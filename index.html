@@ -796,12 +796,12 @@
         .envelope-diagram {
             background: var(--nes-black);
             margin: var(--space-lg) 0;
-            overflow: hidden;
+            overflow-x: auto;
         }
 
         .envelope-row {
             display: grid;
-            grid-template-columns: 120px 1fr 80px;
+            grid-template-columns: minmax(8rem, auto) 1fr minmax(5rem, auto);
             border-bottom: 2px solid var(--nes-border);
         }
 
