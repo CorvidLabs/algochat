@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoChat — Quantum-Resistant Blockchain Messaging | Corvid Labs</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="AlgoChat is an open protocol for end-to-end encrypted messaging through Algorand blockchain transactions. Quantum-resistant, decentralized, and open source.">
+    <meta name="keywords" content="AlgoChat, Algorand, blockchain, encrypted messaging, quantum resistant, E2E encryption, decentralized, Corvid Labs">
+    <meta name="author" content="Corvid Labs">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="AlgoChat — Quantum-Resistant Blockchain Messaging">
+    <meta property="og:description" content="End-to-end encrypted messaging through Algorand transactions. No servers. No accounts. No trust required.">
+    <meta property="og:site_name" content="Corvid Labs">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AlgoChat — Quantum-Resistant Blockchain Messaging">
+    <meta name="twitter:description" content="End-to-end encrypted messaging through Algorand transactions. Quantum-resistant by design.">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#209cee">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <!-- NES.css -->
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           CSS RESET & BASE
+           ============================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ============================================
+           NES CORVID DESIGN TOKENS
+           ============================================ */
+        :root {
+            /* NES Color Palette */
+            --nes-black: #212529;
+            --nes-dark: #1a1d21;
+            --nes-darker: #0d1117;
+            --nes-white: #ffffff;
+            --nes-light: #f8f9fa;
+            
+            --nes-primary: #92cc41;      /* NES Green */
+            --nes-primary-dark: #76a832;
+            --nes-info: #209cee;          /* NES Blue */
+            --nes-info-dark: #1a7dbe;
+            --nes-warning: #f7d51d;       /* NES Yellow */
+            --nes-danger: #e76e55;        /* NES Red */
+            --nes-success: #92cc41;
+            
+            --nes-shadow: #adafbc;
+            --nes-border: #4a4d52;
+            
+            /* Corvid Purple Accent */
+            --corvid-purple: #8b5cf6;
+            --corvid-purple-dark: #7c3aed;
+            
+            /* Typography */
+            --font-pixel: 'Press Start 2P', cursive;
+            
+            /* Spacing */
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 1.5rem;
+            --space-lg: 2rem;
+            --space-xl: 3rem;
+            --space-2xl: 4rem;
+            
+            /* Focus Ring - ADA Compliant (high contrast) */
+            --focus-ring: 0 0 0 4px var(--nes-warning);
+            
+            /* Max Width */
+            --max-width: 1000px;
+        }
+
+        /* ============================================
+           ACCESSIBILITY: REDUCED MOTION
+           ============================================ */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ============================================
+           ACCESSIBILITY: SKIP LINK
+           ============================================ */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--nes-warning);
+            color: var(--nes-black);
+            padding: var(--space-sm);
+            font-family: var(--font-pixel);
+            font-size: 0.75rem;
+            z-index: 9999;
+            text-decoration: none;
+        }
+
+        .skip-link:focus {
+            top: var(--space-sm);
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+
+        /* ============================================
+           BASE STYLES
+           ============================================ */
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        body {
+            font-family: var(--font-pixel);
+            background: var(--nes-darker);
+            color: var(--nes-white);
+            line-height: 2;
+            min-height: 100vh;
+            font-size: 0.75rem;
+        }
+
+        /* ============================================
+           FOCUS STATES - ADA COMPLIANT (High Contrast)
+           ============================================ */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 4px solid var(--nes-warning) !important;
+            outline-offset: 2px;
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+           ============================================ */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-pixel);
+            line-height: 1.8;
+            color: var(--nes-white);
+            margin-bottom: var(--space-sm);
+        }
+
+        h1 { font-size: clamp(1.25rem, 4vw, 2rem); }
+        h2 { font-size: clamp(1rem, 3vw, 1.5rem); }
+        h3 { font-size: clamp(0.875rem, 2vw, 1rem); }
+
+        p {
+            color: var(--nes-light);
+            margin-bottom: var(--space-sm);
+            font-size: 0.75rem;
+        }
+
+        a {
+            color: var(--nes-info);
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        a:hover {
+            color: var(--nes-primary);
+        }
+
+        /* ============================================
+           NES CONTAINER
+           ============================================ */
+        .nes-container {
+            background: var(--nes-dark);
+            padding: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .nes-container.is-dark {
+            background: var(--nes-black);
+            color: var(--nes-white);
+        }
+
+        .nes-container.with-title > .title {
+            background: var(--nes-darker);
+            color: var(--nes-primary);
+        }
+
+        /* ============================================
+           LAYOUT
+           ============================================ */
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 var(--space-sm);
+        }
+
+        section {
+            padding: var(--space-xl) 0;
+        }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        nav {
+            position: sticky;
+            top: 0;
+            background: var(--nes-black);
+            border-bottom: 4px solid var(--nes-primary);
+            z-index: 100;
+            padding: var(--space-sm) 0;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 var(--space-sm);
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: 0.875rem;
+            color: var(--nes-white);
+            text-decoration: none;
+        }
+
+        .nav-brand:hover {
+            color: var(--nes-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--space-sm);
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: var(--nes-light);
+            text-decoration: none;
+            font-size: 0.625rem;
+            padding: var(--space-xs);
+            border: 2px solid transparent;
+        }
+
+        .nav-links a:hover,
+        .nav-links a:focus {
+            color: var(--nes-primary);
+            border-color: var(--nes-primary);
+        }
+
+        /* Mobile Navigation */
+        .nav-toggle {
+            display: none;
+            background: var(--nes-black);
+            border: 4px solid var(--nes-white);
+            color: var(--nes-white);
+            padding: var(--space-xs);
+            font-family: var(--font-pixel);
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .nav-toggle:hover {
+            background: var(--nes-dark);
+            border-color: var(--nes-primary);
+            color: var(--nes-primary);
+        }
+
+        .mobile-menu {
+            display: none;
+            background: var(--nes-black);
+            border-bottom: 4px solid var(--nes-primary);
+            padding: var(--space-sm);
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu a {
+            display: block;
+            padding: var(--space-sm);
+            color: var(--nes-light);
+            text-decoration: none;
+            border-bottom: 2px solid var(--nes-border);
+            font-size: 0.75rem;
+        }
+
+        .mobile-menu a:hover,
+        .mobile-menu a:focus {
+            background: var(--nes-dark);
+            color: var(--nes-primary);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            .nav-toggle {
+                display: block;
+            }
+        }
+
+        /* ============================================
+           HERO SECTION
+           ============================================ */
+        .hero {
+            text-align: center;
+            padding: var(--space-2xl) 0;
+            background: var(--nes-darker);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--nes-black);
+            color: var(--nes-primary);
+            padding: var(--space-xs) var(--space-sm);
+            font-size: 0.625rem;
+            margin-bottom: var(--space-md);
+            border: 4px solid var(--nes-primary);
+        }
+
+        .hero-title {
+            color: var(--nes-info);
+            text-shadow: 4px 4px 0 var(--nes-black);
+            margin-bottom: var(--space-md);
+        }
+
+        .hero-description {
+            font-size: 0.75rem;
+            color: var(--nes-light);
+            max-width: 600px;
+            margin: 0 auto var(--space-lg);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-sm);
+            margin-top: var(--space-lg);
+        }
+
+        .stat-card {
+            background: var(--nes-black);
+            padding: var(--space-md);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            color: var(--nes-primary);
+            display: block;
+            margin-bottom: var(--space-xs);
+        }
+
+        .stat-label {
+            font-size: 0.5rem;
+            color: var(--nes-shadow);
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stat-value {
+                font-size: 1rem;
+            }
+        }
+
+        /* ============================================
+           NES BUTTONS
+           ============================================ */
+        .nes-btn {
+            font-family: var(--font-pixel);
+            font-size: 0.75rem;
+            padding: var(--space-sm) var(--space-md);
+            margin: var(--space-xs);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--space-md);
+        }
+
+        /* ============================================
+           SECTION HEADERS
+           ============================================ */
+        .section-header {
+            text-align: center;
+            margin-bottom: var(--space-lg);
+        }
+
+        .section-number {
+            display: inline-block;
+            font-size: 0.625rem;
+            color: var(--nes-info);
+            margin-bottom: var(--space-xs);
+            letter-spacing: 0.1em;
+        }
+
+        .section-description {
+            color: var(--nes-shadow);
+            font-size: 0.75rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ============================================
+           USE CASES
+           ============================================ */
+        .usecase-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+        }
+
+        .usecase-card {
+            background: var(--nes-black);
+            padding: var(--space-md);
+            text-align: center;
+        }
+
+        .usecase-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .usecase-title {
+            font-size: 0.75rem;
+            color: var(--nes-white);
+            margin-bottom: var(--space-xs);
+        }
+
+        .usecase-desc {
+            font-size: 0.625rem;
+            color: var(--nes-shadow);
+        }
+
+        @media (max-width: 768px) {
+            .usecase-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================
+           COMPARISON
+           ============================================ */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-md);
+        }
+
+        .comparison-col {
+            background: var(--nes-black);
+            padding: var(--space-md);
+        }
+
+        .comparison-col.bad {
+            border-top: 4px solid var(--nes-danger);
+        }
+
+        .comparison-col.good {
+            border-top: 4px solid var(--nes-primary);
+        }
+
+        .comparison-title {
+            font-size: 0.875rem;
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .comparison-col.bad .comparison-title {
+            color: var(--nes-danger);
+        }
+
+        .comparison-col.good .comparison-title {
+            color: var(--nes-primary);
+        }
+
+        .comparison-list {
+            list-style: none;
+        }
+
+        .comparison-list li {
+            padding: var(--space-xs) 0;
+            font-size: 0.625rem;
+            color: var(--nes-light);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+        }
+
+        .comparison-list li::before {
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        .comparison-col.bad .comparison-list li::before {
+            content: "✗";
+            color: var(--nes-danger);
+        }
+
+        .comparison-col.good .comparison-list li::before {
+            content: "✓";
+            color: var(--nes-primary);
+        }
+
+        @media (max-width: 600px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================
+           FLOW DIAGRAM
+           ============================================ */
+        .flow-diagram {
+            background: var(--nes-black);
+            padding: var(--space-lg);
+            margin: var(--space-lg) 0;
+            overflow-x: auto;
+        }
+
+        .flow-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            flex-wrap: wrap;
+            min-width: fit-content;
+        }
+
+        .flow-step {
+            background: var(--nes-dark);
+            border: 4px solid var(--nes-info);
+            padding: var(--space-sm);
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .flow-step-num {
+            font-size: 0.5rem;
+            color: var(--nes-info);
+            margin-bottom: var(--space-xs);
+        }
+
+        .flow-step-title {
+            font-size: 0.625rem;
+            color: var(--nes-white);
+        }
+
+        .flow-arrow {
+            color: var(--nes-primary);
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .flow-steps {
+                flex-direction: column;
+            }
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        /* ============================================
+           CODE BLOCKS
+           ============================================ */
+        .code-block {
+            background: var(--nes-black);
+            margin: var(--space-md) 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-sm);
+            background: var(--nes-dark);
+            border-bottom: 4px solid var(--nes-info);
+        }
+
+        .code-lang {
+            font-size: 0.625rem;
+            color: var(--nes-info);
+            text-transform: uppercase;
+        }
+
+        .code-body {
+            padding: var(--space-sm);
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            margin: 0;
+            font-family: var(--font-pixel);
+            font-size: 0.5rem;
+            line-height: 2.5;
+            color: var(--nes-light);
+            white-space: pre;
+        }
+
+        /* Syntax highlighting */
+        .code-keyword { color: var(--nes-info); }
+        .code-string { color: var(--nes-primary); }
+        .code-comment { color: var(--nes-shadow); }
+        .code-function { color: var(--nes-warning); }
+        .code-type { color: var(--corvid-purple); }
+
+        /* ============================================
+           LANGUAGE CARDS
+           ============================================ */
+        .lang-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: var(--space-sm);
+        }
+
+        .lang-card {
+            background: var(--nes-black);
+            padding: var(--space-md);
+            text-align: center;
+            border: 4px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .lang-card:hover,
+        .lang-card:focus-within {
+            border-color: var(--nes-primary);
+        }
+
+        .lang-icon {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .lang-name {
+            font-size: 0.625rem;
+            color: var(--nes-white);
+            margin-bottom: var(--space-xs);
+        }
+
+        .lang-status {
+            font-size: 0.5rem;
+            color: var(--nes-primary);
+        }
+
+        @media (max-width: 768px) {
+            .lang-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .lang-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ============================================
+           TABLES - ADA COMPLIANT
+           ============================================ */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: var(--space-md) 0;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.625rem;
+            background: var(--nes-black);
+        }
+
+        .data-table caption {
+            padding: var(--space-sm);
+            font-size: 0.75rem;
+            text-align: left;
+            background: var(--nes-dark);
+            color: var(--nes-info);
+            border-bottom: 4px solid var(--nes-info);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: var(--space-sm);
+            text-align: left;
+            border-bottom: 2px solid var(--nes-border);
+        }
+
+        .data-table th {
+            background: var(--nes-dark);
+            color: var(--nes-primary);
+        }
+
+        .data-table td {
+            color: var(--nes-light);
+        }
+
+        .data-table tbody tr:hover td {
+            background: var(--nes-dark);
+        }
+
+        /* ============================================
+           NES BADGES
+           ============================================ */
+        .nes-badge {
+            display: inline-block;
+            font-size: 0.5rem;
+            padding: 2px 8px;
+            font-family: var(--font-pixel);
+        }
+
+        .badge-success {
+            background: var(--nes-primary);
+            color: var(--nes-black);
+        }
+
+        .badge-info {
+            background: var(--nes-info);
+            color: var(--nes-white);
+        }
+
+        .badge-warning {
+            background: var(--nes-warning);
+            color: var(--nes-black);
+        }
+
+        /* ============================================
+           CALLOUT / MESSAGE BOX
+           ============================================ */
+        .callout {
+            background: var(--nes-black);
+            padding: var(--space-md);
+            margin: var(--space-md) 0;
+            border-left: 4px solid var(--nes-info);
+        }
+
+        .callout-title {
+            font-size: 0.75rem;
+            color: var(--nes-primary);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .callout-content {
+            font-size: 0.625rem;
+            color: var(--nes-light);
+        }
+
+        /* ============================================
+           PROTOCOL ENVELOPE
+           ============================================ */
+        .envelope-diagram {
+            background: var(--nes-black);
+            margin: var(--space-lg) 0;
+            overflow: hidden;
+        }
+
+        .envelope-row {
+            display: grid;
+            grid-template-columns: 120px 1fr 80px;
+            border-bottom: 2px solid var(--nes-border);
+        }
+
+        .envelope-row:last-child {
+            border-bottom: none;
+        }
+
+        .envelope-row.header {
+            background: var(--nes-dark);
+            border-bottom: 4px solid var(--nes-info);
+        }
+
+        .envelope-cell {
+            padding: var(--space-sm);
+            font-size: 0.625rem;
+        }
+
+        .envelope-field {
+            color: var(--nes-info);
+        }
+
+        .envelope-desc {
+            color: var(--nes-light);
+        }
+
+        .envelope-size {
+            color: var(--nes-shadow);
+            text-align: right;
+        }
+
+        @media (max-width: 500px) {
+            .envelope-row {
+                grid-template-columns: 1fr;
+            }
+            .envelope-row.header {
+                display: none;
+            }
+            .envelope-cell {
+                padding: var(--space-xs) var(--space-sm);
+            }
+        }
+
+        /* ============================================
+           FAQ ACCORDION - ADA COMPLIANT
+           ============================================ */
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .faq-item {
+            background: var(--nes-black);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md);
+            background: none;
+            border: none;
+            color: var(--nes-white);
+            font-family: var(--font-pixel);
+            font-size: 0.625rem;
+            text-align: left;
+            cursor: pointer;
+            line-height: 2;
+        }
+
+        .faq-question:hover {
+            background: var(--nes-dark);
+            color: var(--nes-primary);
+        }
+
+        .faq-question::after {
+            content: "+";
+            font-size: 1rem;
+            color: var(--nes-info);
+            flex-shrink: 0;
+            margin-left: var(--space-sm);
+        }
+
+        .faq-item.open .faq-question::after {
+            content: "-";
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+        }
+
+        .faq-answer-content {
+            padding: 0 var(--space-md) var(--space-md);
+            font-size: 0.5rem;
+            color: var(--nes-light);
+            border-top: 2px solid var(--nes-border);
+            line-height: 2.5;
+        }
+
+        /* ============================================
+           ROADMAP
+           ============================================ */
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-md);
+        }
+
+        .roadmap-card {
+            background: var(--nes-black);
+            padding: var(--space-md);
+        }
+
+        .roadmap-card.current {
+            border: 4px solid var(--nes-primary);
+        }
+
+        .roadmap-version {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+            flex-wrap: wrap;
+        }
+
+        .roadmap-version-num {
+            font-size: 1rem;
+            color: var(--nes-info);
+        }
+
+        .roadmap-list {
+            list-style: none;
+        }
+
+        .roadmap-list li {
+            padding: var(--space-xs) 0;
+            padding-left: var(--space-md);
+            position: relative;
+            font-size: 0.625rem;
+            color: var(--nes-light);
+        }
+
+        .roadmap-list li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: var(--nes-primary);
+        }
+
+        @media (max-width: 600px) {
+            .roadmap-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        footer {
+            border-top: 4px solid var(--nes-primary);
+            padding: var(--space-xl) 0;
+            margin-top: var(--space-xl);
+            background: var(--nes-black);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-size: 0.75rem;
+            color: var(--nes-white);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: var(--space-md);
+            list-style: none;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--nes-shadow);
+            text-decoration: none;
+            font-size: 0.625rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--nes-primary);
+        }
+
+        .footer-copyright {
+            width: 100%;
+            text-align: center;
+            color: var(--nes-shadow);
+            font-size: 0.5rem;
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 2px solid var(--nes-border);
+        }
+
+        @media (max-width: 500px) {
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            .footer-links {
+                justify-content: center;
+            }
+        }
+
+        /* ============================================
+           VISUALLY HIDDEN (SR ONLY) - ADA
+           ============================================ */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* ============================================
+           HIGH CONTRAST MODE SUPPORT
+           ============================================ */
+        @media (prefers-contrast: high) {
+            :root {
+                --nes-darker: #000000;
+                --nes-dark: #000000;
+                --nes-black: #000000;
+                --nes-white: #ffffff;
+                --nes-light: #ffffff;
+                --nes-shadow: #ffffff;
+            }
+
+            .nes-container,
+            .code-block,
+            .faq-item,
+            .stat-card,
+            .lang-card,
+            .usecase-card,
+            .comparison-col,
+            .roadmap-card {
+                border: 2px solid var(--nes-white);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Link for Keyboard Navigation -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Navigation -->
+    <nav role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <a href="#" class="nav-brand" aria-label="AlgoChat Home">
+                <span aria-hidden="true">🪶</span>
+                AlgoChat
+            </a>
+            
+            <ul class="nav-links" role="list">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#security">Security</a></li>
+                <li><a href="#protocol">Protocol</a></li>
+                <li><a href="#implementations">SDKs</a></li>
+                <li><a href="#quickstart">Start</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+            
+            <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+                MENU
+            </button>
+        </div>
+        
+        <div id="mobile-menu" class="mobile-menu" role="menu">
+            <a href="#overview" role="menuitem">Overview</a>
+            <a href="#security" role="menuitem">Security</a>
+            <a href="#protocol" role="menuitem">Protocol</a>
+            <a href="#implementations" role="menuitem">SDKs</a>
+            <a href="#quickstart" role="menuitem">Quickstart</a>
+            <a href="#faq" role="menuitem">FAQ</a>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="container">
+                <span class="hero-badge" aria-label="Version 1.1 Quantum Resistant">
+                    v1.1 QUANTUM RESISTANT
+                </span>
+                
+                <h1 id="hero-title" class="hero-title">
+                    AlgoChat
+                </h1>
+                
+                <p class="hero-description">
+                    End-to-end encrypted messaging through Algorand blockchain transactions. 
+                    No servers. No accounts. No trust required.
+                </p>
+                
+                <div class="btn-group">
+                    <a href="#quickstart" class="nes-btn is-primary">Get Started</a>
+                    <a href="https://github.com/CorvidLabs" class="nes-btn" target="_blank" rel="noopener noreferrer">
+                        GitHub
+                        <span class="sr-only">(opens in new tab)</span>
+                    </a>
+                </div>
+                
+                <!-- Stats -->
+                <div class="stats-grid" role="list" aria-label="Protocol statistics">
+                    <div class="stat-card" role="listitem">
+                        <span class="stat-value">5</span>
+                        <span class="stat-label">Languages</span>
+                    </div>
+                    <div class="stat-card" role="listitem">
+                        <span class="stat-value">316</span>
+                        <span class="stat-label">Tests</span>
+                    </div>
+                    <div class="stat-card" role="listitem">
+                        <span class="stat-value">128b</span>
+                        <span class="stat-label">Post-Quantum</span>
+                    </div>
+                    <div class="stat-card" role="listitem">
+                        <span class="stat-value">0.001</span>
+                        <span class="stat-label">ALGO/Msg</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Overview Section -->
+        <section id="overview" aria-labelledby="overview-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 01 OVERVIEW</span>
+                    <h2 id="overview-title">What is AlgoChat?</h2>
+                    <p class="section-description">
+                        An open protocol for secure messaging using Algorand as infrastructure.
+                    </p>
+                </div>
+                
+                <!-- Use Cases -->
+                <h3 class="sr-only">Use Cases</h3>
+                <div class="usecase-grid" role="list">
+                    <article class="usecase-card" role="listitem">
+                        <div class="usecase-icon" aria-hidden="true">💬</div>
+                        <h4 class="usecase-title">Private Messaging</h4>
+                        <p class="usecase-desc">Direct encrypted communication between Algorand wallets</p>
+                    </article>
+                    <article class="usecase-card" role="listitem">
+                        <div class="usecase-icon" aria-hidden="true">🏛️</div>
+                        <h4 class="usecase-title">DAO Coordination</h4>
+                        <p class="usecase-desc">Secure governance discussions with cryptographic identity</p>
+                    </article>
+                    <article class="usecase-card" role="listitem">
+                        <div class="usecase-icon" aria-hidden="true">🤝</div>
+                        <h4 class="usecase-title">P2P Commerce</h4>
+                        <p class="usecase-desc">Negotiate trades with immutable message history</p>
+                    </article>
+                </div>
+                
+                <!-- Comparison -->
+                <div class="comparison-grid" style="margin-top: var(--space-xl);">
+                    <div class="comparison-col bad">
+                        <h3 class="comparison-title">
+                            <span aria-hidden="true">⚠️</span>
+                            Traditional
+                        </h3>
+                        <ul class="comparison-list" role="list">
+                            <li>Centralized servers own your data</li>
+                            <li>Accounts can be banned</li>
+                            <li>Messages can be censored</li>
+                            <li>Server breaches expose all</li>
+                            <li>No proof of sender</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-col good">
+                        <h3 class="comparison-title">
+                            <span aria-hidden="true">✓</span>
+                            AlgoChat
+                        </h3>
+                        <ul class="comparison-list" role="list">
+                            <li>Blockchain is infrastructure</li>
+                            <li>Wallet is your identity</li>
+                            <li>Messages are immutable</li>
+                            <li>E2E encryption always</li>
+                            <li>Cryptographic verification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- How It Works Section -->
+        <section id="mechanism" aria-labelledby="mechanism-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 02 MECHANISM</span>
+                    <h2 id="mechanism-title">How It Works</h2>
+                    <p class="section-description">
+                        Messages encrypted and embedded in Algorand transaction note fields.
+                    </p>
+                </div>
+                
+                <!-- Flow Diagram -->
+                <div class="flow-diagram" role="img" aria-label="Message flow: Compose, Encrypt, Send Transaction, Receive, Decrypt">
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <div class="flow-step-num">01</div>
+                            <div class="flow-step-title">Compose</div>
+                        </div>
+                        <span class="flow-arrow" aria-hidden="true">→</span>
+                        <div class="flow-step">
+                            <div class="flow-step-num">02</div>
+                            <div class="flow-step-title">Encrypt</div>
+                        </div>
+                        <span class="flow-arrow" aria-hidden="true">→</span>
+                        <div class="flow-step">
+                            <div class="flow-step-num">03</div>
+                            <div class="flow-step-title">Send Txn</div>
+                        </div>
+                        <span class="flow-arrow" aria-hidden="true">→</span>
+                        <div class="flow-step">
+                            <div class="flow-step-num">04</div>
+                            <div class="flow-step-title">Receive</div>
+                        </div>
+                        <span class="flow-arrow" aria-hidden="true">→</span>
+                        <div class="flow-step">
+                            <div class="flow-step-num">05</div>
+                            <div class="flow-step-title">Decrypt</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Callout -->
+                <div class="callout">
+                    <div class="callout-title">
+                        <span aria-hidden="true">💡</span>
+                        Key Insight
+                    </div>
+                    <p class="callout-content">
+                        AlgoChat uses ECDH key exchange to derive a shared secret. 
+                        Messages are encrypted with AES-256-GCM before being embedded in transaction notes (up to 1KB).
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Security Section -->
+        <section id="security" aria-labelledby="security-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 03 SECURITY</span>
+                    <h2 id="security-title">Quantum-Resistant Design</h2>
+                    <p class="section-description">
+                        PSK mode provides 128-bit post-quantum security.
+                    </p>
+                </div>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-col" style="border-top: 4px solid var(--nes-info);">
+                        <h3 style="color: var(--nes-info); font-size: 0.875rem; margin-bottom: var(--space-sm);">
+                            🔒 Standard Mode
+                        </h3>
+                        <p style="font-size: 0.625rem; color: var(--nes-light);">
+                            ECDH + AES-256-GCM provides strong classical security for most use cases.
+                        </p>
+                        <div style="margin-top: var(--space-sm);">
+                            <span class="nes-badge badge-success">PRODUCTION</span>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-col good">
+                        <h3 style="color: var(--nes-primary); font-size: 0.875rem; margin-bottom: var(--space-sm);">
+                            🛡️ PSK Mode
+                        </h3>
+                        <p style="font-size: 0.625rem; color: var(--nes-light);">
+                            Hybrid ECDH + PSK provides 128-bit post-quantum security.
+                        </p>
+                        <div style="margin-top: var(--space-sm);">
+                            <span class="nes-badge badge-info">RECOMMENDED</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cryptographic Primitives Table -->
+                <div class="table-wrapper" style="margin-top: var(--space-xl);">
+                    <table class="data-table">
+                        <caption>Cryptographic Primitives</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Component</th>
+                                <th scope="col">Algorithm</th>
+                                <th scope="col">Security</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Key Exchange</td>
+                                <td>X25519 (ECDH)</td>
+                                <td>128-bit classical</td>
+                            </tr>
+                            <tr>
+                                <td>Encryption</td>
+                                <td>AES-256-GCM</td>
+                                <td>256-bit symmetric</td>
+                            </tr>
+                            <tr>
+                                <td>Key Derivation</td>
+                                <td>HKDF-SHA256</td>
+                                <td>256-bit</td>
+                            </tr>
+                            <tr>
+                                <td>PSK Mode</td>
+                                <td>ECDH + PSK</td>
+                                <td>128-bit post-quantum</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Protocol Section -->
+        <section id="protocol" aria-labelledby="protocol-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 04 PROTOCOL</span>
+                    <h2 id="protocol-title">Message Envelope</h2>
+                    <p class="section-description">
+                        The AlgoChat structure embedded in transaction notes.
+                    </p>
+                </div>
+                
+                <div class="envelope-diagram" role="table" aria-label="Message envelope format">
+                    <div class="envelope-row header" role="row">
+                        <div class="envelope-cell" role="columnheader">Field</div>
+                        <div class="envelope-cell" role="columnheader">Description</div>
+                        <div class="envelope-cell" role="columnheader">Size</div>
+                    </div>
+                    <div class="envelope-row" role="row">
+                        <div class="envelope-cell envelope-field" role="cell">version</div>
+                        <div class="envelope-cell envelope-desc" role="cell">Protocol version (1)</div>
+                        <div class="envelope-cell envelope-size" role="cell">1 byte</div>
+                    </div>
+                    <div class="envelope-row" role="row">
+                        <div class="envelope-cell envelope-field" role="cell">flags</div>
+                        <div class="envelope-cell envelope-desc" role="cell">Feature flags (PSK, etc.)</div>
+                        <div class="envelope-cell envelope-size" role="cell">1 byte</div>
+                    </div>
+                    <div class="envelope-row" role="row">
+                        <div class="envelope-cell envelope-field" role="cell">ephemeralKey</div>
+                        <div class="envelope-cell envelope-desc" role="cell">Sender's X25519 public key</div>
+                        <div class="envelope-cell envelope-size" role="cell">32 bytes</div>
+                    </div>
+                    <div class="envelope-row" role="row">
+                        <div class="envelope-cell envelope-field" role="cell">nonce</div>
+                        <div class="envelope-cell envelope-desc" role="cell">Random nonce for AES-GCM</div>
+                        <div class="envelope-cell envelope-size" role="cell">12 bytes</div>
+                    </div>
+                    <div class="envelope-row" role="row">
+                        <div class="envelope-cell envelope-field" role="cell">ciphertext</div>
+                        <div class="envelope-cell envelope-desc" role="cell">Encrypted message + auth tag</div>
+                        <div class="envelope-cell envelope-size" role="cell">Variable</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Implementations Section -->
+        <section id="implementations" aria-labelledby="implementations-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 05 IMPLEMENTATIONS</span>
+                    <h2 id="implementations-title">Production SDKs</h2>
+                    <p class="section-description">
+                        Five fully tested implementations with 100% cross-compatibility.
+                    </p>
+                </div>
+                
+                <div class="lang-grid" role="list" aria-label="Available implementations">
+                    <article class="lang-card" role="listitem">
+                        <div class="lang-icon" aria-hidden="true">🍎</div>
+                        <div class="lang-name">Swift</div>
+                        <div class="lang-status">✓ Production</div>
+                    </article>
+                    <article class="lang-card" role="listitem">
+                        <div class="lang-icon" aria-hidden="true">🟦</div>
+                        <div class="lang-name">TypeScript</div>
+                        <div class="lang-status">✓ Production</div>
+                    </article>
+                    <article class="lang-card" role="listitem">
+                        <div class="lang-icon" aria-hidden="true">🐍</div>
+                        <div class="lang-name">Python</div>
+                        <div class="lang-status">✓ Production</div>
+                    </article>
+                    <article class="lang-card" role="listitem">
+                        <div class="lang-icon" aria-hidden="true">🦀</div>
+                        <div class="lang-name">Rust</div>
+                        <div class="lang-status">✓ Production</div>
+                    </article>
+                    <article class="lang-card" role="listitem">
+                        <div class="lang-icon" aria-hidden="true">☕</div>
+                        <div class="lang-name">Kotlin</div>
+                        <div class="lang-status">✓ Production</div>
+                    </article>
+                </div>
+                
+                <div class="callout" style="margin-top: var(--space-xl); border-left-color: var(--nes-primary);">
+                    <div class="callout-title" style="color: var(--nes-primary);">
+                        <span aria-hidden="true">✓</span>
+                        Cross-Compatible
+                    </div>
+                    <p class="callout-content">
+                        All 316 tests pass across every implementation. Messages encrypted in Swift can be 
+                        decrypted in Python, Rust, TypeScript, or Kotlin.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quickstart Section -->
+        <section id="quickstart" aria-labelledby="quickstart-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 06 QUICKSTART</span>
+                    <h2 id="quickstart-title">Get Started</h2>
+                    <p class="section-description">
+                        Simple examples to start sending encrypted messages.
+                    </p>
+                </div>
+                
+                <!-- Swift Example -->
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Swift</span>
+                    </div>
+                    <div class="code-body">
+                        <pre><code><span class="code-keyword">import</span> AlgoChat
+
+<span class="code-comment">// Create identity from wallet</span>
+<span class="code-keyword">let</span> identity = <span class="code-type">AlgoChatIdentity</span>(privateKey: walletKey)
+
+<span class="code-comment">// Encrypt message</span>
+<span class="code-keyword">let</span> envelope = <span class="code-keyword">try</span> AlgoChat.<span class="code-function">encrypt</span>(
+    message: <span class="code-string">"Hello!"</span>,
+    from: identity,
+    to: recipientKey
+)
+
+<span class="code-comment">// Send via Algorand</span>
+algod.<span class="code-function">send</span>(note: envelope.encoded)</code></pre>
+                    </div>
+                </div>
+                
+                <!-- TypeScript Example -->
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">TypeScript</span>
+                    </div>
+                    <div class="code-body">
+                        <pre><code><span class="code-keyword">import</span> { AlgoChat } <span class="code-keyword">from</span> <span class="code-string">'@corvidlabs/algochat'</span>;
+
+<span class="code-comment">// Create identity</span>
+<span class="code-keyword">const</span> identity = <span class="code-keyword">new</span> <span class="code-type">AlgoChatIdentity</span>(walletKey);
+
+<span class="code-comment">// Encrypt & send</span>
+<span class="code-keyword">const</span> envelope = <span class="code-keyword">await</span> AlgoChat.<span class="code-function">encrypt</span>(
+    <span class="code-string">"Hello!"</span>, identity, recipientKey
+);
+
+<span class="code-keyword">await</span> algod.<span class="code-function">send</span>({ note: envelope.encoded });</code></pre>
+                    </div>
+                </div>
+                
+                <!-- Python Example -->
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">Python</span>
+                    </div>
+                    <div class="code-body">
+                        <pre><code><span class="code-keyword">from</span> algochat <span class="code-keyword">import</span> AlgoChat, AlgoChatIdentity
+
+<span class="code-comment"># Create identity</span>
+identity = <span class="code-type">AlgoChatIdentity</span>(private_key=wallet_key)
+
+<span class="code-comment"># Encrypt & send</span>
+envelope = AlgoChat.<span class="code-function">encrypt</span>(
+    message=<span class="code-string">"Hello!"</span>,
+    sender=identity,
+    recipient=recipient_key
+)
+
+algod.<span class="code-function">send</span>(note=envelope.encoded)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- FAQ Section -->
+        <section id="faq" aria-labelledby="faq-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 07 FAQ</span>
+                    <h2 id="faq-title">Questions</h2>
+                </div>
+                
+                <div class="faq-list" role="list">
+                    <div class="faq-item" role="listitem">
+                        <button class="faq-question" aria-expanded="false" aria-controls="faq-1">
+                            How much does it cost?
+                        </button>
+                        <div id="faq-1" class="faq-answer" role="region">
+                            <div class="faq-answer-content">
+                                Each message costs 0.001 ALGO — the minimum Algorand transaction fee.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item" role="listitem">
+                        <button class="faq-question" aria-expanded="false" aria-controls="faq-2">
+                            Is it truly quantum-resistant?
+                        </button>
+                        <div id="faq-2" class="faq-answer" role="region">
+                            <div class="faq-answer-content">
+                                PSK mode provides 128-bit post-quantum security by combining ECDH with pre-shared keys. 
+                                The PSK component cannot be broken by quantum computers.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item" role="listitem">
+                        <button class="faq-question" aria-expanded="false" aria-controls="faq-3">
+                            Can messages be deleted?
+                        </button>
+                        <div id="faq-3" class="faq-answer" role="region">
+                            <div class="faq-answer-content">
+                                No. Messages are stored in Algorand transactions which are immutable. 
+                                Once sent, they cannot be deleted or modified by anyone.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item" role="listitem">
+                        <button class="faq-question" aria-expanded="false" aria-controls="faq-4">
+                            What's the max message size?
+                        </button>
+                        <div id="faq-4" class="faq-answer" role="region">
+                            <div class="faq-answer-content">
+                                Algorand notes are limited to 1KB. After envelope overhead (~46 bytes), 
+                                approximately 950 bytes are available for your encrypted message.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item" role="listitem">
+                        <button class="faq-question" aria-expanded="false" aria-controls="faq-5">
+                            Is AlgoChat open source?
+                        </button>
+                        <div id="faq-5" class="faq-answer" role="region">
+                            <div class="faq-answer-content">
+                                Yes! All five implementations are open source on GitHub. 
+                                The protocol spec is also publicly documented.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Roadmap Section -->
+        <section id="roadmap" aria-labelledby="roadmap-title">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-number">// 08 ROADMAP</span>
+                    <h2 id="roadmap-title">What's Next</h2>
+                </div>
+                
+                <div class="roadmap-grid">
+                    <div class="roadmap-card current">
+                        <div class="roadmap-version">
+                            <span class="roadmap-version-num">v1.1</span>
+                            <span class="nes-badge badge-success">CURRENT</span>
+                        </div>
+                        <ul class="roadmap-list" role="list">
+                            <li>PSK quantum resistance</li>
+                            <li>5 production SDKs</li>
+                            <li>316 passing tests</li>
+                            <li>Full cross-compat</li>
+                            <li>Complete docs</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="roadmap-card">
+                        <div class="roadmap-version">
+                            <span class="roadmap-version-num">v2.0</span>
+                            <span class="nes-badge badge-info">PLANNED</span>
+                        </div>
+                        <ul class="roadmap-list" role="list">
+                            <li>Group chat support</li>
+                            <li>Message threading</li>
+                            <li>Reactions & receipts</li>
+                            <li>IPFS attachments</li>
+                            <li>ML-KEM upgrade</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span aria-hidden="true">🪶</span>
+                    Corvid Labs
+                </div>
+                
+                <ul class="footer-links" role="list">
+                    <li><a href="https://github.com/CorvidLabs" target="_blank" rel="noopener noreferrer">GitHub<span class="sr-only"> (opens in new tab)</span></a></li>
+                    <li><a href="https://discord.gg/corvidlabs" target="_blank" rel="noopener noreferrer">Discord<span class="sr-only"> (opens in new tab)</span></a></li>
+                    <li><a href="https://twitter.com/CorvidLabs" target="_blank" rel="noopener noreferrer">Twitter<span class="sr-only"> (opens in new tab)</span></a></li>
+                </ul>
+            </div>
+            
+            <p class="footer-copyright">
+                © 2025-2026 Corvid Labs. Built on Algorand.
+            </p>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script>
+        // Mobile Navigation Toggle
+        const navToggle = document.querySelector('.nav-toggle');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        
+        navToggle.addEventListener('click', () => {
+            const isExpanded = navToggle.getAttribute('aria-expanded') === 'true';
+            navToggle.setAttribute('aria-expanded', !isExpanded);
+            mobileMenu.classList.toggle('active');
+        });
+        
+        // Close mobile menu on link click
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navToggle.setAttribute('aria-expanded', 'false');
+                mobileMenu.classList.remove('active');
+            });
+        });
+        
+        // FAQ Accordion - ADA Compliant
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const isOpen = item.classList.contains('open');
+                
+                // Close all others
+                document.querySelectorAll('.faq-item').forEach(faq => {
+                    faq.classList.remove('open');
+                    faq.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+                });
+                
+                // Toggle current
+                if (!isOpen) {
+                    item.classList.add('open');
+                    button.setAttribute('aria-expanded', 'true');
+                }
+            });
+            
+            // Keyboard support
+            button.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    button.click();
+                }
+            });
+        });
+        
+        // Smooth scroll with reduced motion support
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const target = document.querySelector(targetId);
+                if (target) {
+                    e.preventDefault();
+                    target.focus({ preventScroll: true });
+                    target.scrollIntoView({
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Console Easter Egg
+        console.log('%c🪶 AlgoChat by Corvid Labs', 'font-size: 16px; font-weight: bold; color: #92cc41;');
+        console.log('%cPRESS START TO ENCRYPT', 'font-family: monospace; color: #209cee;');
+    </script>
+</body>
+</html>
