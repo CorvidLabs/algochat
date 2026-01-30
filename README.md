@@ -2,8 +2,6 @@
 
 End-to-end encrypted messaging on Algorand with hybrid ECDH + PSK ratcheting.
 
-This repo hosts the [AlgoChat landing page](https://corvidlabs.github.io/algochat/).
-
 ## Protocol
 
 The full specification, security model, test vectors, and implementation guide live in the protocol repo:
