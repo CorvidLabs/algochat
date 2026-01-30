@@ -1,44 +1,27 @@
 # AlgoChat
 
-Quantum-resistant end-to-end encrypted messaging through Algorand blockchain transactions. No servers. No accounts. No trust required.
+End-to-end encrypted messaging on Algorand with hybrid ECDH + PSK ratcheting.
 
-## Overview
-
-AlgoChat is an open protocol for secure messaging that uses Algorand transaction note fields as the transport layer. Messages are encrypted client-side using ML-KEM (Kyber) + X25519 hybrid key exchange, making them resistant to both classical and quantum attacks.
-
-### Use Cases
-
-- **Wallet-to-Wallet Messaging** - Direct encrypted communication between Algorand wallets
-- **DAO Governance** - Secure governance discussions with cryptographic identity
-- **P2P Trading** - Negotiate trades with immutable message history
-
-## How It Works
-
-1. **Key Exchange** - Sender fetches recipient's public key from an on-chain opt-in transaction
-2. **Encrypt** - Message is encrypted client-side using hybrid ML-KEM + X25519
-3. **Send** - Encrypted payload is embedded in an Algorand transaction note field
-4. **Decrypt** - Recipient decrypts locally using their private key
+This repo hosts the [AlgoChat landing page](https://corvidlabs.github.io/algochat/).
 
 ## Protocol
 
-Messages use a structured envelope in the transaction note field:
+The full specification, security model, test vectors, and implementation guide live in the protocol repo:
 
-```
-algochat:v1:<recipient>:<nonce>:<ciphertext>
-```
+**[protocol-algochat](https://github.com/CorvidLabs/protocol-algochat)** — Protocol specification, wire format, and documentation
 
-## SDKs
+## Implementations
 
-| SDK | Language | Status |
-|-----|----------|--------|
-| `algochat-swift` | Swift | In Development |
-| `algochat-ts` | TypeScript | In Development |
-| `algochat-py` | Python | In Development |
+| Language | Repository | Description |
+|----------|-----------|-------------|
+| Swift | [swift-algochat](https://github.com/CorvidLabs/swift-algochat) | Production SDK |
+| TypeScript | [ts-algochat](https://github.com/CorvidLabs/ts-algochat) | TypeScript SDK |
+| Python | [py-algochat](https://github.com/CorvidLabs/py-algochat) | Python SDK |
+| Rust | [rs-algochat](https://github.com/CorvidLabs/rs-algochat) | Rust SDK |
+| Kotlin | [kt-algochat](https://github.com/CorvidLabs/kt-algochat) | Kotlin SDK |
+| Angular | [algochat-web](https://github.com/CorvidLabs/algochat-web) | Web client |
 
-## Links
-
-- [Landing Page](https://corvidlabs.github.io/algochat/)
-- [Corvid Labs](https://github.com/CorvidLabs)
+See the [Implementation Status Dashboard](https://corvidlabs.github.io/protocol-algochat/status.html) for live test results.
 
 ## License
 
