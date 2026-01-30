@@ -741,11 +741,14 @@
         /* ============================================
            NES BADGES
            ============================================ */
-        .nes-badge {
+        .status-badge {
             display: inline-block;
             font-size: 0.5rem;
-            padding: 2px 8px;
+            padding: 4px 10px;
             font-family: var(--font-pixel);
+            line-height: 1;
+            white-space: nowrap;
+            letter-spacing: 1px;
         }
 
         .badge-success {
@@ -1288,7 +1291,7 @@
                             ECDH + AES-256-GCM provides strong classical security for most use cases.
                         </p>
                         <div style="margin-top: var(--space-sm);">
-                            <span class="nes-badge badge-success">PRODUCTION</span>
+                            <span class="status-badge badge-success">PRODUCTION</span>
                         </div>
                     </div>
                     
@@ -1300,7 +1303,7 @@
                             Hybrid ECDH + PSK provides 128-bit post-quantum security.
                         </p>
                         <div style="margin-top: var(--space-sm);">
-                            <span class="nes-badge badge-info">RECOMMENDED</span>
+                            <span class="status-badge badge-info">RECOMMENDED</span>
                         </div>
                     </div>
                 </div>
@@ -1602,7 +1605,7 @@ algod.<span class="code-function">send</span>(note=envelope.encoded)</code></pre
                     <div class="roadmap-card current">
                         <div class="roadmap-version">
                             <span class="roadmap-version-num">v1.1</span>
-                            <span class="nes-badge badge-success">CURRENT</span>
+                            <span class="status-badge badge-success">CURRENT</span>
                         </div>
                         <ul class="roadmap-list" role="list">
                             <li>PSK quantum resistance</li>
@@ -1616,7 +1619,7 @@ algod.<span class="code-function">send</span>(note=envelope.encoded)</code></pre
                     <div class="roadmap-card">
                         <div class="roadmap-version">
                             <span class="roadmap-version-num">v2.0</span>
-                            <span class="nes-badge badge-info">PLANNED</span>
+                            <span class="status-badge badge-info">PLANNED</span>
                         </div>
                         <ul class="roadmap-list" role="list">
                             <li>Group chat support</li>
