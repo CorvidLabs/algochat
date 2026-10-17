@@ -7,11 +7,11 @@
   "title": "Say that envelope version 0x02 is accepted, and stop treating the withdrawn handshake note as an acceptance test",
   "description": "Say that envelope version 0x02 is accepted, and stop treating the withdrawn handshake note as an acceptance test",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "620e6b72860844250fcf37f77e0a94c8cc01e1ae",
   "created_at": 1792280827,
-  "updated_at": 1792281155,
+  "updated_at": 1792281175,
   "affected_specs": [
     "protocol"
   ],

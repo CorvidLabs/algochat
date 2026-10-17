@@ -1,6 +1,6 @@
 ---
 id: say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test
-state: implementing
+state: archived
 type: documentation
 base_commit: 620e6b72860844250fcf37f77e0a94c8cc01e1ae
 ---

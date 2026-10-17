@@ -1,0 +1,54 @@
+{
+  "timestamp": 1792281153,
+  "commit": "9104d05a3fe0b803184fd335a8fd0e75712110c4",
+  "contract_digest": "483bfd00592174e4c74cf88228a0d41167379faf6b81173d28e3614cdb26ae3f",
+  "execution_digest": "24e92098dde44be533b811a29313561f5adcb0f5b7ff04f676905d1eb2ece16f",
+  "workspace_digest": "4a369b4197a496734894533a04bc8a3f0ca5b35b18a37a0fd30a8efb8f9e7b72",
+  "acceptance_input_digest": "59629d13115b5c6ae6c0b724c094a8c22b683e2ff6cddbbd652138c8e7fb034c",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "TEST-VECTORS.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "33e788f1ed6f6e8790fc24e64c3e1166778165518f20efb14e39e15fbedf0e2f",
+        "entry_digest": "0a2cc6737489d62f92132e41ec3898a89b466c2d09ee06edc59c22aae42c46d4",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/protocol.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8fcf9f636a9b741ba596f00435db8706879b05ff76026dacde6e33bb3816edda",
+        "entry_digest": "a5168eafa16e87331241083e722d6eeaf756a27cb496c40117a625b9967bc8d8",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ee2d881caa36d0080d01e7d54e9157b2825f20044862c8e514a60434e9e052ef",
+        "entry_digest": "90609a3dbac4f3c49dd83ffcd3ffee11205c369afbb1a869e9c7807517a19bdc",
+        "owners": [
+          "protocol"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-protocol-2"
+  ]
+}
