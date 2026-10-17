@@ -1,4 +1,4 @@
-# Lesson bundle — bring-the-current-protocol-and-language-libraries-into-one-repository
+# Lesson bundle: bring-the-current-protocol-and-language-libraries-into-one-repository
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
