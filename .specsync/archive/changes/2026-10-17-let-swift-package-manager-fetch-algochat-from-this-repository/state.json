@@ -7,10 +7,11 @@
   "title": "Let Swift Package Manager fetch AlgoChat from this repository",
   "description": "Let Swift Package Manager fetch AlgoChat from this repository",
   "kind": "feature",
-  "state": "approved",
+  "state": "archived",
+  "canonical_applied": true,
   "base_commit": "7878122f267307f6c9d6b4898f266548d0a4e8a3",
   "created_at": 1792263693,
-  "updated_at": 1792263727,
+  "updated_at": 1792263765,
   "affected_specs": [],
   "affected_paths": [
     "Package.swift",

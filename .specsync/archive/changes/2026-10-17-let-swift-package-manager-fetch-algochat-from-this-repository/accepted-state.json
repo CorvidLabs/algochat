@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "let-swift-package-manager-fetch-algochat-from-this-repository",
+  "slug": "let-swift-package-manager-fetch-algochat-from-this-repository",
+  "title": "Let Swift Package Manager fetch AlgoChat from this repository",
+  "description": "Let Swift Package Manager fetch AlgoChat from this repository",
+  "kind": "feature",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "7878122f267307f6c9d6b4898f266548d0a4e8a3",
+  "created_at": 1792263693,
+  "updated_at": 1792263755,
+  "affected_specs": [],
+  "affected_paths": [
+    "Package.swift",
+    "swift",
+    "README.md",
+    ".github/workflows/swift.yml",
+    ".github/workflows/status.yml",
+    ".github/workflows/trust.yml",
+    ".gitignore"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The wire format is unchanged. Package.swift moves to the repository root and points at the existing Swift sources.",
+  "acceptance_criteria": [
+    "swift test from the repository root builds the AlgoChat library and its unit tests. A package can depend on https://github.com/CorvidLabs/algochat.git and use the AlgoChat product."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

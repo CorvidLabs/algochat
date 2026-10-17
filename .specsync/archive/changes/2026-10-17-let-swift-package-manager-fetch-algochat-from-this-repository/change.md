@@ -1,6 +1,6 @@
 ---
 id: let-swift-package-manager-fetch-algochat-from-this-repository
-state: approved
+state: archived
 type: feature
 base_commit: 7878122f267307f6c9d6b4898f266548d0a4e8a3
 ---
