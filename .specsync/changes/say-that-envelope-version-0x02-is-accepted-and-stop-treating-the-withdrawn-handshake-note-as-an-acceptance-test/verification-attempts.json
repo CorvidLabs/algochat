@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792281147,
+      "commit": "3fec1539b2b015524b290cea6b4b017481c19b0f",
+      "contract_digest": "483bfd00592174e4c74cf88228a0d41167379faf6b81173d28e3614cdb26ae3f",
+      "execution_digest": "24e92098dde44be533b811a29313561f5adcb0f5b7ff04f676905d1eb2ece16f",
+      "workspace_digest": "df0717695acdef697a5c11c1da89fba3ffa9b76ee5e3dc26a12d86e565c07908",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-2"
+      ]
+    }
+  ]
+}
