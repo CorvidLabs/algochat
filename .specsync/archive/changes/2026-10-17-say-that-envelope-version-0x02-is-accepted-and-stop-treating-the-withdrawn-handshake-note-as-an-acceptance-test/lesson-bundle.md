@@ -1,4 +1,4 @@
-# Lesson bundle — say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test
+# Lesson bundle: say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
