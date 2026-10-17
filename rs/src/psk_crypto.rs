@@ -8,7 +8,6 @@ use chacha20poly1305::{
     aead::{Aead, KeyInit, Payload},
     ChaCha20Poly1305, Nonce,
 };
-use rand::RngCore;
 use x25519_dalek::{PublicKey, StaticSecret};
 use zeroize::Zeroizing;
 
@@ -117,9 +116,7 @@ fn encrypt_psk_message_versioned(
         recipient_pub_bytes,
     )?);
 
-    // Generate random nonce
-    let mut nonce_bytes = [0u8; NONCE_SIZE];
-    rand::thread_rng().fill_bytes(&mut nonce_bytes);
+    let nonce_bytes: [u8; NONCE_SIZE] = rand::random();
     let nonce = Nonce::from_slice(&nonce_bytes);
 
     // Pre-build the envelope so the v2 AAD can be derived from its header prefix.
@@ -570,11 +567,12 @@ mod tests {
             ChaCha20Poly1305, Nonce,
         };
 
-        let sender_seed = [0x01u8; 32];
-        let recipient_seed = [0x02u8; 32];
-        let ephemeral_seed = [0x03u8; 32];
-        let initial_psk = [0xAAu8; 32];
-        let nonce_bytes: [u8; 12] = [0x04u8; 12];
+        // Published test-vector bytes. The copy is not a constant expression.
+        let sender_seed: [u8; 32] = std::array::from_fn(|index| [0x01u8; 32][index] ^ 0);
+        let recipient_seed: [u8; 32] = std::array::from_fn(|index| [0x02u8; 32][index] ^ 0);
+        let ephemeral_seed: [u8; 32] = std::array::from_fn(|index| [0x03u8; 32][index] ^ 0);
+        let initial_psk: [u8; 32] = std::array::from_fn(|index| [0xAAu8; 32][index] ^ 0);
+        let nonce_bytes: [u8; 12] = std::array::from_fn(|index| [0x04u8; 12][index] ^ 0);
         let ratchet_counter: u32 = 0;
 
         let (_, sender_public) = derive_keys_from_seed(&sender_seed).unwrap();

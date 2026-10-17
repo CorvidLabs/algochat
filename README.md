@@ -21,6 +21,40 @@ This is the public specification and the language implementations. It is not a c
 
 Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). On LocalNet, each library writes empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, and one `0x04` handshake. Every library opens every confirmed note.
 
+```mermaid
+flowchart LR
+    subgraph libs["Six libraries, one note format"]
+        TS[TypeScript]
+        SW[Swift]
+        PY[Python]
+        RS[Rust]
+        KT[Kotlin]
+        GO[Go]
+    end
+    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x04 handshake<br/>0x05 session message"]
+    TS --> NOTE
+    SW --> NOTE
+    PY --> NOTE
+    RS --> NOTE
+    KT --> NOTE
+    GO --> NOTE
+```
+
+```mermaid
+sequenceDiagram
+    participant S as Sender
+    participant L as Ledger
+    participant R as Recipient
+    S->>L: payment, note is a 0x04 handshake
+    L->>R: handshake, 1278 bytes
+    R->>R: X25519 plus ML-KEM-768, then the session key
+    S->>L: payment, note is a 0x05 message
+    L->>R: message note
+    R->>R: open with the session key
+```
+
+Fenced `mermaid` blocks render on GitHub. The Pages site renders the same fences with Mermaid 11. [_includes/head-custom.html](_includes/head-custom.html) turns a kramdown `language-mermaid` block into a diagram.
+
 Published package names stay on the existing repositories for now. This tree is where a wire-format change lands once, with the same test vectors for every library.
 
 Add the Swift library from this repository:

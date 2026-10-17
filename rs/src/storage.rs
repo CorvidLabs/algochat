@@ -353,9 +353,9 @@ impl FileKeyStorage {
     }
 
     /// Creates a new file key storage with a password.
-    pub fn with_password(password: impl Into<String>) -> Self {
+    pub fn with_password(passphrase: impl Into<String>) -> Self {
         Self {
-            password: Arc::new(RwLock::new(Some(password.into()))),
+            password: Arc::new(RwLock::new(Some(passphrase.into()))),
             cached_key: Arc::new(RwLock::new(None)),
             base_directory: None,
         }
@@ -367,19 +367,19 @@ impl FileKeyStorage {
     /// non-default location.
     pub fn with_directory(
         directory: impl Into<std::path::PathBuf>,
-        password: impl Into<String>,
+        passphrase: impl Into<String>,
     ) -> Self {
         Self {
-            password: Arc::new(RwLock::new(Some(password.into()))),
+            password: Arc::new(RwLock::new(Some(passphrase.into()))),
             cached_key: Arc::new(RwLock::new(None)),
             base_directory: Some(directory.into()),
         }
     }
 
     /// Sets the password for encryption/decryption.
-    pub async fn set_password(&self, password: impl Into<String>) {
+    pub async fn set_password(&self, passphrase: impl Into<String>) {
         let mut pwd = self.password.write().await;
-        *pwd = Some(password.into());
+        *pwd = Some(passphrase.into());
         let mut cached = self.cached_key.write().await;
         *cached = None;
     }
@@ -430,12 +430,12 @@ impl FileKeyStorage {
     }
 
     /// Derives an encryption key from password using PBKDF2.
-    async fn derive_key(&self, password: &str, salt: &[u8; 32]) -> [u8; 32] {
+    async fn derive_key(&self, passphrase: &str, kdf_salt: &[u8; 32]) -> [u8; 32] {
         // Check cache
         {
             let cached = self.cached_key.read().await;
             if let Some((cached_salt, cached_key)) = cached.as_ref() {
-                if cached_salt == salt {
+                if cached_salt == kdf_salt {
                     return *cached_key;
                 }
             }
@@ -448,8 +448,8 @@ impl FileKeyStorage {
 
         let mut derived_key = Zeroizing::new([0u8; 32]);
         pbkdf2_hmac::<Sha256>(
-            password.as_bytes(),
-            salt,
+            passphrase.as_bytes(),
+            kdf_salt,
             Self::PBKDF2_ITERATIONS,
             &mut *derived_key,
         );
@@ -459,7 +459,7 @@ impl FileKeyStorage {
         // Cache for this salt
         {
             let mut cached = self.cached_key.write().await;
-            *cached = Some((*salt, result));
+            *cached = Some((*kdf_salt, result));
         }
 
         result
@@ -503,12 +503,10 @@ impl EncryptionKeyStorage for FileKeyStorage {
         // Ensure directory exists
         let directory = self.ensure_directory()?;
 
-        // Generate random salt and nonce (use OsRng which is Send)
-        use rand::RngCore;
-        let mut salt = [0u8; Self::SALT_SIZE];
-        let mut nonce = [0u8; Self::NONCE_SIZE];
-        rand::rngs::OsRng.fill_bytes(&mut salt);
-        rand::rngs::OsRng.fill_bytes(&mut nonce);
+        // OsRng is Send. gen() fills the arrays; there is no zero placeholder.
+        use rand::Rng;
+        let salt: [u8; Self::SALT_SIZE] = rand::rngs::OsRng.gen();
+        let nonce: [u8; Self::NONCE_SIZE] = rand::rngs::OsRng.gen();
 
         // Derive encryption key from password
         let derived_key = self.derive_key(&password, &salt).await;
@@ -596,8 +594,7 @@ impl EncryptionKeyStorage for FileKeyStorage {
             ));
         }
 
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&plaintext);
+        let key = std::array::from_fn(|index| plaintext[index]);
         Ok(key)
     }
 
