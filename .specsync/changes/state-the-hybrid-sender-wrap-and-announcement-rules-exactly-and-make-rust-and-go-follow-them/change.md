@@ -1,6 +1,6 @@
 ---
 id: state-the-hybrid-sender-wrap-and-announcement-rules-exactly-and-make-rust-and-go-follow-them
-state: approved
+state: implementing
 type: bug_fix
 base_commit: 2e4eca63bdfb2340f6bd4caca34552fea631844d
 ---
