@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workflow_origin_version": 1,
+  "id": "remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum",
+  "slug": "remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum",
+  "title": "Remove the Raven mailbox router transport and keep AlgoChat as encrypted note messaging with Falcon-1024 post-quantum account support",
+  "description": "Remove the Raven mailbox router transport and keep AlgoChat as encrypted note messaging with Falcon-1024 post-quantum account support",
+  "kind": "refactor",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "e532c343ccc8311277e42f2d4c1aac11fbe5c4a8",
+  "created_at": 1789916236,
+  "updated_at": 1789917915,
+  "affected_specs": [
+    "algochat"
+  ],
+  "affected_paths": [
+    "src",
+    "specs"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "Public package no longer exports MailboxRouterTransport, mailbox derivation helpers, mailbox errors, or mailbox constants. AlgorandService has no mailboxAppId or mailbox property. Raven mailbox source and tests are deleted. Delivery is encrypted payment notes only. Falcon-1024 remains the default for createRandomChatAccount; mnemonic import without a scheme stays Ed25519; Falcon accounts sign through txnSigner with pqsig and at least 3x minFee and do not expose account.sk. Standard X25519+ChaCha20-Poly1305 and PSK envelopes still round-trip. bun test and fledge lanes run verify pass."
+  ],
+  "selected_artifacts": [
+    "context",
+    "plan",
+    "testing",
+    "requirements",
+    "docs",
+    "research",
+    "design",
+    "tasks"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

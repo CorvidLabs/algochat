@@ -1,0 +1,69 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "Sources/**"
+      - "Package.swift"
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    # DocC writes to ./_site rather than ./docs, which holds the design docs sources.
+    - name: Build Documentation
+      run: |
+        swift package --allow-writing-to-directory ./_site \
+          generate-documentation --target AlgoChat \
+          --disable-indexing \
+          --transform-for-static-hosting \
+          --hosting-base-path swift-algochat \
+          --output-path ./_site
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.4.0
+
+    # docs/HLD.md becomes /architecture/, with its Mermaid diagrams drawn in the browser.
+    - name: Render architecture page
+      run: |
+        mkdir -p ./_site/architecture
+        bun docs/pages/build-architecture.ts ./_site/architecture/index.html
+
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

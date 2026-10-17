@@ -1,0 +1,227 @@
+{
+  "tool": "@corvidlabs/ts-algochat conformance generator",
+  "libraryVersion": "0.4.1",
+  "generatedBy": "reference implementation (TypeScript)",
+  "note": "All byte strings are lowercase hex. All inputs are fixed test values; none are secret.",
+  "file": "03-psk-ratchet",
+  "description": "Two-level PSK ratchet: session key per SESSION_SIZE(100) counters, position key per counter, hybrid ECDH+PSK message key derivation, and the replay-window counter state machine transcript.",
+  "initialPSK": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+  "constants": {
+    "sessionSize": 100,
+    "counterWindow": 200
+  },
+  "derivationVectors": [
+    {
+      "counter": 0,
+      "sessionIndex": 0,
+      "sessionPSK": "087386df4242f01503a12b96418af05290d33a7ed7d234e40ab775ea07c31d6d",
+      "positionPSK": "838176c6b2f5f5ed9b9bc1f0ca207823f6191d38f92cf7dadece3d323c22575b",
+      "pskAtCounter": "838176c6b2f5f5ed9b9bc1f0ca207823f6191d38f92cf7dadece3d323c22575b"
+    },
+    {
+      "counter": 1,
+      "sessionIndex": 0,
+      "sessionPSK": "087386df4242f01503a12b96418af05290d33a7ed7d234e40ab775ea07c31d6d",
+      "positionPSK": "027bc8d707b9307f95b4957556f797ec5a675b1af0325adc0a76952c6b00472a",
+      "pskAtCounter": "027bc8d707b9307f95b4957556f797ec5a675b1af0325adc0a76952c6b00472a"
+    },
+    {
+      "counter": 99,
+      "sessionIndex": 0,
+      "sessionPSK": "087386df4242f01503a12b96418af05290d33a7ed7d234e40ab775ea07c31d6d",
+      "positionPSK": "a53ca819501f5bdd3efee9cb97bc12008f7b1dd2cfadfd154c90bd0a1b7d8c87",
+      "pskAtCounter": "a53ca819501f5bdd3efee9cb97bc12008f7b1dd2cfadfd154c90bd0a1b7d8c87"
+    },
+    {
+      "counter": 100,
+      "sessionIndex": 1,
+      "sessionPSK": "e002f218f05157c7b30fb7d84e62c33aba2004b15c9eab64585dbfa4ecb22896",
+      "positionPSK": "87b611e17db375b4cc12c7f2e0f141a5945dcb84b23f2f4d3c49d6cb103cfa0b",
+      "pskAtCounter": "87b611e17db375b4cc12c7f2e0f141a5945dcb84b23f2f4d3c49d6cb103cfa0b"
+    },
+    {
+      "counter": 101,
+      "sessionIndex": 1,
+      "sessionPSK": "e002f218f05157c7b30fb7d84e62c33aba2004b15c9eab64585dbfa4ecb22896",
+      "positionPSK": "6a41d907add69fd798291f48b5633b48340c3163e66b035c8af4e0d5cfb40def",
+      "pskAtCounter": "6a41d907add69fd798291f48b5633b48340c3163e66b035c8af4e0d5cfb40def"
+    },
+    {
+      "counter": 250,
+      "sessionIndex": 2,
+      "sessionPSK": "b016e16af1d3e4cf18adf125eafcf1a9ab9107371ce674aeaf86b695753f7a1a",
+      "positionPSK": "d860e1853a1cd92442f90d96e7c2c8076e9d6f5f9aa3359d409ec8f01c58c2fb",
+      "pskAtCounter": "d860e1853a1cd92442f90d96e7c2c8076e9d6f5f9aa3359d409ec8f01c58c2fb"
+    }
+  ],
+  "hybridKeyVector": {
+    "description": "deriveHybridSymmetricKey(sharedSecret, pskAtCounter0, ephemeralPub, senderPub, recipientPub)",
+    "sharedSecret": "e5df355b33fa6f212678e176f6bb3b19061f2e29c2a0c92eb21ba41e94162a4a",
+    "psk": "838176c6b2f5f5ed9b9bc1f0ca207823f6191d38f92cf7dadece3d323c22575b",
+    "ephemeralPublicKey": "f54b406a8b915bf431edfe3b7f0fd15e08c36c3490aaa94e949ae66d76dac512",
+    "senderPublicKey": "96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e",
+    "recipientPublicKey": "03c831e274f4878ca6382cb0ef7993d242cdc4b9a4c12ebf5b7f7d972eed733c",
+    "derivedKey": "6c6b8fa8649ca1f7526202169acfcba07abd7d36e3d6723d811301df757ac413"
+  },
+  "stateTranscript": [
+    {
+      "op": "createPSKState",
+      "result": {
+        "sendCounter": 0,
+        "peerLastCounter": 0,
+        "seenCounters": []
+      }
+    },
+    {
+      "op": "advanceSendCounter",
+      "counter": 0,
+      "result": {
+        "sendCounter": 1,
+        "peerLastCounter": 0,
+        "seenCounters": []
+      }
+    },
+    {
+      "op": "advanceSendCounter",
+      "counter": 1,
+      "result": {
+        "sendCounter": 2,
+        "peerLastCounter": 0,
+        "seenCounters": []
+      }
+    },
+    {
+      "op": "advanceSendCounter",
+      "counter": 2,
+      "result": {
+        "sendCounter": 3,
+        "peerLastCounter": 0,
+        "seenCounters": []
+      }
+    },
+    {
+      "op": "validateCounter",
+      "counter": 0,
+      "valid": true,
+      "stateBefore": {
+        "sendCounter": 3,
+        "peerLastCounter": 0,
+        "seenCounters": []
+      },
+      "stateAfter": {
+        "sendCounter": 3,
+        "peerLastCounter": 0,
+        "seenCounters": [
+          0
+        ]
+      }
+    },
+    {
+      "op": "validateCounter",
+      "counter": 0,
+      "valid": false,
+      "stateBefore": {
+        "sendCounter": 3,
+        "peerLastCounter": 0,
+        "seenCounters": [
+          0
+        ]
+      },
+      "stateAfter": {
+        "sendCounter": 3,
+        "peerLastCounter": 0,
+        "seenCounters": [
+          0
+        ]
+      }
+    },
+    {
+      "op": "validateCounter",
+      "counter": 2,
+      "valid": true,
+      "stateBefore": {
+        "sendCounter": 3,
+        "peerLastCounter": 0,
+        "seenCounters": [
+          0
+        ]
+      },
+      "stateAfter": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          2
+        ]
+      }
+    },
+    {
+      "op": "validateCounter",
+      "counter": 1,
+      "valid": true,
+      "stateBefore": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          2
+        ]
+      },
+      "stateAfter": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "op": "validateCounter",
+      "counter": 250,
+      "valid": false,
+      "stateBefore": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          1,
+          2
+        ]
+      },
+      "stateAfter": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "op": "validateCounter",
+      "counter": 99999,
+      "valid": false,
+      "stateBefore": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          1,
+          2
+        ]
+      },
+      "stateAfter": {
+        "sendCounter": 3,
+        "peerLastCounter": 2,
+        "seenCounters": [
+          0,
+          1,
+          2
+        ]
+      }
+    }
+  ]
+}

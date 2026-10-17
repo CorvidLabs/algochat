@@ -1,0 +1,13 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": ["src/index.ts"],
+    "out": "_site",
+    "name": "ts-algochat",
+    "readme": "README.md",
+    "projectDocuments": ["docs/HLD.md"],
+    "customJs": "docs/assets/mermaid.js",
+    "ignoredHighlightLanguages": ["mermaid"],
+    "compilerOptions": {
+        "types": ["bun"]
+    }
+}

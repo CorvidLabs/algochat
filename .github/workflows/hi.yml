@@ -1,0 +1,28 @@
+name: Human intent
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hi:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: hi check
+        run: |
+          set -euo pipefail
+          case "$(uname -m)" in
+            aarch64|arm64) asset=hi-aarch64-unknown-linux-gnu.tar.gz ;;
+            x86_64) asset=hi-x86_64-unknown-linux-gnu.tar.gz ;;
+            *) echo "unsupported arch $(uname -m)" >&2; exit 1 ;;
+          esac
+          curl -fsSL -o /tmp/hi.tgz "https://github.com/CorvidLabs/hi/releases/download/v0.8.0/${asset}"
+          tar -xzf /tmp/hi.tgz -C /tmp hi
+          /tmp/hi check

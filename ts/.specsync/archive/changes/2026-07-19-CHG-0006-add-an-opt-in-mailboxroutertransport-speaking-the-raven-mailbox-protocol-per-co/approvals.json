@@ -1,0 +1,32 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784484608,
+      "digest": "f000afa9178002c1f52e74e2814ea262cd7602b02d87b113f87569dce2030010",
+      "note": "Definition reviewed and authorized by the repository owner: opt-in raven mailbox transport (pure derivation/planning layer plus algod-backed transport), additive only, spec delta adds REQ-algochat-021..023"
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784486726,
+      "digest": "16413ab8dd6c3f5c16d5067d1be472cc520cc93bd0a1a07f8a2d99e8ec0be73f",
+      "note": "Definition re-approved after delta grammar fix: Public API section now modified with the full export table (129 existing + 36 new rows); requirements REQ-algochat-021..023 added"
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784486873,
+      "digest": "66d66187e08a5b826eb34f6726dfd93b1b6504525a5e1d0baee49ec29509c6ed",
+      "note": "Definition re-approved with requirement evidence map in the testing artifact (REQ-algochat-021..023 mapped to the two new test files)"
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784486893,
+      "digest": "fb674dc3d0d3e58a23d6e78043a4931ee722f680da2ceb41785081ba06f255a4",
+      "note": "Accepted: fledge verify lane green at 8d34dfd (512 tests, 24 files); REQ-algochat-021..023 verified with evidence; mailbox transport opt-in and additive"
+    }
+  ]
+}

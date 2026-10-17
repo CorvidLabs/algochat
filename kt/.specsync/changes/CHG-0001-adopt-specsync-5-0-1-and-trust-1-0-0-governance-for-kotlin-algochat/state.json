@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-kotlin-algochat",
+  "slug": "adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-kotlin-algochat",
+  "title": "Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for Kotlin AlgoChat",
+  "description": "Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for Kotlin AlgoChat",
+  "kind": "migration",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "e6fb18432225080fcc5530ba9dade452cae1457a",
+  "created_at": 1783884104,
+  "updated_at": 1784012839,
+  "affected_specs": [],
+  "affected_paths": [
+    ".github/",
+    ".specsync/",
+    ".trust.toml",
+    ".augur.toml",
+    ".attest.json",
+    "AGENTS.md",
+    "fledge.toml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "This migration adds governance configuration and CI orchestration without changing the Kotlin protocol implementation; future meaningful implementation changes must add or update canonical specifications.",
+  "acceptance_criteria": [
+    "SpecSync advisory coverage passes; all four agent integrations are installed; Trust doctor passes; Kotlin tests, Gradle build, and JAR packaging pass on JDK 17; the existing JDK 17 and 21 hosted matrix remains green."
+  ],
+  "selected_artifacts": [
+    "context",
+    "research",
+    "design",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}

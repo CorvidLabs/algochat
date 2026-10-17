@@ -1,0 +1,18 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784477693,
+      "digest": "bbc8fa706912ef9e19e55dcf82be7dfa15d13c732454b2304e1afeb01cf32e04",
+      "note": "Definition reviewed and authorized by the repository owner: completes the conformance CI installation superseding archived CHG-0004; CI orchestration only, no spec change"
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784477916,
+      "digest": "d8443fa8046ea00a32d5f61a0ea2ddb43936aa6d3f94065e843c71a18b7391b2",
+      "note": "Closing approval: native Fledge lane green (type-check, build, 454/454 Bun tests) on the exact branch tree containing the workflow; the conformance workflow's green PR run is the functional evidence"
+    }
+  ]
+}

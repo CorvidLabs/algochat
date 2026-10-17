@@ -1,0 +1,80 @@
+{
+  "implementations": [
+    {
+      "id": "swift-algochat",
+      "name": "swift-algochat",
+      "language": "Swift",
+      "repo": "CorvidLabs/algochat",
+      "path": "swift",
+      "status": "production",
+      "description": "iOS, macOS, Linux",
+      "testCommand": "swift test",
+      "protocols": ["0x01", "0x02"]
+    },
+    {
+      "id": "ts-algochat",
+      "name": "ts-algochat",
+      "language": "TypeScript",
+      "repo": "CorvidLabs/algochat",
+      "path": "ts",
+      "status": "active-dev",
+      "description": "Node.js, Browsers",
+      "testCommand": "bun test",
+      "protocols": ["0x01", "0x02"]
+    },
+    {
+      "id": "py-algochat",
+      "name": "py-algochat",
+      "language": "Python",
+      "repo": "CorvidLabs/algochat",
+      "path": "py",
+      "status": "active-dev",
+      "description": "Python 3.10+",
+      "testCommand": "pytest",
+      "protocols": ["0x01", "0x02"]
+    },
+    {
+      "id": "rs-algochat",
+      "name": "rs-algochat",
+      "language": "Rust",
+      "repo": "CorvidLabs/algochat",
+      "path": "rs",
+      "status": "active-dev",
+      "description": "Cargo crate",
+      "testCommand": "cargo test",
+      "protocols": ["0x01", "0x02"]
+    },
+    {
+      "id": "kt-algochat",
+      "name": "kt-algochat",
+      "language": "Kotlin",
+      "repo": "CorvidLabs/algochat",
+      "path": "kt",
+      "status": "active-dev",
+      "description": "JVM, Android",
+      "testCommand": "gradle test",
+      "protocols": ["0x01", "0x02"]
+    },
+    {
+      "id": "go-algochat",
+      "name": "go-algochat",
+      "language": "Go",
+      "repo": "CorvidLabs/algochat",
+      "path": "go",
+      "status": "active-dev",
+      "description": "Go module",
+      "testCommand": "go test ./...",
+      "protocols": ["0x01", "0x02"]
+    },
+    {
+      "id": "algochat-web",
+      "name": "algochat-web",
+      "language": "Angular",
+      "repo": "CorvidLabs/algochat-web",
+      "status": "active-dev",
+      "description": "Web app with NES.css",
+      "testCommand": "bun test",
+      "protocols": ["0x01", "0x02"]
+    }
+  ]
+}

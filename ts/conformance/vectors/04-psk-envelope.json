@@ -1,0 +1,49 @@
+{
+  "tool": "@corvidlabs/ts-algochat conformance generator",
+  "libraryVersion": "0.4.1",
+  "generatedBy": "reference implementation (TypeScript)",
+  "note": "All byte strings are lowercase hex. All inputs are fixed test values; none are secret.",
+  "file": "04-psk-envelope",
+  "description": "Hybrid 0x02 PSK envelope (version 1, protocol 2): deterministic binary encoding of a fully specified envelope including ratchet counter, plus a captured real envelope with its decryption.",
+  "wireFormat": {
+    "headerSize": 130,
+    "layout": "version(1) | protocolId(1) | ratchetCounter(4, big-endian) | senderPublicKey(32) | ephemeralPublicKey(32) | nonce(12) | encryptedSenderKey(48) | ciphertext(N)"
+  },
+  "encodingVector": {
+    "envelope": {
+      "version": 1,
+      "protocolId": 2,
+      "ratchetCounter": 42,
+      "senderPublicKey": "96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e",
+      "ephemeralPublicKey": "f54b406a8b915bf431edfe3b7f0fd15e08c36c3490aaa94e949ae66d76dac512",
+      "nonce": "000102030405060708090a0b",
+      "encryptedSenderKey": "909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+      "ciphertext": "66697865642070736b20626f6479bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "encodedBytes": "01020000002a96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557ef54b406a8b915bf431edfe3b7f0fd15e08c36c3490aaa94e949ae66d76dac512000102030405060708090a0b909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf66697865642070736b20626f6479bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "isChatMessage": false,
+    "isPSKMessage": true
+  },
+  "capturedEnvelope": {
+    "plaintext": "PSK hybrid conformance message — confidentiality needs BOTH secrets.",
+    "initialPSK": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+    "ratchetCounter": 0,
+    "pskAtCounter": "838176c6b2f5f5ed9b9bc1f0ca207823f6191d38f92cf7dadece3d323c22575b",
+    "envelope": {
+      "version": 2,
+      "protocolId": 2,
+      "ratchetCounter": 0,
+      "senderPublicKey": "96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e",
+      "ephemeralPublicKey": "440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653d",
+      "nonce": "ff741c0411c5e50a58d44c33",
+      "encryptedSenderKey": "e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e",
+      "ciphertext": "5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b"
+    },
+    "encodedBytes": "02020000000096c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b",
+    "decrypt": {
+      "privateKey": "acb5e648bacdc9840c42b4797afda7d9dca0051ec132deb6d7fccbf690966465",
+      "publicKey": "03c831e274f4878ca6382cb0ef7993d242cdc4b9a4c12ebf5b7f7d972eed733c",
+      "plaintext": "PSK hybrid conformance message — confidentiality needs BOTH secrets."
+    }
+  }
+}

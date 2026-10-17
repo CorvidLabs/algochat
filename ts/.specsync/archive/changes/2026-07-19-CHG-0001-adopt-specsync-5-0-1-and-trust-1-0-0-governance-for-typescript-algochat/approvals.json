@@ -1,0 +1,68 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1783906918,
+      "digest": "42fc712d82c0c94ddf0cbdb4e2f94fcadbbf1cf16f4f4c7f767e9dc1dc323217",
+      "note": "Organization-wide SpecSync 5.0.1 and Trust 1.0.0 rollout approved"
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783948020,
+      "digest": "686d1739a7f084c1742b099e39cfa36b7c8533d93090b3aec20f90cccfdc33b5",
+      "note": "Authorized after replacing circular prerequisites with truthful completed preparation/configuration tasks; closing approval and hosted results remain deferred."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1783948160,
+      "digest": "4b5cf8e9beac6ef1d44d4ff0fcf8a1e9e6fbabb78f00bd941567eadf2c57ebcd",
+      "note": "Native verification passed; closing approval recorded after verification. Hosted CI remains pending and is not claimed by this approval."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012513,
+      "digest": "b5cad6781fcb44f21afacb79167e7959f18ed83f35aaf930e65c32721903a82e",
+      "note": "Fresh closing approval after the full canonical successor was accepted and the native TypeScript build plus 454/454 Bun tests passed again; hosted status is not claimed by this approval."
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat",
+      "actor": "user:0xLeif",
+      "reason": "The accepted governance delivery inputs changed when the authorized successor added the full canonical AlgoChat specification; refresh evidence without changing the original definition.",
+      "timestamp": 1784012496,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1783948160,
+        "digest": "4b5cf8e9beac6ef1d44d4ff0fcf8a1e9e6fbabb78f00bd941567eadf2c57ebcd",
+        "note": "Native verification passed; closing approval recorded after verification. Hosted CI remains pending and is not claimed by this approval."
+      },
+      "prior_verification": {
+        "timestamp": 1783948036,
+        "commit": "3a7e1a0a79505a18971ee40d050a1c19090786d1",
+        "contract_digest": "686d1739a7f084c1742b099e39cfa36b7c8533d93090b3aec20f90cccfdc33b5",
+        "workspace_digest": "00ee69b2b09bfa2d676704d023325c7391895604bb75468b50f8c7279e7dea98",
+        "acceptance_input_digest": "13fbb5e03435963317dd93040d2837ef27d6937edb2168d822b05c1c673ba6d3",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": []
+      },
+      "stale_acceptance_input_digest": "13fbb5e03435963317dd93040d2837ef27d6937edb2168d822b05c1c673ba6d3",
+      "current_acceptance_input_digest": "5cc3644dce15d0ce0b51009bed08ae318f0d6bda1914b14c753164f08167b277"
+    }
+  ]
+}

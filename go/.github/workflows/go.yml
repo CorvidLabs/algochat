@@ -1,0 +1,60 @@
+name: Go
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+      - .github/workflows/go.yml
+      - .github/workflows/trust.yml
+      - .attest.json
+      - .augur.toml
+      - ".specsync/**"
+      - "specs/**"
+      - .trust.toml
+      - fledge.toml
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+      - .github/workflows/go.yml
+      - .github/workflows/trust.yml
+      - .attest.json
+      - .augur.toml
+      - ".specsync/**"
+      - "specs/**"
+      - .trust.toml
+      - fledge.toml
+
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        go-version: ['1.22', '1.23', '1.24']
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -v -race -count=1 ./...

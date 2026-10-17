@@ -1,0 +1,22 @@
+name: Spec Sync
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  spec-sync:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: spec-sync check
+        uses: CorvidLabs/spec-sync@v6
+        with:
+          version: "6.1.1"
+          require-coverage: "0"

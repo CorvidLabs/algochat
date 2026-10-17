@@ -1,0 +1,504 @@
+import Algorand
+import AlgoKit
+@preconcurrency import Crypto
+import Foundation
+
+/// Protocol for searching transactions, enabling mock injection for tests
+public protocol TransactionSearching: Sendable {
+    func searchTransactions(
+        address: Address?,
+        limit: Int,
+        next: String?,
+        minRound: UInt64?,
+        maxRound: UInt64?
+    ) async throws -> TransactionsResponse
+}
+
+extension TransactionSearching {
+    /// Convenience with defaults for optional parameters
+    public func searchTransactions(
+        address: Address? = nil,
+        limit: Int = 100,
+        next: String? = nil,
+        minRound: UInt64? = nil,
+        maxRound: UInt64? = nil
+    ) async throws -> TransactionsResponse {
+        try await searchTransactions(address: address, limit: limit, next: next, minRound: minRound, maxRound: maxRound)
+    }
+}
+
+extension IndexerClient: TransactionSearching {}
+
+/// Queries and retrieves messages from the blockchain
+public actor MessageIndexer {
+    private let indexerClient: any TransactionSearching
+    private let chatAccount: ChatAccount
+
+    /// Optional PSK manager for decrypting PSK messages
+    private let pskManager: PSKManager?
+
+    /// Default page size for fetching messages
+    public static let defaultPageSize = 50
+
+    public init(indexerClient: IndexerClient, chatAccount: ChatAccount, pskManager: PSKManager? = nil) {
+        self.indexerClient = indexerClient
+        self.chatAccount = chatAccount
+        self.pskManager = pskManager
+    }
+
+    /// Creates a MessageIndexer with a custom transaction searcher (for testing)
+    public init(transactionSearcher: any TransactionSearching, chatAccount: ChatAccount, pskManager: PSKManager? = nil) {
+        self.indexerClient = transactionSearcher
+        self.chatAccount = chatAccount
+        self.pskManager = pskManager
+    }
+
+    /**
+     Fetches messages for a conversation
+
+     - Parameters:
+       - participant: The other party in the conversation
+       - afterRound: Only fetch messages after this round (for forward pagination)
+       - beforeRound: Only fetch messages before this round (for backward pagination)
+       - limit: Maximum number of messages to fetch
+     - Returns: Array of decrypted messages
+     */
+    public func fetchMessages(
+        with participant: Address,
+        afterRound: UInt64? = nil,
+        beforeRound: UInt64? = nil,
+        limit: Int = defaultPageSize
+    ) async throws -> [Message] {
+        var allMessages: [Message] = []
+
+        // Fetch transactions involving our account
+        let response = try await indexerClient.searchTransactions(
+            address: chatAccount.address,
+            limit: limit,
+            minRound: afterRound,
+            maxRound: beforeRound
+        )
+
+        for tx in response.transactions {
+            // Only process payment transactions with notes
+            guard tx.txType == "pay",
+                  let noteData = tx.noteData,
+                  isChatMessage(noteData) else {
+                continue
+            }
+
+            // Determine direction and filter by participant
+            let direction: Message.Direction
+
+            if tx.sender == chatAccount.address.description {
+                // We sent this message
+                guard let payment = tx.paymentTransaction,
+                      payment.receiver == participant.description else {
+                    continue
+                }
+                direction = .sent
+            } else {
+                // We received this message
+                guard tx.sender == participant.description,
+                      let payment = tx.paymentTransaction,
+                      payment.receiver == chatAccount.address.description else {
+                    continue
+                }
+                direction = .received
+            }
+
+            // Try to parse and decrypt the message
+            if let message = try? await parseMessage(from: tx, direction: direction) {
+                allMessages.append(message)
+            }
+        }
+
+        return allMessages.sorted { $0.timestamp < $1.timestamp }
+    }
+
+    /**
+     Fetches all conversations for the current account
+
+     Scans recent transactions to discover all chat participants and their
+     message history. Conversations are sorted by most recent message.
+
+     - Parameter limit: Maximum number of transactions to scan (default: 100)
+     - Returns: Array of conversations sorted by most recent activity
+     */
+    public func fetchConversations(limit: Int = 100) async throws -> [Conversation] {
+        let response = try await indexerClient.searchTransactions(
+            address: chatAccount.address,
+            limit: limit
+        )
+
+        var conversationsByAddress: [String: Conversation] = [:]
+
+        for tx in response.transactions {
+            guard tx.txType == "pay",
+                  let noteData = tx.noteData,
+                  isChatMessage(noteData) else {
+                continue
+            }
+
+            // Determine the other party
+            let otherAddress: String
+            let direction: Message.Direction
+
+            if tx.sender == chatAccount.address.description {
+                guard let payment = tx.paymentTransaction else { continue }
+                otherAddress = payment.receiver
+                direction = .sent
+            } else {
+                guard let payment = tx.paymentTransaction,
+                      payment.receiver == chatAccount.address.description else {
+                    continue
+                }
+                otherAddress = tx.sender
+                direction = .received
+            }
+
+            // Parse and add message
+            if let message = try? await parseMessage(from: tx, direction: direction) {
+                if var conversation = conversationsByAddress[otherAddress] {
+                    conversation.append(message)
+                    conversationsByAddress[otherAddress] = conversation
+                } else {
+                    let participant = try Address(string: otherAddress)
+                    var conversation = Conversation(participant: participant)
+                    conversation.append(message)
+                    conversationsByAddress[otherAddress] = conversation
+                }
+            }
+        }
+
+        // Filter empty conversations (e.g., self-conversations with only key-publish)
+        // and sort by most recent message
+        return Array(conversationsByAddress.values)
+            .filter { !$0.messages.isEmpty }
+            .sorted { ($0.lastMessage?.timestamp ?? .distantPast) > ($1.lastMessage?.timestamp ?? .distantPast) }
+    }
+
+    /// Default page size for key discovery pagination
+    public static let defaultDiscoveryPageSize = 50
+
+    /**
+     Finds a user's encryption public key from their past transactions
+
+     Searches the user's transaction history using paginated indexer queries
+     to find an AlgoChat message containing their public key.
+
+     By default the search is exhaustive — all pages are fetched until the key
+     is found or the address history is fully scanned. Pass `maxPages` to cap
+     the number of indexer round-trips.
+
+     - Parameters:
+       - address: The user's Algorand address
+       - pageSize: Transactions per page (default: 50)
+       - maxPages: Maximum pages to fetch, or nil for exhaustive (default: nil)
+     - Returns: The discovered key
+     - Throws: `ChatError.publicKeyNotFound` if no chat history exists
+     */
+    public func findPublicKey(
+        for address: Address,
+        pageSize: Int = defaultDiscoveryPageSize,
+        maxPages: Int? = nil
+    ) async throws -> DiscoveredKey {
+        var nextToken: String? = nil
+        var unverifiedKey: DiscoveredKey?
+        var pagesSearched = 0
+
+        repeat {
+            let response = try await indexerClient.searchTransactions(
+                address: address,
+                limit: pageSize,
+                next: nextToken
+            )
+
+            for tx in response.transactions {
+                guard tx.sender == address.description,
+                      let noteData = tx.noteData,
+                      isChatMessage(noteData) else {
+                    continue
+                }
+
+                guard let discoveredKey = try? Self.extractKey(
+                    from: noteData,
+                    senderAddress: address
+                ) else {
+                    continue
+                }
+
+                // Prefer verified keys from signed self-transfers
+                let isSelfTransfer = tx.paymentTransaction?.receiver == address.description
+                if isSelfTransfer, discoveredKey.isVerified {
+                    return discoveredKey
+                }
+
+                // Save first unverified key as fallback
+                if unverifiedKey == nil {
+                    unverifiedKey = DiscoveredKey(
+                        publicKey: discoveredKey.publicKey,
+                        isVerified: false
+                    )
+                }
+            }
+
+            nextToken = response.nextToken
+            pagesSearched += 1
+
+            // Stop if we've hit the page limit
+            if let maxPages, pagesSearched >= maxPages {
+                break
+            }
+        } while nextToken != nil
+
+        // Return unverified key if no verified one was found
+        if let unverifiedKey {
+            return unverifiedKey
+        }
+
+        throw ChatError.publicKeyNotFound(address.description)
+    }
+
+    /**
+     Finds a user's encryption public key with a fixed search depth
+
+     Convenience method for backward compatibility. Equivalent to searching
+     a single page of the given size.
+
+     - Parameters:
+       - address: The user's Algorand address
+       - searchDepth: Number of transactions to search (default: 200)
+     - Returns: The discovered key
+     - Throws: `ChatError.publicKeyNotFound` if no chat history exists
+     */
+    public func findPublicKey(
+        for address: Address,
+        searchDepth: Int
+    ) async throws -> DiscoveredKey {
+        try await findPublicKey(for: address, pageSize: searchDepth, maxPages: 1)
+    }
+
+    /**
+     Polls the indexer until a specific transaction appears
+
+     Uses exponential backoff with jitter to reduce load on the indexer
+     while still providing timely notification when the transaction appears.
+
+     - Parameters:
+       - txid: The transaction ID to wait for
+       - timeout: Maximum time to wait in seconds
+       - initialInterval: Initial time between polls (default: 0.5 seconds)
+       - maxInterval: Maximum time between polls (default: 5.0 seconds)
+       - backoffMultiplier: Factor to increase interval each attempt (default: 1.5)
+     - Returns: true if the transaction was found, false if timeout
+     */
+    public func waitForTransaction(
+        _ txid: String,
+        timeout: TimeInterval,
+        initialInterval: TimeInterval = 0.5,
+        maxInterval: TimeInterval = 5.0,
+        backoffMultiplier: Double = 1.5
+    ) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        var currentInterval = initialInterval
+
+        while Date() < deadline {
+            // Query indexer for transactions from our account
+            do {
+                let response = try await indexerClient.searchTransactions(
+                    address: chatAccount.address,
+                    limit: 50
+                )
+
+                // Check if the transaction appears in results
+                if response.transactions.contains(where: { $0.id == txid }) {
+                    return true
+                }
+            } catch {
+                // Indexer error - keep trying with backoff
+            }
+
+            // Exponential backoff with jitter (±20%)
+            let jitter = Double.random(in: 0.8...1.2)
+            let sleepInterval = currentInterval * jitter
+            try? await Task.sleep(nanoseconds: UInt64(sleepInterval * 1_000_000_000))
+
+            // Increase interval for next attempt (capped at maxInterval)
+            currentInterval = min(currentInterval * backoffMultiplier, maxInterval)
+
+            // Check for cancellation
+            if Task.isCancelled {
+                return false
+            }
+        }
+
+        return false
+    }
+
+    // MARK: - Key Verification
+
+    /**
+     Checks if note data contains a verified key announcement
+
+     A signed key announcement is a standard ChatEnvelope with a 64-byte
+     Ed25519 signature appended. The signature is over the sender's X25519
+     encryption public key.
+
+     - Parameters:
+       - noteData: The raw transaction note data
+       - senderAddress: The Algorand address of the transaction sender
+     - Returns: The discovered key with verification status, or nil if not a chat message
+     */
+    public static func extractKey(
+        from noteData: Data,
+        senderAddress: Address
+    ) throws -> DiscoveredKey? {
+        guard EnvelopeDecoder.isChatMessage(noteData) else {
+            return nil
+        }
+
+        guard let decoded = try? EnvelopeDecoder.decode(from: noteData) else {
+            return nil
+        }
+
+        let senderPublicKeyData: Data
+        let headerSize: Int
+        switch decoded {
+        case .standard(let envelope):
+            senderPublicKeyData = envelope.senderPublicKey
+            headerSize = ChatEnvelope.headerSize
+        case .psk(let envelope):
+            senderPublicKeyData = envelope.senderPublicKey
+            headerSize = PSKEnvelope.headerSize
+        }
+
+        let publicKey = try KeyDerivation.decodePublicKey(from: senderPublicKeyData)
+
+        // Check for appended Ed25519 signature (64 bytes after envelope)
+        // Note: EnvelopeDecoder.decode absorbs all trailing bytes into ciphertext,
+        // so we can't use envelope.encode().count to find the boundary.
+        // Instead, check if the last 64 bytes form a valid signature.
+        // The minimum note size with a signature is: header + tag + signature
+        let minSizeWithSignature = headerSize + ChatEnvelope.tagSize + SignatureVerifier.signatureSize
+        if noteData.count >= minSizeWithSignature {
+            let signature = noteData.suffix(SignatureVerifier.signatureSize)
+            let isValid = (try? SignatureVerifier.verify(
+                encryptionPublicKey: senderPublicKeyData,
+                signedBy: senderAddress,
+                signature: Data(signature)
+            )) ?? false
+
+            if isValid {
+                return DiscoveredKey(publicKey: publicKey, isVerified: true)
+            }
+        }
+
+        return DiscoveredKey(publicKey: publicKey, isVerified: false)
+    }
+
+    // MARK: - Private
+
+    private func isChatMessage(_ data: Data) -> Bool {
+        EnvelopeDecoder.isChatMessage(data)
+    }
+
+    private func parseMessage(
+        from tx: IndexerTransaction,
+        direction: Message.Direction
+    ) async throws -> Message? {
+        guard let noteData = tx.noteData else {
+            throw ChatError.invalidEnvelope("No note data")
+        }
+
+        let decoded = try EnvelopeDecoder.decode(from: noteData)
+
+        let decrypted: DecryptedContent?
+        let protocolMode: Message.ProtocolMode
+
+        switch decoded {
+        case .standard(let envelope):
+            decrypted = try MessageEncryptor.decrypt(
+                envelope: envelope,
+                recipientPrivateKey: chatAccount.encryptionPrivateKey
+            )
+            protocolMode = .standard
+
+        case .psk(let envelope):
+            // Determine the peer address for PSK lookup
+            let peerAddress: String
+            if direction == .sent {
+                guard let payment = tx.paymentTransaction else {
+                    throw ChatError.invalidEnvelope("Not a payment transaction")
+                }
+                peerAddress = payment.receiver
+            } else {
+                peerAddress = tx.sender
+            }
+
+            guard let pskManager else {
+                // No PSK manager configured - skip PSK messages
+                return nil
+            }
+
+            // Two-phase counter validation: validate and derive PSK first,
+            // then decrypt, then record the counter only on success.
+            // This prevents burning counters on failed decryptions.
+            let currentPSK = try await pskManager.validateAndDerivePSK(
+                from: peerAddress,
+                counter: envelope.ratchetCounter
+            )
+
+            decrypted = try MessageEncryptor.decryptPSK(
+                envelope: envelope,
+                recipientPrivateKey: chatAccount.encryptionPrivateKey,
+                currentPSK: currentPSK
+            )
+
+            try await pskManager.recordReceive(
+                from: peerAddress,
+                counter: envelope.ratchetCounter
+            )
+            protocolMode = .psk
+        }
+
+        guard let decrypted else {
+            // Key-publish payload - not a real message
+            return nil
+        }
+
+        let sender = try Address(string: tx.sender)
+
+        guard let payment = tx.paymentTransaction else {
+            throw ChatError.invalidEnvelope("Not a payment transaction")
+        }
+        let recipient = try Address(string: payment.receiver)
+
+        let timestamp: Date
+        if let roundTime = tx.roundTime {
+            timestamp = Date(timeIntervalSince1970: TimeInterval(roundTime))
+        } else {
+            timestamp = Date()
+        }
+
+        // Build reply context if this is a reply
+        let replyContext: ReplyContext?
+        if let replyId = decrypted.replyToId, let preview = decrypted.replyToPreview {
+            replyContext = ReplyContext(messageId: replyId, preview: preview)
+        } else {
+            replyContext = nil
+        }
+
+        return Message(
+            id: tx.id,
+            sender: sender,
+            recipient: recipient,
+            content: decrypted.text,
+            timestamp: timestamp,
+            confirmedRound: tx.confirmedRound ?? 0,
+            direction: direction,
+            replyContext: replyContext,
+            protocolMode: protocolMode
+        )
+    }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com",
+  "slug": "migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com",
+  "title": "Migrate the TypeScript AlgoChat package to NodeNext module resolution so the compiled dist output is importable by raw Node.js ESM; rewrite relative import specifiers with explicit .js extensions and directory imports to index.js, with no public API or behavior change",
+  "description": "Migrate the TypeScript AlgoChat package to NodeNext module resolution so the compiled dist output is importable by raw Node.js ESM; rewrite relative import specifiers with explicit .js extensions and directory imports to index.js, with no public API or behavior change",
+  "kind": "migration",
+  "state": "archived",
+  "base_commit": "e628bb5d8813c3d6c78ff2b594aae6ff82e55a5a",
+  "created_at": 1784428463,
+  "updated_at": 1784435606,
+  "affected_specs": [],
+  "affected_paths": [
+    "src/",
+    "tsconfig.json"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "Packaging-only migration: tsconfig module/moduleResolution switch to NodeNext and mechanical import-specifier rewrites across 44 files; public exports, protocol behavior, and tests are unchanged, so the canonical algochat spec remains accurate",
+  "acceptance_criteria": [
+    "tsconfig uses NodeNext module and moduleResolution; bun run tsc type-check passes; bun run build emits dist; all 454 Bun tests pass; raw Node.js ESM can import the compiled package entrypoint; no public export",
+    "protocol behavior",
+    "or test expectation changes relative to main"
+  ],
+  "selected_artifacts": [
+    "context",
+    "research",
+    "design",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}

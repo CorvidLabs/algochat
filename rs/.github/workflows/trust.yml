@@ -1,0 +1,25 @@
+name: trust
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  trust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: CorvidLabs Trust gate
+        id: trust
+        uses: CorvidLabs/trust@dd52a7a90ffbc1d2b1030e37007c18274f3d96bc # v1.2.1

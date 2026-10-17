@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever",
+  "slug": "install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever",
+  "title": "Install the conformance CI workflow delivered with the test-vector suite so every push to main and every pull request runs the unit tests, the 79 conformance checks, and the deterministic-vector regeneration guard",
+  "description": "Install the conformance CI workflow delivered with the test-vector suite so every push to main and every pull request runs the unit tests, the 79 conformance checks, and the deterministic-vector regeneration guard",
+  "kind": "feature",
+  "state": "archived",
+  "base_commit": "885496a6b33d301e46fc20f4e7e7dc8f917d9e8e",
+  "created_at": 1784436691,
+  "updated_at": 1784464179,
+  "affected_specs": [],
+  "affected_paths": [
+    ".github/workflows/conformance.yml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "CI orchestration only: copies the already-merged conformance/ci/conformance.yml template verbatim into .github/workflows; no product source, spec, test, or vector bytes change",
+  "acceptance_criteria": [
+    "the conformance workflow file exists at .github/workflows/conformance.yml byte-identical to the merged template conformance/ci/conformance.yml; the workflow runs green on this change's own pull request",
+    "executing bun test",
+    "the 79-check vector verification",
+    "and the deterministic regeneration comparison; the Trust contract gate passes with the workflow path covered by this change"
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

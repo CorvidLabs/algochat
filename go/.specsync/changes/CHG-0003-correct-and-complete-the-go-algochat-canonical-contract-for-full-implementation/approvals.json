@@ -1,0 +1,125 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001631,
+      "digest": "eb804bb5374fc01e2bfc3b587007be751a5599c31095f07d63e2a99ba1937e4d",
+      "note": "Definition approval after auditing all Go sources and tests, completing every selected artifact, correcting the decode-size claim, defining full exported-API and requirement coverage, and preserving product behavior. Native and hosted verification remain later gates."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001720,
+      "digest": "b8fc2967a9df4a47d95655d7183bcb6c5e606a7d675a7bec94c04221f307eb4f",
+      "note": "Fresh definition approval after adding explicit portable requirement-to-test evidence mappings; native commands passed but closing approval remains gated on a fresh successful verification record."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001755,
+      "digest": "21067c4064cf7763fa4c9df670f94186cd46d07fd065dd799f59252e21a47500",
+      "note": "Closing approval after strict 100% effective contract validation and successful build, vet, uncached race tests, and explicit evidence for all seven requirements; no Go product code changed."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001898,
+      "digest": "86624b0758a63eb4231ba42727d3fd0bf72573d0511f5b027b3b95d28b5e801d",
+      "note": "Fresh closing approval after strict source discovery correctly measured all eight production Go files, all 123 Go exports remained documented, and build, vet, uncached race tests, and seven requirement mappings passed."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784002007,
+      "digest": "b3bab16ede21c3d7098d03eacf0afff884b70432c51a29f1f4f136d3358c1060",
+      "note": "Fresh closing approval after final diff hygiene, strict 100% file and LOC coverage, 123/123 documented exports, successful build/vet/race tests, and seven mapped requirements."
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0003-correct-and-complete-the-go-algochat-canonical-contract-for-full-implementation",
+      "actor": "user:0xLeif",
+      "reason": "The final source-discovery correction treats .github workflow YAML as governance rather than Go API source so the committed 100% threshold measures all eight production Go files accurately.",
+      "timestamp": 1784001871,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1784001755,
+        "digest": "21067c4064cf7763fa4c9df670f94186cd46d07fd065dd799f59252e21a47500",
+        "note": "Closing approval after strict 100% effective contract validation and successful build, vet, uncached race tests, and explicit evidence for all seven requirements; no Go product code changed."
+      },
+      "prior_verification": {
+        "timestamp": 1784001750,
+        "commit": "e96c3692a2673770d3bd7aa101eb017a55f43aaa",
+        "contract_digest": "b8fc2967a9df4a47d95655d7183bcb6c5e606a7d675a7bec94c04221f307eb4f",
+        "workspace_digest": "1697d46b33a565e91c789d172dfd73afcff491220cd617824784ed284b1daf6b",
+        "acceptance_input_digest": "0cc0bc641a1042fee3a154ff01b31b336b3d4b09bac74f21becc130714cfe37c",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004",
+          "REQ-algochat-005",
+          "REQ-algochat-006",
+          "REQ-algochat-007"
+        ]
+      },
+      "stale_acceptance_input_digest": "0cc0bc641a1042fee3a154ff01b31b336b3d4b09bac74f21becc130714cfe37c",
+      "current_acceptance_input_digest": "a0e0fa6653c445c94531958ba62abcf3afa389cfc5e299e9506f4abd92f89b81"
+    },
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0003-correct-and-complete-the-go-algochat-canonical-contract-for-full-implementation",
+      "actor": "user:0xLeif",
+      "reason": "A final non-semantic diff-hygiene correction removed one trailing blank line generated when the successor requirements were applied.",
+      "timestamp": 1784001977,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1784001898,
+        "digest": "86624b0758a63eb4231ba42727d3fd0bf72573d0511f5b027b3b95d28b5e801d",
+        "note": "Fresh closing approval after strict source discovery correctly measured all eight production Go files, all 123 Go exports remained documented, and build, vet, uncached race tests, and seven requirement mappings passed."
+      },
+      "prior_verification": {
+        "timestamp": 1784001892,
+        "commit": "e96c3692a2673770d3bd7aa101eb017a55f43aaa",
+        "contract_digest": "b8fc2967a9df4a47d95655d7183bcb6c5e606a7d675a7bec94c04221f307eb4f",
+        "workspace_digest": "e46c8dde4cf20f20b251307382787c7f645f884efa6a75a771d34319c78ef710",
+        "acceptance_input_digest": "a0e0fa6653c445c94531958ba62abcf3afa389cfc5e299e9506f4abd92f89b81",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004",
+          "REQ-algochat-005",
+          "REQ-algochat-006",
+          "REQ-algochat-007"
+        ]
+      },
+      "stale_acceptance_input_digest": "a0e0fa6653c445c94531958ba62abcf3afa389cfc5e299e9506f4abd92f89b81",
+      "current_acceptance_input_digest": "47d04025aa227266fb5e77e6180edee4b8c8636bf89499d023fd20842940e8b2"
+    }
+  ]
+}

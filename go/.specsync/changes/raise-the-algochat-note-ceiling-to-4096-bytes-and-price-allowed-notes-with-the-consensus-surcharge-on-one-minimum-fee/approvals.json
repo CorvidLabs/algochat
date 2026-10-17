@@ -1,0 +1,25 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792194879,
+      "digest": "1e2d2705de2ed0be4a5b1bebc7ef1fc5eb78530dae9b9815ee4640962ee4eae7",
+      "note": "Note ceiling is 4096 bytes. Fee is one minimum fee plus the consensus surcharge.",
+      "approved_delta_digests": {
+        "algochat": "27e4060139576088e1bceee169eb5f912969188858b3a95b0ae57fe5bdbb1175"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792194915,
+      "digest": "959a0b507deba8da2d696defc1c4384e07bf741539413ff40afaae2cef1c9254",
+      "note": "Record requirement evidence for the 4096-byte note and fee.",
+      "approved_delta_digests": {
+        "algochat": "27e4060139576088e1bceee169eb5f912969188858b3a95b0ae57fe5bdbb1175"
+      }
+    }
+  ],
+  "reopenings": []
+}

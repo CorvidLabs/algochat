@@ -1,0 +1,33 @@
+[tasks.build]
+cmd = "./gradlew build"
+
+[tasks.test]
+cmd = "./gradlew test"
+
+[tasks.lint]
+cmd = "./gradlew ktlintCheck"
+
+[tasks.fmt]
+cmd = "./gradlew ktlintFormat"
+
+[tasks.jar]
+cmd = "./gradlew jar"
+
+[tasks.publish-local]
+cmd = "./gradlew publishToMavenLocal"
+
+[lanes.check]
+description = "Quick pre-commit check"
+steps = [{ parallel = ["lint"] }, "test"]
+
+[lanes.ci]
+description = "Full CI pipeline"
+steps = ["lint", "test", "build"]
+
+[lanes.pre-commit]
+description = "Fast gate before committing"
+steps = ["lint", "test"]
+
+[lanes.verify]
+description = "Run the native Kotlin test, build, and package checks"
+steps = ["test", "build", "jar"]

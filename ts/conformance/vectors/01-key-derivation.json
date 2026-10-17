@@ -1,0 +1,49 @@
+{
+  "tool": "@corvidlabs/ts-algochat conformance generator",
+  "libraryVersion": "0.4.1",
+  "generatedBy": "reference implementation (TypeScript)",
+  "note": "All byte strings are lowercase hex. All inputs are fixed test values; none are secret.",
+  "file": "01-key-derivation",
+  "description": "HKDF-SHA256 X25519 key derivation (salt \"AlgoChat-v1-encryption\", info \"x25519-key\"), Algorand account/mnemonic derivation, X25519 ECDH agreement, Ed25519 key-announcement signatures, fingerprints.",
+  "hkdf": {
+    "hash": "SHA-256",
+    "salt": "AlgoChat-v1-encryption",
+    "info": "x25519-key",
+    "length": 32
+  },
+  "accounts": [
+    {
+      "name": "A (sender)",
+      "seed": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "algorandAddress": "AOQQPP7TZYIL4HLQ3UMOOS6ATFT6JVRQTOSQ2XY53SDGIESVGG4MPFYUMQ",
+      "ed25519PublicKey": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curtain",
+      "x25519PrivateKey": "a3cd9264cf97dd94830e32e70ae0b6c439760f96102dbfe4c585fe0ce2a5adbc",
+      "x25519PublicKey": "96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e",
+      "fingerprint": "FA17 7442 401B 3B76"
+    },
+    {
+      "name": "B (recipient)",
+      "seed": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+      "algorandAddress": "FGWLVYKBXTFPBMRODKKNGTILY43B4UTNBP7BFSEXSS6JGIUWNXL5IA32OI",
+      "ed25519PublicKey": "29acbae141bccaf0b22e1a94d34d0bc7361e526d0bfe12c89794bc9322966dd7",
+      "x25519PrivateKey": "acb5e648bacdc9840c42b4797afda7d9dca0051ec132deb6d7fccbf690966465",
+      "x25519PublicKey": "03c831e274f4878ca6382cb0ef7993d242cdc4b9a4c12ebf5b7f7d972eed733c",
+      "fingerprint": "7082 FCF1 EBC6 D1FA"
+    }
+  ],
+  "ecdh": {
+    "description": "x25519ECDH(privA, pubB) must equal x25519ECDH(privB, pubA).",
+    "sharedSecret": "e5df355b33fa6f212678e176f6bb3b19061f2e29c2a0c92eb21ba41e94162a4a"
+  },
+  "keyAnnouncement": {
+    "description": "Ed25519 signature by account A over its X25519 encryption public key.",
+    "encryptionPublicKey": "96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e",
+    "signingSeed": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+    "verifyingKey": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+    "signature": "949be144c4bc8949e34a87247eb17df15a04cab3fccf9b1d58c240c85fb008b8036830745f609f32146eb17edf5c099a88379d4a050a23a42b11164b431e0109",
+    "verifies": true,
+    "wrongVerifyingKey": "29acbae141bccaf0b22e1a94d34d0bc7361e526d0bfe12c89794bc9322966dd7",
+    "verifiesUnderWrongKey": false
+  }
+}

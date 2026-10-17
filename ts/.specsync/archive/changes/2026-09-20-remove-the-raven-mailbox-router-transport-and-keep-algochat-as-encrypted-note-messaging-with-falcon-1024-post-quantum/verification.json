@@ -1,0 +1,613 @@
+{
+  "timestamp": 1789917743,
+  "commit": "5a9df4c0bfb3484240ca343f59ad4ccdc6ba234b",
+  "contract_digest": "e58abae594030f94035de8cde3982fae2f5524e39914796adb352e0578a84e3f",
+  "workspace_digest": "ffa9153a86bccf462cb46dca29dc466fab229b5dfa5f0d308a1b2c8b3887818c",
+  "acceptance_input_digest": "59cf9d8e7cb2749757594a06ed1e0fd439a326e2f586d0c022147d0a824db232",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "specs",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "d654cba9ce3c5b8a9c72964ac1f99b8ae3d9a6de6b54d1baa36d7558aac4bb42",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/algochat/algochat.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f37f1432cbe92e489399e5af4fb1dcb548e0b911f9c6460c8b88850fc977c34f",
+        "entry_digest": "723970b35b05e664201d24436b0f508a6637495fca92bc3163f1f59fd95b4e71",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "04c25489ff478a49e623c5e30c4aeca012786d41226d330fbb7ba7b9acc95b0c",
+        "entry_digest": "e90c6533184934ea90164b9ba4a8cf253467d29ee3e7635ceeca3a9753a5c189",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e256b07d556b69a1da3c97576981260e0e542400f0d43062186cc8c0a1b7922a",
+        "entry_digest": "8bbb69b80cbe10d11ee1cb27507e3830958b1b72aac92d2a22b23e7a2ad953c9",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1bd0b3fb4e0140c9147e7a85d1e19cc533a1265d81522c31d6b7d6ea4c524280",
+        "entry_digest": "55bfc6f5192b1f9da6672c5c24bc7ca5f19aace351c5c79333262c9ef485aa04",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "89a6aa27b3393ff67cc663e44d243f2c230173f9b82f6a9e4f51a1a178dd4433",
+        "entry_digest": "f3e2c6f78a037fab1317111f31424cc6b073b85d48ce796794887132e2642d2e",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "a975d836004bff9e2e8a5f45520f8c8d83a7264330d0ec50324d19145ce20fd3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "src/blockchain/discovery.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0b3f51cdef7dcf45142bac265ca37e8957e74529ef284274624143e8f94f33db",
+        "entry_digest": "2551c8751e2b6c2b77cfbb9ce9e3f9007c7fed2e13a5f5d0178e57cc1e8c7939",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/discovery.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ccb3f4834d1934e1a8ee676cab0e5c6b49b3a6eee2835cd22ff38134ab332c66",
+        "entry_digest": "4c991ccee3fedcea36112cd209f22c20f63b8b2a21a55e55eda2a456ada211b4",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8152c843466b9ceb6118bc0f16bfe6b3cb0c8db4552fdbf343914d72d1e8a291",
+        "entry_digest": "bfb63d7d7362a223a3f0e88eda7f3aab1844fba741d050dcde0ea26e7add61e6",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/interfaces.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c256a71c19e732ddf81819126d5028d75d6b191136724943f4313326b066a9d8",
+        "entry_digest": "b050a9c1975ccff20e40a6835d30f28a2318a681f0f8302e7fad05d367750001",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/message-indexer.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "db346069f2d02f3b8dda18a5ea2bcf67a096a682afd58a16527c6fb45a09303d",
+        "entry_digest": "b51d8dde2f19661cadad5eb272d68104ea0070f2088ee17818f368cbafcd07db",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/message-indexer.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6fceae4b6a8b43f71bcdabc1dc29c77372fd07e433a165c70d21803caf3710e8",
+        "entry_digest": "b5ed9f05719988e78beaa087abd52913ae79bae1130b188e532dc2a7aee7ed1b",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/message-transaction.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "64c6579124911d42fe537de33ad8d78487557d35358dd4fb62736ff4d3d563aa",
+        "entry_digest": "252f8bb500df913738dd6013fed014b0764b71c5eb319a9ac772594d20cf6a1d",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/blockchain/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f049438802c463996a2316852a1fa27f664e66ff49bcddce072dbe2111b4fc73",
+        "entry_digest": "25db4fd014c7515dc45e5b252b893086942335f616e6a10178f53d7cb7f96d04",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/cache/MessageCache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3e01b25568f3215a7e5909e44f21459630d936f7acef65abd37f96d9573a99f8",
+        "entry_digest": "89801c20296cbecda328bd860c4d23df2f3fd272fbf439103d4b138e8667305a",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/cache/PublicKeyCache.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cd8b28963a9e2608cedf85b64a81ff24fabad7f73cfd99931a8ff0da12091e5f",
+        "entry_digest": "d9bea8cdf836749d2df09007c06fc72c7b88bbffb214d672321628621dd12111",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/cache/PublicKeyCache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0d58bafc79ec9d085d4c746227e79aae12b43180a2a798a1f5bc051b0ed52e9c",
+        "entry_digest": "b02e0431640ca800696ea783557ac205f62aa7d366a0e49f56667ddfc4ad3b55",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/cache/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f787b6efdc2ac43b57e880a207a0e67550189ed792cf7d79a6285df9a3fb25e5",
+        "entry_digest": "b621d64807c597b897f48ccace3a0224b166eabb9fd72a7eaf12da1afd41fe56",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/encryption.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ed60fc0d90dde71ebea58a8524d80f03e8d2387af03fd59100bdff52b0c3ce1c",
+        "entry_digest": "8ebd09cc3334a3be6ba2540c0dd4314fc830247cf64cace9117168e3c8daa360",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/encryption.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a57c613d63163ff2dc71d309295f522a9e309071124870a91bc0c8bc12c821d6",
+        "entry_digest": "ba765ed9fc7d33a7ca5cfd5be3f8d0898eacdf0eb0946f3dfe47afc8fc20bad5",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/envelope.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "608ef579e48c8a3fe587ae87324a3e4c3fb84f65919a283a840484b0c7c1c873",
+        "entry_digest": "cc6c939eeb5f8797c003f0425124acff4f085782f8c7931a60ac640c2e07e3df",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a5457ce2b6cc1d40629678ffe47d5f63d2fdd4b01fd53e20b782c368b2f08843",
+        "entry_digest": "5826c4304e3fdc1480147f90cd9a882a2462afad208ec2592701adfae2e680d1",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/keys.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f08d9c99e8465ecabf4082e82fcff02e473fa986796f858141b09b2f600e08b1",
+        "entry_digest": "a0df83bc2111e83911930b5ffd708e198e888d7570cec6acc38b97157fe60af8",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/signature.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f6e73a16246e8a6f634be5489c4b3bfd01312def577ddf050e1c69a9c14e9218",
+        "entry_digest": "84a233570bf001f0ee5bc77faba41972290d6110acb2028c9ce8963d0dea3c59",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/crypto/signature.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "651843a3ca8db604b33d65d479e86273c66896aca099f446c468c202749d7928",
+        "entry_digest": "5ab2c4a1f3f5bba6e07de8ba72541a3dfb28a366bfb3f78942b00275fb5a2132",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/errors/ChatError.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "052e99a46163a1f5a50c2b80c7c44146b25ac21901f247b06f1731a34b90e9a4",
+        "entry_digest": "0d531d57740d0bebef56351d2a557768ec413ff12fd9bca838caacab3322207d",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/errors/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cb63297d81ea2be01198e19bc7ba0bb9223daad122d10b17b91b258a6cab3f8a",
+        "entry_digest": "b175c7c7151e443b402dfbb1c82782054060e94b293bbb1b2004862ee8c39ee3",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2c862814e5bfae31e043eefe33a838aef0135b441c23c9cc4e425eee15bf5ccc",
+        "entry_digest": "bcc948f66155b3745e4f5f27836a5c5040420169e789379d999908d15bfd9e3f",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/models/Conversation.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f90ee3deddd73ec5f8b96cce36cbd53db74eacb69632f169e506fa6493cc83fc",
+        "entry_digest": "3de85f998f4951b0320bf11e619c1e6de7edd966b5a1e256b2bdb8cb65a7606d",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/models/Conversation.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "af6697748d8d0257a6ad3cdfe3a8a0a9a45b9e3bf4a815337e845527f5c12b65",
+        "entry_digest": "0587773ef30d8f6087ce9a38835cc1c7699b1345e7d06967a0c785489c8b6d5d",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/models/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0e05ada03099f4e94f933aabb791a24b9d88a4b98fe443a536da2caad99a826f",
+        "entry_digest": "19f924fa5a245a42fb8521363d6e0dc79a356197f01aba09440694669a9bcaad",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/models/pending-message.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "874c072f090de46d42eefabe92e51ca644dc72b2ef111a4ece9948e3a57e2e9a",
+        "entry_digest": "569bc437e9e074a54dc7f75a9f44b68f1c27739aed704ad7de7983e43d4f8106",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/models/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3512bd50b1d7b6dad14f0b6b3eee1dfe170887bb5df4edbb82b7ce8a735809d8",
+        "entry_digest": "bef6a0ca7b55d8c33264836c87f3efc0b5f5226a9191fb8b247dcbb7bfe0dc96",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/encryption.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b4ba9b3d3c87d4d100e20fdb278d66a2e8848b5a2671fdeb72db4d66092a5086",
+        "entry_digest": "f367ab97dabf2c45fab364f52b14be2903f2163d67161c384b8f5633469689dd",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/envelope.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ae9a6e39ad18601e2101b6e535430749885c3e73b50be73e7adf7bbc55932e75",
+        "entry_digest": "e7fdc22f0693ab796b09d2e24855c621d370f69f5350f5b760976401e8e5c2b6",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/exchange.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3071a02fe447bfb2d7a21dddd7d24304af1efe3e7daf1c2d3b27b7ff724fc303",
+        "entry_digest": "6d23b908457ec5e58b0cd41ed33e14f62ec1615ea880c2b4a42039fa885ec793",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "988bf6c40817996987cb3181be6e1dedb4e35e284c26d762b33fe37900999f99",
+        "entry_digest": "7881069f24137d8e65071d82fcfef419e95ac35918a67cd9092648090747d45e",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/psk.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1a8f32d7f627464706d409c9cbd5bd6a4ddf7add84b0d275bd45e3a1697f427a",
+        "entry_digest": "180ab83f6261b159aad414585a6bb3953ffbd7008f1228f7a639ad85975fb05c",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/ratchet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bbbca5d638de3c329d2c6717142eb942949f126336349e99a4364a012b6dc72b",
+        "entry_digest": "0acec69e9a20fe137c7d83d901825958e0cdb2309588545eb85a831cc971c239",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/state.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b6a9aa95bff98bc2c0662067e4619260c41f62a400eebfe50fa5e43dfe9bd805",
+        "entry_digest": "85d16eb12c88e717a05909a1e20bebae267cc56c077e71b44f604838639f7550",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/psk/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1e0c08a23a8a77d186fb02e01115d66b80554cb41f2681163b23aa714059b10c",
+        "entry_digest": "d69a41f6b68bd5942cf714a2a89f6a79fe55427f52fc4589e83019b087045b9b",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/queue/SendQueue.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b8de55913773d9b4b9281bb181705697f7a86345f1babd8f15da35f0eabfce04",
+        "entry_digest": "dfa0cb3aede4e64f34243fd2ce30d5fd0a7c90d71cd72e8342b69f19f477977c",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/queue/SendQueue.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "35c3519517b5ed807b2d09f0225e56ccab9296f1e33f9324bff6570c50f34b6b",
+        "entry_digest": "6a81e80c1d70d786ba590840788da551e8c17893340e16d58a50570c53b2c2ae",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/queue/SyncManager.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d7191a055b039925b5a55e508a0f8ff45eb527e1f1cb5729263834e7aa53e976",
+        "entry_digest": "f2aa63b9f80c432ac991ad4ea789e700bfb066d250ed2f5c40b721c8d26315f4",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/queue/file-send-queue-storage.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "db2a2da9cd4b889f6d532953793d05853fe7c4690b4f87ac92aa79323febed7a",
+        "entry_digest": "82bb6299cfd1de34d4064957b9519bc7a2827042096a6245fbc467df30d72750",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/queue/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d6c4473e51450eab6a58946f0e429c3689d802de6dc0f1cd41971c5f5eb698b1",
+        "entry_digest": "6a6514621fb4899262bf690cb519bdb23960c846defb4e7d8d0aebb9de80d674",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/MessageIndexer.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "92a49d0076dc7cbfb1eb2fbef4bb68d7c32225dd7b76aaae0da6f252dd463320",
+        "entry_digest": "a2df86ed8a7fda876592e47a273b175b5f2bc095c3a6fb7c8d7f70c948c61268",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/algorand.service.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "02fc6fc74c707c35b437e8476e49d6472ab3e6418dd2789df2929866ee3d2b88",
+        "entry_digest": "d1509475017bd28a1356503fffa5fd3d18eb5029d3db94b051bd34717c4fe004",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/algorand.service.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "34520ef49953d2febb0af89f6b750c2c6c19693c264cbbddd98662324d0662b9",
+        "entry_digest": "cf0d2c3ee9a2689231a816101604f5afdfee86cf7a8599234d9e678319117ff2",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ca312b7c2250b02b9b4ca22bad3987f56721def27db2032689708721332fadaf",
+        "entry_digest": "b3fc507269b9435a950928a38e80117e4ab7a33c5e930cf66862f078362f01db",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/mnemonic.service.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "406844997742ac5248d34464f3273012b5d01d6ede1a2226b0f43d1555325c87",
+        "entry_digest": "0ae35c1dcfd2d09d1565f6b92878c196e09d015d1852cd1fd4c0f3933ca8ae3b",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/mnemonic.service.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c0e364becc88a7073165774567468b1b54e9408b2269d289f0759c6894ef06d7",
+        "entry_digest": "7efdf6f89ccf5ee03836577e31a46567edd5385bb376d0f9c87c4e4107aaf250",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/storage/encryption-key-storage.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "573b3eac95502a2d87f856ba4ba530f0d597e1cfc42f3fda916db369167c5aff",
+        "entry_digest": "c2cb9229522734479a0e78ca083f6deaaa9b65b52b7d6ef3206f4ce976bb200c",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/storage/file-key-storage.errors.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1ecbe90e639fd06019440ce428dcce378f305dcfb7fe16db0d1176a86ab52288",
+        "entry_digest": "f4603956e139b1b5b5297a2ad7a08e481f49ef2d49b8ed43c1b164332857abfe",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/storage/file-key-storage.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2fd53f0d334f5531c6524d2887bf800c5e7bf1fdab8e96cf638bfa45cceb927d",
+        "entry_digest": "b42835b7d0ebe781177c2e74dd482db65fdf79d93dd71f6efa394ab44ff0cec5",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/storage/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6ff36a8cb8048a95ac43be0cc176056b94e41f7794d2c2e66a01cf318ef28d2e",
+        "entry_digest": "846603c7483f831fa5ba7f7a880f1e8542d7e28f04e48cfc7809dbb8dcc8913c",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/storage/message-cache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "100554274b68a597c6137542b8563b4cf5e85c7aa7485ce5d53b9b6c83f6b93c",
+        "entry_digest": "97c0345c7e9966623b0cdd099c0e9b033f500ee8ca4a06e1e1d9d63b31273158",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/storage/public-key-cache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1b16d77b591d88209c1a7cb8aab32bea31b05c7233ca754c57f7d07378a71b42",
+        "entry_digest": "34248c6561b253935ea25281f6ed00e7be46c2b2d088f420c3c3ece8dd60d4f0",
+        "owners": [
+          "algochat"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec algochat",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-algochat-025"
+  ]
+}

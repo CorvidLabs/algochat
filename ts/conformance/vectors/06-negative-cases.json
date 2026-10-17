@@ -1,0 +1,141 @@
+{
+  "tool": "@corvidlabs/ts-algochat conformance generator",
+  "libraryVersion": "0.4.1",
+  "generatedBy": "reference implementation (TypeScript)",
+  "note": "All byte strings are lowercase hex. All inputs are fixed test values; none are secret.",
+  "file": "06-negative-cases",
+  "description": "Mandatory failure behavior. \"null\" = decrypt returns null without plaintext. \"throw\" = typed error, no partial output. An implementation MUST NOT emit plaintext in any of these cases.",
+  "cases": [
+    {
+      "name": "tampered ciphertext (last byte flipped)",
+      "input": "020196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1cba641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015ef09",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "tampered encryptedSenderKey — recipient path (must fail)",
+      "input": "020196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1c45641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015eff6",
+      "note": "VERSION_AAD binds the full 126-byte header including encryptedSenderKey; flipping that field breaks the recipient-path AEAD tag.",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "tampered encryptedSenderKey — sender path (must fail)",
+      "input": "020196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1c45641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015eff6",
+      "note": "The sender path unwraps its own copy key; a flipped byte breaks that AEAD tag.",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "version 0x02→0x01 downgrade (must fail)",
+      "input": "010196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1cba641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015eff6",
+      "note": "Ciphertext was sealed under VERSION_AAD with header AAD; downgrading the version byte to legacy 0x01 causes decrypt to omit AAD and fail closed.",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "protocolId flip (must fail)",
+      "input": "020296c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1cba641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015eff6",
+      "note": "protocolId is part of the VERSION_AAD-bound header; flipping it fails decode (wrong protocol) / AAD auth.",
+      "expect": {
+        "result": "throw",
+        "error": "EnvelopeError"
+      }
+    },
+    {
+      "name": "wrong private key (A tries to read B’s copy)",
+      "input": "020196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1cba641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015eff6",
+      "note": "uses valid envelope with unrelated key material",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "truncated note (40 bytes)",
+      "input": "020196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6",
+      "expect": {
+        "result": "throw",
+        "error": "EnvelopeError"
+      }
+    },
+    {
+      "name": "unsupported version byte 0xff",
+      "input": "ff0196c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e679e12aefcb6767536173b912c2905d4b309817e0572382ac9b6596a76db70627554c5e28cd6a6aad061d9faf5fd3b14c1135dd9df4c69693be4d6f2919153eadf82e4d13dc945b03ebf8c1e6ff5816ce560029cc1431b1a22ec1cba641e90a6e7da655e2d2b247c7ae8186cdc55ee94dc8b08c7b4c5ddcefdfa6c7abdb3d66a934c4bbab7d093c8182d20abcba038dc59596ea25cc6217729dd53e9a51e50651cb2965829874267ce15a8fd0f488a4c0fcf6816e4339a4d812f42be7015eff6",
+      "expect": {
+        "result": "throw",
+        "error": "EnvelopeError"
+      }
+    },
+    {
+      "name": "random bytes classification",
+      "input": "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+      "expect": {
+        "result": "classified",
+        "isChatMessage": false,
+        "isPSKMessage": false
+      }
+    },
+    {
+      "name": "PSK envelope: tampered ciphertext",
+      "input": "02020000000096c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8db4",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "PSK envelope: tampered encryptedSenderKey (must fail)",
+      "input": "02020000000096c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd5c15d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b",
+      "note": "VERSION_AAD binds the full 130-byte PSK header including encryptedSenderKey.",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "PSK envelope: version 0x02→0x01 downgrade (must fail)",
+      "input": "01020000000096c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b",
+      "note": "PSK ciphertext sealed under VERSION_AAD; downgrading version omits AAD and fails closed.",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "PSK envelope: protocolId flip (must fail)",
+      "input": "02010000000096c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b",
+      "note": "protocolId is AAD-bound in the PSK header; flipping it fails decode / auth.",
+      "expect": {
+        "result": "throw",
+        "error": "PSKEnvelopeError"
+      }
+    },
+    {
+      "name": "PSK envelope: ratchetCounter mutation (must fail)",
+      "input": "0202000000ff96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b",
+      "note": "Big-endian ratchetCounter is part of pskHeaderAAD; mutating it fails closed.",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    },
+    {
+      "name": "PSK envelope: wrong ratchet position key (counter 1 instead of 0)",
+      "input": "02020000000096c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e440739b0490054481110df850487f159586b9c022e7b54a42472ae28aee6653dff741c0411c5e50a58d44c33e1d7b6fcfe51532ca8d05cad39e4120f6f58cf88cd0fab99fe3db5f38fbfac3236b7026d2e0212c6a2ac2ff2bd8bd53e5d7c18812803ce685cf50cf0f59347c1535ea317de2c169ac33a1d2220bdc634eb3c86eaf49a793afa626b09fb4aa50f7c42b30b8af4a8dfe56cdd4481ed3ee19f79ff66446fd1258c8814f1a37b86f57c5e13dd8d4b",
+      "expect": {
+        "result": "throw",
+        "error": "Error"
+      }
+    }
+  ],
+  "invariant": "Decoders reject unsupported versions, truncated fields, and unauthenticated ciphertext rather than returning partial content (spec invariant 2)."
+}

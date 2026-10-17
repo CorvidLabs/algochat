@@ -1,0 +1,39 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783959351,
+      "digest": "05be97b10f48da78a1b99c4ab6af41a42ae0e27869451e62845f3376fc0c0e9b",
+      "note": "Definition approval for the reviewed CI-trigger correction: governance changes must run the existing JDK 17/21 matrix without altering its jobs, setup, tests, or artifacts."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012268,
+      "digest": "feb4c71fbf68ae2a686b56bc6aeeddd018c0e0b99c31726ff6fbcffa7ffd9f3f",
+      "note": "Definition approval for the reviewed full Kotlin SDD adoption: four accurate canonical contracts, stable test-linked requirements, 100 percent production-source coverage, and unchanged native JDK matrix behavior."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012450,
+      "digest": "feb4c71fbf68ae2a686b56bc6aeeddd018c0e0b99c31726ff6fbcffa7ffd9f3f",
+      "note": "Definition re-approved after exact interoperability test names were recorded; scope remains the reviewed four canonical contracts, 100 percent production coverage, and native CI trigger correction."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012581,
+      "digest": "ee3ac9c64331cf022bd1c36fafa6cebed6f70a9c9f8a30410ec06b1d702bdf36",
+      "note": "Portable definition approval for 19 normative test-linked requirements across the client, protocol, PSK, and cross-vector contracts, with 100 percent production-source coverage and unchanged native CI behavior."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012603,
+      "digest": "7f379f10d631dd1309e5eb14eb44b6a55c8e4bdc336e159892bdb8749d1e6a1b",
+      "note": "Closing approval after strict 100 percent source coverage, 218 of 218 documented Kotlin exports, 19 requirement evidence links, a forced fresh 292-test pass with zero failures, and successful test/build/JAR verification."
+    }
+  ]
+}

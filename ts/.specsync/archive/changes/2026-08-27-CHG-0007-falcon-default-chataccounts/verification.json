@@ -1,0 +1,173 @@
+{
+  "timestamp": 1787873964,
+  "commit": "bd0a1513bb2201bcc15a237ccdc1ad5ea7809c58",
+  "contract_digest": "6e173657acedc6b8406f144f6bd61b4edda2aa97c04be962868f53b1321ca164",
+  "workspace_digest": "b492ef56519fc579839a96c3d2f679f478450cbb03d4051af9cfa8c96c33fa97",
+  "acceptance_input_digest": "841cf402cc11aa82c7d840120c382ac1b1b250287ed5dc431f782337382950dd",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": ".specsync/change-sequence.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b5ffd9b80a4c22baba0e6613c3aeceaa59f1d12f217ddee67ff6d70ddc1760fb",
+        "entry_digest": "2a2936cd0a45d207c492755ca65677cd53424e28520a6695f2c38ae9739dacf4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "README.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ac6402eed0e6dc80bde63589c8e4c8d14c0481bfcdd0715ec3f00db64015e9d8",
+        "entry_digest": "78f310a35345ddecac06b42a8ef5fc3217307a16ea30d1b1d16fcd1742933f0e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "bun.lock",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e69bb3dc1d9b0e8956d67267a3965e194a9cf67435685e004d96ea006f2c3f30",
+        "entry_digest": "b7cb4b2adec884b3ea115ca860c7b7a17b716f9bbd7dedbf0a57b98547d2c8d3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "package.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5cd710a2f55b875c29c47404042ad4bd7922871a0880f263a699cdf98c20d7c3",
+        "entry_digest": "364063c711f1c309ffc158161a1f400470e0ccbdd0042c6949728b8b5f41c3ea",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/algochat/algochat.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c7c1ce5824b2186fe48310468d8931bd3c0ce03dbe10bff99b34cae292fb8926",
+        "entry_digest": "fddbc45bc836ad1274e5b46ac34a8c220077769ffba280941924bd864a579194",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4c29f674d7fcbc4bb74d73d30d5bc6460aa67d22cc73acf8cab712cc70a2975a",
+        "entry_digest": "81b4ed9910aa8ae13ab496482da7ad7fa1a57c798aed13ae684afe09ab62cdae",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2b824c2723a2ba74ee9e4f2121162f88e98f874931ccad390a08901cc0ee5b0e",
+        "entry_digest": "a456192a722f05060171ac4b0fc4e3bae5220138a123a84236bb10dae5845852",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "60f819498b1ecfa3dbb018e5b2fe5823199688312cc0f71459693e5888f50f3e",
+        "entry_digest": "906911efb973ff42a506e7e0aec5a307afe379c0c8ce9639379b93a4b063b0ce",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "specs/algochat/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9ca4de7b10ccee87006549f7ef44d4d1817402c28867162177adb31df82cf1d9",
+        "entry_digest": "5f9e949050fbafdb0f99b6a92ebb21d06fc412a7bddeb75ae48c0b300ba2d8d5",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a96e60dae18c4b2372bae1a68643d22e744a3026a60df80681316e10ac025286",
+        "entry_digest": "a8748fe5c41a2c2243488c43ef6808d5159974ef7b33764058d39b522d332819",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/algorand.service.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "eda4e6ab8e80d072b3da740c9c852b66dff4da816e43b9a795140a14d064b909",
+        "entry_digest": "67e724b87503228905ee21ce5ef031309aee6eb746d90611fb8ee25fa7e2c858",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/algorand.service.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9374ff6ff6fd00dff537924c96d93fb31cb19a6718cef96aca6c1b1dc7476bec",
+        "entry_digest": "e3babe72987381199f5f29dcb1e8daf72488e728ec44926622b779b2d933753a",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ca312b7c2250b02b9b4ca22bad3987f56721def27db2032689708721332fadaf",
+        "entry_digest": "b3fc507269b9435a950928a38e80117e4ab7a33c5e930cf66862f078362f01db",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/mnemonic.service.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "406844997742ac5248d34464f3273012b5d01d6ede1a2226b0f43d1555325c87",
+        "entry_digest": "0ae35c1dcfd2d09d1565f6b92878c196e09d015d1852cd1fd4c0f3933ca8ae3b",
+        "owners": [
+          "algochat"
+        ]
+      },
+      {
+        "path": "src/services/mnemonic.service.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c0e364becc88a7073165774567468b1b54e9408b2269d289f0759c6894ef06d7",
+        "entry_digest": "7efdf6f89ccf5ee03836577e31a46567edd5385bb376d0f9c87c4e4107aaf250",
+        "owners": [
+          "algochat"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "fledge lanes run verify",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-algochat-024"
+  ]
+}

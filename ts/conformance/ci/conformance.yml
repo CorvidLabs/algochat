@@ -1,0 +1,36 @@
+name: conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Unit tests
+        run: bun test
+
+      - name: Conformance vectors verify (79 checks)
+        run: bun conformance/tools/verify.mjs
+
+      - name: Deterministic sections regenerate byte-identically
+        run: |
+          bun conformance/tools/generate.mjs /tmp/vecs
+          for f in 00-protocol-constants 01-key-derivation 03-psk-ratchet 05-psk-exchange; do
+            cmp /tmp/vecs/$f.json conformance/vectors/$f.json \
+              || { echo "::error::deterministic vector $f changed — this is a protocol change, review it"; exit 1; }
+          done
+        # 02/04/06 captured-envelope bytes rotate by design (fresh ephemeral
+        # material); only their encodingVector sections are protocol-pinned.
+        # See conformance/README.md § Regeneration semantics.
