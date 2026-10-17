@@ -1,0 +1,36 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792262832,
+      "digest": "33d2b9f31ead8264832096e88ccf04f3d85d2769f1aef98a62a1155e9152e7ee",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "describe-the-repository-and-run-each-library-ci-only-when-that-library-changes",
+        "title": "Describe the repository and run each library CI only when that library changes",
+        "description": "Describe the repository and run each library CI only when that library changes",
+        "kind": "documentation",
+        "affected_specs": [],
+        "affected_paths": [
+          ".github/workflows",
+          "README.md"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The wire format is unchanged. This updates the README and path filters on CI.",
+        "acceptance_criteria": [
+          "The README names the six libraries and links the protocol docs. CI runs a language suite only when that language or its workflow changes. The daily status job reads this repository, not the old split repositories."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}

@@ -2,8 +2,26 @@ name: Spec Sync
 
 on:
   pull_request:
+    paths:
+      - ".specsync/**"
+      - "specs/**"
+      - "**/specs/**"
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "SECURITY.md"
+      - "IMPLEMENTATION.md"
+      - ".github/workflows/spec-sync.yml"
   push:
     branches: [main]
+    paths:
+      - ".specsync/**"
+      - "specs/**"
+      - "**/specs/**"
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "SECURITY.md"
+      - "IMPLEMENTATION.md"
+      - ".github/workflows/spec-sync.yml"
 
 permissions:
   contents: read

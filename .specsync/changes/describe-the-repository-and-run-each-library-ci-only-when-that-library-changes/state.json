@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "describe-the-repository-and-run-each-library-ci-only-when-that-library-changes",
+  "slug": "describe-the-repository-and-run-each-library-ci-only-when-that-library-changes",
+  "title": "Describe the repository and run each library CI only when that library changes",
+  "description": "Describe the repository and run each library CI only when that library changes",
+  "kind": "documentation",
+  "state": "approved",
+  "base_commit": "305a6cb3b5b33caaff207594be76013880557289",
+  "created_at": 1792262813,
+  "updated_at": 1792262832,
+  "affected_specs": [],
+  "affected_paths": [
+    "README.md",
+    ".github/workflows"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The wire format is unchanged. This updates the README and path filters on CI.",
+  "acceptance_criteria": [
+    "The README names the six libraries and links the protocol docs. CI runs a language suite only when that language or its workflow changes. The daily status job reads this repository, not the old split repositories."
+  ],
+  "selected_artifacts": [
+    "context",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

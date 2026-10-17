@@ -4,18 +4,6 @@ on:
   schedule:
     - cron: '0 6 * * *'
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - implementations.json
-      - scripts/**
-      - .github/workflows/status.yml
-  pull_request:
-    branches: [main]
-    paths:
-      - implementations.json
-      - scripts/**
-      - .github/workflows/status.yml
 
 permissions:
   contents: read
@@ -31,12 +19,11 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout swift-algochat
+      - name: Checkout
         uses: actions/checkout@v5
-        with:
-          repository: CorvidLabs/swift-algochat
 
       - name: Run Swift tests
+        working-directory: swift
         run: |
           set +e
           START_TIME=$(date +%s)
@@ -83,18 +70,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout ts-algochat
+      - name: Checkout
         uses: actions/checkout@v5
-        with:
-          repository: CorvidLabs/ts-algochat
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
+        working-directory: ts
         run: bun install
 
       - name: Run TypeScript tests
+        working-directory: ts
         run: |
           set +e
           START_TIME=$(date +%s)
@@ -136,10 +123,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout py-algochat
+      - name: Checkout
         uses: actions/checkout@v5
-        with:
-          repository: CorvidLabs/py-algochat
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -147,11 +132,13 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
+        working-directory: py
         run: |
           pip install -e ".[dev]" || pip install -e .
           pip install pytest
 
       - name: Run Python tests
+        working-directory: py
         run: |
           set +e
           START_TIME=$(date +%s)
@@ -191,15 +178,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout rs-algochat
+      - name: Checkout
         uses: actions/checkout@v5
-        with:
-          repository: CorvidLabs/rs-algochat
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run Rust tests
+        working-directory: rs
         run: |
           set +e
           START_TIME=$(date +%s)
@@ -239,10 +225,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout kt-algochat
+      - name: Checkout
         uses: actions/checkout@v5
-        with:
-          repository: CorvidLabs/kt-algochat
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -251,6 +235,7 @@ jobs:
           java-version: '17'
 
       - name: Run Kotlin tests
+        working-directory: kt
         run: |
           set +e
           START_TIME=$(date +%s)

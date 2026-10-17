@@ -2,8 +2,38 @@ name: trust
 
 on:
   pull_request:
+    paths:
+      - "ts/**"
+      - "swift/**"
+      - "py/**"
+      - "rs/**"
+      - "kt/**"
+      - "go/**"
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "SECURITY.md"
+      - "IMPLEMENTATION.md"
+      - "implementations.json"
+      - ".trust.toml"
+      - ".specsync/**"
+      - ".github/workflows/trust.yml"
   push:
     branches: [main]
+    paths:
+      - "ts/**"
+      - "swift/**"
+      - "py/**"
+      - "rs/**"
+      - "kt/**"
+      - "go/**"
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "SECURITY.md"
+      - "IMPLEMENTATION.md"
+      - "implementations.json"
+      - ".trust.toml"
+      - ".specsync/**"
+      - ".github/workflows/trust.yml"
 
 permissions:
   contents: read

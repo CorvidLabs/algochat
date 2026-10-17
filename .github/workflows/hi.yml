@@ -2,8 +2,14 @@ name: Human intent
 
 on:
   pull_request:
+    paths:
+      - "hi/**"
+      - ".github/workflows/hi.yml"
   push:
     branches: [main]
+    paths:
+      - "hi/**"
+      - ".github/workflows/hi.yml"
 
 permissions:
   contents: read
