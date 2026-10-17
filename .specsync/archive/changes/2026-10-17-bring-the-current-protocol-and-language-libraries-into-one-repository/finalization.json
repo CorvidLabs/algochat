@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "bring-the-current-protocol-and-language-libraries-into-one-repository",
+  "implementation_commit": "85b6183d3ce350b6eb5b94f97afc32dc9cd744db",
+  "implementation_tree": "fd4007cecb0fa3817889f441ed9641e805293031",
+  "contract_digest": "a40aa0ea7e4543720ca5fd789cf5a49c1fb7332d988629f612571af5912d59cf",
+  "workspace_digest": "825eecca723f97eb09bbdad52a162523eb5db4288908c4d49df35a863342966b",
+  "closing_digest": "d1de5c807592fae6bb410977df61db7ebd6e51a33c40037e2c6432533d498802",
+  "review_digest": "22d48a337c48367df7e49ee64ed9a2af5e151d75937159c35296c13c4ba0fb5f",
+  "finalization_digest": "1676258a90152833677c2413293d481e6c34fb4637b6b30b3b0b4e2bc6299b28",
+  "timestamp": 1792262259
+}

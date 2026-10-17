@@ -7,10 +7,11 @@
   "title": "Bring the current protocol and language libraries into one repository",
   "description": "Bring the current protocol and language libraries into one repository",
   "kind": "migration",
-  "state": "approved",
+  "state": "accepted",
+  "canonical_applied": true,
   "base_commit": "32b70eabbe39a6045d4557ab782c0fe150e6ce91",
   "created_at": 1792262114,
-  "updated_at": 1792262172,
+  "updated_at": 1792262259,
   "affected_specs": [],
   "affected_paths": [
     "PROTOCOL.md",
