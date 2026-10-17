@@ -1,6 +1,6 @@
 ---
 id: describe-the-repository-and-run-each-library-ci-only-when-that-library-changes
-state: approved
+state: archived
 type: documentation
 base_commit: 305a6cb3b5b33caaff207594be76013880557289
 ---

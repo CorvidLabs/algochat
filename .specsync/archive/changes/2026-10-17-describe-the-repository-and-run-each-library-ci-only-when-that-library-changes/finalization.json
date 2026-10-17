@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "describe-the-repository-and-run-each-library-ci-only-when-that-library-changes",
+  "implementation_commit": "658c28c4866e28c720af8959ae0a377f35379b3c",
+  "implementation_tree": "4db191bf9e51878e93d308907628a50a7bf0a410",
+  "contract_digest": "33d2b9f31ead8264832096e88ccf04f3d85d2769f1aef98a62a1155e9152e7ee",
+  "workspace_digest": "ac53291a2ecdce49c9fabb8fe73a418c675a57e779c8681696f585abf2db9d10",
+  "closing_digest": "22ed50e2af4e5b042e739f3ff38cc81d2ec03f9f345aa2d303e988aa12ad266f",
+  "review_digest": "51780f9a81f77a1d92552b7eaf5843918d2255422767671aa8bf4cf5ffaba42b",
+  "finalization_digest": "d77428d409c8ae048358c4bcff0b442b4a25570877fbe48e179324c8958a572b",
+  "timestamp": 1792262855
+}

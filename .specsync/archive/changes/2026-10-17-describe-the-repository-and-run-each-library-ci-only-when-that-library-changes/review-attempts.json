@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "describe-the-repository-and-run-each-library-ci-only-when-that-library-changes",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "658c28c4866e28c720af8959ae0a377f35379b3c",
+      "contract_digest": "33d2b9f31ead8264832096e88ccf04f3d85d2769f1aef98a62a1155e9152e7ee",
+      "execution_digest": "d727770dec1d93344f708fe2c20a66618940c321aab8eed0bd96606e77a2af18",
+      "workspace_digest": "ac53291a2ecdce49c9fabb8fe73a418c675a57e779c8681696f585abf2db9d10",
+      "timestamp": 1792262843
+    }
+  ]
+}

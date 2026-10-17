@@ -7,10 +7,11 @@
   "title": "Describe the repository and run each library CI only when that library changes",
   "description": "Describe the repository and run each library CI only when that library changes",
   "kind": "documentation",
-  "state": "approved",
+  "state": "accepted",
+  "canonical_applied": true,
   "base_commit": "305a6cb3b5b33caaff207594be76013880557289",
   "created_at": 1792262813,
-  "updated_at": 1792262832,
+  "updated_at": 1792262855,
   "affected_specs": [],
   "affected_paths": [
     "README.md",

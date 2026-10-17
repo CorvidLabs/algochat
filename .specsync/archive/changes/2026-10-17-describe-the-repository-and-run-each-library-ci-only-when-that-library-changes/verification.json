@@ -1,0 +1,152 @@
+{
+  "timestamp": 1792262835,
+  "commit": "658c28c4866e28c720af8959ae0a377f35379b3c",
+  "contract_digest": "33d2b9f31ead8264832096e88ccf04f3d85d2769f1aef98a62a1155e9152e7ee",
+  "execution_digest": "d727770dec1d93344f708fe2c20a66618940c321aab8eed0bd96606e77a2af18",
+  "workspace_digest": "ac53291a2ecdce49c9fabb8fe73a418c675a57e779c8681696f585abf2db9d10",
+  "acceptance_input_digest": "9f82863b2668c544bffd72faced03a2237e53a6aadaeb9143c451ac1faa6eb5f",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": ".github/workflows",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "393b55385bf3382491bdcc2b1a9b95da12bf82cdb582c2b5fb21ef5c0b612bee",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/go.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3969d65b644a69702078ea38caf6f2a24961de7ff0e0bb898f5cf92a61c0d54a",
+        "entry_digest": "9c8b4f40bc85a97e823a63cca8a59478697dad583e89f72a236ec83595730a38",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/hi.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "282daac1eadc851ebee91c6d614c140baaf53bded1d933718e3fa3a1a225b0d2",
+        "entry_digest": "43c382bd94ee6ab5d2dc001f5376ca88585a7b7d309f3b1891e595ac349d8fe2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/kt.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9f2428a3bdac4bbcd06c33fbc8f9807ceae6e531429cd4c4d1f7dcea1563875e",
+        "entry_digest": "092d7da725cb891bedd2a919bac9fa7988d7fb689995d5f0161db370b008133d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/protocol.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0f18ac9147693034be61ec5a8588e3c0fba5158f6df5389b8b5e8366d09dd137",
+        "entry_digest": "2c650550eb67f091d1efc6360d5b1ad2b3d159690cb925cc9bf9452c2da331d0",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/py.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "587591120aefc6002ed69ff311a317aafdec8622b3c96225fbfbf493f506c3e2",
+        "entry_digest": "5d73be581be62a80a5376404676c121b8c4c2e8cc5b8b4320d8c31d6b2fe8bfb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/rs.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "39a2dd4a25a1f4a388201da91dd85078a13ff29a8e4aa074dc93853607441ab5",
+        "entry_digest": "b5eb07ea9353f1d1d9f258272e83790178ab253dd7494047599177d6ff672e9c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/spec-sync.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "67182a09319100c98c781d8904f7742f532a815377a2675d147d1a01de2a2682",
+        "entry_digest": "5b619cc691e1c64ee33b1ef2afad6fda8e4c3ecd9d1c9933f481ed00a635472a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/status.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "046012716fe1758753f761a74ae60afec050faafa0e8e7156d0ca677943292e7",
+        "entry_digest": "b69bd377ee9b2ce1aea9cb5ca9bb431aa87f51627124cb83da94b42a2ef4d3d2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/swift.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8955bd694e3a29464e0f786b8824454f9fb574052315d3ef11fb8a9333675d85",
+        "entry_digest": "60edfd5fa1b7b079f4148f580457c4924a5b58b7b74a68b816aebb4f1f9a54b5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/trust.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "db430368ec7d1e3bb81a0f01d063ba55d49817343c57bec7a4dc57f6f0bb39c0",
+        "entry_digest": "5031c9b336c2e071cb862202b8270725ce8e271da53d8b12d05eb2b7eafdc448",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": ".github/workflows/ts.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a0fa869de8ab73b0366966ecbd12adeff9185a1aa47c86bed1b99049cce56449",
+        "entry_digest": "438b1e279224833e5885cbc203d6319da488aa8f6bb46250e5f7b1a5088aaa25",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "README.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f796e385e790268766050ac7f887c1e2f261f27a9e58cae74e7409ee23269428",
+        "entry_digest": "04a50b06ebbba36d29e27369f1c8f84549f939bf0aeea23eec21853c9a93e038",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check (no spec in scope)",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}
