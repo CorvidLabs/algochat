@@ -283,9 +283,10 @@ mod tests {
     use super::*;
 
     fn json_field(text: &str, key: &str) -> String {
-        let pat = format!("\"{key}\": \"");
+        let pat = format!("\"{key}\"");
         let i = text.find(&pat).unwrap() + pat.len();
-        let rest = &text[i..];
+        let rest = text[i..].trim_start_matches(|c: char| c == ':' || c.is_whitespace());
+        let rest = rest.trim_start_matches('"');
         rest[..rest.find('"').unwrap()].to_string()
     }
 
@@ -316,5 +317,22 @@ mod tests {
         bad[last] ^= 1;
         assert!(decrypt_pq_message(&bad, &session).is_err());
         assert!(is_pq_announcement(b"ACPQ"));
+    }
+
+    #[test]
+    fn live_localnet_note() {
+        let raw = match std::fs::read_to_string("/tmp/pq-live.json") {
+            Ok(text) => text,
+            Err(_) => return,
+        };
+        let alice = hex::decode(json_field(&raw, "aliceSeed")).unwrap();
+        let bob = hex::decode(json_field(&raw, "bobSeed")).unwrap();
+        let note = hex::decode(json_field(&raw, "handshake")).unwrap();
+        let message = hex::decode(json_field(&raw, "message")).unwrap();
+        let session = accept_pq_handshake(&note, &bob).unwrap();
+        assert_eq!(hex::encode(session.session_key), json_field(&raw, "sessionKey"));
+        assert_eq!(decrypt_pq_message(&message, &session).unwrap(), json_field(&raw, "text"));
+        let reopened = open_pq_handshake_as_sender(&note, &alice).unwrap();
+        assert_eq!(decrypt_pq_message(&message, &reopened).unwrap(), json_field(&raw, "text"));
     }
 }

@@ -98,6 +98,62 @@ func TestPQParityFixture(t *testing.T) {
 	}
 }
 
+func TestLiveLocalnetNote(t *testing.T) {
+	raw, err := os.ReadFile("/tmp/pq-live.json")
+	if err != nil {
+		t.Skip(err)
+	}
+	var v struct {
+		AliceSeed  string `json:"aliceSeed"`
+		BobSeed    string `json:"bobSeed"`
+		Handshake  string `json:"handshake"`
+		Message    string `json:"message"`
+		SessionKey string `json:"sessionKey"`
+		Text       string `json:"text"`
+	}
+	if err := json.Unmarshal(raw, &v); err != nil {
+		t.Fatal(err)
+	}
+	aliceSeed, _ := hex.DecodeString(v.AliceSeed)
+	bobSeed, _ := hex.DecodeString(v.BobSeed)
+	note, _ := hex.DecodeString(v.Handshake)
+	msg, _ := hex.DecodeString(v.Message)
+	var a, b [KeySize]byte
+	copy(a[:], aliceSeed)
+	copy(b[:], bobSeed)
+	alice, err := DeriveEncryptionKeys(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bob, err := DeriveEncryptionKeys(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dk, err := DeriveMLKEM768(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := AcceptPQHandshake(note, bob, dk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hex.EncodeToString(session.SessionKey) != v.SessionKey {
+		t.Fatalf("session %x", session.SessionKey)
+	}
+	plain, err := DecryptPQMessage(msg, session)
+	if err != nil || plain != v.Text {
+		t.Fatalf("bob %q %v", plain, err)
+	}
+	reopened, err := OpenPQHandshakeAsSender(note, alice)
+	if err != nil {
+		t.Fatal(err)
+	}
+	senderPlain, err := DecryptPQMessage(msg, reopened)
+	if err != nil || senderPlain != v.Text {
+		t.Fatalf("alice %q %v", senderPlain, err)
+	}
+}
+
 func bytesRepeat(b byte, n int) []byte {
 	out := make([]byte, n)
 	for i := range out {

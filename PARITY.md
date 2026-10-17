@@ -34,7 +34,7 @@ The handshake note is not a frozen hex vector. The sender wrap uses a random non
 | `kt/` | yes | no | no | no |
 | `go/` | yes | yes | yes | yes, opens the TypeScript note |
 
-Go and Rust open the frozen TypeScript handshake note and recover the same session key. Python, Kotlin, and Swift do not yet. The live LocalNet proof was two TypeScript accounts in one process.
+Go and Rust open the frozen TypeScript handshake note and recover the same session key. They also opened a handshake and message that TypeScript confirmed on LocalNet (rounds 40916 and 40917, text "localnet pq parity"). Python, Kotlin, and Swift do not yet.
 
 ## Work left, per language
 
