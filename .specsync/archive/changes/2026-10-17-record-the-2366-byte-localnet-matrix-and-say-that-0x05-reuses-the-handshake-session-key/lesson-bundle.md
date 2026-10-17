@@ -1,4 +1,4 @@
-# Lesson bundle — record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key
+# Lesson bundle: record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
