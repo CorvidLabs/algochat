@@ -1,0 +1,18 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784428610,
+      "digest": "d8002161cbef1c4f477662839b4cc4b759a227e4afc190ed20fdfd1b388f02b0",
+      "note": "Definition reviewed and authorized by the repository owner: packaging-only NodeNext migration, no spec change, mechanical import rewrites with explicit verification criteria"
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784429505,
+      "digest": "a86a28d3babf7acb27c1e041b6fa90590538b567bf8cf612c2c25f75ad58faf3",
+      "note": "Closing approval: NodeNext type-check, build, and 454/454 Bun tests pass in the Fledge lane; raw Node.js ESM imports the compiled entrypoint; published tree verified byte-exact against the tested tree"
+    }
+  ]
+}

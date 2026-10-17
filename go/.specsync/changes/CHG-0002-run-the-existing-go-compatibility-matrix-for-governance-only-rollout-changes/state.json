@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "CHG-0002-run-the-existing-go-compatibility-matrix-for-governance-only-rollout-changes",
+  "slug": "run-the-existing-go-compatibility-matrix-for-governance-only-rollout-changes",
+  "title": "Run the existing Go compatibility matrix for governance-only rollout changes",
+  "description": "Run the existing Go compatibility matrix for governance-only rollout changes",
+  "kind": "operations",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "fd32c638a48433abf55cafe6ca034ae5b3289c35",
+  "created_at": 1783963293,
+  "updated_at": 1784001789,
+  "affected_specs": [],
+  "affected_paths": [
+    ".github/workflows/go.yml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "This changes only CI trigger coverage; package behavior and the canonical Go AlgoChat contract remain unchanged.",
+  "acceptance_criteria": [
+    "The existing Go 1.22 through 1.24 matrix runs on pull requests and protected-main pushes that change Trust or SpecSync governance files without changing the matrix or jobs or package behavior or release configuration."
+  ],
+  "selected_artifacts": [
+    "context",
+    "plan",
+    "tasks",
+    "testing"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

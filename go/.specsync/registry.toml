@@ -1,0 +1,5 @@
+[registry]
+name = "go-algochat-trust-wave7"
+
+[specs]
+algochat = "specs/algochat/algochat.spec.md"

@@ -1,0 +1,31 @@
+{
+  "timestamp": 1787875293,
+  "commit": "546ad4f70761eb581131a01372d3d9618ab2b90f",
+  "contract_digest": "e8489dd792399a9df0dd4e5be64a4ffa5dbc8ab0e1458fec1f5aff4e06b53784",
+  "workspace_digest": "3a3e586ad0174f800f1aa2706e64936694493b82e2a8804422f07abb66407800",
+  "acceptance_input_digest": "42b98216c962c675aaaf93ac5f88b3bc38afc9ffa0b3a4f64eeefe27e6a382ca",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": ".github/workflows/trust.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9960a96086e55f356056ae3e23b6981e53f4d830ab0a6b1b65c5d41e80449589",
+        "entry_digest": "93e28dfa4a427fcde8a4703f7fa5d1f729a286e83da504561028b60a9ec3919c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "fledge lanes run verify",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}

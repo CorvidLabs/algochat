@@ -1,0 +1,41 @@
+{
+  "tool": "@corvidlabs/ts-algochat conformance generator",
+  "libraryVersion": "0.4.1",
+  "generatedBy": "reference implementation (TypeScript)",
+  "note": "All byte strings are lowercase hex. All inputs are fixed test values; none are secret.",
+  "file": "05-psk-exchange",
+  "description": "Out-of-band PSK exchange URI: creation, parsing, round-trip equality, and rejection of malformed URIs.",
+  "exchangeVector": {
+    "address": "FGWLVYKBXTFPBMRODKKNGTILY43B4UTNBP7BFSEXSS6JGIUWNXL5IA32OI",
+    "psk": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+    "label": "Conformance Peer",
+    "uri": "algochat-psk://v1?addr=FGWLVYKBXTFPBMRODKKNGTILY43B4UTNBP7BFSEXSS6JGIUWNXL5IA32OI&psk=QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8&label=Conformance%20Peer",
+    "parsed": {
+      "address": "FGWLVYKBXTFPBMRODKKNGTILY43B4UTNBP7BFSEXSS6JGIUWNXL5IA32OI",
+      "psk": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+      "label": "Conformance Peer"
+    }
+  },
+  "malformedUris": [
+    {
+      "uri": "algochat-psk://notanaddress",
+      "accepted": false,
+      "error": "Error"
+    },
+    {
+      "uri": "https://example.com/evil",
+      "accepted": false,
+      "error": "Error"
+    },
+    {
+      "uri": "",
+      "accepted": false,
+      "error": "Error"
+    },
+    {
+      "uri": "algochat-psk://",
+      "accepted": false,
+      "error": "Error"
+    }
+  ]
+}

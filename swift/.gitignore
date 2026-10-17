@@ -1,0 +1,31 @@
+# Swift build artifacts
+.build/
+.swiftpm/
+DerivedData/
+
+# Documentation site build output (docs.yml)
+_site/
+
+# Package resolution
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local

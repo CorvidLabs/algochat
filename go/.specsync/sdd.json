@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "enabled": true,
+  "require_change_for_meaningful_files": true,
+  "meaningful_paths": [
+    "blockchain.go",
+    "crypto.go",
+    "doc.go",
+    "envelope.go",
+    "models.go",
+    "queue.go",
+    "signature.go",
+    "storage.go",
+    ".github/",
+    ".attest.json",
+    ".augur.toml",
+    ".trust.toml",
+    "fledge.toml",
+    "go.mod",
+    "go.sum",
+    "specs/",
+    ".specsync/",
+    ".specsync/sdd.json",
+    ".specsync/config.toml",
+    ".specsync/version"
+  ],
+  "ignored_paths": [],
+  "verification_commands": [
+    "fledge lanes run verify"
+  ],
+  "custom_artifacts": {},
+  "principles_file": null
+}

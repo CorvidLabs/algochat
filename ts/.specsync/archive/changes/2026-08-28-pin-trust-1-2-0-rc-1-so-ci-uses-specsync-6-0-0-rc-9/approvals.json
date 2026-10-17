@@ -1,0 +1,20 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1787874863,
+      "digest": "e8489dd792399a9df0dd4e5be64a4ffa5dbc8ab0e1458fec1f5aff4e06b53784",
+      "note": "Adopt Trust 1.2.0-rc.1 / SpecSync 6.0.0-rc.9 pin.",
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "acceptance",
+      "actor": "0xLeif",
+      "timestamp": 1787875305,
+      "digest": "54b5b9207587f6045ad789c31d23545a0c7e5c3c713d4cc642be8c3b57032489",
+      "note": "Closing approval after Trust 1.2.0-rc.1 merge."
+    }
+  ],
+  "reopenings": []
+}

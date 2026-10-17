@@ -1,0 +1,61 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783963404,
+      "digest": "84ee1d5f09008b15edc9e57df6f0551ccca2829bf345c70cd0906ecf2811e600",
+      "note": "Definition approval for the reviewed scheduling-only correction: governance inputs must run the existing Go compatibility matrix without altering its versions, jobs, commands, packaging, or release behavior."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "0xleif",
+      "timestamp": 1783963476,
+      "digest": "89294d1c6ac0bd592da3677c406aa2f546d624e00f8d4ae13852d7a638f29279",
+      "note": "Closing approval for the exact symmetric path-filter-only correction after strict lifecycle and native build, vet, and race-test verification passed."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001789,
+      "digest": "832f52e8a38934b41b1fa8a64aceebe7a21d7942bad083b2e028498701ec7348",
+      "note": "Fresh closing approval after adding all omitted Trust policy and canonical-spec trigger paths while preserving the Go 1.22 through 1.24 matrix and successfully rerunning build, vet, and uncached race tests."
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0002-run-the-existing-go-compatibility-matrix-for-governance-only-rollout-changes",
+      "actor": "user:0xLeif",
+      "reason": "The authorized successor correction adds omitted Trust policy and canonical-spec trigger paths to the accepted Go compatibility workflow delivery and requires fresh verification.",
+      "timestamp": 1784001423,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "0xleif",
+        "timestamp": 1783963476,
+        "digest": "89294d1c6ac0bd592da3677c406aa2f546d624e00f8d4ae13852d7a638f29279",
+        "note": "Closing approval for the exact symmetric path-filter-only correction after strict lifecycle and native build, vet, and race-test verification passed."
+      },
+      "prior_verification": {
+        "timestamp": 1783963472,
+        "commit": "fd32c638a48433abf55cafe6ca034ae5b3289c35",
+        "contract_digest": "84ee1d5f09008b15edc9e57df6f0551ccca2829bf345c70cd0906ecf2811e600",
+        "workspace_digest": "6fc9916e701ba62384cae332ecf77784745667d3138fa9180845bed09dce3394",
+        "acceptance_input_digest": "54b0e278e694ecdd0f5c68a9ae8fe6155cde3adaf1a361f4d48b6937f7be3a9a",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": []
+      },
+      "stale_acceptance_input_digest": "54b0e278e694ecdd0f5c68a9ae8fe6155cde3adaf1a361f4d48b6937f7be3a9a",
+      "current_acceptance_input_digest": "bb56baca9d8ae1ac6a16e0aed4a201363f08bdc94c35f84d34e1de19d21eeb80"
+    }
+  ]
+}

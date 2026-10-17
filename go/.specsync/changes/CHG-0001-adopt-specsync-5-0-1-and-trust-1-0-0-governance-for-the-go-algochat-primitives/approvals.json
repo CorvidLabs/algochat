@@ -1,0 +1,211 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783958388,
+      "digest": "91a7b06f2f278ed7d149b930c1c313e1bc3a4a91d19f12179d7acd3b41114bec",
+      "note": "Definition approval after review of truthful completed preparation/configuration tasks, canonical requirements, and previously completed native verification; hosted CI and closing approval remain later gates."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783962850,
+      "digest": "9e5534a6cc01b0d78d7cd4fd3cedc24a342d10deb3ae7d9497804191cbb3ac93",
+      "note": "Fresh definition approval after the explicitly authorized lifecycle reset and truthful requirement-to-test evidence mapping."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1783962908,
+      "digest": "7e0e6bfa513c32bb6d07e08d5594205958c3cd521acdad71ad35b1f4127b009c",
+      "note": "Closing approval after normalized canonical requirement blocks and committed-head build, vet, full race tests, and all four requirement mappings passed."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "0xleif",
+      "timestamp": 1783963462,
+      "digest": "a85e374c456c5a93d289bb10821eccb808c2f2cc31f70f60c04a8c9be6cab591",
+      "note": "Fresh closing approval after audited reopen and successful build, vet, race-test, and four-requirement verification for the approved workflow trigger correction."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001789,
+      "digest": "51b32b402a0f047e36124fe6e9adfa98bb3f720ca0fe0b50fdcd548df5ba1fbb",
+      "note": "Fresh closing approval after the accepted successor corrected the canonical contract and full 100% coverage, regenerated portable integrations, and successful build, vet, and uncached race tests refreshed the migration delivery evidence."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784001898,
+      "digest": "f5847a947e2bca88b42003e38fd8f3f41fcdad3a609d03b493400806905696b8",
+      "note": "Fresh closing approval after correcting source discovery to measure all eight production Go files at 100% without treating workflow YAML as Go API, followed by successful build, vet, and uncached race tests."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784002006,
+      "digest": "f6d4a0210dc6d569e6ed0b180b0bafefbfc4a7fa17d58db7a5a8d2fe6a1c9661",
+      "note": "Fresh closing approval after final diff hygiene and successful build, vet, uncached race tests, and four mapped migration requirements."
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-go-algochat-primitives",
+      "actor": "0xleif",
+      "reason": "The approved CHG-0002 workflow trigger correction changed delivery inputs after CHG-0001 acceptance and requires fresh verification evidence.",
+      "timestamp": 1783963439,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1783962908,
+        "digest": "7e0e6bfa513c32bb6d07e08d5594205958c3cd521acdad71ad35b1f4127b009c",
+        "note": "Closing approval after normalized canonical requirement blocks and committed-head build, vet, full race tests, and all four requirement mappings passed."
+      },
+      "prior_verification": {
+        "timestamp": 1783962903,
+        "commit": "e828fa12a4699a51f7e00e0d4a8a45ca1860ad23",
+        "contract_digest": "9e5534a6cc01b0d78d7cd4fd3cedc24a342d10deb3ae7d9497804191cbb3ac93",
+        "workspace_digest": "8069b6b2db8b31aa49ae1477f92415e2b3058ae8a8dd84b326313508f7500c5c",
+        "acceptance_input_digest": "6f12ed5dd531110aff487a0644b8f0b36ad264c178b5ba44fb0ac821e29bc69f",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004"
+        ]
+      },
+      "stale_acceptance_input_digest": "6f12ed5dd531110aff487a0644b8f0b36ad264c178b5ba44fb0ac821e29bc69f",
+      "current_acceptance_input_digest": "ce9805bd811bd4396373bed56f2bed62624eafc26e183e2eefee06098fe29abc"
+    },
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-go-algochat-primitives",
+      "actor": "user:0xLeif",
+      "reason": "The authorized successor correction changes governed specification, policy, workflow, and portable agent-integration delivery inputs and requires fresh native evidence after those corrections are accepted.",
+      "timestamp": 1784001423,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "0xleif",
+        "timestamp": 1783963462,
+        "digest": "a85e374c456c5a93d289bb10821eccb808c2f2cc31f70f60c04a8c9be6cab591",
+        "note": "Fresh closing approval after audited reopen and successful build, vet, race-test, and four-requirement verification for the approved workflow trigger correction."
+      },
+      "prior_verification": {
+        "timestamp": 1783963452,
+        "commit": "fd32c638a48433abf55cafe6ca034ae5b3289c35",
+        "contract_digest": "9e5534a6cc01b0d78d7cd4fd3cedc24a342d10deb3ae7d9497804191cbb3ac93",
+        "workspace_digest": "6fc9916e701ba62384cae332ecf77784745667d3138fa9180845bed09dce3394",
+        "acceptance_input_digest": "ce9805bd811bd4396373bed56f2bed62624eafc26e183e2eefee06098fe29abc",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004"
+        ]
+      },
+      "stale_acceptance_input_digest": "ce9805bd811bd4396373bed56f2bed62624eafc26e183e2eefee06098fe29abc",
+      "current_acceptance_input_digest": "61de223d83d2243b5177e070df75624e11490ce43f023ee4345e6c9e799644d7"
+    },
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-go-algochat-primitives",
+      "actor": "user:0xLeif",
+      "reason": "The final SpecSync source-discovery correction excludes workflow YAML from Go source/API coverage while retaining workflow governance requirements, requiring refreshed migration evidence.",
+      "timestamp": 1784001871,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1784001789,
+        "digest": "51b32b402a0f047e36124fe6e9adfa98bb3f720ca0fe0b50fdcd548df5ba1fbb",
+        "note": "Fresh closing approval after the accepted successor corrected the canonical contract and full 100% coverage, regenerated portable integrations, and successful build, vet, and uncached race tests refreshed the migration delivery evidence."
+      },
+      "prior_verification": {
+        "timestamp": 1784001775,
+        "commit": "e96c3692a2673770d3bd7aa101eb017a55f43aaa",
+        "contract_digest": "9e5534a6cc01b0d78d7cd4fd3cedc24a342d10deb3ae7d9497804191cbb3ac93",
+        "workspace_digest": "129b2293634b4430994c15d2e6f44d10f2e897927ba0ce4bf3230d784e11025e",
+        "acceptance_input_digest": "c249004da6e0c922f379b2ac1ed749fd8a659d5bd07cee13a6169ef3a7a8c6e5",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004"
+        ]
+      },
+      "stale_acceptance_input_digest": "c249004da6e0c922f379b2ac1ed749fd8a659d5bd07cee13a6169ef3a7a8c6e5",
+      "current_acceptance_input_digest": "dffc66a2f95d450e12880dee03b4528d2a3c8f483441f84b90add4ef0ce0937c"
+    },
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-go-algochat-primitives",
+      "actor": "user:0xLeif",
+      "reason": "A final diff-hygiene correction removed one trailing blank line generated in the canonical requirements companion and requires refreshed delivery evidence.",
+      "timestamp": 1784001977,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1784001898,
+        "digest": "f5847a947e2bca88b42003e38fd8f3f41fcdad3a609d03b493400806905696b8",
+        "note": "Fresh closing approval after correcting source discovery to measure all eight production Go files at 100% without treating workflow YAML as Go API, followed by successful build, vet, and uncached race tests."
+      },
+      "prior_verification": {
+        "timestamp": 1784001883,
+        "commit": "e96c3692a2673770d3bd7aa101eb017a55f43aaa",
+        "contract_digest": "9e5534a6cc01b0d78d7cd4fd3cedc24a342d10deb3ae7d9497804191cbb3ac93",
+        "workspace_digest": "e46c8dde4cf20f20b251307382787c7f645f884efa6a75a771d34319c78ef710",
+        "acceptance_input_digest": "dffc66a2f95d450e12880dee03b4528d2a3c8f483441f84b90add4ef0ce0937c",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004"
+        ]
+      },
+      "stale_acceptance_input_digest": "dffc66a2f95d450e12880dee03b4528d2a3c8f483441f84b90add4ef0ce0937c",
+      "current_acceptance_input_digest": "11e9c9d575d6e102191d4b6829ef01b21b653b44477a5364341c280c439f47b6"
+    }
+  ]
+}

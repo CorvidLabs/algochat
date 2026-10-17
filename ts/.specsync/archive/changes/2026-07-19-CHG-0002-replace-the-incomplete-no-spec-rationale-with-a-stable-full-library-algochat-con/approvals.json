@@ -1,0 +1,110 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012057,
+      "digest": "cb446c43dce87aeccaa09be014852a87bbe67378a97423240312a77f4dd24f0b",
+      "note": "Definition reviewed: the contract documents existing TypeScript AlgoChat behavior and requires truthful 100% export, file, and line coverage without product changes."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012169,
+      "digest": "771a38ddfcc890c4a68e38800cf37675d22a393431bf7b1ad22599352e5f6311",
+      "note": "Reapproved after adding the exact 129-export inventory and correcting the semantic delta operation; behavior remains documentation-only."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012200,
+      "digest": "cb7d56367dcad6fe561f9867032f9ae44f72bbc679f940e4ef1ab14593476e77",
+      "note": "Reapproved after replacing circular verification tasks with truthful completed verification configuration; no hosted or closing success is claimed."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012394,
+      "digest": "e9a3180d4df92d564ce0279b8f0b26035d448ce132ca56d14b0042de61433678",
+      "note": "Reapproved after representing the already-staged canonical requirement content as modified rather than duplicating it; exact contract is unchanged."
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012456,
+      "digest": "cc5e7d165efceb2ff58992f9107da26faa45903b904bc2395ebb6976a7275199",
+      "note": "Reapproved after adding the explicit truthful requirement-to-test evidence map; no product or test bytes changed."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012469,
+      "digest": "25196c1e9e3594b1676e7e9d11c2a0402a93863fe5fc7e5672a2ce53a4baa0b1",
+      "note": "Closing approval after strict native build and 454/454 Bun tests passed with explicit evidence for all 20 requirements and no product changes."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012625,
+      "digest": "ad40d3d9c51952b714431f0cecdaa4af2412761c4ffca46279d7cc6c93c9720b",
+      "note": "Fresh closing approval after restoring detailed API explanations and rerunning the strict TypeScript build plus 454/454 Bun tests; semantics and product bytes remain unchanged."
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con",
+      "actor": "user:0xLeif",
+      "reason": "Restore the detailed grouped public-API explanations removed mechanically when the accepted semantic delta replaced the section table; this is a non-semantic documentation correction.",
+      "timestamp": 1784012605,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1784012469,
+        "digest": "25196c1e9e3594b1676e7e9d11c2a0402a93863fe5fc7e5672a2ce53a4baa0b1",
+        "note": "Closing approval after strict native build and 454/454 Bun tests passed with explicit evidence for all 20 requirements and no product changes."
+      },
+      "prior_verification": {
+        "timestamp": 1784012463,
+        "commit": "ed12850c6f073c8476b8dbcee2b6d1dd1075d9cb",
+        "contract_digest": "cc5e7d165efceb2ff58992f9107da26faa45903b904bc2395ebb6976a7275199",
+        "workspace_digest": "05960add6c7cd9ef02349eff1688ea29cd2a040e3c31102ba452ec0c226226c6",
+        "acceptance_input_digest": "b5a3bcfdd6f281ce92acf6f6be954fd6b4feb1f4df94d150a5a8e7d65fc906c8",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-algochat-001",
+          "REQ-algochat-002",
+          "REQ-algochat-003",
+          "REQ-algochat-004",
+          "REQ-algochat-005",
+          "REQ-algochat-006",
+          "REQ-algochat-007",
+          "REQ-algochat-008",
+          "REQ-algochat-009",
+          "REQ-algochat-010",
+          "REQ-algochat-011",
+          "REQ-algochat-012",
+          "REQ-algochat-013",
+          "REQ-algochat-014",
+          "REQ-algochat-015",
+          "REQ-algochat-016",
+          "REQ-algochat-017",
+          "REQ-algochat-018",
+          "REQ-algochat-019",
+          "REQ-algochat-020"
+        ]
+      },
+      "stale_acceptance_input_digest": "b5a3bcfdd6f281ce92acf6f6be954fd6b4feb1f4df94d150a5a8e7d65fc906c8",
+      "current_acceptance_input_digest": "49f11106506e999df6475246072b77b6ecb6d7d150115f49c9c0453334db1a13"
+    }
+  ]
+}

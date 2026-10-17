@@ -1,0 +1,25 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784436788,
+      "digest": "6f377c50a18c1704167afb0efe6548edc567b23f48b663544586f6ced2a3e930",
+      "note": "Definition reviewed and authorized by the repository owner: installs the merged conformance CI template verbatim; CI orchestration only, no spec change"
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1784437361,
+      "digest": "f2b5ba7d46cdb7a95e3c0aa211620ab182b8325c244417014b38316731fb22fe",
+      "note": "Re-approved after completing the task list wording for verification; definition unchanged: install the merged conformance CI template verbatim, CI orchestration only"
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784437523,
+      "digest": "0d2e174cc04b8f67308766c62684ed3b806d3944345b44ff771d2a65a0630890",
+      "note": "Closing approval: native Fledge lane green (type-check, build, 454/454 Bun tests); workflow file itself lands via maintainer push because the automation token lacks the workflows permission; the workflow's own PR run is the functional evidence"
+    }
+  ]
+}

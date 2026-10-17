@@ -1,0 +1,64 @@
+{
+    "name": "@corvidlabs/ts-algochat",
+    "version": "0.8.0",
+    "description": "TypeScript implementation of the AlgoChat protocol for encrypted messaging on Algorand",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "src"
+    ],
+    "scripts": {
+        "build": "bun run tsc",
+        "dev": "bun run tsc --watch",
+        "test": "bun test",
+        "clean": "rm -rf dist",
+        "prepublishOnly": "bun run build"
+    },
+    "packageManager": "bun@1.3.6",
+    "dependencies": {
+        "@noble/ciphers": "^1.0.0",
+        "@noble/curves": "^1.7.0",
+        "@noble/hashes": "^1.6.0",
+        "algosdk": "3.7.0",
+        "falcon-1024": "^0.2.0"
+    },
+    "devDependencies": {
+        "@types/bun": "^1.1.0",
+        "typescript": "^5.7.0"
+    },
+    "keywords": [
+        "algorand",
+        "encryption",
+        "messaging",
+        "blockchain",
+        "chacha20",
+        "x25519",
+        "end-to-end",
+        "crypto"
+    ],
+    "author": "CorvidLabs",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/CorvidLabs/ts-algochat"
+    },
+    "homepage": "https://github.com/CorvidLabs/ts-algochat#readme",
+    "bugs": {
+        "url": "https://github.com/CorvidLabs/ts-algochat/issues"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://npm.pkg.github.com"
+    }
+}

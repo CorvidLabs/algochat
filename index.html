@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoChat Protocol | End-to-End Encrypted Messaging on Algorand</title>
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Press Start 2P', cursive;
+        }
+        body {
+            background-color: #212529;
+            color: #f8f9fa;
+            padding: 20px;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .nes-container {
+            background-color: #2d3238;
+        }
+        .nes-container.is-dark {
+            background-color: #212529;
+        }
+        .nes-container.with-title > .title {
+            background-color: #212529;
+            color: #92cc41;
+        }
+        h1, h2, h3 {
+            color: #92cc41;
+        }
+        a {
+            color: #209cee;
+        }
+        a:hover {
+            color: #92cc41;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header i {
+            font-size: 64px;
+            color: #f7d51d;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin: 20px 0;
+        }
+        @media (max-width: 600px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .feature-item {
+            padding: 16px;
+            background-color: #1a1d21;
+            border: 2px solid #3d4348;
+        }
+        .feature-item .feature-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .feature-item i {
+            color: #f7d51d;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .feature-item strong {
+            color: #92cc41;
+        }
+        .feature-item p {
+            margin: 0;
+            color: #adb5bd;
+            font-size: 10px;
+        }
+        pre {
+            background-color: #1a1d21;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 10px;
+        }
+        code {
+            color: #92cc41;
+        }
+        .doc-links {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .doc-link {
+            text-align: center;
+            min-width: 180px;
+        }
+        .impl-table {
+            width: 100%;
+            margin-top: 15px;
+        }
+        .links-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 10px;
+        }
+        .corvid-logo {
+            color: #ff6b35;
+        }
+        .wire-format {
+            background-color: #1a1d21;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .wire-bytes {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 0;
+            font-size: 8px;
+            min-width: fit-content;
+        }
+        .byte {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 10px;
+            min-height: 40px;
+            box-sizing: border-box;
+            background-color: #2d3238;
+            border: 2px solid #92cc41;
+            white-space: nowrap;
+            text-align: center;
+        }
+        .byte.header {
+            border-color: #f7d51d;
+            background-color: #3d3520;
+        }
+        .byte.crypto {
+            border-color: #e76e55;
+            background-color: #3d2520;
+        }
+        .byte.payload {
+            border-color: #92cc41;
+            background-color: #203d25;
+        }
+        .byte.psk {
+            border-color: #a78bfa;
+            background-color: #2d2040;
+        }
+        .wire-legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 20px;
+            font-size: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border: 2px solid;
+        }
+        .legend-color.header {
+            border-color: #f7d51d;
+            background-color: #3d3520;
+        }
+        .legend-color.crypto {
+            border-color: #e76e55;
+            background-color: #3d2520;
+        }
+        .legend-color.payload {
+            border-color: #92cc41;
+            background-color: #203d25;
+        }
+        .legend-color.psk {
+            border-color: #a78bfa;
+            background-color: #2d2040;
+        }
+        .wire-summary {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #3d4348;
+            font-size: 10px;
+        }
+        .section {
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="nes-icon is-large trophy"></i>
+            <h1>AlgoChat Protocol</h1>
+            <p>End-to-end encrypted messaging on Algorand</p>
+        </div>
+
+        <section class="nes-container with-title is-dark">
+            <p class="title">Features</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-header">
+                        <i class="nes-icon is-small heart"></i>
+                        <strong>End-to-End Encryption</strong>
+                    </div>
+                    <p>X25519 + ChaCha20-Poly1305</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-header">
+                        <i class="nes-icon is-small star"></i>
+                        <strong>Per-Message Key Separation</strong>
+                    </div>
+                    <p>Fresh ephemeral key pair per message</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-header">
+                        <i class="nes-icon is-small coin"></i>
+                        <strong>Immutable Storage</strong>
+                    </div>
+                    <p>Messages stored on blockchain</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-header">
+                        <i class="nes-icon is-small trophy"></i>
+                        <strong>Decentralized</strong>
+                    </div>
+                    <p>No central server required</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-header">
+                        <i class="nes-icon is-small like"></i>
+                        <strong>Quantum Resistant</strong>
+                    </div>
+                    <p>Optional PSK mode (v1.1)</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-header">
+                        <i class="nes-icon is-small star"></i>
+                        <strong>Ratcheted Keys</strong>
+                    </div>
+                    <p>Session-bounded PSK derivation</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Wire Format</p>
+
+            <p style="margin-bottom: 12px; color: #92cc41; font-size: 10px;">v1.0 &mdash; Standard Mode (0x01)</p>
+            <div class="wire-format">
+                <div class="wire-bytes">
+                    <span class="byte header">ver:1</span>
+                    <span class="byte header">proto:1</span>
+                    <span class="byte crypto">sender_pk:32</span>
+                    <span class="byte crypto">ephemeral_pk:32</span>
+                    <span class="byte crypto">nonce:12</span>
+                    <span class="byte crypto">enc_sender:48</span>
+                    <span class="byte payload">ciphertext:var</span>
+                </div>
+                <div class="wire-summary">
+                    <strong>Header:</strong> 126 bytes &nbsp;|&nbsp; <strong>Max plaintext:</strong> 3954 bytes &nbsp;|&nbsp; <strong>Note limit:</strong> 4096 bytes
+                </div>
+            </div>
+
+            <p style="margin-bottom: 12px; margin-top: 24px; color: #f7d51d; font-size: 10px;">v1.1 &mdash; PSK Mode (0x02)</p>
+            <div class="wire-format">
+                <div class="wire-bytes">
+                    <span class="byte header">ver:1</span>
+                    <span class="byte header">proto:2</span>
+                    <span class="byte psk">counter:4</span>
+                    <span class="byte crypto">sender_pk:32</span>
+                    <span class="byte crypto">ephemeral_pk:32</span>
+                    <span class="byte crypto">nonce:12</span>
+                    <span class="byte crypto">enc_sender:48</span>
+                    <span class="byte payload">ciphertext:var</span>
+                </div>
+                <div class="wire-summary">
+                    <strong>Header:</strong> 130 bytes &nbsp;|&nbsp; <strong>Max plaintext:</strong> 3950 bytes &nbsp;|&nbsp; <strong>Note limit:</strong> 4096 bytes &nbsp;|&nbsp; <strong>Hybrid:</strong> X25519 + ratcheted PSK
+                </div>
+            </div>
+
+            <div class="wire-legend">
+                <div class="legend-item">
+                    <span class="legend-color header"></span>
+                    <span>Header</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color psk"></span>
+                    <span>PSK</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color crypto"></span>
+                    <span>Crypto</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color payload"></span>
+                    <span>Payload</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Cryptographic Primitives</p>
+            <table class="nes-table is-bordered is-dark impl-table">
+                <thead>
+                    <tr><th>Function</th><th>Algorithm</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Key Agreement</td><td>X25519 ECDH</td></tr>
+                    <tr><td>Encryption</td><td>ChaCha20-Poly1305</td></tr>
+                    <tr><td>Key Derivation</td><td>HKDF-SHA256</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">PSK Ratchet (v1.1)</p>
+            <p>Optional pre-shared key mode adds quantum resistance through hybrid key derivation.</p>
+            <table class="nes-table is-bordered is-dark impl-table" style="margin-top: 15px;">
+                <thead>
+                    <tr><th>Property</th><th>Standard (0x01)</th><th>PSK (0x02)</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Key derivation</td>
+                        <td>X25519 ECDH</td>
+                        <td>X25519 + ratcheted PSK</td>
+                    </tr>
+                    <tr>
+                        <td>Quantum resistance</td>
+                        <td><span class="nes-text is-error">No</span></td>
+                        <td><span class="nes-text is-success">Defense-in-depth</span></td>
+                    </tr>
+                    <tr>
+                        <td>Max plaintext</td>
+                        <td>3954 bytes</td>
+                        <td>3950 bytes</td>
+                    </tr>
+                    <tr>
+                        <td>Session size</td>
+                        <td>N/A</td>
+                        <td>100 messages</td>
+                    </tr>
+                    <tr>
+                        <td>Out-of-order delivery</td>
+                        <td><span class="nes-text is-success">Yes</span></td>
+                        <td><span class="nes-text is-success">Yes (counter window)</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 16px; font-size: 10px; color: #adb5bd;">
+                The ratchet derives a unique key per message from a shared PSK using deterministic session-based HKDF.
+                An attacker must break <strong style="color: #e76e55;">both</strong> X25519 and know the PSK to decrypt.
+            </p>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Documentation</p>
+            <div class="doc-links">
+                <a href="https://github.com/CorvidLabs/protocol-algochat/blob/main/PROTOCOL.md" class="nes-btn is-primary doc-link">
+                    PROTOCOL.md
+                </a>
+                <a href="https://github.com/CorvidLabs/protocol-algochat/blob/main/IMPLEMENTATION.md" class="nes-btn is-success doc-link">
+                    IMPLEMENTATION.md
+                </a>
+                <a href="https://github.com/CorvidLabs/protocol-algochat/blob/main/SECURITY.md" class="nes-btn is-warning doc-link">
+                    SECURITY.md
+                </a>
+                <a href="https://github.com/CorvidLabs/protocol-algochat/blob/main/TEST-VECTORS.md" class="nes-btn doc-link">
+                    TEST-VECTORS.md
+                </a>
+                <a href="docs/HLD.html" class="nes-btn is-error doc-link">
+                    HLD (DESIGN)
+                </a>
+            </div>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Implementations</p>
+            <table class="nes-table is-bordered is-dark impl-table">
+                <thead>
+                    <tr><th>Language</th><th>Repository</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Swift</td>
+                        <td><a href="https://github.com/CorvidLabs/swift-algochat">swift-algochat</a></td>
+                        <td><span class="nes-text is-success">Production</span></td>
+                    </tr>
+                    <tr>
+                        <td>TypeScript</td>
+                        <td><a href="https://github.com/CorvidLabs/ts-algochat">ts-algochat</a></td>
+                        <td><span class="nes-text is-warning">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td>Python</td>
+                        <td><a href="https://github.com/CorvidLabs/py-algochat">py-algochat</a></td>
+                        <td><span class="nes-text is-warning">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td>Rust</td>
+                        <td><a href="https://github.com/CorvidLabs/rs-algochat">rs-algochat</a></td>
+                        <td><span class="nes-text is-warning">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td>Kotlin</td>
+                        <td><a href="https://github.com/CorvidLabs/kt-algochat">kt-algochat</a></td>
+                        <td><span class="nes-text is-warning">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td>Angular</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat-web">algochat-web</a></td>
+                        <td><span class="nes-text is-warning">Active</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="status.html" class="nes-btn">View Test Status Dashboard</a>
+            </div>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Transport</p>
+            <p>Messages are transmitted as the <code>note</code> field of Algorand payment transactions:</p>
+            <ul class="nes-list is-disc" style="margin-top: 15px;">
+                <li>Minimum payment: 0 ALGO</li>
+                <li>Fee is the scheme minimum for the first 1024 note bytes, then a surcharge. At a 1,000 µAlgo min-fee, 4096 bytes is 1308 µAlgo (Ed25519) or 3308 µAlgo (Falcon-1024).</li>
+                <li>Note field limit: 4096 bytes. 4097 is not a legal note.</li>
+            </ul>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Version History</p>
+            <table class="nes-table is-bordered is-dark impl-table">
+                <thead>
+                    <tr><th>Version</th><th>Changes</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="nes-text is-success">1.0</span></td>
+                        <td>Initial specification. Standard mode (0x01) with X25519 + ChaCha20-Poly1305.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="nes-text is-warning">1.1</span></td>
+                        <td>Add ratcheting PSK mode (0x02). Hybrid X25519 + pre-shared key derivation for quantum defense-in-depth.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="nes-text is-success">1.2</span></td>
+                        <td>Account agility: payments MAY use Falcon-1024 pqsig. Encryption seed is mnemonic entropy. Envelope bytes unchanged.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="nes-text is-success">1.2.1</span></td>
+                        <td>Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit 4096 bytes. Standard plaintext 3954, PSK plaintext 3950. Scheme minimum covers the first 1024 note bytes.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="links-section">
+            <a href="https://github.com/CorvidLabs/protocol-algochat" class="nes-btn is-primary">
+                GitHub
+            </a>
+            <a href="https://github.com/CorvidLabs/protocol-algochat/blob/main/PROTOCOL.md" class="nes-btn is-success">
+                Full Spec
+            </a>
+        </div>
+
+        <footer>
+            <p>Made with <i class="nes-icon is-small heart"></i> by <span class="corvid-logo">Corvid Labs</span></p>
+            <p>
+                <a href="https://github.com/CorvidLabs" target="_blank" rel="noopener noreferrer">GitHub</a>
+                &nbsp;·&nbsp;
+                <a href="https://discord.gg/JJWFBPkSJm" target="_blank" rel="noopener noreferrer">Discord</a>
+                &nbsp;·&nbsp;
+                <a href="https://x.com/corvid_algo" target="_blank" rel="noopener noreferrer">Twitter</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

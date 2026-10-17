@@ -1,0 +1,51 @@
+name: macOS
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".github/workflows/macOS.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".github/workflows/macOS.yml"
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macOS:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v5
+    - name: Build
+      run: swift build -v
+    # Run tests in 2 batches. Limit ~12 suites per batch — too many
+    # concurrent suites crash CryptoKit/BoringSSL (signal 5).
+    # Max 2 swift test invocations (3rd+ crashes on startup).
+    #
+    # Excluded suites (crash in CI regardless of batching):
+    #   - ForwardSecrecyProof: signal 5 even when run alone
+    #   - EncryptionTests, EdgeCaseTests, PSKEncryptionTests,
+    #     CrossProtocolTests, ReplyContextTests: heavy crypto
+    #   - E2E simulation suites: crypto-heavy, crash in CI
+    #   - LocalnetIntegrationTests: requires Docker/algokit localnet
+    #   - CustomAmountIntegrationTests: requires Docker/algokit localnet
+    - name: Run tests (batch 1 — crypto + envelope)
+      run: >-
+        swift test -v
+        --filter "ChatEnvelope|MessageEncryptor|KeyDerivation|KeyStorage|KeyVerification"
+    - name: Run tests (batch 2 — unit + non-crypto)
+      run: >-
+        swift test -v
+        --filter "ChatErrorTests|CustomAmountTests/|MessageCodableTests|MessageDirectionTests|MessageEqualityTests|ConversationMergeTests|PendingMessageTests|SendQueueTests|InMemorySendQueueStorageTests|InMemoryMessageCacheTests|FileSendQueueStorageTests|ReplyContextModelTests|SyncManager|PSKEnvelopeTests|PSKExchangeURITests|PSKStateTests|PublicKeyCacheTests|DiscoveredKeyTests|PSKRatchetTests"

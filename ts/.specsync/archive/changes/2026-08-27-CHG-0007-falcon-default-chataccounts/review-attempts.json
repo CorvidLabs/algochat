@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "CHG-0007-falcon-default-chataccounts",
+      "reviewer": "grok",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "bd0a1513bb2201bcc15a237ccdc1ad5ea7809c58",
+      "contract_digest": "6e173657acedc6b8406f144f6bd61b4edda2aa97c04be962868f53b1321ca164",
+      "execution_digest": "6e173657acedc6b8406f144f6bd61b4edda2aa97c04be962868f53b1321ca164",
+      "workspace_digest": "b492ef56519fc579839a96c3d2f679f478450cbb03d4051af9cfa8c96c33fa97",
+      "timestamp": 1787873832
+    }
+  ]
+}

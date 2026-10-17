@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792194921,
+      "commit": "b20f439db6b081ff7d9ded969e92d39cc3309134",
+      "contract_digest": "959a0b507deba8da2d696defc1c4384e07bf741539413ff40afaae2cef1c9254",
+      "workspace_digest": "32f7c3474c05d12e83c446f086d19a024121b4b29541ab44eba0de1ddc7d034c",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-001",
+        "REQ-algochat-008"
+      ]
+    }
+  ]
+}

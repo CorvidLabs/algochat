@@ -1,0 +1,421 @@
+name: Implementation Status
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - implementations.json
+      - scripts/**
+      - .github/workflows/status.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - implementations.json
+      - scripts/**
+      - .github/workflows/status.yml
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: status-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-swift:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout swift-algochat
+        uses: actions/checkout@v5
+        with:
+          repository: CorvidLabs/swift-algochat
+
+      - name: Run Swift tests
+        run: |
+          set +e
+          START_TIME=$(date +%s)
+          swift test 2>&1 | tee swift_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          END_TIME=$(date +%s)
+          DURATION=$(( (END_TIME - START_TIME) * 1000 ))
+
+          echo "=== Test output tail ==="
+          tail -20 swift_output.txt
+
+          # Simple pass/fail: check if Test Suite passed
+          if grep -q "Test Suite.*passed\|Test run.*passed\|✅" swift_output.txt; then
+            STATUS="passing"
+            ERROR="null"
+          elif [ $EXIT_CODE -eq 0 ]; then
+            STATUS="passing"
+            ERROR="null"
+          else
+            STATUS="failing"
+            ERROR="\"Tests failed\""
+          fi
+
+          echo ">>> Status: $STATUS (exit code: $EXIT_CODE)"
+
+          cat > swift-algochat.json << EOF
+          {
+            "implementationId": "swift-algochat",
+            "status": "$STATUS",
+            "duration": $DURATION,
+            "error": $ERROR,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat swift-algochat.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-algochat-result
+          path: swift-algochat.json
+
+  test-typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout ts-algochat
+        uses: actions/checkout@v5
+        with:
+          repository: CorvidLabs/ts-algochat
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run TypeScript tests
+        run: |
+          set +e
+          START_TIME=$(date +%s)
+          bun test 2>&1 | tee test_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          END_TIME=$(date +%s)
+          DURATION=$(( (END_TIME - START_TIME) * 1000 ))
+
+          cat test_output.txt
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            STATUS="passing"
+            ERROR="null"
+          else
+            STATUS="failing"
+            ERROR="\"Tests failed\""
+          fi
+
+          echo ">>> Status: $STATUS"
+
+          cat > ts-algochat.json << EOF
+          {
+            "implementationId": "ts-algochat",
+            "status": "$STATUS",
+            "duration": $DURATION,
+            "error": $ERROR,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat ts-algochat.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: ts-algochat-result
+          path: ts-algochat.json
+
+  test-python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout py-algochat
+        uses: actions/checkout@v5
+        with:
+          repository: CorvidLabs/py-algochat
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]" || pip install -e .
+          pip install pytest
+
+      - name: Run Python tests
+        run: |
+          set +e
+          START_TIME=$(date +%s)
+          pytest -v 2>&1 | tee test_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          END_TIME=$(date +%s)
+          DURATION=$(( (END_TIME - START_TIME) * 1000 ))
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            STATUS="passing"
+            ERROR="null"
+          else
+            STATUS="failing"
+            ERROR="\"Tests failed\""
+          fi
+
+          echo ">>> Status: $STATUS"
+
+          cat > py-algochat.json << EOF
+          {
+            "implementationId": "py-algochat",
+            "status": "$STATUS",
+            "duration": $DURATION,
+            "error": $ERROR,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat py-algochat.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: py-algochat-result
+          path: py-algochat.json
+
+  test-rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout rs-algochat
+        uses: actions/checkout@v5
+        with:
+          repository: CorvidLabs/rs-algochat
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust tests
+        run: |
+          set +e
+          START_TIME=$(date +%s)
+          cargo test 2>&1 | tee test_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          END_TIME=$(date +%s)
+          DURATION=$(( (END_TIME - START_TIME) * 1000 ))
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            STATUS="passing"
+            ERROR="null"
+          else
+            STATUS="failing"
+            ERROR="\"Tests failed\""
+          fi
+
+          echo ">>> Status: $STATUS"
+
+          cat > rs-algochat.json << EOF
+          {
+            "implementationId": "rs-algochat",
+            "status": "$STATUS",
+            "duration": $DURATION,
+            "error": $ERROR,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat rs-algochat.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: rs-algochat-result
+          path: rs-algochat.json
+
+  test-kotlin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout kt-algochat
+        uses: actions/checkout@v5
+        with:
+          repository: CorvidLabs/kt-algochat
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Run Kotlin tests
+        run: |
+          set +e
+          START_TIME=$(date +%s)
+          ./gradlew test --console=plain 2>&1 | tee test_output.txt || gradle test --console=plain 2>&1 | tee test_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          END_TIME=$(date +%s)
+          DURATION=$(( (END_TIME - START_TIME) * 1000 ))
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            STATUS="passing"
+            ERROR="null"
+          else
+            STATUS="failing"
+            ERROR="\"Tests failed\""
+          fi
+
+          echo ">>> Status: $STATUS"
+
+          cat > kt-algochat.json << EOF
+          {
+            "implementationId": "kt-algochat",
+            "status": "$STATUS",
+            "duration": $DURATION,
+            "error": $ERROR,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat kt-algochat.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: kt-algochat-result
+          path: kt-algochat.json
+
+  test-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout algochat-web
+        uses: actions/checkout@v5
+        with:
+          repository: CorvidLabs/algochat-web
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: |
+          set +e
+          START_TIME=$(date +%s)
+
+          # Check if tests exist
+          if [ -d "tests" ] || [ -d "test" ] || ls *.test.ts >/dev/null 2>&1 || ls **/*.test.ts >/dev/null 2>&1; then
+            bun test 2>&1 | tee test_output.txt
+            EXIT_CODE=${PIPESTATUS[0]}
+          else
+            echo "No tests found"
+            EXIT_CODE=0
+          fi
+
+          END_TIME=$(date +%s)
+          DURATION=$(( (END_TIME - START_TIME) * 1000 ))
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            STATUS="passing"
+            ERROR="null"
+          else
+            STATUS="failing"
+            ERROR="\"Tests failed\""
+          fi
+
+          echo ">>> Status: $STATUS"
+
+          cat > algochat-web.json << EOF
+          {
+            "implementationId": "algochat-web",
+            "status": "$STATUS",
+            "duration": $DURATION,
+            "error": $ERROR,
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          cat algochat-web.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: algochat-web-result
+          path: algochat-web.json
+
+  generate-status:
+    needs: [test-swift, test-typescript, test-python, test-rust, test-kotlin, test-web]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout protocol repo
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Organize results
+        run: |
+          mkdir -p test-results badges
+          for dir in artifacts/*-result; do
+            if [ -d "$dir" ]; then
+              for f in "$dir"/*.json; do
+                cp "$f" test-results/
+              done
+            fi
+          done
+          echo "=== Test Results ==="
+          cat test-results/*.json
+
+      - name: Generate status page
+        run: bun scripts/generate-status.ts
+
+      - name: Upload status artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-page
+          path: |
+            status.html
+            badges/
+
+  deploy:
+    needs: generate-status
+    if: always() && needs.generate-status.result == 'success' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download status page
+        uses: actions/download-artifact@v4
+        with:
+          name: status-page
+          path: ./
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

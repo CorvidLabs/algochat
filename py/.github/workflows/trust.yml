@@ -1,0 +1,37 @@
+name: trust
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  trust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install verification dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" "ruff==0.15.21"
+      - name: SpecSync lifecycle gate
+        uses: CorvidLabs/spec-sync@v6 # v6.0.0
+        with:
+          version: "6.0.0"
+          root: .
+          strict: "true"
+          require-coverage: "100"
+          lifecycle-enforce: "true"
+      - name: CorvidLabs Trust gate
+        id: trust
+        uses: CorvidLabs/trust@dd52a7a90ffbc1d2b1030e37007c18274f3d96bc # v1.2.1

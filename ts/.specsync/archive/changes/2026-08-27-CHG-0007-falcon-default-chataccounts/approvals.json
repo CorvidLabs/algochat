@@ -1,0 +1,32 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1787873486,
+      "digest": "66f7656dd44caaf7b57521e6871c227c02d4db199661ce30c9180a41fa46076e",
+      "note": "Proceed with SpecSync 6 RC; Trust 5.0.1 pin may stay red.",
+      "approved_delta_digests": {
+        "algochat": "26b15c233333b32c0844fa564375afd5d4e66d6496cb04c46924936bb4a2062d"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1787873611,
+      "digest": "6e173657acedc6b8406f144f6bd61b4edda2aa97c04be962868f53b1321ca164",
+      "note": "Re-approve after requirement evidence table; SpecSync 6 RC.",
+      "approved_delta_digests": {
+        "algochat": "26b15c233333b32c0844fa564375afd5d4e66d6496cb04c46924936bb4a2062d"
+      }
+    },
+    {
+      "gate": "acceptance",
+      "actor": "0xLeif",
+      "timestamp": 1787873978,
+      "digest": "d629aa80512cb3f83e660435c0b52dda414a7023413bb346196156cff38e5b1d",
+      "note": "Closing approval for SpecSync 6 RC Falcon ChatAccounts."
+    }
+  ],
+  "reopenings": []
+}

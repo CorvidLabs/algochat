@@ -1,0 +1,9 @@
+# fledge.toml — project task definitions
+[tasks]
+build = "go build ./..."
+vet = "go vet ./..."
+test = "go test -v -race -count=1 ./..."
+
+[lanes.verify]
+description = "Build, vet, and race-test the Go AlgoChat primitives"
+steps = ["build", "vet", "test"]

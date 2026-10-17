@@ -1,0 +1,61 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783958399,
+      "digest": "7ff60e5d75b8e503e544bbbdcb22625d14de272c0114bc26c56042b8ae6b1698",
+      "note": "Definition approval after review of truthful completed preparation/configuration tasks and previously completed native verification; hosted CI and closing approval remain later gates."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1783958885,
+      "digest": "ee7d1426a919196af81e7a95c175612a7f37c8979f8cae0f2c5fd788ee9381bf",
+      "note": "Closing approval after committed-head JDK 17 test, build, and JAR verification passed; hosted JDK 17/21 and Trust checks remain independent post-push gates."
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1784012839,
+      "digest": "07b9636ec7b47c58615919cc09a2dd383a36ba5efed4b1d141dc3d3b96e0340c",
+      "note": "Fresh closing approval after the unchanged governance migration passed the current test, build, and JAR lane alongside complete canonical SDD adoption; prior approval and reopen audit are preserved."
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-kotlin-algochat",
+      "actor": "user:0xLeif",
+      "reason": "The accepted rollout evidence predates the completed full SDD contracts and CI-trigger correction on this branch; refresh the unchanged governance migration against the current delivery inputs without altering runtime behavior.",
+      "timestamp": 1784012819,
+      "from_state": "accepted",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "acceptance",
+        "actor": "user:0xLeif",
+        "timestamp": 1783958885,
+        "digest": "ee7d1426a919196af81e7a95c175612a7f37c8979f8cae0f2c5fd788ee9381bf",
+        "note": "Closing approval after committed-head JDK 17 test, build, and JAR verification passed; hosted JDK 17/21 and Trust checks remain independent post-push gates."
+      },
+      "prior_verification": {
+        "timestamp": 1783958872,
+        "commit": "6d4d73426649f939a01bf4082b6bc965eb6b8565",
+        "contract_digest": "7ff60e5d75b8e503e544bbbdcb22625d14de272c0114bc26c56042b8ae6b1698",
+        "workspace_digest": "6d3dc12b0a9fb836190c8fe160f4c5939799742ff5a95e8e937c03077068a8d7",
+        "acceptance_input_digest": "060b5929aa9f1f9284c1049fb0abad9bae7b139ef9c2f5202f41045436a95dfe",
+        "passed": true,
+        "commands": [
+          {
+            "command": "fledge lanes run verify",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": []
+      },
+      "stale_acceptance_input_digest": "060b5929aa9f1f9284c1049fb0abad9bae7b139ef9c2f5202f41045436a95dfe",
+      "current_acceptance_input_digest": "91b30d7b3f1e01ccc43da0829519600e8a3510b8b3b562b034380d3e2be0136a"
+    }
+  ]
+}

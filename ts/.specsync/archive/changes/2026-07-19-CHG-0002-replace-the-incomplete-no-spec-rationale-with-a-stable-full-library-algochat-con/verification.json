@@ -1,0 +1,37 @@
+{
+  "timestamp": 1784012617,
+  "commit": "ef1806e4c99b5f5bed4498274606922281c094c6",
+  "contract_digest": "cc5e7d165efceb2ff58992f9107da26faa45903b904bc2395ebb6976a7275199",
+  "workspace_digest": "91fbb4ef135b109ca95e5f3243787261e8892e9291b8f6a95caefeeab2284552",
+  "acceptance_input_digest": "49f11106506e999df6475246072b77b6ecb6d7d150115f49c9c0453334db1a13",
+  "passed": true,
+  "commands": [
+    {
+      "command": "fledge lanes run verify",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-algochat-001",
+    "REQ-algochat-002",
+    "REQ-algochat-003",
+    "REQ-algochat-004",
+    "REQ-algochat-005",
+    "REQ-algochat-006",
+    "REQ-algochat-007",
+    "REQ-algochat-008",
+    "REQ-algochat-009",
+    "REQ-algochat-010",
+    "REQ-algochat-011",
+    "REQ-algochat-012",
+    "REQ-algochat-013",
+    "REQ-algochat-014",
+    "REQ-algochat-015",
+    "REQ-algochat-016",
+    "REQ-algochat-017",
+    "REQ-algochat-018",
+    "REQ-algochat-019",
+    "REQ-algochat-020"
+  ]
+}

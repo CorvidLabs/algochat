@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoChat Status</title>
+    <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Press Start 2P', cursive; }
+        body {
+            background-color: #212529;
+            color: #f8f9fa;
+            padding: 20px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        .nes-container { background-color: #2d3238; }
+        .nes-container.is-dark { background-color: #212529; }
+        .nes-container.with-title > .title {
+            background-color: #212529;
+            color: #92cc41;
+        }
+        h1 { color: #92cc41; font-size: 18px; }
+        a { color: #209cee; }
+        a:hover { color: #92cc41; }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .header i { font-size: 48px; color: #f7d51d; }
+        .header p { color: #adb5bd; font-size: 10px; margin-top: 8px; }
+
+        .summary {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin: 24px 0;
+        }
+        .stat { text-align: center; }
+        .stat-value {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .stat-value.green { color: #92cc41; }
+        .stat-value.red { color: #e76e55; }
+        .stat-label { font-size: 8px; color: #6c757d; }
+
+        .impl-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        .impl-table th {
+            text-align: left;
+            padding: 12px 8px;
+            border-bottom: 2px solid #92cc41;
+            color: #92cc41;
+            font-size: 9px;
+        }
+        .impl-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #3d4348;
+            vertical-align: middle;
+        }
+        .impl-table tr:hover td { background-color: #2d3238; }
+        .impl-table a { text-decoration: none; }
+        .impl-table a:hover { text-decoration: underline; }
+
+        .tests-col { text-align: center; }
+        .test-status {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 9px;
+            min-width: 48px;
+            text-align: center;
+        }
+        .test-success { color: #92cc41; }
+        .test-warning { color: #f7d51d; }
+        .test-error { color: #e76e55; }
+        .test-none { color: #6c757d; }
+        .test-pending { color: #6c757d; }
+
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+        }
+        .links .nes-btn { font-size: 10px; }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 16px;
+            color: #6c757d;
+            font-size: 8px;
+        }
+        .corvid { color: #ff6b35; }
+
+        .section { margin-top: 24px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="nes-icon trophy"></i>
+            <h1>Implementation Status</h1>
+            <p>Test results for AlgoChat protocol implementations</p>
+        </div>
+
+        <section class="nes-container with-title is-dark">
+            <p class="title">Summary</p>
+            <div class="summary">
+                <div class="stat">
+                    <span class="stat-value green">0</span>
+                    <span class="stat-label">Passed</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value ">0</span>
+                    <span class="stat-label">Failed</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">0</span>
+                    <span class="stat-label">Total</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="nes-container with-title is-dark section">
+            <p class="title">Implementations</p>
+            <table class="impl-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Language</th>
+                        <th>Platforms</th>
+                        <th>Status</th>
+                        <th class="tests-col">Tests</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                <tr>
+                    <td>
+                        <a href="https://github.com/CorvidLabs/swift-algochat">swift-algochat</a>
+                    </td>
+                    <td>Swift</td>
+                    <td>iOS, macOS, Linux</td>
+                    <td><span class="nes-text is-success">Production</span></td>
+                    <td class="tests-col"><span class="test-status test-pending">...</span></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <a href="https://github.com/CorvidLabs/ts-algochat">ts-algochat</a>
+                    </td>
+                    <td>TypeScript</td>
+                    <td>Node.js, Browsers</td>
+                    <td><span class="nes-text is-warning">Active</span></td>
+                    <td class="tests-col"><span class="test-status test-pending">...</span></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <a href="https://github.com/CorvidLabs/py-algochat">py-algochat</a>
+                    </td>
+                    <td>Python</td>
+                    <td>Python 3.10+</td>
+                    <td><span class="nes-text is-warning">Active</span></td>
+                    <td class="tests-col"><span class="test-status test-pending">...</span></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <a href="https://github.com/CorvidLabs/rs-algochat">rs-algochat</a>
+                    </td>
+                    <td>Rust</td>
+                    <td>Cargo crate</td>
+                    <td><span class="nes-text is-warning">Active</span></td>
+                    <td class="tests-col"><span class="test-status test-pending">...</span></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <a href="https://github.com/CorvidLabs/kt-algochat">kt-algochat</a>
+                    </td>
+                    <td>Kotlin</td>
+                    <td>JVM, Android</td>
+                    <td><span class="nes-text is-warning">Active</span></td>
+                    <td class="tests-col"><span class="test-status test-pending">...</span></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <a href="https://github.com/CorvidLabs/algochat-web">algochat-web</a>
+                    </td>
+                    <td>Angular</td>
+                    <td>Web app with NES.css</td>
+                    <td><span class="nes-text is-warning">Active</span></td>
+                    <td class="tests-col"><span class="test-status test-pending">...</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="links">
+            <a href="index.html" class="nes-btn is-primary">Protocol</a>
+            <a href="https://github.com/CorvidLabs/protocol-algochat" class="nes-btn">GitHub</a>
+        </div>
+
+        <footer>
+            <p>Made with <i class="nes-icon is-small heart"></i> by <span class="corvid">Corvid Labs</span></p>
+            <p style="margin-top: 8px;">
+                <a href="https://github.com/CorvidLabs" target="_blank" rel="noopener noreferrer">GitHub</a>
+                &nbsp;·&nbsp;
+                <a href="https://discord.gg/JJWFBPkSJm" target="_blank" rel="noopener noreferrer">Discord</a>
+                &nbsp;·&nbsp;
+                <a href="https://x.com/corvid_algo" target="_blank" rel="noopener noreferrer">Twitter</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

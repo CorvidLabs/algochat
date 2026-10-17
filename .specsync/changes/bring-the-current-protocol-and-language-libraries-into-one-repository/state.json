@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "bring-the-current-protocol-and-language-libraries-into-one-repository",
+  "slug": "bring-the-current-protocol-and-language-libraries-into-one-repository",
+  "title": "Bring the current protocol and language libraries into one repository",
+  "description": "Bring the current protocol and language libraries into one repository",
+  "kind": "migration",
+  "state": "approved",
+  "base_commit": "32b70eabbe39a6045d4557ab782c0fe150e6ce91",
+  "created_at": 1792262114,
+  "updated_at": 1792262172,
+  "affected_specs": [],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "TEST-VECTORS.md",
+    "SECURITY.md",
+    "IMPLEMENTATION.md",
+    "implementations.json",
+    "hi",
+    "ts",
+    "swift",
+    "py",
+    "rs",
+    "kt",
+    "go",
+    ".github"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The wire format stays protocols 0x01 and 0x02 with a 4096-byte note. This commit relocates the existing documents and libraries.",
+  "acceptance_criteria": [
+    "The protocol documents and the TypeScript, Swift, Python, Rust, Kotlin, and Go libraries from their 4096-byte note releases are in this repository. Protocols stay 0x01 and 0x02. Post-quantum envelopes are absent. hi check passes and bun scripts/validate.ts passes."
+  ],
+  "selected_artifacts": [
+    "context",
+    "research",
+    "design",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}

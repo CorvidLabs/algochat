@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "5a9df4c0bfb3484240ca343f59ad4ccdc6ba234b",
+  "contract_digest": "e58abae594030f94035de8cde3982fae2f5524e39914796adb352e0578a84e3f",
+  "execution_digest": "e58abae594030f94035de8cde3982fae2f5524e39914796adb352e0578a84e3f",
+  "workspace_digest": "ffa9153a86bccf462cb46dca29dc466fab229b5dfa5f0d308a1b2c8b3887818c",
+  "timestamp": 1789917892
+}

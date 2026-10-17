@@ -1,0 +1,18 @@
+[tasks]
+build = "bun run tsc"
+test = "bun test"
+clean = "rm -rf dist"
+docs = "bunx typedoc@0.28"
+
+[lanes.check]
+steps = ["build"]
+
+[lanes.ci]
+steps = ["build", "test"]
+
+[lanes.pre-commit]
+steps = ["build", "test"]
+
+[lanes.verify]
+description = "Build and test the TypeScript AlgoChat package"
+steps = ["build", "test"]
