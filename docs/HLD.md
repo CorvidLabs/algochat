@@ -364,7 +364,7 @@ sequenceDiagram
     participant L as Ledger
     participant R as Recipient
     S->>L: payment whose note is protocol 0x04
-    Note over S: note is 1278 bytes, version 0x02
+    Note over S: note is 2366 bytes, version 0x02
     L->>R: handshake
     R->>R: decapsulate ML-KEM-768 and finish X25519
     S->>L: payment whose note is protocol 0x05
@@ -398,7 +398,7 @@ Offsets are from the deserializer in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (
 | Largest plaintext payload | 3954 bytes | 3950 bytes |
 | Note prefix for indexer filtering | `0x0101` or `0x0201` | `0x0102` or `0x0202` |
 
-Hybrid session notes are separate from this table. A handshake is version `0x02` and protocol `0x04` (prefix `0x0204`, 1278 bytes). A session message is version `0x02` and protocol `0x05` (prefix `0x0205`). Both are specified in [PROTOCOL.md](../PROTOCOL.md) section 5.7.
+Hybrid session notes are separate from this table. A handshake is version `0x02` and protocol `0x04` (prefix `0x0204`, 2366 bytes). A session message is version `0x02` and protocol `0x05` (prefix `0x0205`). The sender copy on the handshake needs both X25519 and ML-KEM. Both layouts are specified in [PROTOCOL.md](../PROTOCOL.md) section 5.7.
 
 ### 5.2 Payload
 

@@ -46,7 +46,7 @@ sequenceDiagram
     participant L as Ledger
     participant R as Recipient
     S->>L: payment, note is a 0x04 handshake
-    L->>R: handshake, 1278 bytes
+    L->>R: handshake, 2366 bytes
     R->>R: X25519 plus ML-KEM-768, then the session key
     S->>L: payment, note is a 0x05 message
     L->>R: message note

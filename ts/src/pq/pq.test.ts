@@ -16,7 +16,7 @@ import {
     isPQMessage,
     openPQSessionAsSender,
 } from './session.js';
-import { PQ_HANDSHAKE_SIZE, PQ_MAX_PAYLOAD_SIZE, PQ_PROTOCOL } from './types.js';
+import { PQ_DATA_HEADER_SIZE, PQ_HANDSHAKE_SIZE, PQ_MAX_PAYLOAD_SIZE, PQ_PROTOCOL } from './types.js';
 
 const HYBRID_VECTOR = '9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734';
 
@@ -28,9 +28,11 @@ describe('hybrid PQ session', () => {
     test('handshake fits one note and both sides derive the same key', () => {
         const alice = deriveEncryptionKeys(ALICE_SEED);
         const bob = deriveEncryptionKeys(BOB_SEED);
+        const aliceKem = deriveMLKEMKeyPair(ALICE_SEED);
         const bobKem = deriveMLKEMKeyPair(BOB_SEED);
         const { note, session } = initiatePQSession({
             sender: alice,
+            senderEncapsKey: aliceKem.encapsKey,
             recipientPublicKey: bob.publicKey,
             recipientEncapsKey: bobKem.encapsKey,
             kemRandomness: KEM_COINS,
@@ -46,16 +48,21 @@ describe('hybrid PQ session', () => {
         expect(Buffer.from(accepted.sessionKey).equals(Buffer.from(session.sessionKey))).toBe(true);
         expect(Buffer.from(accepted.handshakeId).equals(Buffer.from(session.handshakeId))).toBe(true);
 
-        const reopened = openPQSessionAsSender(note, alice);
+        const reopened = openPQSessionAsSender(note, alice, aliceKem.decapsKey);
         expect(Buffer.from(reopened.sessionKey).equals(Buffer.from(session.sessionKey))).toBe(true);
+
+        const stranger = deriveMLKEMKeyPair(new Uint8Array(32).fill(0x44));
+        expect(() => openPQSessionAsSender(note, alice, stranger.decapsKey)).toThrow(/sender wrap failed/);
     });
 
     test('a message round-trips and a flipped byte fails closed', () => {
         const alice = deriveEncryptionKeys(ALICE_SEED);
         const bob = deriveEncryptionKeys(BOB_SEED);
+        const aliceKem = deriveMLKEMKeyPair(ALICE_SEED);
         const bobKem = deriveMLKEMKeyPair(BOB_SEED);
         const { note, session } = initiatePQSession({
             sender: alice,
+            senderEncapsKey: aliceKem.encapsKey,
             recipientPublicKey: bob.publicKey,
             recipientEncapsKey: bobKem.encapsKey,
         });
@@ -63,19 +70,26 @@ describe('hybrid PQ session', () => {
         const message = encryptPQMessage('quantum hello', session);
         expect(isPQMessage(message)).toBe(true);
         expect(decryptPQMessage(message, bobSession)).toBe('quantum hello');
-        expect(decryptPQMessage(message, openPQSessionAsSender(note, alice))).toBe('quantum hello');
+        expect(decryptPQMessage(message, openPQSessionAsSender(note, alice, aliceKem.decapsKey))).toBe(
+            'quantum hello'
+        );
 
-        const tampered = new Uint8Array(message);
-        tampered[tampered.length - 1] ^= 0x01;
-        expect(() => decryptPQMessage(tampered, bobSession)).toThrow(/authentication failed/);
+        const tagFlip = new Uint8Array(message);
+        tagFlip[tagFlip.length - 1] ^= 0x01;
+        expect(() => decryptPQMessage(tagFlip, bobSession)).toThrow(/authentication failed/);
+        const bodyFlip = new Uint8Array(message);
+        bodyFlip[PQ_DATA_HEADER_SIZE] ^= 0x01;
+        expect(() => decryptPQMessage(bodyFlip, bobSession)).toThrow(/authentication failed/);
     });
 
     test('the full plaintext budget fits and one extra byte does not', () => {
         const alice = deriveEncryptionKeys(ALICE_SEED);
         const bob = deriveEncryptionKeys(BOB_SEED);
+        const aliceKem = deriveMLKEMKeyPair(ALICE_SEED);
         const bobKem = deriveMLKEMKeyPair(BOB_SEED);
         const { session } = initiatePQSession({
             sender: alice,
+            senderEncapsKey: aliceKem.encapsKey,
             recipientPublicKey: bob.publicKey,
             recipientEncapsKey: bobKem.encapsKey,
         });

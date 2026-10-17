@@ -59,8 +59,10 @@ function write(aliceHex: string, bobHex: string, text: string): Record<string, u
     const alice = deriveEncryptionKeys(fromHex(aliceHex));
     const bob = deriveEncryptionKeys(fromHex(bobHex));
     const kem = deriveMLKEMKeyPair(fromHex(bobHex));
+    const aliceKem = deriveMLKEMKeyPair(fromHex(aliceHex));
     const { note, session } = initiatePQSession({
         sender: alice,
+        senderEncapsKey: aliceKem.encapsKey,
         recipientPublicKey: bob.publicKey,
         recipientEncapsKey: kem.encapsKey,
     });
@@ -126,8 +128,10 @@ function read02(
 function write05s(aliceHex: string, bobHex: string, texts: string[]): Record<string, unknown> {
     const { alice, bob } = pair(aliceHex, bobHex);
     const kem = deriveMLKEMKeyPair(fromHex(bobHex));
+    const aliceKem = deriveMLKEMKeyPair(fromHex(aliceHex));
     const { note, session } = initiatePQSession({
         sender: alice,
+        senderEncapsKey: aliceKem.encapsKey,
         recipientPublicKey: bob.publicKey,
         recipientEncapsKey: kem.encapsKey,
     });
@@ -146,7 +150,8 @@ function read(aliceHex: string, bobHex: string, handshakeHex: string, messageHex
     const message = fromHex(messageHex);
     const session = acceptPQSession(handshake, bob, kem.encapsKey, kem.decapsKey);
     const opened = decryptPQMessage(message, session);
-    const sender = openPQSessionAsSender(handshake, alice);
+    const aliceKem = deriveMLKEMKeyPair(fromHex(aliceHex));
+    const sender = openPQSessionAsSender(handshake, alice, aliceKem.decapsKey);
     const senderPlain = decryptPQMessage(message, sender);
     if (opened !== text || senderPlain !== text) {
         throw new Error(`plaintext ${opened} / ${senderPlain}`);

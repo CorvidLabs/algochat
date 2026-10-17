@@ -316,6 +316,10 @@ fn parse_key_announcement(note: &[u8], address: &str) -> Option<DiscoveredKey> {
     if note.len() < 32 {
         return None;
     }
+    // Encapsulation-key notes start with "ACPQ" and are not X25519 keys.
+    if note.starts_with(b"ACPQ") {
+        return None;
+    }
 
     let mut public_key = [0u8; 32];
     public_key.copy_from_slice(&note[..32]);
@@ -418,6 +422,13 @@ mod tests {
     fn test_decode_algorand_address_invalid_base32() {
         let result = decode_algorand_address("not-valid-base32!!!");
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_key_announcement_rejects_acpq() {
+        let mut note = vec![0x41, 0x43, 0x50, 0x51, 0x01];
+        note.extend(std::iter::repeat(0u8).take(1184));
+        assert!(parse_key_announcement(&note, "SOMEADDR").is_none());
     }
 
     #[test]

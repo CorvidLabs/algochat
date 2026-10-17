@@ -1,7 +1,7 @@
 """Hybrid X25519 + ML-KEM-768 sessions (protocol 1.3.0).
 
 Notes use version byte 0x02. The one-note handshake is protocol 0x04 and is
-1278 bytes. Steady-state messages are protocol 0x05 with a 78-byte header.
+2366 bytes. Steady-state messages are protocol 0x05 with a 78-byte header.
 Protocol id 0x03 is not used.
 
 The account seed is expanded with HKDF-SHA256 into the FIPS 203 key-generation
@@ -50,6 +50,7 @@ PQ_HANDSHAKE_SIZE = (
     + 32
     + MLKEM_CT_SIZE
     + PQ_EK_HASH_SIZE
+    + MLKEM_CT_SIZE
     + NONCE_SIZE
     + PQ_WRAPPED_KEY_SIZE
 )
@@ -104,6 +105,7 @@ class _HandshakeFields:
     ephemeral_public_key: bytes
     kem_ciphertext: bytes
     encaps_key_hash: bytes
+    sender_kem_ciphertext: bytes
     nonce: bytes
     wrapped_session_key: bytes
 
@@ -184,7 +186,7 @@ def derive_hybrid_pq_key(
 
 
 def is_pq_handshake(note: bytes) -> bool:
-    """Return whether ``note`` is a 1278-byte 0x04 handshake."""
+    """Return whether ``note`` is a 2366-byte 0x04 handshake."""
     return (
         len(note) == PQ_HANDSHAKE_SIZE
         and note[0] == PQ_VERSION
@@ -205,17 +207,18 @@ def initiate_pq_session(
     sender_public_key: X25519PublicKey,
     recipient_public_key: X25519PublicKey,
     recipient_encaps_key: bytes,
+    sender_encaps_key: bytes,
 ) -> Tuple[bytes, PQSession]:
     """Build a 0x04 handshake note and the sender's session.
 
-    Encapsulation coins and the X25519 ephemeral key are random. The session
-    key is wrapped for the sender under ChaCha20-Poly1305 so the sender can
-    reopen the note without the ML-KEM decapsulation key.
+    The sender copy is sealed under X25519 and an ML-KEM ciphertext to the sender.
     """
     _require_len("encapsulation key", recipient_encaps_key, MLKEM_EK_SIZE)
+    _require_len("sender encapsulation key", sender_encaps_key, MLKEM_EK_SIZE)
     ephemeral_private, ephemeral_public = generate_ephemeral_keypair()
     ec_shared = x25519_ecdh(ephemeral_private, recipient_public_key)
     pq_shared, kem_ciphertext = encapsulate(recipient_encaps_key)
+    sender_mlkem, sender_ciphertext = encapsulate(sender_encaps_key)
 
     sender_pub = public_key_to_bytes(sender_public_key)
     recipient_pub = public_key_to_bytes(recipient_public_key)
@@ -237,9 +240,15 @@ def initiate_pq_session(
         ephemeral_pub,
         kem_ciphertext,
         recipient_encaps_key,
+        sender_ciphertext,
         nonce,
     )
-    wrap_key = _sender_wrap_key(ephemeral_private, sender_public_key, sender_pub, ephemeral_pub)
+    wrap_key = _sender_wrap_key(
+        x25519_ecdh(ephemeral_private, sender_public_key),
+        sender_mlkem,
+        sender_pub,
+        ephemeral_pub,
+    )
     wrapped = ChaCha20Poly1305(wrap_key).encrypt(nonce, session_key, prefix)
     if len(wrapped) != PQ_WRAPPED_KEY_SIZE:
         raise PQError("Wrapped session key is the wrong length")
@@ -283,15 +292,17 @@ def open_pq_session_as_sender(
     note: bytes,
     sender_private_key: X25519PrivateKey,
     sender_public_key: X25519PublicKey,
+    sender_kem: MLKEMKeyPair,
 ) -> PQSession:
     """Recover the session from the sender wrap on a 0x04 note."""
     fields = _parse_handshake(note)
     sender_pub = public_key_to_bytes(sender_public_key)
     if fields.sender_public_key != sender_pub:
         raise PQError("Handshake was not sent by this key")
+    sender_mlkem = decapsulate(fields.sender_kem_ciphertext, sender_kem.decaps_key)
     wrap_key = _sender_wrap_key(
-        sender_private_key,
-        public_key_from_bytes(fields.ephemeral_public_key),
+        x25519_ecdh(sender_private_key, public_key_from_bytes(fields.ephemeral_public_key)),
+        sender_mlkem,
         sender_pub,
         fields.ephemeral_public_key,
     )
@@ -430,6 +441,7 @@ def _handshake_prefix(
     ephemeral_public_key: bytes,
     kem_ciphertext: bytes,
     encaps_key: bytes,
+    sender_kem_ciphertext: bytes,
     nonce: bytes,
 ) -> bytes:
     return (
@@ -439,6 +451,7 @@ def _handshake_prefix(
         + ephemeral_public_key
         + kem_ciphertext
         + hashlib.sha256(encaps_key).digest()
+        + sender_kem_ciphertext
         + nonce
     )
 
@@ -464,6 +477,8 @@ def _parse_handshake(note: bytes) -> _HandshakeFields:
     offset += MLKEM_CT_SIZE
     encaps_key_hash = note[offset : offset + 32]
     offset += 32
+    sender_kem_ciphertext = note[offset : offset + MLKEM_CT_SIZE]
+    offset += MLKEM_CT_SIZE
     nonce = note[offset : offset + NONCE_SIZE]
     offset += NONCE_SIZE
     wrapped_session_key = note[offset : offset + PQ_WRAPPED_KEY_SIZE]
@@ -473,17 +488,17 @@ def _parse_handshake(note: bytes) -> _HandshakeFields:
         ephemeral_public_key=ephemeral_public_key,
         kem_ciphertext=kem_ciphertext,
         encaps_key_hash=encaps_key_hash,
+        sender_kem_ciphertext=sender_kem_ciphertext,
         nonce=nonce,
         wrapped_session_key=wrapped_session_key,
     )
 
 
 def _sender_wrap_key(
-    private_key: X25519PrivateKey,
-    other_public_key: X25519PublicKey,
+    x25519_shared: bytes,
+    sender_mlkem_shared: bytes,
     sender_public_key: bytes,
     ephemeral_public_key: bytes,
 ) -> bytes:
-    agreed = x25519_ecdh(private_key, other_public_key)
     info = _SENDER_WRAP_INFO + sender_public_key
-    return _hkdf32(agreed, ephemeral_public_key, info)
+    return _hkdf32(x25519_shared + sender_mlkem_shared, ephemeral_public_key, info)

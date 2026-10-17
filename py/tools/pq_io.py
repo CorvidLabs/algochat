@@ -41,7 +41,10 @@ def write_note(alice_hex: str, bob_hex: str, text: str) -> dict:
     _bob_private, bob_public = derive_keys_from_seed(_hex_bytes(bob_hex))
     del alice_private
     kem = derive_mlkem_keypair(_hex_bytes(bob_hex))
-    note, session = initiate_pq_session(alice_public, bob_public, kem.encaps_key)
+    alice_kem = derive_mlkem_keypair(_hex_bytes(alice_hex))
+    note, session = initiate_pq_session(
+        alice_public, bob_public, kem.encaps_key, alice_kem.encaps_key
+    )
     message = encrypt_pq_message(text, session)
     return {
         "handshake": note.hex(),
@@ -105,7 +108,10 @@ def write05s(alice_hex: str, bob_hex: str, texts: list[str]) -> dict:
     _alice_private, alice_public = derive_keys_from_seed(_hex_bytes(alice_hex))
     _bob_private, bob_public = derive_keys_from_seed(_hex_bytes(bob_hex))
     kem = derive_mlkem_keypair(_hex_bytes(bob_hex))
-    note, session = initiate_pq_session(alice_public, bob_public, kem.encaps_key)
+    alice_kem = derive_mlkem_keypair(_hex_bytes(alice_hex))
+    note, session = initiate_pq_session(
+        alice_public, bob_public, kem.encaps_key, alice_kem.encaps_key
+    )
     return {
         "handshake": note.hex(),
         "messages": [encrypt_pq_message(text, session).hex() for text in texts],
@@ -121,7 +127,8 @@ def read_note(alice_hex: str, bob_hex: str, handshake_hex: str, message_hex: str
     message = _hex_bytes(message_hex)
     session = accept_pq_session(handshake, bob_private, bob_public, kem)
     opened = decrypt_pq_message(message, session)
-    sender = open_pq_session_as_sender(handshake, alice_private, alice_public)
+    alice_kem = derive_mlkem_keypair(_hex_bytes(alice_hex))
+    sender = open_pq_session_as_sender(handshake, alice_private, alice_public, alice_kem)
     sender_plain = decrypt_pq_message(message, sender)
     if opened != text or sender_plain != text:
         raise RuntimeError(f"plaintext {opened} / {sender_plain}")

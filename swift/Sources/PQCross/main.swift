@@ -140,10 +140,12 @@ private enum PQCross {
         let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "bobSeed")))
         let kem = try PQSession.encapsulationPrivateKey(fromAccountSeed: try hexDecode(try string(object, "bobSeed")))
         let encaps = Data([UInt8](kem.publicKey.rawRepresentation))
+        let aliceKem = try PQSession.encapsulationPrivateKey(fromAccountSeed: try hexDecode(try string(object, "aliceSeed")))
         let built = try PQSession.initiate(
             senderPrivateKey: alice.privateKey,
             recipientPublicKey: bob.publicKey,
-            recipientEncapsKey: encaps
+            recipientEncapsKey: encaps,
+            senderKemKey: aliceKem
         )
         guard let texts = object["texts"] as? [String] else {
             throw ChatError.invalidEnvelope("missing texts")
@@ -172,10 +174,12 @@ private enum PQCross {
         let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: hexDecode(bobHex))
         let kem = try PQSession.encapsulationPrivateKey(fromAccountSeed: hexDecode(bobHex))
         let encaps = Data([UInt8](kem.publicKey.rawRepresentation))
+        let aliceKem = try PQSession.encapsulationPrivateKey(fromAccountSeed: hexDecode(aliceHex))
         let built = try PQSession.initiate(
             senderPrivateKey: alice.privateKey,
             recipientPublicKey: bob.publicKey,
-            recipientEncapsKey: encaps
+            recipientEncapsKey: encaps,
+            senderKemKey: aliceKem
         )
         let message = try built.session.encrypt(text)
         return [
@@ -203,7 +207,12 @@ private enum PQCross {
             kemPrivateKey: kem
         )
         let opened = try session.decrypt(message)
-        let sender = try PQSession.openAsSender(note: handshake, senderPrivateKey: alice.privateKey)
+        let aliceKem = try PQSession.encapsulationPrivateKey(fromAccountSeed: hexDecode(aliceHex))
+        let sender = try PQSession.openAsSender(
+            note: handshake,
+            senderPrivateKey: alice.privateKey,
+            senderKemKey: aliceKem
+        )
         let senderPlain = try sender.decrypt(message)
         guard opened == text, senderPlain == text else {
             throw ChatError.decryptionFailed("plaintext \(opened) / \(senderPlain)")

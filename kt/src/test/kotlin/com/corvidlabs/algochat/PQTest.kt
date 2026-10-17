@@ -64,8 +64,18 @@ class PQTest {
 
     @Test
     fun `bob accepts the typescript handshake and alice reopens it`() {
-        val note = unhex(fixture.handshakeNote)
-        assertEquals(1278, note.size)
+        assertEquals(2366, PQProtocol.HANDSHAKE_SIZE)
+        val alice = Keys.deriveKeysFromSeed(seed(0x11))
+        val bob = Keys.deriveKeysFromSeed(seed(0x22))
+        val aliceKem = PQ.deriveMLKEMKeyPair(seed(0x11))
+        val bobKem = PQ.deriveMLKEMKeyPair(seed(0x22))
+        val started = PQ.initiatePQSession(
+            alice,
+            Keys.publicKeyToBytes(bob.publicKey),
+            bobKem.encapsKey,
+            aliceKem.encapsKey
+        )
+        val note = started.note
         assertEquals(PQProtocol.HANDSHAKE_SIZE, note.size)
         assertEquals(PQProtocol.VERSION, note[0])
         assertEquals(PQProtocol.HANDSHAKE_ID, note[1])
@@ -73,34 +83,38 @@ class PQTest {
         assertFalse(isChatMessage(note))
         assertFalse(isPSKMessage(note))
 
-        val bob = Keys.deriveKeysFromSeed(seed(0x22))
-        val bobKem = PQ.deriveMLKEMKeyPair(seed(0x22))
         val session = PQ.acceptPQSession(note, bob, bobKem)
-        assertEquals(fixture.handshakeSessionKey, hex(session.sessionKey))
+        assertTrue(session.sessionKey.contentEquals(started.session.sessionKey))
 
-        val alice = Keys.deriveKeysFromSeed(seed(0x11))
-        val reopened = PQ.openPQSessionAsSender(note, alice)
-        assertEquals(fixture.handshakeSessionKey, hex(reopened.sessionKey))
+        val reopened = PQ.openPQSessionAsSender(note, alice, aliceKem)
+        assertTrue(reopened.sessionKey.contentEquals(session.sessionKey))
         assertTrue(reopened.handshakeId.contentEquals(session.handshakeId))
-        assertTrue(reopened.senderPublicKey.contentEquals(session.senderPublicKey))
 
         assertThrows<AlgoChatException.DecryptionFailed> {
             PQ.acceptPQSession(note, alice, bobKem)
         }
         assertThrows<AlgoChatException.DecryptionFailed> {
-            PQ.openPQSessionAsSender(note, bob)
+            PQ.openPQSessionAsSender(note, bob, bobKem)
         }
         assertThrows<AlgoChatException.DecryptionFailed> {
-            PQ.acceptPQSession(note, bob, PQ.deriveMLKEMKeyPair(seed(0x11)))
+            PQ.openPQSessionAsSender(note, alice, bobKem)
         }
     }
 
     @Test
     fun `a message round-trips and a flipped byte fails closed`() {
-        val note = unhex(fixture.handshakeNote)
+        val alice = Keys.deriveKeysFromSeed(seed(0x11))
         val bob = Keys.deriveKeysFromSeed(seed(0x22))
-        val session = PQ.acceptPQSession(note, bob, PQ.deriveMLKEMKeyPair(seed(0x22)))
-        val reopened = PQ.openPQSessionAsSender(note, Keys.deriveKeysFromSeed(seed(0x11)))
+        val aliceKem = PQ.deriveMLKEMKeyPair(seed(0x11))
+        val bobKem = PQ.deriveMLKEMKeyPair(seed(0x22))
+        val started = PQ.initiatePQSession(
+            alice,
+            Keys.publicKeyToBytes(bob.publicKey),
+            bobKem.encapsKey,
+            aliceKem.encapsKey
+        )
+        val session = PQ.acceptPQSession(started.note, bob, bobKem)
+        val reopened = PQ.openPQSessionAsSender(started.note, alice, aliceKem)
 
         val message = PQ.encryptPQMessage("parity", session)
         assertEquals(PQProtocol.DATA_HEADER_SIZE, 78)
@@ -131,10 +145,12 @@ class PQTest {
         val bobSeed = seed(0x22)
         val bob = Keys.deriveKeysFromSeed(bobSeed)
         val bobKem = PQ.deriveMLKEMKeyPair(bobSeed)
+        val aliceKem = PQ.deriveMLKEMKeyPair(seed(0x11))
         val started = PQ.initiatePQSession(
             alice,
             Keys.publicKeyToBytes(bob.publicKey),
             bobKem.encapsKey,
+            aliceKem.encapsKey,
             seed(0x33)
         )
         assertEquals(PQProtocol.HANDSHAKE_SIZE, started.note.size)
@@ -144,7 +160,7 @@ class PQTest {
 
         val accepted = PQ.acceptPQSession(started.note, bob, bobKem)
         assertTrue(accepted.sessionKey.contentEquals(started.session.sessionKey))
-        val reopened = PQ.openPQSessionAsSender(started.note, alice)
+        val reopened = PQ.openPQSessionAsSender(started.note, alice, aliceKem)
         assertTrue(reopened.sessionKey.contentEquals(started.session.sessionKey))
 
         val full = "x".repeat(PQProtocol.MAX_PAYLOAD_SIZE)

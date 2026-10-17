@@ -30,10 +30,14 @@ const SENDER_WRAP_INFO = new TextEncoder().encode('AlgoChatPQ-SenderKey');
 
 export interface InitiatePQSessionInput {
     sender: X25519KeyPair;
+    /** Sender's ML-KEM encapsulation key. The handshake carries a ciphertext to this key. */
+    senderEncapsKey: Uint8Array;
     recipientPublicKey: Uint8Array;
     recipientEncapsKey: Uint8Array;
-    /** 32-byte ML-KEM encapsulation coins. Omit for a random handshake. */
+    /** 32-byte ML-KEM encapsulation coins for the recipient. Omit for a random handshake. */
     kemRandomness?: Uint8Array;
+    /** 32-byte ML-KEM encapsulation coins for the sender copy. Omit for a random handshake. */
+    senderKemRandomness?: Uint8Array;
 }
 
 export function isPQHandshake(note: Uint8Array): boolean {
@@ -51,10 +55,12 @@ export function isPQMessage(note: Uint8Array): boolean {
 export function initiatePQSession(input: InitiatePQSessionInput): { note: Uint8Array; session: PQSession } {
     requireLength('recipient public key', input.recipientPublicKey, 32);
     requireLength('encapsulation key', input.recipientEncapsKey, PQ_PROTOCOL.MLKEM_EK_SIZE);
+    requireLength('sender encapsulation key', input.senderEncapsKey, PQ_PROTOCOL.MLKEM_EK_SIZE);
 
     const ephemeral = generateEphemeralKeyPair();
     const ecShared = x25519ECDH(ephemeral.privateKey, input.recipientPublicKey);
     const encapsulated = encapsulate(input.recipientEncapsKey, input.kemRandomness);
+    const senderCopy = encapsulate(input.senderEncapsKey, input.senderKemRandomness);
     const sessionKey = deriveHybridPQKey(ecShared, encapsulated.sharedSecret, {
         ephemeralPublicKey: ephemeral.publicKey,
         kemCiphertext: encapsulated.ciphertext,
@@ -70,11 +76,12 @@ export function initiatePQSession(input: InitiatePQSessionInput): { note: Uint8A
         ephemeralPublicKey: ephemeral.publicKey,
         kemCiphertext: encapsulated.ciphertext,
         encapsKey: input.recipientEncapsKey,
+        senderKemCiphertext: senderCopy.ciphertext,
         nonce,
     });
     const wrapKey = senderWrapKey(
-        ephemeral.privateKey,
-        input.sender.publicKey,
+        x25519ECDH(ephemeral.privateKey, input.sender.publicKey),
+        senderCopy.sharedSecret,
         input.sender.publicKey,
         ephemeral.publicKey
     );
@@ -117,15 +124,20 @@ export function acceptPQSession(
     return sessionFrom(note, sessionKey, fields.senderPublicKey, fields.recipientPublicKey);
 }
 
-/** Sender recovers the session from the handshake note and the long-term X25519 key. */
-export function openPQSessionAsSender(note: Uint8Array, sender: X25519KeyPair): PQSession {
+/** Sender recovers the session from the note, the long-term X25519 key, and the sender's ML-KEM key. */
+export function openPQSessionAsSender(
+    note: Uint8Array,
+    sender: X25519KeyPair,
+    senderDecapsKey: Uint8Array
+): PQSession {
     const fields = parseHandshake(note);
     if (!uint8ArrayEquals(fields.senderPublicKey, sender.publicKey)) {
         throw new PQError('Handshake was not sent by this key');
     }
+    const senderMlkem = decapsulate(fields.senderKemCiphertext, senderDecapsKey);
     const wrapKey = senderWrapKey(
-        sender.privateKey,
-        fields.ephemeralPublicKey,
+        x25519ECDH(sender.privateKey, fields.ephemeralPublicKey),
+        senderMlkem,
         sender.publicKey,
         fields.ephemeralPublicKey
     );
@@ -199,6 +211,7 @@ function handshakePrefix(fields: {
     ephemeralPublicKey: Uint8Array;
     kemCiphertext: Uint8Array;
     encapsKey: Uint8Array;
+    senderKemCiphertext: Uint8Array;
     nonce: Uint8Array;
 }): Uint8Array {
     const prefix = new Uint8Array(PQ_HANDSHAKE_SIZE - PQ_PROTOCOL.ENCRYPTED_SESSION_KEY_SIZE);
@@ -215,6 +228,8 @@ function handshakePrefix(fields: {
     offset += PQ_PROTOCOL.MLKEM_CT_SIZE;
     prefix.set(sha256Bytes(fields.encapsKey), offset);
     offset += 32;
+    prefix.set(fields.senderKemCiphertext, offset);
+    offset += PQ_PROTOCOL.MLKEM_CT_SIZE;
     prefix.set(fields.nonce, offset);
     return prefix;
 }
@@ -225,6 +240,7 @@ interface HandshakeFields {
     ephemeralPublicKey: Uint8Array;
     kemCiphertext: Uint8Array;
     encapsKeyHash: Uint8Array;
+    senderKemCiphertext: Uint8Array;
     nonce: Uint8Array;
     wrappedSessionKey: Uint8Array;
 }
@@ -244,6 +260,8 @@ function parseHandshake(note: Uint8Array): HandshakeFields {
     offset += PQ_PROTOCOL.MLKEM_CT_SIZE;
     const encapsKeyHash = note.slice(offset, offset + 32);
     offset += 32;
+    const senderKemCiphertext = note.slice(offset, offset + PQ_PROTOCOL.MLKEM_CT_SIZE);
+    offset += PQ_PROTOCOL.MLKEM_CT_SIZE;
     const nonce = note.slice(offset, offset + 12);
     offset += 12;
     const wrappedSessionKey = note.slice(offset, offset + PQ_PROTOCOL.ENCRYPTED_SESSION_KEY_SIZE);
@@ -253,6 +271,7 @@ function parseHandshake(note: Uint8Array): HandshakeFields {
         ephemeralPublicKey,
         kemCiphertext,
         encapsKeyHash,
+        senderKemCiphertext,
         nonce,
         wrappedSessionKey,
     };
@@ -269,11 +288,16 @@ function dataHeader(senderPublicKey: Uint8Array, handshakeId: Uint8Array, nonce:
 }
 
 function senderWrapKey(
-    privateKey: Uint8Array,
-    otherPublicKey: Uint8Array,
+    x25519Shared: Uint8Array,
+    senderMlkemShared: Uint8Array,
     senderPublicKey: Uint8Array,
     ephemeralPublicKey: Uint8Array
 ): Uint8Array {
-    const agreed = x25519ECDH(privateKey, otherPublicKey);
-    return hkdf(sha256, agreed, ephemeralPublicKey, concatBytes(SENDER_WRAP_INFO, senderPublicKey), 32);
+    return hkdf(
+        sha256,
+        concatBytes(x25519Shared, senderMlkemShared),
+        ephemeralPublicKey,
+        concatBytes(SENDER_WRAP_INFO, senderPublicKey),
+        32
+    );
 }

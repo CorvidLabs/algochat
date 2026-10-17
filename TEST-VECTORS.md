@@ -486,4 +486,4 @@ recipient_x25519 = 0x04 repeated 32 times
 session_key = 9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734
 ```
 
-A real handshake with account seeds `0x11` and `0x22` and ML-KEM coins `0x33` (each repeated 32 times) MUST produce one 1278-byte `0x04` note, and both parties MUST derive the same session key. That session key is not this vector. This vector pins the combiner only.
+A real handshake with account seeds `0x11` and `0x22` MUST produce one 2366-byte `0x04` note, and both parties MUST derive the same session key. The sender copy is sealed under X25519 and ML-KEM to the sender. That session key is not this vector. This vector pins the combiner only. The recorded 1278-byte handshake in `vectors/pq-mlkem768.json` is the withdrawn layout.

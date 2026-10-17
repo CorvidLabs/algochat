@@ -42,11 +42,11 @@ object PQProtocol {
     const val ENCRYPTED_SESSION_KEY_SIZE = 48
 
     /**
-     * version, protocol, sender, recipient, ephemeral, ciphertext, ek hash,
-     * nonce, wrapped session key.
+     * version, protocol, sender, recipient, ephemeral, recipient ciphertext, ek hash,
+     * sender ciphertext, nonce, wrapped session key.
      */
     const val HANDSHAKE_SIZE =
-        2 + 32 + 32 + 32 + MLKEM_CT_SIZE + EK_HASH_SIZE + Protocol.NONCE_SIZE + ENCRYPTED_SESSION_KEY_SIZE
+        2 + 32 + 32 + 32 + MLKEM_CT_SIZE + EK_HASH_SIZE + MLKEM_CT_SIZE + Protocol.NONCE_SIZE + ENCRYPTED_SESSION_KEY_SIZE
 
     /** version + protocol + sender + handshake id + nonce */
     const val DATA_HEADER_SIZE = 2 + 32 + 32 + Protocol.NONCE_SIZE
@@ -265,16 +265,19 @@ object PQ {
         sender: KeyPair,
         recipientPublicKey: ByteArray,
         recipientEncapsKey: ByteArray,
+        senderEncapsKey: ByteArray,
         kemRandomness: ByteArray? = null
     ): PQHandshake {
         requireSize("recipient public key", recipientPublicKey, 32)
         requireSize("encapsulation key", recipientEncapsKey, PQProtocol.MLKEM_EK_SIZE)
+        requireSize("sender encapsulation key", senderEncapsKey, PQProtocol.MLKEM_EK_SIZE)
 
         val senderPublicKey = Keys.publicKeyToBytes(sender.publicKey)
         val ephemeral = Keys.generateEphemeralKeyPair()
         val ephemeralPublicKey = Keys.publicKeyToBytes(ephemeral.publicKey)
         val ecShared = Keys.x25519Ecdh(ephemeral.privateKey, Keys.publicKeyFromBytes(recipientPublicKey))
         val encapsulated = encapsulate(recipientEncapsKey, kemRandomness)
+        val senderCopy = encapsulate(senderEncapsKey, null)
         val sessionKey = deriveHybridPQKey(
             ecShared,
             encapsulated.sharedSecret,
@@ -291,11 +294,12 @@ object PQ {
             ephemeralPublicKey,
             encapsulated.ciphertext,
             recipientEncapsKey,
+            senderCopy.ciphertext,
             nonce
         )
         val wrapKey = senderWrapKey(
-            ephemeral.privateKey,
-            senderPublicKey,
+            Keys.x25519Ecdh(ephemeral.privateKey, sender.publicKey),
+            senderCopy.sharedSecret,
             senderPublicKey,
             ephemeralPublicKey
         )
@@ -338,15 +342,16 @@ object PQ {
     }
 
     /** Sender recovers the session from the handshake note and the long-term X25519 key. */
-    fun openPQSessionAsSender(note: ByteArray, sender: KeyPair): PQSession {
+    fun openPQSessionAsSender(note: ByteArray, sender: KeyPair, senderKem: MLKEMKeyPair): PQSession {
         val fields = parseHandshake(note)
         val senderPublicKey = Keys.publicKeyToBytes(sender.publicKey)
         if (!fields.senderPublicKey.contentEquals(senderPublicKey)) {
             throw AlgoChatException.DecryptionFailed("Handshake was not sent by this key")
         }
+        val senderMlkem = decapsulate(fields.senderKemCiphertext, senderKem)
         val wrapKey = senderWrapKey(
-            sender.privateKey,
-            fields.ephemeralPublicKey,
+            Keys.x25519Ecdh(sender.privateKey, Keys.publicKeyFromBytes(fields.ephemeralPublicKey)),
+            senderMlkem,
             senderPublicKey,
             fields.ephemeralPublicKey
         )
@@ -528,6 +533,7 @@ object PQ {
         ephemeralPublicKey: ByteArray,
         kemCiphertext: ByteArray,
         encapsKey: ByteArray,
+        senderKemCiphertext: ByteArray,
         nonce: ByteArray
     ): ByteArray {
         val prefix = ByteArray(PQProtocol.HANDSHAKE_SIZE - PQProtocol.ENCRYPTED_SESSION_KEY_SIZE)
@@ -544,6 +550,8 @@ object PQ {
         offset += PQProtocol.MLKEM_CT_SIZE
         sha256(encapsKey).copyInto(prefix, offset)
         offset += 32
+        senderKemCiphertext.copyInto(prefix, offset)
+        offset += PQProtocol.MLKEM_CT_SIZE
         nonce.copyInto(prefix, offset)
         return prefix
     }
@@ -554,6 +562,7 @@ object PQ {
         val ephemeralPublicKey: ByteArray,
         val kemCiphertext: ByteArray,
         val encapsKeyHash: ByteArray,
+        val senderKemCiphertext: ByteArray,
         val nonce: ByteArray,
         val wrappedSessionKey: ByteArray
     )
@@ -573,6 +582,8 @@ object PQ {
         offset += PQProtocol.MLKEM_CT_SIZE
         val encapsKeyHash = note.copyOfRange(offset, offset + 32)
         offset += 32
+        val senderKemCiphertext = note.copyOfRange(offset, offset + PQProtocol.MLKEM_CT_SIZE)
+        offset += PQProtocol.MLKEM_CT_SIZE
         val nonce = note.copyOfRange(offset, offset + Protocol.NONCE_SIZE)
         offset += Protocol.NONCE_SIZE
         val wrappedSessionKey = note.copyOfRange(offset, offset + PQProtocol.ENCRYPTED_SESSION_KEY_SIZE)
@@ -582,6 +593,7 @@ object PQ {
             ephemeralPublicKey,
             kemCiphertext,
             encapsKeyHash,
+            senderKemCiphertext,
             nonce,
             wrappedSessionKey
         )
@@ -612,12 +624,11 @@ object PQ {
     }
 
     private fun senderWrapKey(
-        privateKey: X25519PrivateKeyParameters,
-        otherPublicKey: ByteArray,
+        x25519Shared: ByteArray,
+        senderMlkemShared: ByteArray,
         senderPublicKey: ByteArray,
         ephemeralPublicKey: ByteArray
     ): ByteArray {
-        val agreed = Keys.x25519Ecdh(privateKey, Keys.publicKeyFromBytes(otherPublicKey))
-        return hkdf(agreed, ephemeralPublicKey, SENDER_WRAP_INFO + senderPublicKey)
+        return hkdf(x25519Shared + senderMlkemShared, ephemeralPublicKey, SENDER_WRAP_INFO + senderPublicKey)
     }
 }

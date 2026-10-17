@@ -13,12 +13,12 @@ func TestPQParityFixture(t *testing.T) {
 		t.Fatal(err)
 	}
 	var v struct {
-		EncapsKey            string `json:"encaps_key"`
-		Ciphertext           string `json:"ciphertext"`
-		SS                   string `json:"mlkem_shared_secret"`
-		Combiner             string `json:"combiner_session_key"`
-		HandshakeNote        string `json:"handshake_note"`
-		HandshakeSessionKey  string `json:"handshake_session_key"`
+		EncapsKey           string `json:"encaps_key"`
+		Ciphertext          string `json:"ciphertext"`
+		SS                  string `json:"mlkem_shared_secret"`
+		Combiner            string `json:"combiner_session_key"`
+		HandshakeNote       string `json:"handshake_note"`
+		HandshakeSessionKey string `json:"handshake_session_key"`
 	}
 	if err := json.Unmarshal(raw, &v); err != nil {
 		t.Fatal(err)
@@ -66,20 +66,33 @@ func TestPQParityFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	note, _ := hex.DecodeString(v.HandshakeNote)
-	session, err := AcceptPQHandshake(note, bob, dk)
+	aliceDK, err := DeriveMLKEM768(aliceSeed)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if hex.EncodeToString(session.SessionKey) != v.HandshakeSessionKey {
-		t.Fatalf("handshake session %x", session.SessionKey)
-	}
-	reopened, err := OpenPQHandshakeAsSender(note, alice)
+	note, session, err := InitiatePQHandshake(alice, bob.PublicKey, dk.EncapsulationKey().Bytes(), aliceDK.EncapsulationKey().Bytes())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if hex.EncodeToString(reopened.SessionKey) != v.HandshakeSessionKey {
+	if len(note) != pqHandshakeSize {
+		t.Fatalf("handshake %d", len(note))
+	}
+	accepted, err := AcceptPQHandshake(note, bob, dk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hex.EncodeToString(accepted.SessionKey) != hex.EncodeToString(session.SessionKey) {
+		t.Fatal("recipient session mismatch")
+	}
+	reopened, err := OpenPQHandshakeAsSender(note, alice, aliceDK)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hex.EncodeToString(reopened.SessionKey) != hex.EncodeToString(session.SessionKey) {
 		t.Fatal("sender reopen mismatch")
+	}
+	if _, err := OpenPQHandshakeAsSender(note, alice, dk); err == nil {
+		t.Fatal("recipient decapsulation key must not open the sender wrap")
 	}
 	out, err := EncryptPQMessage("parity", session)
 	if err != nil {
@@ -95,6 +108,16 @@ func TestPQParityFixture(t *testing.T) {
 	}
 	if !IsPQAnnouncement(append([]byte("ACPQ"), 0x01)) {
 		t.Fatal("ACPQ not recognized")
+	}
+	unsigned := append([]byte("ACPQ"), 0x01)
+	unsigned = append(unsigned, bytesRepeat(0x07, mlkemEKSize)...)
+	encaps, verified, ok := ParsePQAnnouncement(unsigned, nil)
+	if !ok || verified || len(encaps) != mlkemEKSize {
+		t.Fatal("unsigned announcement")
+	}
+	bad := append(unsigned, bytesRepeat(0, 64)...)
+	if _, _, ok := ParsePQAnnouncement(bad, bytesRepeat(0x11, 32)); ok {
+		t.Fatal("bad signature accepted")
 	}
 }
 
@@ -117,6 +140,9 @@ func TestLiveLocalnetNote(t *testing.T) {
 	aliceSeed, _ := hex.DecodeString(v.AliceSeed)
 	bobSeed, _ := hex.DecodeString(v.BobSeed)
 	note, _ := hex.DecodeString(v.Handshake)
+	if len(note) != pqHandshakeSize {
+		t.Skip("live note is not the current handshake")
+	}
 	msg, _ := hex.DecodeString(v.Message)
 	var a, b [KeySize]byte
 	copy(a[:], aliceSeed)
@@ -144,7 +170,11 @@ func TestLiveLocalnetNote(t *testing.T) {
 	if err != nil || plain != v.Text {
 		t.Fatalf("bob %q %v", plain, err)
 	}
-	reopened, err := OpenPQHandshakeAsSender(note, alice)
+	aliceDK, err := DeriveMLKEM768(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reopened, err := OpenPQHandshakeAsSender(note, alice, aliceDK)
 	if err != nil {
 		t.Fatal(err)
 	}

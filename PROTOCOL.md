@@ -178,7 +178,14 @@ A plaintext of 878 bytes still encrypts. That envelope is 1024 bytes. It remains
 
 This mode is optional. A peer with no ML-KEM encapsulation key still receives `0x01` or `0x02`. Identifier `0x03` is not assigned.
 
-ML-KEM-768 (FIPS 203, category 3) is combined with X25519. The session key requires both shared secrets. The long-term ML-KEM key opens every handshake sent to that account. This is not forward secrecy.
+ML-KEM-768 (FIPS 203, category 3) is combined with X25519. The recipient derives the session key from both shared secrets. The long-term ML-KEM key opens every handshake sent to that account on that path. This is not forward secrecy.
+
+The handshake also carries a sender copy of the session key. That copy is sealed under both of these secrets, which the sender can recompute later:
+
+- X25519 of the sender's long-term key and the ephemeral public key on the note
+- ML-KEM-768 decapsulation of a ciphertext on the note addressed to the sender's own encapsulation key
+
+An attacker who breaks only X25519, or only ML-KEM, cannot open that copy. Opening it requires both.
 
 The encapsulation key is derived from the same 32-byte account seed as the X25519 key, with HKDF-SHA256 salt `AlgoChat-v1-mlkem768` and info `mlkem768-d` and `mlkem768-z`. Those 32-byte outputs are concatenated and passed to ML-KEM key generation.
 
@@ -190,15 +197,27 @@ magic "ACPQ" (4) | version 0x01 (1) | encapsulation key (1184) | Ed25519 signatu
 
 The signature is over SHA-256 of `AlgoChat-pq-ek-v1`, the version byte, and the encapsulation key. A bad signature is rejected. No signature means the key is unverified. Implementations MUST NOT parse an `ACPQ` note as an X25519 announcement.
 
-The handshake is one note of 1278 bytes:
+The handshake is one note of 2366 bytes:
 
 ```
 version 0x02 | protocol 0x04 | sender X25519 (32) | recipient X25519 (32)
-ephemeral X25519 (32) | ML-KEM ciphertext (1088) | SHA-256(encapsulation key) (32)
-nonce (12) | wrapped session key (48)
+ephemeral X25519 (32) | recipient ML-KEM ciphertext (1088) | SHA-256(recipient encapsulation key) (32)
+sender ML-KEM ciphertext (1088) | nonce (12) | wrapped session key (48)
 ```
 
-The wrapped session key lets the sender reopen the session from the note and the long-term X25519 key. The recipient decapsulates and runs X25519, then derives the same key.
+The recipient decapsulates the recipient ciphertext and runs X25519, then derives the session key. The recipient does not need the sender ciphertext.
+
+Sender wrap key, HKDF-SHA256, 32 bytes:
+
+```
+ikm  = X25519(sender long-term, ephemeral) || sender ML-KEM shared secret
+salt = ephemeral public
+info = UTF-8 "AlgoChatPQ-SenderKey" || sender X25519
+```
+
+When the handshake is built, X25519(ephemeral private, sender public) is the same shared secret. The wrap AEAD is ChaCha20-Poly1305. Its associated data is every handshake byte before the wrapped key (2318 bytes). The nonce is the 12-byte field in the handshake.
+
+A `0x05` message uses the 78-byte header as associated data. The payload ciphertext starts at byte 78.
 
 Session key, HKDF-SHA256, 32 bytes:
 

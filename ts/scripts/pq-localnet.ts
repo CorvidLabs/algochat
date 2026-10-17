@@ -77,9 +77,11 @@ await pay(algod, funder, bob.addr.toString(), 2_000_000);
 
 const aliceKeys = deriveEncryptionKeys(seedOf(alice));
 const bobKeys = deriveEncryptionKeys(seedOf(bob));
+const aliceKem = deriveMLKEMKeyPair(seedOf(alice));
 const bobKem = deriveMLKEMKeyPair(seedOf(bob));
 const { note: handshake, session } = initiatePQSession({
     sender: aliceKeys,
+    senderEncapsKey: aliceKem.encapsKey,
     recipientPublicKey: bobKeys.publicKey,
     recipientEncapsKey: bobKem.encapsKey,
 });
@@ -93,7 +95,10 @@ const messageTx = await pay(algod, alice, bob.addr.toString(), 1000, message);
 if (!messageTx.note) throw new Error("message note missing");
 const bobSession = acceptPQSession(handshakeTx.note, bobKeys, bobKem.encapsKey, bobKem.decapsKey);
 const opened = decryptPQMessage(messageTx.note, bobSession);
-const senderCopy = decryptPQMessage(messageTx.note, openPQSessionAsSender(handshakeTx.note, aliceKeys));
+const senderCopy = decryptPQMessage(
+    messageTx.note,
+    openPQSessionAsSender(handshakeTx.note, aliceKeys, aliceKem.decapsKey)
+);
 if (opened !== TEXT || senderCopy !== TEXT) throw new Error(`decrypt ${opened} ${senderCopy}`);
 const flipped = new Uint8Array(messageTx.note);
 flipped[flipped.length - 1] ^= 1;

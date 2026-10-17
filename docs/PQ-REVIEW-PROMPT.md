@@ -23,7 +23,7 @@ Read, in this order:
 
 The intended contract:
 - Optional hybrid session: X25519 plus ML-KEM-768 (FIPS 203 category 3).
-- Protocol 0x04 is one 1278-byte handshake. Protocol 0x05 is a message with a 78-byte header. Maximum 0x05 plaintext is 4002 bytes. A 3-byte body is 97 bytes.
+- Protocol 0x04 is one 2366-byte handshake. The sender copy is sealed under X25519 and an ML-KEM ciphertext to the sender. Protocol 0x05 is a message with a 78-byte header. Maximum 0x05 plaintext is 4002 bytes. A 3-byte body is 97 bytes.
 - Session key is HKDF-SHA256. Salt and info both start with the UTF-8 string algochat-pq-v1. IKM is the 32-byte X25519 secret followed by the 32-byte ML-KEM secret. Info then appends ephemeral public key, ML-KEM ciphertext, sender X25519, recipient X25519, and SHA-256 of the encapsulation key.
 - Pinned combiner output: 9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734
 - Announcement magic is the four bytes ACPQ. It must not be parsed as an X25519 key.

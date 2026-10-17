@@ -220,7 +220,7 @@ try {
         }
         const handshake = Buffer.from(written.handshake, "hex");
         const message = Buffer.from(written.message, "hex");
-        if (handshake.length !== 1278 || handshake[0] !== 0x02 || handshake[1] !== 0x04) {
+        if (handshake.length !== 2366 || handshake[0] !== 0x02 || handshake[1] !== 0x04) {
             throw new Error(`${lang} handshake is ${handshake.length} bytes`);
         }
         if (message.length < 78 + 16 || message[0] !== 0x02 || message[1] !== 0x05) {

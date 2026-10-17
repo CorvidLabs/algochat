@@ -12,9 +12,9 @@ A library is at parity for 1.3.0 when every row below passes in that language, a
 | --- | --- |
 | ML-KEM-768 key from the 32-byte account seed | Same encapsulation key as TypeScript for seed `0x22` * 32 |
 | Combiner | Session key `9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734` for the inputs in TEST-VECTORS.md section "1.3 Hybrid session key" |
-| Handshake | One note, exactly 1278 bytes, version `0x02`, protocol `0x04` |
+| Handshake | One note, exactly 2366 bytes, version `0x02`, protocol `0x04` |
 | Same key | Sender and recipient derive the same 32-byte session key |
-| Sender reopen | The sender opens the session from the note and the long-term X25519 key |
+| Sender reopen | The sender opens the session from the note, the long-term X25519 key, and the sender's ML-KEM key. The wrap is not X25519-only |
 | Message | Protocol `0x05`, 78-byte header, plaintext max 4002, a 3-byte body is 97 bytes |
 | Tamper | One flipped ciphertext byte fails closed |
 | Announcement | Magic `ACPQ`, 1184-byte key, optional Ed25519 signature. A bad signature is rejected. An `ACPQ` note is not parsed as an X25519 key |
@@ -34,7 +34,7 @@ The handshake note in that fixture is one TypeScript run, so encapsulate is not 
 | `kt/` | yes | yes | yes | yes | yes |
 | `go/` | yes | yes | yes | yes | yes |
 
-On 2026-10-17 a size matrix confirmed 90 notes in rounds 41059 through 41154. Each library wrote empty, small, 2000-byte, and maximum plaintext for `0x01`, `0x02`, and `0x05`, three Extra lock messages at counters 0, 1, and 2, and one `0x04` handshake. Every library opened every confirmed note. TypeScript writes envelope version `0x02`. The other five write version `0x01`. All six read both. Identifier `0x03` was not used.
+On 2026-10-17 a size matrix confirmed rounds 41059 through 41154. That run used a 1278-byte handshake whose sender copy was sealed with X25519 only. That layout is withdrawn. It is not the 1.3.0 wire format. The current handshake is 2366 bytes and the sender copy also requires the sender's ML-KEM secret. A new LocalNet matrix is required before a tag. TypeScript still writes everyday and Extra lock version `0x02`. The other five write version `0x01`. All six read both. Identifier `0x03` is not used.
 
 An earlier 6x6 mesh, rounds 40924 through 40935, used one small `0x05` body per library. Go and Rust also opened the TypeScript note from rounds 40916 and 40917.
 
@@ -55,4 +55,4 @@ Do not tag `v1.3.0` until this table is still yes on the commit you tag.
 
 ## Limits that stay in every port
 
-The session is not forward secret. The long-term ML-KEM key opens every handshake sent to that account. Falcon authorizes a payment and does not sign the encapsulation key. An unsigned announcement is unverified, the same rule as an unsigned X25519 key. Extra lock (`0x02`) stays its own mode.
+The session is not forward secret. The long-term ML-KEM key opens every handshake sent to that account for the recipient. The sender copy on the note stays closed unless both the sender's X25519 secret and the sender's ML-KEM secret are available. Falcon authorizes a payment and does not sign the encapsulation key. An unsigned announcement is unverified, the same rule as an unsigned X25519 key. Extra lock (`0x02`) stays its own mode.

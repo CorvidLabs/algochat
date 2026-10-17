@@ -71,7 +71,13 @@ private fun writeNote(aliceHex: String, bobHex: String, text: String): Map<Strin
     val alice = Keys.deriveKeysFromSeed(hexToBytes(aliceHex))
     val bob = Keys.deriveKeysFromSeed(hexToBytes(bobHex))
     val kem = PQ.deriveMLKEMKeyPair(hexToBytes(bobHex))
-    val handshake = PQ.initiatePQSession(alice, Keys.publicKeyToBytes(bob.publicKey), kem.encapsKey)
+    val aliceKem = PQ.deriveMLKEMKeyPair(hexToBytes(aliceHex))
+    val handshake = PQ.initiatePQSession(
+        alice,
+        Keys.publicKeyToBytes(bob.publicKey),
+        kem.encapsKey,
+        aliceKem.encapsKey
+    )
     val message = PQ.encryptPQMessage(text, handshake.session)
     return mapOf(
         "handshake" to bytesToHex(handshake.note),
@@ -94,7 +100,8 @@ private fun readNote(
     val message = hexToBytes(messageHex)
     val session = PQ.acceptPQSession(handshake, bob, kem)
     val opened = PQ.decryptPQMessage(message, session)
-    val sender = PQ.openPQSessionAsSender(handshake, alice)
+    val aliceKem = PQ.deriveMLKEMKeyPair(hexToBytes(aliceHex))
+    val sender = PQ.openPQSessionAsSender(handshake, alice, aliceKem)
     val senderPlain = PQ.decryptPQMessage(message, sender)
     if (opened != text || senderPlain != text) {
         throw IllegalStateException("plaintext $opened / $senderPlain")
@@ -164,7 +171,13 @@ private fun writeMany(aliceHex: String, bobHex: String, texts: List<String>): Tr
     val alice = Keys.deriveKeysFromSeed(hexToBytes(aliceHex))
     val bob = Keys.deriveKeysFromSeed(hexToBytes(bobHex))
     val kem = PQ.deriveMLKEMKeyPair(hexToBytes(bobHex))
-    val handshake = PQ.initiatePQSession(alice, Keys.publicKeyToBytes(bob.publicKey), kem.encapsKey)
+    val aliceKem = PQ.deriveMLKEMKeyPair(hexToBytes(aliceHex))
+    val handshake = PQ.initiatePQSession(
+        alice,
+        Keys.publicKeyToBytes(bob.publicKey),
+        kem.encapsKey,
+        aliceKem.encapsKey
+    )
     val messages = texts.map { text -> bytesToHex(PQ.encryptPQMessage(text, handshake.session)) }
     return Triple(bytesToHex(handshake.note), messages, bytesToHex(handshake.session.sessionKey))
 }

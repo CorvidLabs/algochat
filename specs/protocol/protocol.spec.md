@@ -19,7 +19,7 @@ PROTOCOL.md section 5.7 is the contract. TEST-VECTORS.md pins the hybrid session
 
 ## Invariants
 
-A handshake note is 1278 bytes. A `0x05` header is 78 bytes. Both shared secrets are required for the session key.
+A handshake note is 2366 bytes. A `0x05` header is 78 bytes. The recipient session key uses both shared secrets. The sender copy also uses both the sender's X25519 secret and the sender's ML-KEM secret.
 
 ## Behavioral Examples
 

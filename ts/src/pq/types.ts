@@ -25,7 +25,11 @@ export const PQ_PROTOCOL = {
     TAG_SIZE: 16,
 } as const;
 
-/** version, protocol, sender, recipient, ephemeral, ciphertext, ek hash, nonce, wrapped session key */
+/**
+ * version, protocol, sender, recipient, ephemeral, recipient ciphertext,
+ * recipient encapsulation-key hash, sender ciphertext, nonce, wrapped session key.
+ * The sender ciphertext is ML-KEM to the sender, so the wrap is not X25519-only.
+ */
 export const PQ_HANDSHAKE_SIZE =
     2 +
     32 +
@@ -33,6 +37,7 @@ export const PQ_HANDSHAKE_SIZE =
     32 +
     PQ_PROTOCOL.MLKEM_CT_SIZE +
     PQ_PROTOCOL.EK_HASH_SIZE +
+    PQ_PROTOCOL.MLKEM_CT_SIZE +
     PQ_PROTOCOL.NONCE_SIZE +
     PQ_PROTOCOL.ENCRYPTED_SESSION_KEY_SIZE;
 

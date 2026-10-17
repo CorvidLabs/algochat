@@ -1,24 +1,24 @@
 package algochat
 
 import (
+	"crypto/ed25519"
 	"crypto/mlkem"
-	"crypto/sha256"
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"io"
 
 	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/hkdf"
 )
 
 const (
-	protocolVersionAAD = 0x02
+	protocolVersionAAD    = 0x02
 	protocolIDPQHandshake = 0x04
 	protocolIDPQData      = 0x05
 	mlkemCTSize           = 1088
 	mlkemEKSize           = 1184
-	pqHandshakeSize       = 1278
+	pqHandshakeSize       = 2366
 	pqDataHeaderSize      = 78
 	pqWrappedKeySize      = 48
 	pqMaxPayloadSize      = MaxNoteSize - pqDataHeaderSize - TagSize
@@ -32,10 +32,10 @@ var (
 
 // PQSession is the hybrid session key shared by a 0x04 handshake.
 type PQSession struct {
-	SessionKey           []byte
-	SenderPublicKey      [KeySize]byte
-	RecipientPublicKey   [KeySize]byte
-	HandshakeID          [KeySize]byte
+	SessionKey         []byte
+	SenderPublicKey    [KeySize]byte
+	RecipientPublicKey [KeySize]byte
+	HandshakeID        [KeySize]byte
 }
 
 // DeriveMLKEM768 derives an ML-KEM-768 key from the 32-byte account seed.
@@ -85,7 +85,9 @@ func AcceptPQHandshake(note []byte, recipient X25519KeyPair, decap *mlkem.Decaps
 }
 
 // OpenPQHandshakeAsSender recovers the session from the sender wrap.
-func OpenPQHandshakeAsSender(note []byte, sender X25519KeyPair) (PQSession, error) {
+// The wrap key is X25519(sender, ephemeral) concatenated with the ML-KEM secret
+// from the ciphertext addressed to the sender.
+func OpenPQHandshakeAsSender(note []byte, sender X25519KeyPair, senderKey *mlkem.DecapsulationKey768) (PQSession, error) {
 	f, err := parseHandshake(note)
 	if err != nil {
 		return PQSession{}, err
@@ -93,10 +95,15 @@ func OpenPQHandshakeAsSender(note []byte, sender X25519KeyPair) (PQSession, erro
 	if f.senderPublic != sender.PublicKey {
 		return PQSession{}, errPQHandshake
 	}
-	wrapKey, err := senderWrapKey(sender.PrivateKey, f.ephemeralPublic, sender.PublicKey, f.ephemeralPublic)
+	senderSS, err := senderKey.Decapsulate(f.senderCT)
 	if err != nil {
 		return PQSession{}, err
 	}
+	agreed, err := x25519ECDH(sender.PrivateKey, f.ephemeralPublic)
+	if err != nil {
+		return PQSession{}, err
+	}
+	wrapKey := senderWrapKey(agreed, senderSS, sender.PublicKey[:], f.ephemeralPublic[:])
 	aead, err := chacha20poly1305.New(wrapKey)
 	if err != nil {
 		return PQSession{}, err
@@ -110,7 +117,7 @@ func OpenPQHandshakeAsSender(note []byte, sender X25519KeyPair) (PQSession, erro
 }
 
 // InitiatePQHandshake builds a 0x04 note. Encapsulation coins are random.
-func InitiatePQHandshake(sender X25519KeyPair, recipientPublic [KeySize]byte, encapsKey []byte) ([]byte, PQSession, error) {
+func InitiatePQHandshake(sender X25519KeyPair, recipientPublic [KeySize]byte, recipientEncapsKey, senderEncapsKey []byte) ([]byte, PQSession, error) {
 	eph, err := GenerateEphemeralKeyPair()
 	if err != nil {
 		return nil, PQSession{}, err
@@ -119,21 +126,27 @@ func InitiatePQHandshake(sender X25519KeyPair, recipientPublic [KeySize]byte, en
 	if err != nil {
 		return nil, PQSession{}, err
 	}
-	ek, err := mlkem.NewEncapsulationKey768(encapsKey)
+	ek, err := mlkem.NewEncapsulationKey768(recipientEncapsKey)
 	if err != nil {
 		return nil, PQSession{}, err
 	}
 	pq, ct := ek.Encapsulate()
-	key := DeriveHybridPQKey(ec, pq, eph.PublicKey[:], ct, sender.PublicKey[:], recipientPublic[:], encapsKey)
+	senderEK, err := mlkem.NewEncapsulationKey768(senderEncapsKey)
+	if err != nil {
+		return nil, PQSession{}, err
+	}
+	senderSS, senderCT := senderEK.Encapsulate()
+	key := DeriveHybridPQKey(ec, pq, eph.PublicKey[:], ct, sender.PublicKey[:], recipientPublic[:], recipientEncapsKey)
 	nonce := make([]byte, NonceSize)
 	if _, err := rand.Read(nonce); err != nil {
 		return nil, PQSession{}, err
 	}
-	prefix := handshakePrefix(sender.PublicKey, recipientPublic, eph.PublicKey, ct, encapsKey, nonce)
-	wrapKey, err := senderWrapKey(eph.PrivateKey, sender.PublicKey, sender.PublicKey, eph.PublicKey)
+	agreed, err := x25519ECDH(eph.PrivateKey, sender.PublicKey)
 	if err != nil {
 		return nil, PQSession{}, err
 	}
+	prefix := handshakePrefix(sender.PublicKey, recipientPublic, eph.PublicKey, ct, recipientEncapsKey, senderCT, nonce)
+	wrapKey := senderWrapKey(agreed, senderSS, sender.PublicKey[:], eph.PublicKey[:])
 	aead, err := chacha20poly1305.New(wrapKey)
 	if err != nil {
 		return nil, PQSession{}, err
@@ -193,10 +206,34 @@ func IsPQAnnouncement(note []byte) bool {
 	return len(note) >= len(announceMagic) && string(note[:4]) == "ACPQ"
 }
 
+// ParsePQAnnouncement reads an ACPQ note.
+// An unsigned note is unverified. A bad signature is rejected.
+func ParsePQAnnouncement(note []byte, verifyingKey ed25519.PublicKey) (encaps []byte, verified bool, ok bool) {
+	const unsigned = 4 + 1 + mlkemEKSize
+	const signed = unsigned + 64
+	if !IsPQAnnouncement(note) || (len(note) != unsigned && len(note) != signed) || note[4] != 0x01 {
+		return nil, false, false
+	}
+	encaps = append([]byte{}, note[5:unsigned]...)
+	if len(note) == unsigned {
+		return encaps, false, true
+	}
+	if len(verifyingKey) != ed25519.PublicKeySize {
+		return nil, false, false
+	}
+	msg := append(append([]byte("AlgoChat-pq-ek-v1"), 0x01), encaps...)
+	sum := sha256.Sum256(msg)
+	if !ed25519.Verify(verifyingKey, sum[:], note[unsigned:]) {
+		return nil, false, false
+	}
+	return encaps, true, true
+}
+
 type handshakeFields struct {
 	senderPublic, recipientPublic, ephemeralPublic [KeySize]byte
 	kemCT                                          []byte
 	encapsHash                                     [KeySize]byte
+	senderCT                                       []byte
 	nonce                                          [NonceSize]byte
 	wrapped                                        []byte
 }
@@ -217,13 +254,15 @@ func parseHandshake(note []byte) (handshakeFields, error) {
 	off += mlkemCTSize
 	copy(f.encapsHash[:], note[off:off+32])
 	off += 32
+	f.senderCT = append([]byte{}, note[off:off+mlkemCTSize]...)
+	off += mlkemCTSize
 	copy(f.nonce[:], note[off:off+12])
 	off += 12
 	f.wrapped = append([]byte{}, note[off:off+pqWrappedKeySize]...)
 	return f, nil
 }
 
-func handshakePrefix(sender, recip, eph [KeySize]byte, ct, ek, nonce []byte) []byte {
+func handshakePrefix(sender, recip, eph [KeySize]byte, ct, ek, senderCT, nonce []byte) []byte {
 	prefix := make([]byte, pqHandshakeSize-pqWrappedKeySize)
 	prefix[0] = protocolVersionAAD
 	prefix[1] = protocolIDPQHandshake
@@ -239,6 +278,8 @@ func handshakePrefix(sender, recip, eph [KeySize]byte, ct, ek, nonce []byte) []b
 	sum := sha256.Sum256(ek)
 	copy(prefix[off:], sum[:])
 	off += 32
+	copy(prefix[off:], senderCT)
+	off += len(senderCT)
 	copy(prefix[off:], nonce)
 	return prefix
 }
@@ -258,13 +299,10 @@ func sessionFrom(note, key []byte, sender, recip [KeySize]byte) PQSession {
 	return PQSession{SessionKey: key, SenderPublicKey: sender, RecipientPublicKey: recip, HandshakeID: id}
 }
 
-func senderWrapKey(priv, other, sender, eph [KeySize]byte) ([]byte, error) {
-	agreed, err := curve25519.X25519(priv[:], other[:])
-	if err != nil {
-		return nil, err
-	}
-	info := append([]byte("AlgoChatPQ-SenderKey"), sender[:]...)
-	return expandHKDF(agreed, eph[:], info), nil
+func senderWrapKey(x25519Shared, mlkemShared, sender, eph []byte) []byte {
+	ikm := append(append([]byte{}, x25519Shared...), mlkemShared...)
+	info := append([]byte("AlgoChatPQ-SenderKey"), sender...)
+	return expandHKDF(ikm, eph, info)
 }
 
 func expandHKDF(ikm, salt, info []byte) []byte {

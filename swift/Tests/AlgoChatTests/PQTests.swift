@@ -7,18 +7,19 @@ import Testing
 struct PQTests {
     private static let pinnedCombiner = "9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734"
 
-    @Test("wire sizes stay 1278 and 78 and do not use 0x03")
+    @Test("wire sizes stay 2366 and 78 and do not use 0x03")
     func wireSizes() {
         #expect(PQProtocol.version == 0x02)
         #expect(PQProtocol.handshakeID == 0x04)
         #expect(PQProtocol.messageID == 0x05)
         #expect(PQProtocol.handshakeID != 0x03)
         #expect(PQProtocol.messageID != 0x03)
-        #expect(PQProtocol.handshakeSize == 1278)
+        #expect(PQProtocol.handshakeSize == 2366)
         #expect(PQProtocol.messageHeaderSize == 78)
         #expect(PQProtocol.maxPayloadSize == 4002)
         #expect(
-            2 + 32 + 32 + 32 + PQProtocol.ciphertextSize + 32 + 12 + PQProtocol.wrappedKeySize
+            2 + 32 + 32 + 32 + PQProtocol.ciphertextSize + 32 + PQProtocol.ciphertextSize + 12
+                + PQProtocol.wrappedKeySize
                 == PQProtocol.handshakeSize
         )
     }
@@ -99,30 +100,38 @@ struct PQTests {
     @Test("accepts the TypeScript handshake, reopens it, and fails a flipped byte")
     @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
     func acceptsTypeScriptHandshake() throws {
-        let fixture = try loadFixture()
-        let note = try data(hex: fixture.handshake_note)
+        let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x11, count: 32))
+        let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x22, count: 32))
+        let aliceKem = try PQSession.encapsulationPrivateKey(fromAccountSeed: Data(repeating: 0x11, count: 32))
+        let kem = try PQSession.encapsulationPrivateKey(fromAccountSeed: Data(repeating: 0x22, count: 32))
+        let built = try PQSession.initiate(
+            senderPrivateKey: alice.privateKey,
+            recipientPublicKey: bob.publicKey,
+            recipientEncapsKey: kem.publicKey.rawRepresentation,
+            senderKemKey: aliceKem
+        )
+        let note = built.note
         let bytes = [UInt8](note)
-        #expect(fixture.handshake_bytes == 1278)
-        #expect(note.count == 1278)
+        #expect(note.count == 2366)
         #expect(PQSession.isHandshake(note))
         #expect(bytes[0] == 0x02)
         #expect(bytes[1] == 0x04)
         #expect(!EnvelopeDecoder.isChatMessage(note))
-
-        let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x11, count: 32))
-        let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x22, count: 32))
         #expect(Data(bytes[2..<34]) == alice.publicKey.rawRepresentation)
         #expect(Data(bytes[34..<66]) == bob.publicKey.rawRepresentation)
 
-        let kem = try PQSession.encapsulationPrivateKey(fromAccountSeed: Data(repeating: 0x22, count: 32))
         let session = try PQSession.accept(
             note: note,
             recipientPrivateKey: bob.privateKey,
             kemPrivateKey: kem
         )
-        #expect(hex(session.sessionKey) == fixture.handshake_session_key)
+        #expect(session.sessionKey == built.session.sessionKey)
 
-        let reopened = try PQSession.openAsSender(note: note, senderPrivateKey: alice.privateKey)
+        let reopened = try PQSession.openAsSender(
+            note: note,
+            senderPrivateKey: alice.privateKey,
+            senderKemKey: aliceKem
+        )
         #expect(reopened.sessionKey == session.sessionKey)
         #expect(reopened.handshakeID == session.handshakeID)
 
@@ -159,10 +168,12 @@ struct PQTests {
         let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x11, count: 32))
         let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x22, count: 32))
         let kem = try PQSession.encapsulationPrivateKey(fromAccountSeed: Data(repeating: 0x22, count: 32))
+        let aliceKem = try PQSession.encapsulationPrivateKey(fromAccountSeed: Data(repeating: 0x11, count: 32))
         let opened = try PQSession.initiate(
             senderPrivateKey: alice.privateKey,
             recipientPublicKey: bob.publicKey,
-            recipientEncapsKey: kem.publicKey.rawRepresentation
+            recipientEncapsKey: kem.publicKey.rawRepresentation,
+            senderKemKey: aliceKem
         )
         #expect(opened.note.count == PQProtocol.handshakeSize)
         #expect([UInt8](opened.note)[0] == PQProtocol.version)
@@ -173,7 +184,11 @@ struct PQTests {
             recipientPrivateKey: bob.privateKey,
             kemPrivateKey: kem
         )
-        let reopened = try PQSession.openAsSender(note: opened.note, senderPrivateKey: alice.privateKey)
+        let reopened = try PQSession.openAsSender(
+            note: opened.note,
+            senderPrivateKey: alice.privateKey,
+            senderKemKey: aliceKem
+        )
         #expect(accepted.sessionKey == opened.session.sessionKey)
         #expect(reopened.sessionKey == opened.session.sessionKey)
 

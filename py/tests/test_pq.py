@@ -74,37 +74,45 @@ class TestPQParityFixture:
         assert key.hex() == _vector()["combiner_session_key"]
 
     def test_handshake_note_accept_and_sender_reopen(self):
-        vector = _vector()
-        note = bytes.fromhex(vector["handshake_note"])
-        assert len(note) == 1278
-        assert len(note) == vector["handshake_bytes"]
-        assert len(note) == PQ_HANDSHAKE_SIZE
-        assert note[0] == PQ_VERSION == 0x02
-        assert note[1] == PQ_HANDSHAKE_ID == 0x04
+        note_len = PQ_HANDSHAKE_SIZE
+        assert note_len == 2366
+        assert note_len <= MAX_NOTE_SIZE
         assert PQ_HANDSHAKE_ID != 0x03
         assert PQ_DATA_ID != 0x03
+
+        bob_private, bob_public = _keys(_BOB_SEED)
+        alice_private, alice_public = _keys(_ALICE_SEED)
+        alice_kem = derive_mlkem_keypair(_ALICE_SEED)
+        bob_kem = derive_mlkem_keypair(_BOB_SEED)
+        note, session = initiate_pq_session(
+            alice_public, bob_public, bob_kem.encaps_key, alice_kem.encaps_key
+        )
+        assert len(note) == note_len
+        assert note[0] == PQ_VERSION == 0x02
+        assert note[1] == PQ_HANDSHAKE_ID == 0x04
         assert is_pq_handshake(note)
         assert not is_chat_message(note)
         assert not is_psk_message(note)
 
-        bob_private, bob_public = _keys(_BOB_SEED)
-        alice_private, alice_public = _keys(_ALICE_SEED)
-        bob_kem = derive_mlkem_keypair(_BOB_SEED)
         accepted = accept_pq_session(note, bob_private, bob_public, bob_kem)
-        assert accepted.session_key.hex() == vector["handshake_session_key"]
+        assert accepted.session_key == session.session_key
 
-        reopened = open_pq_session_as_sender(note, alice_private, alice_public)
+        reopened = open_pq_session_as_sender(note, alice_private, alice_public, alice_kem)
         assert reopened.session_key == accepted.session_key
         assert reopened.handshake_id == accepted.handshake_id
+        with pytest.raises(PQError):
+            open_pq_session_as_sender(note, alice_private, alice_public, bob_kem)
 
     def test_round_trip_and_flipped_byte_fails(self):
         alice_private, alice_public = _keys(_ALICE_SEED)
         bob_private, bob_public = _keys(_BOB_SEED)
+        alice_kem = derive_mlkem_keypair(_ALICE_SEED)
         bob_kem = derive_mlkem_keypair(_BOB_SEED)
         note, session = initiate_pq_session(
             alice_public,
             bob_public,
             bob_kem.encaps_key,
+            alice_kem.encaps_key,
         )
         assert len(note) == PQ_HANDSHAKE_SIZE
         assert note[0] == 0x02
@@ -113,7 +121,7 @@ class TestPQParityFixture:
 
         accepted = accept_pq_session(note, bob_private, bob_public, bob_kem)
         assert accepted.session_key == session.session_key
-        reopened = open_pq_session_as_sender(note, alice_private, alice_public)
+        reopened = open_pq_session_as_sender(note, alice_private, alice_public, alice_kem)
         assert reopened.session_key == session.session_key
 
         message = encrypt_pq_message("parity", session)
@@ -130,12 +138,19 @@ class TestPQParityFixture:
         tampered[-1] ^= 0x01
         with pytest.raises(PQError, match="authentication failed"):
             decrypt_pq_message(bytes(tampered), accepted)
+        body = bytearray(message)
+        body[PQ_DATA_HEADER_SIZE] ^= 0x01
+        with pytest.raises(PQError, match="authentication failed"):
+            decrypt_pq_message(bytes(body), accepted)
 
     def test_payload_budget_uses_78_byte_header(self):
         _, alice_public = _keys(_ALICE_SEED)
         _, bob_public = _keys(_BOB_SEED)
         bob_kem = derive_mlkem_keypair(_BOB_SEED)
-        _, session = initiate_pq_session(alice_public, bob_public, bob_kem.encaps_key)
+        alice_kem = derive_mlkem_keypair(_ALICE_SEED)
+        _, session = initiate_pq_session(
+            alice_public, bob_public, bob_kem.encaps_key, alice_kem.encaps_key
+        )
         full = "x" * PQ_MAX_PAYLOAD_SIZE
         note = encrypt_pq_message(full, session)
         assert len(note) == MAX_NOTE_SIZE

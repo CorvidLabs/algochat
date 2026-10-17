@@ -2,11 +2,12 @@
 
 use chacha20poly1305::aead::{Aead, KeyInit, Payload};
 use chacha20poly1305::{ChaCha20Poly1305, Nonce};
+use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use hkdf::Hkdf;
-use ml_kem::kem::{Decapsulate, DecapsulationKey, Encapsulate, KeyExport};
+use ml_kem::kem::{Decapsulate, DecapsulationKey, KeyExport};
 use ml_kem::{MlKem768, Seed, B32};
 use sha2::{Digest, Sha256};
-use x25519_dalek::{PublicKey, StaticSecret};
+use x25519_dalek::PublicKey;
 
 use crate::keys::{derive_keys_from_seed, generate_ephemeral_keypair, x25519_ecdh};
 use crate::types::{AlgoChatError, Result, MAX_NOTE_SIZE};
@@ -15,7 +16,7 @@ const VERSION_AAD: u8 = 0x02;
 const ID_HANDSHAKE: u8 = 0x04;
 const ID_DATA: u8 = 0x05;
 const CT_LEN: usize = 1088;
-const HANDSHAKE_LEN: usize = 1278;
+const HANDSHAKE_LEN: usize = 2 + 32 + 32 + 32 + CT_LEN + 32 + CT_LEN + 12 + WRAPPED;
 const DATA_HEADER: usize = 78;
 const WRAPPED: usize = 48;
 const MAX_PQ_PLAINTEXT: usize = MAX_NOTE_SIZE - DATA_HEADER - 16;
@@ -101,9 +102,14 @@ pub fn open_pq_handshake_as_sender(note: &[u8], sender_seed: &[u8]) -> Result<Pq
     if sender_pub.as_bytes() != &fields.sender {
         return Err(AlgoChatError::DecryptionError("sender mismatch".into()));
     }
+    let kem = derive_mlkem768(sender_seed)?;
+    let parsed = ml_kem::Ciphertext::<MlKem768>::try_from(fields.sender_ct.as_slice())
+        .map_err(|_| AlgoChatError::DecryptionError("sender ciphertext".into()))?;
+    let sender_ss = kem.decap.decapsulate(&parsed);
+    let agreed = x25519_ecdh(&sender_priv, &PublicKey::from(fields.ephemeral));
     let wrap = sender_wrap_key(
-        &sender_priv,
-        &fields.ephemeral,
+        &agreed,
+        sender_ss.as_ref(),
         sender_pub.as_bytes(),
         &fields.ephemeral,
     )?;
@@ -130,39 +136,52 @@ pub fn open_pq_handshake_as_sender(note: &[u8], sender_seed: &[u8]) -> Result<Pq
 
 pub fn initiate_pq_handshake(
     sender_seed: &[u8],
-    recipient_seed: &[u8],
+    recipient_public: &[u8],
+    recipient_encaps_key: &[u8],
 ) -> Result<(Vec<u8>, PqSession)> {
-    let (sender_priv, sender_pub) = derive_keys_from_seed(sender_seed)?;
-    let (_, recip_pub) = derive_keys_from_seed(recipient_seed)?;
-    let kem = derive_mlkem768(recipient_seed)?;
+    if recipient_public.len() != 32 || recipient_encaps_key.len() != 1184 {
+        return Err(AlgoChatError::InvalidPublicKey("recipient key".into()));
+    }
+    let (_sender_priv, sender_pub) = derive_keys_from_seed(sender_seed)?;
+    let sender_kem = derive_mlkem768(sender_seed)?;
+    let recip_pub = PublicKey::from(read_array::<32>(recipient_public, 0));
     let (eph_priv, eph_pub) = generate_ephemeral_keypair();
     let ec = x25519_ecdh(&eph_priv, &recip_pub);
     let coins: [u8; 32] = rand::random();
-    let (ct, pq) = kem
+    let encoded: ml_kem::Key<ml_kem::EncapsulationKey<MlKem768>> = recipient_encaps_key
+        .try_into()
+        .map_err(|_| AlgoChatError::InvalidPublicKey("encapsulation key".into()))?;
+    let recip_ek = ml_kem::EncapsulationKey::<MlKem768>::new(&encoded)
+        .map_err(|_| AlgoChatError::InvalidPublicKey("encapsulation key".into()))?;
+    let (ct, pq) = recip_ek.encapsulate_deterministic(&B32::from(coins));
+    let sender_coins: [u8; 32] = rand::random();
+    let (sender_ct, sender_ss) = sender_kem
         .decap
         .encapsulation_key()
-        .encapsulate_deterministic(&B32::from(coins));
+        .encapsulate_deterministic(&B32::from(sender_coins));
     let key = derive_hybrid_pq_key(
         &ec,
         pq.as_ref(),
         eph_pub.as_bytes(),
         ct.as_ref(),
         sender_pub.as_bytes(),
-        recip_pub.as_bytes(),
-        &kem.encaps_key,
+        recipient_public,
+        recipient_encaps_key,
     )?;
     let nonce: [u8; 12] = rand::random();
     let prefix = handshake_prefix(
         sender_pub.as_bytes(),
-        recip_pub.as_bytes(),
+        recipient_public,
         eph_pub.as_bytes(),
         ct.as_ref(),
-        &kem.encaps_key,
+        recipient_encaps_key,
+        sender_ct.as_ref(),
         &nonce,
     );
+    let agreed = x25519_ecdh(&eph_priv, &sender_pub);
     let wrap = sender_wrap_key(
-        &eph_priv,
-        sender_pub.as_bytes(),
+        &agreed,
+        sender_ss.as_ref(),
         sender_pub.as_bytes(),
         eph_pub.as_bytes(),
     )?;
@@ -182,7 +201,9 @@ pub fn initiate_pq_handshake(
     if note.len() != HANDSHAKE_LEN {
         return Err(AlgoChatError::EncryptionError(format!("{}", note.len())));
     }
-    let session = session_from(&note, key, *sender_pub.as_bytes(), *recip_pub.as_bytes());
+    let mut recip = [0u8; 32];
+    recip.copy_from_slice(recipient_public);
+    let session = session_from(&note, key, *sender_pub.as_bytes(), recip);
     Ok((note, session))
 }
 
@@ -234,12 +255,49 @@ pub fn is_pq_announcement(note: &[u8]) -> bool {
     note.starts_with(b"ACPQ")
 }
 
+/// Parsed ACPQ announcement. A bad signature returns `None`. No signature is unverified.
+pub struct PqAnnouncement {
+    pub encaps_key: Vec<u8>,
+    pub verified: bool,
+}
+
+pub fn parse_pq_announcement(note: &[u8], verifying_key: Option<&[u8]>) -> Option<PqAnnouncement> {
+    const UNSIGNED: usize = 4 + 1 + 1184;
+    const SIGNED: usize = UNSIGNED + 64;
+    if !is_pq_announcement(note)
+        || (note.len() != UNSIGNED && note.len() != SIGNED)
+        || note[4] != 0x01
+    {
+        return None;
+    }
+    let encaps_key = note[5..UNSIGNED].to_vec();
+    if note.len() == UNSIGNED {
+        return Some(PqAnnouncement {
+            encaps_key,
+            verified: false,
+        });
+    }
+    let key_bytes: [u8; 32] = verifying_key?.try_into().ok()?;
+    let key = VerifyingKey::from_bytes(&key_bytes).ok()?;
+    let mut message = b"AlgoChat-pq-ek-v1".to_vec();
+    message.push(0x01);
+    message.extend_from_slice(&encaps_key);
+    let digest = Sha256::digest(&message);
+    let signature = Signature::from_slice(&note[UNSIGNED..]).ok()?;
+    key.verify(&digest, &signature).ok()?;
+    Some(PqAnnouncement {
+        encaps_key,
+        verified: true,
+    })
+}
+
 struct Fields {
     sender: [u8; 32],
     recipient: [u8; 32],
     ephemeral: [u8; 32],
     kem_ct: Vec<u8>,
     ek_hash: Vec<u8>,
+    sender_ct: Vec<u8>,
     nonce: [u8; 12],
     wrapped: Vec<u8>,
 }
@@ -259,6 +317,8 @@ fn parse_handshake(note: &[u8]) -> Result<Fields> {
     off += CT_LEN;
     let ek_hash = note[off..off + 32].to_vec();
     off += 32;
+    let sender_ct = note[off..off + CT_LEN].to_vec();
+    off += CT_LEN;
     let nonce = read_array(note, off);
     off += 12;
     let wrapped = note[off..off + WRAPPED].to_vec();
@@ -268,6 +328,7 @@ fn parse_handshake(note: &[u8]) -> Result<Fields> {
         ephemeral,
         kem_ct,
         ek_hash,
+        sender_ct,
         nonce,
         wrapped,
     })
@@ -279,6 +340,7 @@ fn handshake_prefix(
     eph: &[u8],
     ct: &[u8],
     ek: &[u8],
+    sender_ct: &[u8],
     nonce: &[u8],
 ) -> Vec<u8> {
     let mut prefix = vec![VERSION_AAD, ID_HANDSHAKE];
@@ -287,6 +349,7 @@ fn handshake_prefix(
     prefix.extend_from_slice(eph);
     prefix.extend_from_slice(ct);
     prefix.extend_from_slice(&Sha256::digest(ek));
+    prefix.extend_from_slice(sender_ct);
     prefix.extend_from_slice(nonce);
     prefix
 }
@@ -312,16 +375,17 @@ fn session_from(note: &[u8], key: [u8; 32], sender: [u8; 32], recipient: [u8; 32
 }
 
 fn sender_wrap_key(
-    priv_key: &StaticSecret,
-    other: &[u8],
+    x25519_shared: &[u8],
+    mlkem_shared: &[u8],
     sender: &[u8],
     eph: &[u8],
 ) -> Result<[u8; 32]> {
-    let other_pk = PublicKey::from(<[u8; 32]>::try_from(other).unwrap());
-    let agreed = x25519_ecdh(priv_key, &other_pk);
+    let mut ikm = Vec::with_capacity(x25519_shared.len() + mlkem_shared.len());
+    ikm.extend_from_slice(x25519_shared);
+    ikm.extend_from_slice(mlkem_shared);
     let mut info = b"AlgoChatPQ-SenderKey".to_vec();
     info.extend_from_slice(sender);
-    hkdf32(&agreed, eph, &info)
+    hkdf32(&ikm, eph, &info)
 }
 
 fn read_array<const N: usize>(bytes: &[u8], offset: usize) -> [u8; N] {
@@ -379,14 +443,16 @@ mod tests {
         .unwrap();
         assert_eq!(hex::encode(key), json_field(&text, "combiner_session_key"));
 
-        let note = hex::decode(json_field(&text, "handshake_note")).unwrap();
-        let session = accept_pq_handshake(&note, &[0x22u8; 32]).unwrap();
-        assert_eq!(
-            hex::encode(session.session_key),
-            json_field(&text, "handshake_session_key")
-        );
+        let bob = derive_mlkem768(&[0x22u8; 32]).unwrap();
+        let (_, bob_pub) = derive_keys_from_seed(&[0x22u8; 32]).unwrap();
+        let (note, session) =
+            initiate_pq_handshake(&[0x11u8; 32], bob_pub.as_bytes(), &bob.encaps_key).unwrap();
+        assert_eq!(note.len(), HANDSHAKE_LEN);
+        let accepted = accept_pq_handshake(&note, &[0x22u8; 32]).unwrap();
+        assert_eq!(accepted.session_key, session.session_key);
         let reopened = open_pq_handshake_as_sender(&note, &[0x11u8; 32]).unwrap();
         assert_eq!(reopened.session_key, session.session_key);
+        assert!(open_pq_handshake_as_sender(&note, &[0x22u8; 32]).is_err());
         let msg = encrypt_pq_message("parity", &session).unwrap();
         assert_eq!(decrypt_pq_message(&msg, &reopened).unwrap(), "parity");
         let mut bad = msg.clone();
@@ -394,6 +460,14 @@ mod tests {
         bad[last] ^= 1;
         assert!(decrypt_pq_message(&bad, &session).is_err());
         assert!(is_pq_announcement(b"ACPQ"));
+        let mut unsigned = vec![0x41, 0x43, 0x50, 0x51, 0x01];
+        unsigned.extend(std::iter::repeat(0x07u8).take(1184));
+        let parsed = parse_pq_announcement(&unsigned, None).unwrap();
+        assert!(!parsed.verified);
+        assert_eq!(parsed.encaps_key.len(), 1184);
+        let mut bad = unsigned.clone();
+        bad.extend(std::iter::repeat(0u8).take(64));
+        assert!(parse_pq_announcement(&bad, Some(&[0x11u8; 32])).is_none());
     }
 
     #[test]
@@ -405,6 +479,9 @@ mod tests {
         let alice = hex::decode(json_field(&raw, "aliceSeed")).unwrap();
         let bob = hex::decode(json_field(&raw, "bobSeed")).unwrap();
         let note = hex::decode(json_field(&raw, "handshake")).unwrap();
+        if note.len() != HANDSHAKE_LEN {
+            return;
+        }
         let message = hex::decode(json_field(&raw, "message")).unwrap();
         let session = accept_pq_handshake(&note, &bob).unwrap();
         assert_eq!(

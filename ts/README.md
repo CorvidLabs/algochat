@@ -16,7 +16,7 @@ TypeScript implementation of the AlgoChat protocol for encrypted messaging on Al
 - **PSK Mode (v1.1)** - Hybrid ECDH + pre-shared key ratcheting for quantum defense-in-depth
 - **Bidirectional Decryption** - Sender can decrypt own messages
 - **Reply Support** - Thread conversations with context
-- **Minimal Dependencies** - Uses @noble crypto libraries (audited) + algosdk 3.7 + falcon-1024
+- **Minimal Dependencies** - Uses @noble/curves and @noble/hashes, plus @noble/post-quantum 0.7.1 (no independent audit), algosdk 3.7, and falcon-1024
 - **Falcon-1024 accounts** - New identities sign with `pqsig` by default. Import without a scheme still recovers Ed25519
 - **4096-byte notes** - Standard plaintext up to 3954 bytes, PSK plaintext up to 3950 bytes. Notes past 1024 bytes pay the consensus fee surcharge
 - **TypeScript First** - Full type safety

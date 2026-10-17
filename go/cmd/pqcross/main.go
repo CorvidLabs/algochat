@@ -12,12 +12,12 @@ import (
 )
 
 type request struct {
-	ID        int    `json:"id"`
-	Op        string `json:"op"`
-	Seed      string `json:"seed"`
-	AliceSeed string `json:"aliceSeed"`
-	BobSeed   string `json:"bobSeed"`
-	Text      string `json:"text"`
+	ID        int      `json:"id"`
+	Op        string   `json:"op"`
+	Seed      string   `json:"seed"`
+	AliceSeed string   `json:"aliceSeed"`
+	BobSeed   string   `json:"bobSeed"`
+	Text      string   `json:"text"`
 	Handshake string   `json:"handshake"`
 	Message   string   `json:"message"`
 	Note      string   `json:"note"`
@@ -137,7 +137,11 @@ func writeNote(aliceSeed, bobSeed [32]byte, text string) (map[string]any, error)
 	if err != nil {
 		return nil, err
 	}
-	note, session, err := algochat.InitiatePQHandshake(alice, bob.PublicKey, dk.EncapsulationKey().Bytes())
+	aliceDK, err := algochat.DeriveMLKEM768(aliceSeed)
+	if err != nil {
+		return nil, err
+	}
+	note, session, err := algochat.InitiatePQHandshake(alice, bob.PublicKey, dk.EncapsulationKey().Bytes(), aliceDK.EncapsulationKey().Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +177,11 @@ func readNote(aliceSeed, bobSeed [32]byte, handshake, message []byte, text strin
 	if err != nil {
 		return nil, err
 	}
-	sender, err := algochat.OpenPQHandshakeAsSender(handshake, alice)
+	aliceDK, err := algochat.DeriveMLKEM768(aliceSeed)
+	if err != nil {
+		return nil, err
+	}
+	sender, err := algochat.OpenPQHandshakeAsSender(handshake, alice, aliceDK)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +309,11 @@ func writeMany(aliceSeed, bobSeed [32]byte, texts []string) (map[string]any, err
 	if err != nil {
 		return nil, err
 	}
-	note, session, err := algochat.InitiatePQHandshake(alice, bob.PublicKey, dk.EncapsulationKey().Bytes())
+	aliceDK, err := algochat.DeriveMLKEM768(aliceSeed)
+	if err != nil {
+		return nil, err
+	}
+	note, session, err := algochat.InitiatePQHandshake(alice, bob.PublicKey, dk.EncapsulationKey().Bytes(), aliceDK.EncapsulationKey().Bytes())
 	if err != nil {
 		return nil, err
 	}

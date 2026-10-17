@@ -25,9 +25,9 @@ public enum PQProtocol {
     public static let wrappedKeySize = 48
     public static let tagSize = 16
 
-    /// version, protocol, sender, recipient, ephemeral, ciphertext, ek hash, nonce, wrapped key
+    /// version, protocol, sender, recipient, ephemeral, recipient ciphertext, ek hash, sender ciphertext, nonce, wrapped key
     public static let handshakeSize =
-        2 + 32 + 32 + 32 + ciphertextSize + 32 + nonceSize + wrappedKeySize
+        2 + 32 + 32 + 32 + ciphertextSize + 32 + ciphertextSize + nonceSize + wrappedKeySize
 
     /// version, protocol, sender, handshake id, nonce
     public static let messageHeaderSize = 2 + 32 + 32 + nonceSize
@@ -176,7 +176,8 @@ public struct PQSession: Sendable {
     public static func initiate(
         senderPrivateKey: Curve25519.KeyAgreement.PrivateKey,
         recipientPublicKey: Curve25519.KeyAgreement.PublicKey,
-        recipientEncapsKey: Data
+        recipientEncapsKey: Data,
+        senderKemKey: MLKEM768.PrivateKey
     ) throws -> (note: Data, session: PQSession) {
         try requireCount("encapsulation key", recipientEncapsKey, PQProtocol.encapsKeySize)
         let senderPublicKey = senderPrivateKey.publicKey.rawRepresentation
@@ -185,6 +186,8 @@ public struct PQSession: Sendable {
         let ephemeral = Curve25519.KeyAgreement.PrivateKey()
         let ecShared = try x25519SharedSecret(ephemeral, recipientPublic)
         let encapsulated = try MLKEM.encapsulate(recipientEncapsKey)
+        let senderEncapsKey = Data([UInt8](senderKemKey.publicKey.rawRepresentation))
+        let senderCopy = try MLKEM.encapsulate(senderEncapsKey)
         let sessionKey = try deriveHybridKey(
             x25519SharedSecret: ecShared,
             mlkemSharedSecret: encapsulated.sharedSecret,
@@ -202,11 +205,12 @@ public struct PQSession: Sendable {
             ephemeralPublicKey: ephemeral.publicKey.rawRepresentation,
             kemCiphertext: encapsulated.ciphertext,
             encapsKey: recipientEncapsKey,
+            senderKemCiphertext: senderCopy.ciphertext,
             nonce: nonce
         )
         let wrapKey = try senderWrapKey(
-            privateKey: ephemeral,
-            otherPublicKey: senderPublicKey,
+            x25519Shared: try x25519SharedSecret(ephemeral, senderPublicKey),
+            senderMlkemShared: senderCopy.sharedSecret,
             senderPublicKey: senderPublicKey,
             ephemeralPublicKey: ephemeral.publicKey.rawRepresentation
         )
@@ -251,18 +255,21 @@ public struct PQSession: Sendable {
         return sessionFrom(note, sessionKey, fields.senderPublicKey, fields.recipientPublicKey)
     }
 
-    /// Sender recovers the session from the note and the long-term X25519 key.
+    /// Sender recovers the session from the note, the long-term X25519 key, and the sender ML-KEM key.
+    @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
     public static func openAsSender(
         note: Data,
-        senderPrivateKey: Curve25519.KeyAgreement.PrivateKey
+        senderPrivateKey: Curve25519.KeyAgreement.PrivateKey,
+        senderKemKey: MLKEM768.PrivateKey
     ) throws -> PQSession {
         let fields = try parseHandshake(note)
         guard fields.senderPublicKey == senderPrivateKey.publicKey.rawRepresentation else {
             throw ChatError.invalidEnvelope("Handshake was not sent by this key")
         }
+        let senderMlkem = try MLKEM.decapsulate(fields.senderKemCiphertext, privateKey: senderKemKey)
         let wrapKey = try senderWrapKey(
-            privateKey: senderPrivateKey,
-            otherPublicKey: fields.ephemeralPublicKey,
+            x25519Shared: try x25519SharedSecret(senderPrivateKey, fields.ephemeralPublicKey),
+            senderMlkemShared: senderMlkem,
             senderPublicKey: fields.senderPublicKey,
             ephemeralPublicKey: fields.ephemeralPublicKey
         )
@@ -395,6 +402,7 @@ private struct HandshakeFields {
     let ephemeralPublicKey: Data
     let kemCiphertext: Data
     let encapsKeyHash: Data
+    let senderKemCiphertext: Data
     let nonce: Data
     let wrappedSessionKey: Data
 }
@@ -415,6 +423,8 @@ private func parseHandshake(_ note: Data) throws -> HandshakeFields {
     offset += PQProtocol.ciphertextSize
     let encapsKeyHash = slice(bytes, offset, 32)
     offset += 32
+    let senderKemCiphertext = slice(bytes, offset, PQProtocol.ciphertextSize)
+    offset += PQProtocol.ciphertextSize
     let nonce = slice(bytes, offset, PQProtocol.nonceSize)
     offset += PQProtocol.nonceSize
     let wrappedSessionKey = slice(bytes, offset, PQProtocol.wrappedKeySize)
@@ -428,6 +438,7 @@ private func parseHandshake(_ note: Data) throws -> HandshakeFields {
         ephemeralPublicKey: ephemeralPublicKey,
         kemCiphertext: kemCiphertext,
         encapsKeyHash: encapsKeyHash,
+        senderKemCiphertext: senderKemCiphertext,
         nonce: nonce,
         wrappedSessionKey: wrappedSessionKey
     )
@@ -439,6 +450,7 @@ private func handshakePrefix(
     ephemeralPublicKey: Data,
     kemCiphertext: Data,
     encapsKey: Data,
+    senderKemCiphertext: Data,
     nonce: Data
 ) -> Data {
     var prefix = Data()
@@ -449,6 +461,7 @@ private func handshakePrefix(
     prefix.append(ephemeralPublicKey)
     prefix.append(kemCiphertext)
     prefix.append(Data(SHA256.hash(data: encapsKey)))
+    prefix.append(senderKemCiphertext)
     prefix.append(nonce)
     return prefix
 }
@@ -477,17 +490,19 @@ private func sessionFrom(
     )
 }
 
-/// X25519(private, other) then HKDF with salt = ephemeral public and info = `AlgoChatPQ-SenderKey` || sender.
+/// HKDF of X25519 shared secret concatenated with the sender's ML-KEM shared secret.
 private func senderWrapKey(
-    privateKey: Curve25519.KeyAgreement.PrivateKey,
-    otherPublicKey: Data,
+    x25519Shared: Data,
+    senderMlkemShared: Data,
     senderPublicKey: Data,
     ephemeralPublicKey: Data
-) throws -> SymmetricKey {
-    let agreed = try x25519SharedSecret(privateKey, otherPublicKey)
+) -> SymmetricKey {
+    var ikm = Data()
+    ikm.append(x25519Shared)
+    ikm.append(senderMlkemShared)
     var info = Data("AlgoChatPQ-SenderKey".utf8)
     info.append(senderPublicKey)
-    let key = hkdf(ikm: agreed, salt: ephemeralPublicKey, info: info)
+    let key = hkdf(ikm: ikm, salt: ephemeralPublicKey, info: info)
     return SymmetricKey(data: key)
 }
 
