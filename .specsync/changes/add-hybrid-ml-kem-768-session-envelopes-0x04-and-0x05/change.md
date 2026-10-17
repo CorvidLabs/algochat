@@ -1,6 +1,6 @@
 ---
 id: add-hybrid-ml-kem-768-session-envelopes-0x04-and-0x05
-state: approved
+state: implementing
 type: feature
 base_commit: 69ed4d66251348eff02833f5d2c68f73e5723cec
 ---
