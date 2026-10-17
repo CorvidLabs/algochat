@@ -1,6 +1,6 @@
 ---
 id: prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum
-state: implementing
+state: archived
 type: feature
 base_commit: 76dcba487d1c83c233f2915f86ca15eba418137b
 ---
