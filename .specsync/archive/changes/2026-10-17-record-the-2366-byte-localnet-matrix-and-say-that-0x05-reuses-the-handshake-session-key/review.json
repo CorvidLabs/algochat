@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "a8ac47ed0eed33bccccfe23ed40e999de1333ba5",
+  "contract_digest": "50cd614205786b276d1f803251704043a5caffa0ee1df85c541da710b1ebda52",
+  "execution_digest": "ccc036cef613f559f6e341d864c0f3f0fe2ee397e0a20296f5b38b7a605d7c7c",
+  "workspace_digest": "20645ad36359e1ca36094c7af2f01a011e4a89a7f8ceed4da7153a157a361a1b",
+  "timestamp": 1792279732
+}

@@ -1,0 +1,64 @@
+{
+  "timestamp": 1792279727,
+  "commit": "a8ac47ed0eed33bccccfe23ed40e999de1333ba5",
+  "contract_digest": "50cd614205786b276d1f803251704043a5caffa0ee1df85c541da710b1ebda52",
+  "execution_digest": "ccc036cef613f559f6e341d864c0f3f0fe2ee397e0a20296f5b38b7a605d7c7c",
+  "workspace_digest": "20645ad36359e1ca36094c7af2f01a011e4a89a7f8ceed4da7153a157a361a1b",
+  "acceptance_input_digest": "c54a012d833b8ed92d52140a5b3600848925e384d1c37548b77368ed67df8d71",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "PARITY.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "26bcd719ca0a3a7633588fe62d6f6e9ace1a287c4a6af26c62abdbac5b1557b8",
+        "entry_digest": "b95df0e5c2d419166012431e7955bf7c442b8e7d2906d6b81132467fdfeb3c3e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "PROTOCOL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "58bf1a3a2afd656f706c799ccb7f535f251593f2332e82f2715c733d9b8b5dcb",
+        "entry_digest": "b66cdc209316f35d41706b25c6cfbe85adc104346e6c2289147f3157255098f8",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/protocol.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0a9bffad90429fed70d9fe0e7acf19513d63912dd9654eb48c45349d5833fd55",
+        "entry_digest": "104c9f1dddbe7a0912cb1ce568d27463c1b9c6840ee21f38ca391b9d342e2878",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "92ce56c3682372562c7d2380f572fea840f393856fbc36095923d546c88d5672",
+        "entry_digest": "c341db3c88ae9542951463a15ee105433ddc37c42e6e7b7547a6fd1ba153d6ad",
+        "owners": [
+          "protocol"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-protocol-1"
+  ]
+}

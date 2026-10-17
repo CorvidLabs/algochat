@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key",
+  "implementation_commit": "a8ac47ed0eed33bccccfe23ed40e999de1333ba5",
+  "implementation_tree": "d855b382b863edf1993a366898e1585b524e4bba",
+  "contract_digest": "50cd614205786b276d1f803251704043a5caffa0ee1df85c541da710b1ebda52",
+  "workspace_digest": "20645ad36359e1ca36094c7af2f01a011e4a89a7f8ceed4da7153a157a361a1b",
+  "closing_digest": "bbab608ca9fe863932e34fd26efbc668aeca9262ca84382a79af158135dbd6d5",
+  "review_digest": "7cff376b06b103cf8e24412b4a07540f4594b787e3c4fb43ae5dc91c55438624",
+  "finalization_digest": "f9c5898629745e02c0341eb9b9fcd1ec0ca093b895546d0db7d242f29f2aeb27",
+  "timestamp": 1792279744
+}

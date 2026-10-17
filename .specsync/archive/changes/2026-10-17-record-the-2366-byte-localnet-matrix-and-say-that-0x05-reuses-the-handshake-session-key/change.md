@@ -1,6 +1,6 @@
 ---
 id: record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key
-state: implementing
+state: archived
 type: documentation
 base_commit: 7a3c964ede48b01c5abff4929f9b6db880494724
 ---
