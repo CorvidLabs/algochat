@@ -1,4 +1,4 @@
-# Lesson bundle — implement-the-1-3-0-hybrid-session-in-python-kotlin-and-swift
+# Lesson bundle: implement-the-1-3-0-hybrid-session-in-python-kotlin-and-swift
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
