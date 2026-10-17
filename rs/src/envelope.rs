@@ -59,6 +59,7 @@ impl ChatEnvelope {
         aad.extend_from_slice(&self.sender_public_key);
         aad.extend_from_slice(&self.ephemeral_public_key);
         aad.extend_from_slice(&self.nonce);
+        aad.extend_from_slice(&self.encrypted_sender_key);
         aad
     }
 
@@ -202,8 +203,7 @@ mod tests {
             ciphertext: vec![5u8; 32],
         };
         let aad = envelope.v2_aad();
-        assert_eq!(aad.len(), 78);
-        // The AAD must equal the first 78 bytes of the encoded envelope.
-        assert_eq!(&aad[..], &envelope.encode()[..78]);
+        assert_eq!(aad.len(), 126);
+        assert_eq!(&aad[..], &envelope.encode()[..126]);
     }
 }

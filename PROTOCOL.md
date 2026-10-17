@@ -101,7 +101,7 @@ that address MUST carry a Falcon `pqsig` and MUST pay the Falcon fee
 
 | Field | Size | Description |
 |-------|------|-------------|
-| version | 1 byte | Protocol version (0x01) |
+| version | 1 byte | Envelope version (`0x01` or `0x02`, section 5.4.1) |
 | protocol | 1 byte | Protocol identifier (0x01 = AlgoChat) |
 | sender_pubkey | 32 bytes | Sender's X25519 public key |
 | ephemeral_pubkey | 32 bytes | Per-message ephemeral public key |
@@ -129,6 +129,17 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 | `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
 | `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
 
+Identifier `0x03` is not assigned.
+
+### 5.4.1 Envelope version
+
+Everyday (`0x01`) and Extra lock (`0x02`) notes use version byte `0x01` or `0x02`. The field layout does not change.
+
+- Version `0x01` uses empty associated data for the payload and for the sender-key wrap.
+- Version `0x02` binds the full fixed header as the payload's associated data. That header includes the wrapped sender key, so the wrap is computed first and uses empty associated data.
+
+A reader MUST accept both versions. Changing the version byte of a version `0x02` note MUST fail decryption. Protocols `0x04` and `0x05` use version byte `0x02` with the layouts in section 5.7. That is a different header from an everyday version `0x02` note. The protocol byte tells them apart.
+
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
 ```
@@ -141,7 +152,7 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 
 | Field | Size | Description |
 |-------|------|-------------|
-| version | 1 byte | Protocol version (`0x01`) |
+| version | 1 byte | Envelope version (`0x01` or `0x02`, section 5.4.1) |
 | protocol | 1 byte | Protocol identifier (`0x02` = Ratcheting PSK) |
 | ratchet_counter | 4 bytes | Big-endian message counter for PSK ratcheting |
 | sender_pubkey | 32 bytes | Sender's X25519 public key |
@@ -596,14 +607,18 @@ When querying the indexer, filter by note prefix to match the protocol mode:
 
 | Mode | Note Prefix | Description |
 |------|-------------|-------------|
-| Standard (`0x01`) | `0x0101` | Version byte + standard protocol byte |
-| Ratcheting PSK (`0x02`) | `0x0102` | Version byte + PSK protocol byte |
+| Standard, version `0x01` | `0x0101` | Empty associated data |
+| Standard, version `0x02` | `0x0201` | Full header is payload associated data |
+| Extra lock, version `0x01` | `0x0102` | Empty associated data |
+| Extra lock, version `0x02` | `0x0202` | Full header is payload associated data |
 
-To discover all AlgoChat messages, query for both prefixes:
+To discover everyday and Extra lock notes, query for all four prefixes:
 
 ```
-standardPrefix = [0x01, 0x01]
-pskPrefix      = [0x01, 0x02]
+standardV1 = [0x01, 0x01]
+standardV2 = [0x02, 0x01]
+pskV1      = [0x01, 0x02]
+pskV2      = [0x02, 0x02]
 ```
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for pseudocode examples.
@@ -717,4 +732,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.1 | Add ratcheting PSK mode (protocol `0x02`). |
 | 1.2 | Account agility: payments MAY be Falcon-1024 `pqsig` as well as Ed25519 `sig`. Encryption seed is mnemonic entropy, not a signing-key prefix. Falcon min fee is 3×. Envelope bytes and 1.1 test vectors are unchanged. |
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
-| 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. `0x01` and `0x02` are unchanged. `0x03` is not assigned. |
+| 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |

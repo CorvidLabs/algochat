@@ -114,7 +114,7 @@ struct EnvelopeDecoderTests {
     @Test("isChatMessage returns false for wrong version")
     func testIsChatMessageWrongVersion() {
         var data = Data(repeating: 0x00, count: 150)
-        data[0] = 0x02 // Wrong version
+        data[0] = 0x09 // Unsupported version
         data[1] = 0x01
         #expect(!EnvelopeDecoder.isChatMessage(data))
     }

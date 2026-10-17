@@ -8,8 +8,8 @@ import (
 )
 
 // Protocol constants matching AlgoChat protocol revision 1.2.1.
-// The envelope version byte stays 0x01. Protocol ID 0x02 is reserved;
-// this package does not implement PSK envelopes.
+// Envelope version 0x01 uses empty associated data. Version 0x02 binds the
+// full header as payload associated data. Protocol ID 0x02 is Extra lock.
 const (
 	ProtocolVersion    = 0x01
 	ProtocolIDStandard = 0x01

@@ -74,6 +74,7 @@ impl PSKEnvelope {
         aad.extend_from_slice(&self.sender_public_key);
         aad.extend_from_slice(&self.ephemeral_public_key);
         aad.extend_from_slice(&self.nonce);
+        aad.extend_from_slice(&self.encrypted_sender_key);
         aad
     }
 }

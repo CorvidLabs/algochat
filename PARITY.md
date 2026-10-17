@@ -34,7 +34,9 @@ The handshake note in that fixture is one TypeScript run, so encapsulate is not 
 | `kt/` | yes | yes | yes | yes | yes |
 | `go/` | yes | yes | yes | yes | yes |
 
-On 2026-10-17 each library wrote one handshake and one message from the same two LocalNet accounts. Algod confirmed those notes in rounds 40924 through 40935. Every library then opened every confirmed note, recovered the same session key, and returned the plaintext `cross from` plus the writer name. Go and Rust also opened the earlier TypeScript note from rounds 40916 and 40917.
+On 2026-10-17 a size matrix confirmed 90 notes in rounds 41059 through 41154. Each library wrote empty, small, 2000-byte, and maximum plaintext for `0x01`, `0x02`, and `0x05`, three Extra lock messages at counters 0, 1, and 2, and one `0x04` handshake. Every library opened every confirmed note. TypeScript writes envelope version `0x02`. The other five write version `0x01`. All six read both. Identifier `0x03` was not used.
+
+An earlier 6x6 mesh, rounds 40924 through 40935, used one small `0x05` body per library. Go and Rust also opened the TypeScript note from rounds 40916 and 40917.
 
 ## Engines
 

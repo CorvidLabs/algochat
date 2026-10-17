@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum",
+  "slug": "prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum",
+  "title": "Prove on LocalNet that all six libraries read and write 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, including several messages in one exchange. Go gains Extra lock. Every library accepts version 0x02 header binding the way TypeScript emits it. Identifier 0x03 stays unassigned.",
+  "description": "Prove on LocalNet that all six libraries read and write 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, including several messages in one exchange. Go gains Extra lock. Every library accepts version 0x02 header binding the way TypeScript emits it. Identifier 0x03 stays unassigned.",
+  "kind": "feature",
+  "state": "approved",
+  "base_commit": "76dcba487d1c83c233f2915f86ca15eba418137b",
+  "created_at": 1792271500,
+  "updated_at": 1792271553,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "PARITY.md",
+    "README.md",
+    "implementations.json",
+    "docs",
+    "ts",
+    "go",
+    "rs",
+    "py",
+    "kt",
+    "swift",
+    "Package.swift"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "On LocalNet, each library writes 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, plus several messages in one exchange. Every other library opens those confirmed notes. Version 0x02 header binding matches TypeScript. Go implements Extra lock. Identifier 0x03 is not used."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

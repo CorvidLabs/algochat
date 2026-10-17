@@ -3,6 +3,8 @@
  * One JSON object per line. Responses are one JSON object per line.
  * Operations: identity, write, read.
  */
+import { decodeEnvelope, encodeEnvelope } from "../src/crypto/envelope.js";
+import { decryptMessage, encryptMessage } from "../src/crypto/encryption.js";
 import { deriveEncryptionKeys } from "../src/crypto/keys.js";
 import { deriveMLKEMKeyPair } from "../src/pq/kem.js";
 import {
@@ -12,6 +14,9 @@ import {
     initiatePQSession,
     openPQSessionAsSender,
 } from "../src/pq/session.js";
+import { decodePSKEnvelope, encodePSKEnvelope } from "../src/psk/envelope.js";
+import { decryptPSKMessage, encryptPSKMessage } from "../src/psk/encryption.js";
+import { derivePSKAtCounter } from "../src/psk/ratchet.js";
 
 interface Request {
     id: number;
@@ -20,8 +25,12 @@ interface Request {
     aliceSeed?: string;
     bobSeed?: string;
     text?: string;
+    texts?: string[];
     handshake?: string;
     message?: string;
+    note?: string;
+    psk?: string;
+    counter?: number;
 }
 
 function fromHex(hex: string): Uint8Array {
@@ -63,6 +72,72 @@ function write(aliceHex: string, bobHex: string, text: string): Record<string, u
     };
 }
 
+function pair(aliceHex: string, bobHex: string) {
+    return {
+        alice: deriveEncryptionKeys(fromHex(aliceHex)),
+        bob: deriveEncryptionKeys(fromHex(bobHex)),
+    };
+}
+
+function textOf(content: { text: string } | null, who: string): string {
+    if (!content) throw new Error(`${who} saw a key publish`);
+    return content.text;
+}
+
+function write01(aliceHex: string, bobHex: string, text: string): Record<string, unknown> {
+    const { alice, bob } = pair(aliceHex, bobHex);
+    const envelope = encryptMessage(text, alice.publicKey, bob.publicKey);
+    return { note: toHex(encodeEnvelope(envelope)) };
+}
+
+function read01(aliceHex: string, bobHex: string, noteHex: string, text: string): Record<string, unknown> {
+    const { alice, bob } = pair(aliceHex, bobHex);
+    const envelope = decodeEnvelope(fromHex(noteHex));
+    const recipient = textOf(decryptMessage(envelope, bob.privateKey, bob.publicKey), "bob");
+    const sender = textOf(decryptMessage(envelope, alice.privateKey, alice.publicKey), "alice");
+    if (recipient !== text || sender !== text) throw new Error(`plaintext ${recipient} / ${sender}`);
+    return { recipient, sender };
+}
+
+function write02(aliceHex: string, bobHex: string, text: string, pskHex: string, counter: number): Record<string, unknown> {
+    const { alice, bob } = pair(aliceHex, bobHex);
+    const current = derivePSKAtCounter(fromHex(pskHex), counter);
+    const envelope = encryptPSKMessage(text, alice.publicKey, bob.publicKey, current, counter);
+    return { note: toHex(encodePSKEnvelope(envelope)) };
+}
+
+function read02(
+    aliceHex: string,
+    bobHex: string,
+    noteHex: string,
+    text: string,
+    pskHex: string,
+    counter: number
+): Record<string, unknown> {
+    const { alice, bob } = pair(aliceHex, bobHex);
+    const current = derivePSKAtCounter(fromHex(pskHex), counter);
+    const envelope = decodePSKEnvelope(fromHex(noteHex));
+    const recipient = textOf(decryptPSKMessage(envelope, bob.privateKey, bob.publicKey, current), "bob");
+    const sender = textOf(decryptPSKMessage(envelope, alice.privateKey, alice.publicKey, current), "alice");
+    if (recipient !== text || sender !== text) throw new Error(`plaintext ${recipient} / ${sender}`);
+    return { recipient, sender };
+}
+
+function write05s(aliceHex: string, bobHex: string, texts: string[]): Record<string, unknown> {
+    const { alice, bob } = pair(aliceHex, bobHex);
+    const kem = deriveMLKEMKeyPair(fromHex(bobHex));
+    const { note, session } = initiatePQSession({
+        sender: alice,
+        recipientPublicKey: bob.publicKey,
+        recipientEncapsKey: kem.encapsKey,
+    });
+    return {
+        handshake: toHex(note),
+        messages: texts.map((text) => toHex(encryptPQMessage(text, session))),
+        sessionKey: toHex(session.sessionKey),
+    };
+}
+
 function read(aliceHex: string, bobHex: string, handshakeHex: string, messageHex: string, text: string): Record<string, unknown> {
     const alice = deriveEncryptionKeys(fromHex(aliceHex));
     const bob = deriveEncryptionKeys(fromHex(bobHex));
@@ -96,7 +171,21 @@ function handle(line: string): void {
         else if (req.op === "write") body = write(req.aliceSeed ?? "", req.bobSeed ?? "", req.text ?? "");
         else if (req.op === "read") {
             body = read(req.aliceSeed ?? "", req.bobSeed ?? "", req.handshake ?? "", req.message ?? "", req.text ?? "");
-        } else throw new Error(`unknown op ${req.op}`);
+        } else if (req.op === "write01") body = write01(req.aliceSeed ?? "", req.bobSeed ?? "", req.text ?? "");
+        else if (req.op === "read01") body = read01(req.aliceSeed ?? "", req.bobSeed ?? "", req.note ?? "", req.text ?? "");
+        else if (req.op === "write02") {
+            body = write02(req.aliceSeed ?? "", req.bobSeed ?? "", req.text ?? "", req.psk ?? "", Number(req.counter ?? 0));
+        } else if (req.op === "read02") {
+            body = read02(
+                req.aliceSeed ?? "",
+                req.bobSeed ?? "",
+                req.note ?? "",
+                req.text ?? "",
+                req.psk ?? "",
+                Number(req.counter ?? 0)
+            );
+        } else if (req.op === "write05s") body = write05s(req.aliceSeed ?? "", req.bobSeed ?? "", req.texts ?? []);
+        else throw new Error(`unknown op ${req.op}`);
         reply({ id: req.id, ok: true, ...body });
     } catch (error) {
         reply({ id: req.id, ok: false, error: error instanceof Error ? error.message : "failed" });

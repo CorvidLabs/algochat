@@ -3,7 +3,8 @@
 use std::io::{self, BufRead, Write};
 
 use algochat::{
-    accept_pq_handshake, decrypt_pq_message, derive_keys_from_seed, derive_mlkem768, encrypt_pq_message,
+    accept_pq_handshake, decrypt_message, decrypt_pq_message, decrypt_psk_message, derive_keys_from_seed,
+    derive_mlkem768, encode_psk_envelope, encrypt_message, encrypt_pq_message, encrypt_psk_message,
     initiate_pq_handshake, open_pq_handshake_as_sender,
 };
 use serde_json::{json, Value};
@@ -52,6 +53,11 @@ fn dispatch(req: &Value) -> Result<Value, String> {
             &hex_bytes(&field(req, "message")?)?,
             field(req, "text")?,
         ),
+        "write01" => write_classical(req, false),
+        "read01" => read_classical(req, false),
+        "write02" => write_classical(req, true),
+        "read02" => read_classical(req, true),
+        "write05s" => write_many(req),
         _ => Err(format!("unknown op {op}")),
     }
 }
@@ -95,6 +101,78 @@ fn read_note(alice_hex: String, bob_hex: String, handshake: &[u8], message: &[u8
         "sessionKey": hex::encode(session.session_key),
         "recipient": opened,
         "sender": sender_plain,
+    }))
+}
+
+fn write_classical(req: &Value, extra: bool) -> Result<Value, String> {
+    let alice_seed = hex_bytes(&field(req, "aliceSeed")?)?;
+    let bob_seed = hex_bytes(&field(req, "bobSeed")?)?;
+    let text = field(req, "text")?;
+    let (alice_private, alice_public) = derive_keys_from_seed(&alice_seed).map_err(|error| error.to_string())?;
+    let (_, bob_public) = derive_keys_from_seed(&bob_seed).map_err(|error| error.to_string())?;
+    let note = if extra {
+        let psk = hex_bytes(&field(req, "psk")?)?;
+        let counter = req.get("counter").and_then(|value| value.as_u64()).unwrap_or(0) as u32;
+        let envelope = encrypt_psk_message(&text, &alice_private, &alice_public, &bob_public, &psk, counter)
+            .map_err(|error| error.to_string())?;
+        encode_psk_envelope(&envelope)
+    } else {
+        encrypt_message(&text, &alice_private, &alice_public, &bob_public)
+            .map_err(|error| error.to_string())?
+            .encode()
+    };
+    Ok(json!({ "note": hex::encode(note) }))
+}
+
+fn read_classical(req: &Value, extra: bool) -> Result<Value, String> {
+    let alice_seed = hex_bytes(&field(req, "aliceSeed")?)?;
+    let bob_seed = hex_bytes(&field(req, "bobSeed")?)?;
+    let text = field(req, "text")?;
+    let note = hex_bytes(&field(req, "note")?)?;
+    let (alice_private, alice_public) = derive_keys_from_seed(&alice_seed).map_err(|error| error.to_string())?;
+    let (bob_private, bob_public) = derive_keys_from_seed(&bob_seed).map_err(|error| error.to_string())?;
+    let (recipient, sender) = if extra {
+        let psk = hex_bytes(&field(req, "psk")?)?;
+        let envelope = algochat::decode_psk_envelope(&note).map_err(|error| error.to_string())?;
+        let recipient = decrypt_psk_message(&envelope, &bob_private, &bob_public, &psk).map_err(|error| error.to_string())?;
+        let sender = decrypt_psk_message(&envelope, &alice_private, &alice_public, &psk).map_err(|error| error.to_string())?;
+        (recipient, sender)
+    } else {
+        let envelope = algochat::ChatEnvelope::decode(&note).map_err(|error| error.to_string())?;
+        let recipient = decrypt_message(&envelope, &bob_private, &bob_public)
+            .map_err(|error| error.to_string())?
+            .ok_or("bob saw a key publish")?
+            .text;
+        let sender = decrypt_message(&envelope, &alice_private, &alice_public)
+            .map_err(|error| error.to_string())?
+            .ok_or("alice saw a key publish")?
+            .text;
+        (recipient, sender)
+    };
+    if recipient != text || sender != text {
+        return Err(format!("plaintext {recipient} / {sender}"));
+    }
+    Ok(json!({ "recipient": recipient, "sender": sender }))
+}
+
+fn write_many(req: &Value) -> Result<Value, String> {
+    let alice_seed = hex_bytes(&field(req, "aliceSeed")?)?;
+    let bob_seed = hex_bytes(&field(req, "bobSeed")?)?;
+    let texts = req
+        .get("texts")
+        .and_then(|value| value.as_array())
+        .ok_or("missing texts")?;
+    let (note, session) = initiate_pq_handshake(&alice_seed, &bob_seed).map_err(|error| error.to_string())?;
+    let mut messages = Vec::new();
+    for text in texts {
+        let text = text.as_str().ok_or("text")?;
+        let message = encrypt_pq_message(text, &session).map_err(|error| error.to_string())?;
+        messages.push(hex::encode(message));
+    }
+    Ok(json!({
+        "handshake": hex::encode(note),
+        "messages": messages,
+        "sessionKey": hex::encode(session.session_key),
     }))
 }
 

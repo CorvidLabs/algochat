@@ -12,13 +12,36 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X
 from .types import (
     DecryptedContent,
     EncryptionError,
+    DecryptionError,
     ENCRYPTION_INFO_PREFIX,
     SENDER_KEY_INFO_PREFIX,
     MAX_PAYLOAD_SIZE,
     NONCE_SIZE,
+    HEADER_SIZE,
 )
 from .keys import generate_ephemeral_keypair, x25519_ecdh, public_key_to_bytes, public_key_from_bytes
-from .envelope import ChatEnvelope
+from .envelope import ChatEnvelope, _VERSION_AAD
+
+
+def _payload_aad(envelope: ChatEnvelope) -> Optional[bytes]:
+    """Associated data for the message ciphertext.
+
+    Version 0x01 keeps ChaCha associated data empty. Version 0x02 binds the
+    126-byte header, including the wrapped sender key. The sender-key wrap
+    itself always uses empty associated data.
+    """
+    if envelope.version < _VERSION_AAD:
+        return None
+    header = (
+        bytes([envelope.version, envelope.protocol_id])
+        + envelope.sender_public_key
+        + envelope.ephemeral_public_key
+        + envelope.nonce
+        + envelope.encrypted_sender_key
+    )
+    if len(header) != HEADER_SIZE:
+        raise DecryptionError(f"Everyday header is {len(header)} bytes, expected {HEADER_SIZE}")
+    return header
 
 
 def encrypt_message(
@@ -61,11 +84,12 @@ def encrypt_message(
     # Generate random nonce
     nonce = os.urandom(NONCE_SIZE)
 
-    # Encrypt message
+    # Encrypt message. Version 0x01 keeps associated data empty.
     cipher = ChaCha20Poly1305(symmetric_key)
     ciphertext = cipher.encrypt(nonce, message_bytes, None)
 
-    # Encrypt the symmetric key for sender (bidirectional decryption)
+    # Encrypt the symmetric key for sender (bidirectional decryption).
+    # The wrap also uses empty associated data.
     sender_shared_secret = x25519_ecdh(ephemeral_private, sender_public_key)
     sender_info = SENDER_KEY_INFO_PREFIX + sender_pub_bytes
 
@@ -132,7 +156,7 @@ def _decrypt_as_recipient(
     symmetric_key = hkdf.derive(shared_secret)
 
     cipher = ChaCha20Poly1305(symmetric_key)
-    return cipher.decrypt(envelope.nonce, envelope.ciphertext, None)
+    return cipher.decrypt(envelope.nonce, envelope.ciphertext, _payload_aad(envelope))
 
 
 def _decrypt_as_sender(
@@ -153,9 +177,8 @@ def _decrypt_as_sender(
     sender_cipher = ChaCha20Poly1305(sender_decryption_key)
     symmetric_key = sender_cipher.decrypt(envelope.nonce, envelope.encrypted_sender_key, None)
 
-    # Now decrypt the message
     cipher = ChaCha20Poly1305(symmetric_key)
-    return cipher.decrypt(envelope.nonce, envelope.ciphertext, None)
+    return cipher.decrypt(envelope.nonce, envelope.ciphertext, _payload_aad(envelope))
 
 
 def _is_key_publish_payload(data: bytes) -> bool:

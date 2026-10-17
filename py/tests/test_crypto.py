@@ -1,14 +1,24 @@
 """Tests for encryption and decryption."""
 
+import os
+
 import pytest
-from algochat.keys import derive_keys_from_seed, public_key_to_bytes
-from algochat.crypto import encrypt_message, decrypt_message
-from algochat.envelope import encode_envelope, decode_envelope, is_chat_message
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+from algochat.envelope import ChatEnvelope, decode_envelope, encode_envelope, is_chat_message
+from algochat.keys import derive_keys_from_seed, generate_ephemeral_keypair, public_key_to_bytes, x25519_ecdh
+from algochat.crypto import decrypt_message, encrypt_message
 from algochat.types import (
+    ENCRYPTION_INFO_PREFIX,
     HEADER_SIZE,
-    TAG_SIZE,
     MAX_NOTE_SIZE,
     MAX_PAYLOAD_SIZE,
+    NONCE_SIZE,
+    SENDER_KEY_INFO_PREFIX,
+    TAG_SIZE,
     EncryptionError,
     payment_fee,
 )
@@ -287,3 +297,85 @@ class TestNoteCapacity:
         assert payment_fee(1024, 1000) == 1000
         assert payment_fee(2000, 1000) == 1098
         assert payment_fee(4096, 1000) == 1308
+
+
+def _seal_everyday_v02(plaintext: str, sender_public, recipient_public) -> ChatEnvelope:
+    """Seal a version 0x02 everyday note. The sender-key wrap has empty associated data."""
+    message_bytes = plaintext.encode("utf-8")
+    ephemeral_private, ephemeral_public = generate_ephemeral_keypair()
+    sender_pub_bytes = public_key_to_bytes(sender_public)
+    recipient_pub_bytes = public_key_to_bytes(recipient_public)
+    ephemeral_pub_bytes = public_key_to_bytes(ephemeral_public)
+
+    shared_secret = x25519_ecdh(ephemeral_private, recipient_public)
+    info = ENCRYPTION_INFO_PREFIX + sender_pub_bytes + recipient_pub_bytes
+    symmetric_key = HKDF(algorithm=SHA256(), length=32, salt=ephemeral_pub_bytes, info=info).derive(shared_secret)
+    nonce = os.urandom(NONCE_SIZE)
+
+    sender_shared = x25519_ecdh(ephemeral_private, sender_public)
+    sender_info = SENDER_KEY_INFO_PREFIX + sender_pub_bytes
+    sender_key = HKDF(algorithm=SHA256(), length=32, salt=ephemeral_pub_bytes, info=sender_info).derive(sender_shared)
+    encrypted_sender_key = ChaCha20Poly1305(sender_key).encrypt(nonce, symmetric_key, None)
+
+    version = 0x02
+    protocol_id = 0x01
+    aad = (
+        bytes([version, protocol_id])
+        + sender_pub_bytes
+        + ephemeral_pub_bytes
+        + nonce
+        + encrypted_sender_key
+    )
+    assert len(aad) == 126
+    ciphertext = ChaCha20Poly1305(symmetric_key).encrypt(nonce, message_bytes, aad)
+    return ChatEnvelope(
+        version=version,
+        protocol_id=protocol_id,
+        sender_public_key=sender_pub_bytes,
+        ephemeral_public_key=ephemeral_pub_bytes,
+        nonce=nonce,
+        encrypted_sender_key=encrypted_sender_key,
+        ciphertext=ciphertext,
+    )
+
+
+class TestVersion02AssociatedData:
+    """Version 0x02 everyday notes bind the 126-byte header."""
+
+    @pytest.fixture
+    def alice_keys(self):
+        """Alice's key pair."""
+        return derive_keys_from_seed(bytes.fromhex(ALICE_SEED_HEX))
+
+    @pytest.fixture
+    def bob_keys(self):
+        """Bob's key pair."""
+        return derive_keys_from_seed(bytes.fromhex(BOB_SEED_HEX))
+
+    def test_round_trip_and_version_byte_flip(self, alice_keys, bob_keys) -> None:
+        """A 0x02 note decrypts, and flipping the version byte to 0x01 fails."""
+        alice_private, alice_public = alice_keys
+        bob_private, bob_public = bob_keys
+        message = "aad-bound"
+
+        envelope = _seal_everyday_v02(message, alice_public, bob_public)
+        encoded = encode_envelope(envelope)
+        assert encoded[0] == 0x02
+        assert encoded[1] == 0x01
+        assert len(encoded) >= HEADER_SIZE
+        assert is_chat_message(encoded)
+
+        decoded = decode_envelope(encoded)
+        opened = decrypt_message(decoded, bob_private, bob_public)
+        assert opened is not None
+        assert opened.text == message
+        as_sender = decrypt_message(decoded, alice_private, alice_public)
+        assert as_sender is not None
+        assert as_sender.text == message
+
+        flipped = bytearray(encoded)
+        flipped[0] = 0x01
+        downgraded = decode_envelope(bytes(flipped))
+        assert downgraded.version == 0x01
+        with pytest.raises(InvalidTag):
+            decrypt_message(downgraded, bob_private, bob_public)

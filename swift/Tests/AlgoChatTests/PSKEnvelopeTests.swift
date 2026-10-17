@@ -160,7 +160,7 @@ struct PSKEnvelopeTests {
     @Test("Rejects wrong version")
     func testRejectsWrongVersion() {
         var data = Data(repeating: 0x00, count: 150)
-        data[0] = 0x02  // Wrong version
+        data[0] = 0x09  // Unsupported version
         data[1] = 0x02  // PSK protocol
 
         #expect(throws: ChatError.self) {

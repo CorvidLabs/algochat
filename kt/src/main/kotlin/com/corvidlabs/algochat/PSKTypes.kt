@@ -79,7 +79,8 @@ data class PSKEnvelope(
     /** Encrypted symmetric key for sender decryption (48 bytes). */
     val encryptedSenderKey: ByteArray,
     /** Encrypted message ciphertext (variable length). */
-    val ciphertext: ByteArray
+    val ciphertext: ByteArray,
+    val version: Byte = PSKProtocol.VERSION
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

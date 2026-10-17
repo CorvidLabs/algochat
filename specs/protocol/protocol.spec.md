@@ -11,7 +11,7 @@ files:
 
 ## Purpose
 
-The public wire format lives in PROTOCOL.md. Version 1.3.0 adds optional protocols `0x04` and `0x05`. Versions `0x01` and `0x02` stay. Identifier `0x03` is not assigned.
+The public wire format lives in PROTOCOL.md. Version 1.3.0 adds optional protocols `0x04` and `0x05`. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Identifier `0x03` is not assigned.
 
 ## Public API
 
@@ -37,3 +37,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | Date | Change |
 |------|--------|
 | 2026-10-17 | add-hybrid-ml-kem-768-session-envelopes-0x04-and-0x05: Add hybrid ML-KEM-768 session envelopes 0x04 and 0x05 |
+| 2026-10-17 | Envelope version 0x02 binds the full everyday or Extra lock header as payload associated data. Version 0x01 stays valid. |

@@ -239,12 +239,25 @@ func decryptAsRecipient(envelope *ChatEnvelope, recipientPrivateKey, recipientPu
 		return nil, fmt.Errorf("cipher creation failed: %w", err)
 	}
 
-	plaintext, err := aead.Open(nil, envelope.Nonce[:], envelope.Ciphertext, nil)
+	plaintext, err := aead.Open(nil, envelope.Nonce[:], envelope.Ciphertext, payloadAAD(envelope))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}
 
 	return plaintext, nil
+}
+
+func payloadAAD(envelope *ChatEnvelope) []byte {
+	if envelope.Version != protocolVersionAAD {
+		return nil
+	}
+	aad := make([]byte, 0, HeaderSize)
+	aad = append(aad, envelope.Version, envelope.ProtocolID)
+	aad = append(aad, envelope.SenderPublicKey[:]...)
+	aad = append(aad, envelope.EphemeralPublicKey[:]...)
+	aad = append(aad, envelope.Nonce[:]...)
+	aad = append(aad, envelope.EncryptedSenderKey[:]...)
+	return aad
 }
 
 func decryptAsSender(envelope *ChatEnvelope, senderPrivateKey, senderPublicKey [KeySize]byte) ([]byte, error) {
@@ -277,7 +290,7 @@ func decryptAsSender(envelope *ChatEnvelope, senderPrivateKey, senderPublicKey [
 		return nil, fmt.Errorf("cipher creation failed: %w", err)
 	}
 
-	plaintext, err := aead.Open(nil, envelope.Nonce[:], envelope.Ciphertext, nil)
+	plaintext, err := aead.Open(nil, envelope.Nonce[:], envelope.Ciphertext, payloadAAD(envelope))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrDecryptionFailed, err)
 	}

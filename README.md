@@ -19,7 +19,7 @@ This is the public specification and the language implementations. It is not a c
 | [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05` | `./gradlew test` |
 | [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05` | `go test ./...` |
 
-Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). Each library writes a handshake and a message. Each library opens the notes the others confirmed on LocalNet.
+Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). On LocalNet, each library writes empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, and one `0x04` handshake. Every library opens every confirmed note.
 
 Published package names stay on the existing repositories for now. This tree is where a wire-format change lands once, with the same test vectors for every library.
 

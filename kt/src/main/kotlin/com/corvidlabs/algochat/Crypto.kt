@@ -149,7 +149,7 @@ object Crypto {
 
         val symmetricKey = deriveKey(sharedSecret, envelope.ephemeralPublicKey, info)
 
-        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext)
+        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext, payloadAad(envelope))
     }
 
     private fun decryptAsSender(
@@ -167,7 +167,7 @@ object Crypto {
         val symmetricKey = chaCha20Poly1305Decrypt(senderDecryptionKey, envelope.nonce, envelope.encryptedSenderKey)
 
         // Now decrypt the message
-        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext)
+        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext, payloadAad(envelope))
     }
 
     private fun deriveKey(secret: ByteArray, salt: ByteArray, info: ByteArray): ByteArray {
@@ -192,9 +192,18 @@ object Crypto {
         return output
     }
 
-    private fun chaCha20Poly1305Decrypt(key: ByteArray, nonce: ByteArray, ciphertext: ByteArray): ByteArray {
+    private fun payloadAad(envelope: ChatEnvelope): ByteArray? {
+        if (envelope.version != 0x02.toByte()) return null
+        return byteArrayOf(envelope.version, envelope.protocolId) +
+            envelope.senderPublicKey +
+            envelope.ephemeralPublicKey +
+            envelope.nonce +
+            envelope.encryptedSenderKey
+    }
+
+    private fun chaCha20Poly1305Decrypt(key: ByteArray, nonce: ByteArray, ciphertext: ByteArray, aad: ByteArray? = null): ByteArray {
         val cipher = ChaCha20Poly1305()
-        val params = AEADParameters(KeyParameter(key), 128, nonce, null)
+        val params = AEADParameters(KeyParameter(key), 128, nonce, aad)
         cipher.init(false, params)
 
         val output = ByteArray(cipher.getOutputSize(ciphertext.size))

@@ -133,20 +133,6 @@ fn encrypt_psk_message_versioned(
         encrypted_sender_key: Vec::new(),
         ciphertext: Vec::new(),
     };
-    let aad: Vec<u8> = if version == PSK_VERSION_V2 {
-        envelope.v2_aad()
-    } else {
-        Vec::new()
-    };
-
-    // Encrypt message
-    let cipher = ChaCha20Poly1305::new_from_slice(&*symmetric_key)
-        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK cipher init failed: {}", e)))?;
-    let ciphertext = cipher
-        .encrypt(nonce, payload(message_bytes, &aad))
-        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK encryption failed: {}", e)))?;
-
-    // Encrypt the symmetric key for sender (bidirectional decryption)
     let sender_shared_secret = Zeroizing::new(x25519_ecdh(&ephemeral_private, sender_public_key));
     let sender_encryption_key = Zeroizing::new(derive_sender_key(
         &*sender_shared_secret,
@@ -159,12 +145,22 @@ fn encrypt_psk_message_versioned(
         AlgoChatError::EncryptionError(format!("PSK sender cipher init failed: {}", e))
     })?;
     let encrypted_sender_key = sender_cipher
-        .encrypt(nonce, payload(symmetric_key.as_slice(), &aad))
+        .encrypt(nonce, payload(symmetric_key.as_slice(), &[]))
         .map_err(|e| {
             AlgoChatError::EncryptionError(format!("PSK sender key encryption failed: {}", e))
         })?;
 
     envelope.encrypted_sender_key = encrypted_sender_key;
+    let aad: Vec<u8> = if version == PSK_VERSION_V2 {
+        envelope.v2_aad()
+    } else {
+        Vec::new()
+    };
+    let cipher = ChaCha20Poly1305::new_from_slice(&*symmetric_key)
+        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK cipher init failed: {}", e)))?;
+    let ciphertext = cipher
+        .encrypt(nonce, payload(message_bytes, &aad))
+        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK encryption failed: {}", e)))?;
     envelope.ciphertext = ciphertext;
     Ok(envelope)
 }
@@ -279,7 +275,7 @@ fn decrypt_psk_as_sender(
         sender_cipher
             .decrypt(
                 nonce,
-                payload(envelope.encrypted_sender_key.as_slice(), aad),
+                payload(envelope.encrypted_sender_key.as_slice(), &[]),
             )
             .map_err(|e| {
                 AlgoChatError::DecryptionError(format!("PSK sender key decryption failed: {}", e))

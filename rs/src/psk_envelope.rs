@@ -218,8 +218,8 @@ mod tests {
             ciphertext: vec![5u8; 16],
         };
         let aad = envelope.v2_aad();
-        assert_eq!(aad.len(), 82);
-        assert_eq!(&aad[..], &encode_psk_envelope(&envelope)[..82]);
+        assert_eq!(aad.len(), 130);
+        assert_eq!(&aad[..], &encode_psk_envelope(&envelope)[..130]);
     }
 
     #[test]

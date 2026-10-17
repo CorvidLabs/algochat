@@ -1,10 +1,13 @@
 package com.corvidlabs.algochat
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -26,6 +29,11 @@ fun main() {
         }
         val id = req.int("id")
         try {
+            if (req.str("op") == "write05s") {
+                val many = writeMany(req.str("aliceSeed"), req.str("bobSeed"), req.texts("texts"))
+                reply(id, true, mapOf("handshake" to many.first, "sessionKey" to many.third), messages = many.second)
+                continue
+            }
             val fields = when (req.str("op")) {
                 "identity" -> identity(req.str("seed"))
                 "write" -> writeNote(req.str("aliceSeed"), req.str("bobSeed"), req.str("text"))
@@ -36,6 +44,10 @@ fun main() {
                     req.str("message"),
                     req.str("text")
                 )
+                "write01" -> writeClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("text"), null, 0)
+                "read01" -> readClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("note"), req.str("text"), null, 0)
+                "write02" -> writeClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("text"), req.str("psk"), req.int("counter"))
+                "read02" -> readClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("note"), req.str("text"), req.str("psk"), req.int("counter"))
                 else -> throw IllegalArgumentException("unknown op ${req.str("op")}")
             }
             reply(id, true, fields)
@@ -97,12 +109,79 @@ private fun readNote(
     )
 }
 
-private fun reply(id: Int, ok: Boolean, fields: Map<String, String> = emptyMap(), error: String? = null) {
+private fun writeClassical(aliceHex: String, bobHex: String, text: String, pskHex: String?, counter: Int): Map<String, String> {
+    val alice = Keys.deriveKeysFromSeed(hexToBytes(aliceHex))
+    val bob = Keys.deriveKeysFromSeed(hexToBytes(bobHex))
+    val note = if (pskHex == null) {
+        Crypto.encryptMessage(text, alice.privateKey, alice.publicKey, bob.publicKey).encode()
+    } else {
+        val current = PSKRatchet.derivePSKAtCounter(hexToBytes(pskHex), counter.toUInt())
+        val envelope = PSKCrypto.encryptMessage(
+            text,
+            alice.privateKey,
+            alice.publicKey,
+            bob.publicKey,
+            current,
+            counter.toUInt()
+        )
+        PSKEnvelopeCodec.encode(envelope)
+    }
+    return mapOf("note" to bytesToHex(note))
+}
+
+private fun readClassical(
+    aliceHex: String,
+    bobHex: String,
+    noteHex: String,
+    text: String,
+    pskHex: String?,
+    counter: Int
+): Map<String, String> {
+    val alice = Keys.deriveKeysFromSeed(hexToBytes(aliceHex))
+    val bob = Keys.deriveKeysFromSeed(hexToBytes(bobHex))
+    val raw = hexToBytes(noteHex)
+    val recipient: String
+    val sender: String
+    if (pskHex == null) {
+        val envelope = ChatEnvelope.decode(raw)
+        recipient = Crypto.decryptMessage(envelope, bob.privateKey, bob.publicKey)?.text
+            ?: throw IllegalStateException("bob failed")
+        sender = Crypto.decryptMessage(envelope, alice.privateKey, alice.publicKey)?.text
+            ?: throw IllegalStateException("alice failed")
+    } else {
+        val current = PSKRatchet.derivePSKAtCounter(hexToBytes(pskHex), counter.toUInt())
+        val envelope = PSKEnvelopeCodec.decode(raw)
+        recipient = PSKCrypto.decryptMessage(envelope, bob.privateKey, bob.publicKey, current)?.text
+            ?: throw IllegalStateException("bob failed")
+        sender = PSKCrypto.decryptMessage(envelope, alice.privateKey, alice.publicKey, current)?.text
+            ?: throw IllegalStateException("alice failed")
+    }
+    if (recipient != text || sender != text) throw IllegalStateException("plaintext $recipient / $sender")
+    return mapOf("recipient" to recipient, "sender" to sender)
+}
+
+private fun writeMany(aliceHex: String, bobHex: String, texts: List<String>): Triple<String, List<String>, String> {
+    val alice = Keys.deriveKeysFromSeed(hexToBytes(aliceHex))
+    val bob = Keys.deriveKeysFromSeed(hexToBytes(bobHex))
+    val kem = PQ.deriveMLKEMKeyPair(hexToBytes(bobHex))
+    val handshake = PQ.initiatePQSession(alice, Keys.publicKeyToBytes(bob.publicKey), kem.encapsKey)
+    val messages = texts.map { text -> bytesToHex(PQ.encryptPQMessage(text, handshake.session)) }
+    return Triple(bytesToHex(handshake.note), messages, bytesToHex(handshake.session.sessionKey))
+}
+
+private fun reply(
+    id: Int,
+    ok: Boolean,
+    fields: Map<String, String> = emptyMap(),
+    error: String? = null,
+    messages: List<String>? = null
+) {
     println(buildJsonObject {
         put("id", id)
         put("ok", ok)
         if (error != null) put("error", error)
         for ((key, value) in fields) put(key, value)
+        if (messages != null) put("messages", JsonArray(messages.map { JsonPrimitive(it) }))
     })
     System.out.flush()
 }
@@ -113,6 +192,11 @@ private fun JsonObject.str(name: String): String {
 
 private fun JsonObject.int(name: String): Int {
     return this[name]?.jsonPrimitive?.int ?: 0
+}
+
+private fun JsonObject.texts(name: String): List<String> {
+    val value = this[name] ?: throw IllegalArgumentException("missing $name")
+    return value.jsonArray.map { it.jsonPrimitive.content }
 }
 
 private fun hexToBytes(hex: String): ByteArray {

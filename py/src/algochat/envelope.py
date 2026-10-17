@@ -11,6 +11,10 @@ from .types import (
     ENCRYPTED_SENDER_KEY_SIZE,
 )
 
+# Decrypt-only. Payload ChaCha associated data is the 126-byte header.
+_VERSION_AAD = 0x02
+_ACCEPTED_VERSIONS = (PROTOCOL_VERSION, _VERSION_AAD)
+
 
 @dataclass
 class ChatEnvelope:
@@ -77,7 +81,7 @@ def decode_envelope(data: bytes) -> ChatEnvelope:
     version = data[0]
     protocol_id = data[1]
 
-    if version != PROTOCOL_VERSION:
+    if version not in _ACCEPTED_VERSIONS:
         raise EnvelopeError(f"Unknown version: {version}")
 
     if protocol_id != PROTOCOL_ID:
@@ -122,4 +126,4 @@ def is_chat_message(data: bytes) -> bool:
     if len(data) < HEADER_SIZE:
         return False
 
-    return data[0] == PROTOCOL_VERSION and data[1] == PROTOCOL_ID
+    return data[0] in _ACCEPTED_VERSIONS and data[1] == PROTOCOL_ID

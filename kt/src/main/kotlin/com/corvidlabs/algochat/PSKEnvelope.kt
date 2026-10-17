@@ -28,7 +28,7 @@ object PSKEnvelopeCodec {
         val buffer = ByteBuffer.allocate(PSKProtocol.HEADER_SIZE + envelope.ciphertext.size)
         buffer.order(ByteOrder.BIG_ENDIAN)
 
-        buffer.put(PSKProtocol.VERSION)
+        buffer.put(envelope.version)
         buffer.put(PSKProtocol.PROTOCOL_ID)
         buffer.putInt(envelope.ratchetCounter.toInt())
         buffer.put(envelope.senderPublicKey)
@@ -57,7 +57,7 @@ object PSKEnvelopeCodec {
         val version = data[0]
         val protocolId = data[1]
 
-        if (version != PSKProtocol.VERSION) {
+        if (version != PSKProtocol.VERSION && version != 0x02.toByte()) {
             throw AlgoChatException.InvalidEnvelope("Unknown PSK version: " + version.toString())
         }
 
@@ -94,7 +94,8 @@ object PSKEnvelopeCodec {
             ephemeralPublicKey = ephemeralPublicKey,
             nonce = nonce,
             encryptedSenderKey = encryptedSenderKey,
-            ciphertext = ciphertext
+            ciphertext = ciphertext,
+            version = version
         )
     }
 }
@@ -109,5 +110,5 @@ fun isPSKMessage(data: ByteArray): Boolean {
     if (data.size < PSKProtocol.HEADER_SIZE) {
         return false
     }
-    return data[0] == PSKProtocol.VERSION && data[1] == PSKProtocol.PROTOCOL_ID
+    return (data[0] == PSKProtocol.VERSION || data[0] == 0x02.toByte()) && data[1] == PSKProtocol.PROTOCOL_ID
 }

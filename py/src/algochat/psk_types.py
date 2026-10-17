@@ -7,6 +7,8 @@ from .types import MAX_NOTE_SIZE
 
 # Protocol constants
 PSK_VERSION = 0x01
+# Decrypt-only. Payload ChaCha associated data is the 130-byte header.
+_PSK_VERSION_AAD = 0x02
 PSK_PROTOCOL_ID = 0x02
 PSK_HEADER_SIZE = 130
 PSK_TAG_SIZE = 16
@@ -22,7 +24,7 @@ class PSKEnvelope:
     """PSK protocol message envelope.
 
     Wire format (130-byte header + variable ciphertext):
-        [0]       version (0x01)
+        [0]       version (0x01, or 0x02 when the payload binds this header)
         [1]       protocolId (0x02)
         [2..5]    ratchetCounter (4 bytes, big-endian uint32)
         [6..37]   senderPublicKey (32 bytes)
@@ -38,3 +40,4 @@ class PSKEnvelope:
     nonce: bytes  # 12 bytes
     encrypted_sender_key: bytes  # 48 bytes (32 + 16 tag)
     ciphertext: bytes  # variable (message + 16-byte tag)
+    version: int = PSK_VERSION

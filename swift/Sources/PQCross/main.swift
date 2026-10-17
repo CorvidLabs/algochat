@@ -55,9 +55,105 @@ private enum PQCross {
                 messageHex: string(object, "message"),
                 text: string(object, "text")
             )
+        case "write01":
+            return try writeClassical(object, extra: false)
+        case "read01":
+            return try readClassical(object, extra: false)
+        case "write02":
+            return try writeClassical(object, extra: true)
+        case "read02":
+            return try readClassical(object, extra: true)
+        case "write05s":
+            return try writeMany(object)
         default:
             throw ChatError.invalidEnvelope("unknown op \(op)")
         }
+    }
+
+    static func writeClassical(_ object: [String: Any], extra: Bool) throws -> [String: Any] {
+        let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "aliceSeed")))
+        let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "bobSeed")))
+        let text = try string(object, "text")
+        let note: Data
+        if extra {
+            let current = PSKRatchet.derivePSKAtCounter(
+                initialPSK: try hexDecode(try string(object, "psk")),
+                counter: UInt32(intValue(object["counter"]))
+            )
+            let envelope = try MessageEncryptor.encryptPSK(
+                message: text,
+                senderPrivateKey: alice.privateKey,
+                recipientPublicKey: bob.publicKey,
+                currentPSK: current,
+                ratchetCounter: UInt32(intValue(object["counter"]))
+            )
+            note = envelope.encode()
+        } else {
+            let envelope = try MessageEncryptor.encrypt(
+                message: text,
+                senderPrivateKey: alice.privateKey,
+                recipientPublicKey: bob.publicKey
+            )
+            note = envelope.encode()
+        }
+        return ["note": hexEncode(note)]
+    }
+
+    static func readClassical(_ object: [String: Any], extra: Bool) throws -> [String: Any] {
+        let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "aliceSeed")))
+        let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "bobSeed")))
+        let text = try string(object, "text")
+        let raw = try hexDecode(try string(object, "note"))
+        let recipient: String
+        let sender: String
+        if extra {
+            let current = PSKRatchet.derivePSKAtCounter(
+                initialPSK: try hexDecode(try string(object, "psk")),
+                counter: UInt32(intValue(object["counter"]))
+            )
+            let envelope = try PSKEnvelope.decode(from: raw)
+            guard let bobText = try MessageEncryptor.decryptPSK(envelope: envelope, recipientPrivateKey: bob.privateKey, currentPSK: current)?.text,
+                  let aliceText = try MessageEncryptor.decryptPSK(envelope: envelope, recipientPrivateKey: alice.privateKey, currentPSK: current)?.text
+            else {
+                throw ChatError.decryptionFailed("missing plaintext")
+            }
+            recipient = bobText
+            sender = aliceText
+        } else {
+            let envelope = try ChatEnvelope.decode(from: raw)
+            guard let bobText = try MessageEncryptor.decrypt(envelope: envelope, recipientPrivateKey: bob.privateKey)?.text,
+                  let aliceText = try MessageEncryptor.decrypt(envelope: envelope, recipientPrivateKey: alice.privateKey)?.text
+            else {
+                throw ChatError.decryptionFailed("missing plaintext")
+            }
+            recipient = bobText
+            sender = aliceText
+        }
+        guard recipient == text, sender == text else {
+            throw ChatError.decryptionFailed("plaintext \(recipient) / \(sender)")
+        }
+        return ["recipient": recipient, "sender": sender]
+    }
+
+    static func writeMany(_ object: [String: Any]) throws -> [String: Any] {
+        let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "aliceSeed")))
+        let bob = try KeyDerivation.deriveEncryptionKeys(fromSeed: try hexDecode(try string(object, "bobSeed")))
+        let kem = try PQSession.encapsulationPrivateKey(fromAccountSeed: try hexDecode(try string(object, "bobSeed")))
+        let encaps = Data([UInt8](kem.publicKey.rawRepresentation))
+        let built = try PQSession.initiate(
+            senderPrivateKey: alice.privateKey,
+            recipientPublicKey: bob.publicKey,
+            recipientEncapsKey: encaps
+        )
+        guard let texts = object["texts"] as? [String] else {
+            throw ChatError.invalidEnvelope("missing texts")
+        }
+        let messages = try texts.map { text in hexEncode(try built.session.encrypt(text)) }
+        return [
+            "handshake": hexEncode(built.note),
+            "messages": messages,
+            "sessionKey": hexEncode(built.session.sessionKey)
+        ]
     }
 
     static func identity(seedHex: String) throws -> [String: Any] {

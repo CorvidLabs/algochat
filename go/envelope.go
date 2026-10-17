@@ -29,7 +29,7 @@ func DecodeEnvelope(data []byte) (*ChatEnvelope, error) {
 	version := data[0]
 	protocolID := data[1]
 
-	if version != ProtocolVersion {
+	if version != ProtocolVersion && version != protocolVersionAAD {
 		return nil, fmt.Errorf("%w: unsupported version %d", ErrInvalidEnvelope, version)
 	}
 
@@ -59,5 +59,5 @@ func DecodeEnvelope(data []byte) (*ChatEnvelope, error) {
 
 // IsChatMessage checks if data is an AlgoChat message by examining the header bytes.
 func IsChatMessage(data []byte) bool {
-	return len(data) >= 2 && data[0] == ProtocolVersion && data[1] == ProtocolIDStandard
+	return len(data) >= 2 && (data[0] == ProtocolVersion || data[0] == protocolVersionAAD) && data[1] == ProtocolIDStandard
 }
