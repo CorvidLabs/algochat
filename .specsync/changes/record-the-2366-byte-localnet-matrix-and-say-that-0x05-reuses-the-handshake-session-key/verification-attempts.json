@@ -18,6 +18,24 @@
       "requirement_ids": [
         "REQ-protocol-1"
       ]
+    },
+    {
+      "timestamp": 1792279727,
+      "commit": "ee90d4adc47ace9a84e58dd16f5c1e2fda3f5ab5",
+      "contract_digest": "50cd614205786b276d1f803251704043a5caffa0ee1df85c541da710b1ebda52",
+      "execution_digest": "ccc036cef613f559f6e341d864c0f3f0fe2ee397e0a20296f5b38b7a605d7c7c",
+      "workspace_digest": "20645ad36359e1ca36094c7af2f01a011e4a89a7f8ceed4da7153a157a361a1b",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-1"
+      ]
     }
   ]
 }
