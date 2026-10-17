@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "let-swift-package-manager-fetch-algochat-from-this-repository",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "b0455d4a473abaefad2e7ff90d28d9b3d4c12286",
+  "contract_digest": "7f4e90b88e0e495ebf2f7728b68a18a3578bacea45ef98f89df5f8544fd463e6",
+  "execution_digest": "8d8edfc857467421521f995f10e4399ef1dc97eb325b6968a24167ac3db06e36",
+  "workspace_digest": "17e48cfbb9d6cdcc9d8ab011b63936b58cc130781a17425d655778c663af9fa9",
+  "timestamp": 1792263743
+}

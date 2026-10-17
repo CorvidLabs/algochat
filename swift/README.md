@@ -31,9 +31,11 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 
 Add AlgoChat to your `Package.swift`:
 
+The package manifest is at the root of [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat).
+
 ```swift
 dependencies: [
-    .package(url: "https://github.com/CorvidLabs/swift-algochat.git", from: "0.1.0")
+    .package(url: "https://github.com/CorvidLabs/algochat.git", branch: "main")
 ]
 ```
 
@@ -43,7 +45,7 @@ Then add the dependency to your target:
 .target(
     name: "YourApp",
     dependencies: [
-        .product(name: "AlgoChat", package: "swift-algochat")
+        .product(name: "AlgoChat", package: "algochat")
     ]
 )
 ```

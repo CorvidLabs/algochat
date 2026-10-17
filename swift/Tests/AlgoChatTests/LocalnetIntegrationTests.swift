@@ -12,14 +12,28 @@ struct LocalnetIntegrationTests {
 
     // MARK: - Test Helpers
 
+    /// Homebrew and Docker Desktop do not share one path.
+    private func dockerExecutable() throws -> URL {
+        let candidates = [
+            "/opt/homebrew/bin/docker",
+            "/usr/local/bin/docker",
+            "/usr/bin/docker",
+        ]
+        if let path = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) {
+            return URL(fileURLWithPath: path)
+        }
+        throw TestError.fundingFailed("Docker was not found. Localnet tests need the AlgoKit sandbox.")
+    }
+
     /// Discovers a funded address from the localnet KMD wallet
     private func discoverFundingAddress() throws -> String {
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/docker")
+        task.executableURL = try dockerExecutable()
         task.arguments = [
             "exec", "algokit_sandbox_algod",
             "goal", "account", "list",
-            "-d", "/algod/data"
+            "-d", "/algod/data",
+            "-w", "unencrypted-default-wallet"
         ]
 
         let pipe = Pipe()
@@ -57,10 +71,11 @@ struct LocalnetIntegrationTests {
         let fundingAddress = try discoverFundingAddress()
 
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/docker")
+        task.executableURL = try dockerExecutable()
         task.arguments = [
             "exec", "algokit_sandbox_algod",
             "goal", "clerk", "send",
+            "-w", "unencrypted-default-wallet",
             "-a", String(amount),
             "-f", fundingAddress,
             "-t", account.address.description,
