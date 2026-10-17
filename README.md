@@ -12,12 +12,14 @@ This is the public specification and the language implementations. It is not a c
 
 | Path | Language | Protocols | Test |
 | --- | --- | --- | --- |
-| [`ts/`](ts/) | TypeScript | `0x01`, `0x02` | `bun test` |
+| [`ts/`](ts/) | TypeScript | `0x01`, `0x02`, `0x04`, `0x05` | `bun test` |
 | [`swift/`](swift/) | Swift | `0x01`, `0x02` | `swift test` |
 | [`py/`](py/) | Python | `0x01`, `0x02` | `pytest` |
 | [`rs/`](rs/) | Rust | `0x01`, `0x02` | `cargo test` |
 | [`kt/`](kt/) | Kotlin | `0x01`, `0x02` | `./gradlew test` |
 | [`go/`](go/) | Go | `0x01`, `0x02` | `go test ./...` |
+
+Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). TypeScript is the reference. The other five libraries do not speak `0x04` or `0x05` yet.
 
 Published package names stay on the existing repositories for now. This tree is where a wire-format change lands once, with the same test vectors for every library.
 
