@@ -34,7 +34,9 @@ The handshake note in that fixture is one TypeScript run, so encapsulate is not 
 | `kt/` | yes | yes | yes | yes | yes |
 | `go/` | yes | yes | yes | yes | yes |
 
-On 2026-10-17 a size matrix confirmed rounds 41059 through 41154. That run used a 1278-byte handshake whose sender copy was sealed with X25519 only. That layout is withdrawn. It is not the 1.3.0 wire format. The current handshake is 2366 bytes and the sender copy also requires the sender's ML-KEM secret. A new LocalNet matrix is required before a tag. TypeScript still writes everyday and Extra lock version `0x02`. The other five write version `0x01`. All six read both. Identifier `0x03` is not used.
+On 2026-10-17 a size matrix in rounds 41059 through 41154 used a 1278-byte handshake whose sender copy was sealed with X25519 only. That layout is withdrawn.
+
+The current handshake is 2366 bytes. A later LocalNet matrix on the same day, rounds 41641 through 41736, confirmed 96 notes: six 2366-byte handshakes and 90 messages. Every library opened every message from every writer, 540 reads, with no failures. Handshake rounds were TypeScript 41652, Go 41668, Rust 41684, Python 41700, Kotlin 41716, and Swift 41732. TypeScript still writes everyday and Extra lock version `0x02`. The other five write version `0x01`. All six read both. Identifier `0x03` is not used. Swift hybrid sessions use CryptoKit ML-KEM on macOS 26. The Swift workflow does not run on Linux.
 
 An earlier 6x6 mesh, rounds 40924 through 40935, used one small `0x05` body per library. Go and Rust also opened the TypeScript note from rounds 40916 and 40917.
 

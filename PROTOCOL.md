@@ -10,7 +10,7 @@ AlgoChat is an end-to-end encrypted messaging protocol that uses the Algorand bl
 ## 2. Design Goals
 
 1. **Privacy** - Only sender and recipient can read messages
-2. **Per-Message Key Separation** - Each message derives its own symmetric key from a fresh ephemeral key pair. This is *not* forward secrecy; see [11.1](#111-forward-secrecy--not-provided)
+2. **Per-Message Key Separation** - Each everyday (`0x01`) and Extra lock (`0x02`) message derives its own symmetric key from a fresh ephemeral key pair. A hybrid `0x05` message reuses the session key from its `0x04` handshake. This is not forward secrecy; see [11.1](#111-forward-secrecy--not-provided)
 3. **Bidirectional Decryption** - Sender can decrypt their own sent messages. This enables chat history display on the sender's device without storing plaintext locally—messages can be re-decrypted from the blockchain on any authorized device.
 4. **Immutability** - Messages cannot be altered after transmission
 5. **Decentralization** - No trusted third parties required

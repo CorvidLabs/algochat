@@ -2,10 +2,10 @@
   "format_version": 1,
   "hashes": {
     ".specsync/config.toml": "893fd4e16d8de5f357c9f1c28303c76fa92fc4c0c09a73b6fe7ead0000798853",
-    "PROTOCOL.md": "693a5f47dba4cbd9174512641a53e576ef99be273629d6b443aebfc55d102bcb",
-    "TEST-VECTORS.md": "f095f61479522afef6d3b713be7d6e0c654b0fe95c802af8b3b28f0f30728d21",
-    "specs/protocol/protocol.spec.md": "764436d048af7be09a88a557e97600034e655c1cfb5d8a0735fa89d21ddd75b3",
-    "specs/protocol/requirements.md": "20e2c1d8a2dce1658d9ba3802c4b41d734d5da1a75209efa4b54a68de722bf76"
+    "PROTOCOL.md": "7a82de5c0704c6a53398e950a947e98097ff5451cc58d99e1bc02b8fc6a9244b",
+    "TEST-VECTORS.md": "9a551bf17ed830387dc3fef1a191e0ca160486115fd0bc2f1d573839b5e1a117",
+    "specs/protocol/protocol.spec.md": "bc487f27bb9eb334886ee559e1dfe24bae689c27c0004bb4752c0aad2a172937",
+    "specs/protocol/requirements.md": "2825af2a290a3e0a18aa7fc0be61dac0ba74e25795c9b0da92b30062662854a8"
   },
   "snapshots": {
     "specs/protocol/protocol.spec.md": {
@@ -14,8 +14,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "31a29143c59ad05cba7e7317abd6e9b82c19a65ccbc4d8fb5df265b6a8a3021a",
-      "snapshot_digest": "820f2151ad58db314235f744da7714e6b4cf45f983fa37c037d3508a2017bb7c"
+      "input_digest": "47721209a9b20b9c96742319a248122ab254efdb4352c3297fa37dff20a834dc",
+      "snapshot_digest": "2a570d738c5a55ca2a6ab3722b0304344d9c1b28b7bb24c5307b6713c3447557"
     }
   }
 }

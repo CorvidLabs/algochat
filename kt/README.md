@@ -241,7 +241,7 @@ The PSK (Pre-Shared Key) protocol extends AlgoChat with an additional symmetric 
 
 - **Two-level ratchet** - Session and position keys derived from an initial PSK via HKDF
 - **Hybrid encryption** - Combines X25519 ECDH with PSK for dual-layer security
-- **Forward secrecy** - Each message uses a unique derived key from the ratchet counter
+- **Unique counter keys** - Each message uses a key derived from the ratchet counter. This is not forward secrecy.
 - **Replay protection** - Sliding counter window prevents message replay attacks
 
 kotlin

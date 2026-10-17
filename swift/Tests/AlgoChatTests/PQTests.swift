@@ -134,6 +134,13 @@ struct PQTests {
         )
         #expect(reopened.sessionKey == session.sessionKey)
         #expect(reopened.handshakeID == session.handshakeID)
+        #expect(throws: ChatError.self) {
+            _ = try PQSession.openAsSender(
+                note: note,
+                senderPrivateKey: alice.privateKey,
+                senderKemKey: kem
+            )
+        }
 
         let message = try session.encrypt("parity")
         #expect(PQSession.isMessage(message))
@@ -148,6 +155,11 @@ struct PQTests {
         tampered[tampered.count - 1] ^= 0x01
         #expect(throws: ChatError.self) {
             _ = try session.decrypt(Data(tampered))
+        }
+        var body = [UInt8](message)
+        body[PQProtocol.messageHeaderSize] ^= 0x01
+        #expect(throws: ChatError.self) {
+            _ = try session.decrypt(Data(body))
         }
 
         var notHandshake = bytes

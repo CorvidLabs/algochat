@@ -85,7 +85,7 @@ The protocol supports bidirectional decryption, allowing senders to decrypt thei
 
 ## PSK v1.1 Protocol
 
-The PSK (Pre-Shared Key) v1.1 protocol adds a shared secret layer on top of the standard X25519 key agreement, providing forward secrecy through a two-level ratchet system.
+The PSK (Pre-Shared Key) v1.1 protocol adds a shared secret layer on top of the standard X25519 key agreement. The two-level schedule derives keys from the initial secret. It does not provide forward secrecy.
 
 ```python
 from algochat import (

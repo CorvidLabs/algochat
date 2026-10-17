@@ -136,6 +136,11 @@ class PQTest {
         assertThrows<AlgoChatException.DecryptionFailed> {
             PQ.decryptPQMessage(tampered, session)
         }
+        val body = message.copyOf()
+        body[PQProtocol.DATA_HEADER_SIZE] = (body[PQProtocol.DATA_HEADER_SIZE].toInt() xor 1).toByte()
+        assertThrows<AlgoChatException.DecryptionFailed> {
+            PQ.decryptPQMessage(body, session)
+        }
     }
 
     @Test

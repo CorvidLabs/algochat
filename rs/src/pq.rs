@@ -453,12 +453,39 @@ mod tests {
         let reopened = open_pq_handshake_as_sender(&note, &[0x11u8; 32]).unwrap();
         assert_eq!(reopened.session_key, session.session_key);
         assert!(open_pq_handshake_as_sender(&note, &[0x22u8; 32]).is_err());
+        let fields = parse_handshake(&note).unwrap();
+        let (alice_priv, alice_pub) = derive_keys_from_seed(&[0x11u8; 32]).unwrap();
+        let wrong_kem = derive_mlkem768(&[0x44u8; 32]).unwrap();
+        let wrong_ct = ml_kem::Ciphertext::<MlKem768>::try_from(fields.sender_ct.as_slice()).unwrap();
+        let wrong_ss = wrong_kem.decap.decapsulate(&wrong_ct);
+        let agreed = x25519_ecdh(&alice_priv, &PublicKey::from(fields.ephemeral));
+        let wrong_wrap = sender_wrap_key(
+            &agreed,
+            wrong_ss.as_ref(),
+            alice_pub.as_bytes(),
+            &fields.ephemeral,
+        )
+        .unwrap();
+        let wrong_cipher = ChaCha20Poly1305::new_from_slice(&wrong_wrap).unwrap();
+        let prefix = &note[..note.len() - WRAPPED];
+        assert!(wrong_cipher
+            .decrypt(
+                Nonce::from_slice(&fields.nonce),
+                Payload {
+                    msg: &fields.wrapped,
+                    aad: prefix,
+                },
+            )
+            .is_err());
         let msg = encrypt_pq_message("parity", &session).unwrap();
         assert_eq!(decrypt_pq_message(&msg, &reopened).unwrap(), "parity");
         let mut bad = msg.clone();
         let last = bad.len() - 1;
         bad[last] ^= 1;
         assert!(decrypt_pq_message(&bad, &session).is_err());
+        let mut body = msg.clone();
+        body[DATA_HEADER] ^= 1;
+        assert!(decrypt_pq_message(&body, &session).is_err());
         assert!(is_pq_announcement(b"ACPQ"));
         let mut unsigned = vec![0x41, 0x43, 0x50, 0x51, 0x01];
         unsigned.extend(std::iter::repeat(0x07u8).take(1184));
@@ -479,9 +506,12 @@ mod tests {
         let alice = hex::decode(json_field(&raw, "aliceSeed")).unwrap();
         let bob = hex::decode(json_field(&raw, "bobSeed")).unwrap();
         let note = hex::decode(json_field(&raw, "handshake")).unwrap();
-        if note.len() != HANDSHAKE_LEN {
-            return;
-        }
+        assert_eq!(
+            note.len(),
+            HANDSHAKE_LEN,
+            "live handshake is {} bytes; the current handshake is {HANDSHAKE_LEN}",
+            note.len()
+        );
         let message = hex::decode(json_field(&raw, "message")).unwrap();
         let session = accept_pq_handshake(&note, &bob).unwrap();
         assert_eq!(

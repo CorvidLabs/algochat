@@ -79,7 +79,7 @@ The protocol supports bidirectional decryption, allowing senders to decrypt thei
 The PSK (Pre-Shared Key) protocol extends AlgoChat with an additional layer of symmetric key security:
 
 - **Hybrid encryption**: Combines X25519 ECDH with a pre-shared key
-- **Two-level ratchet**: Session + position derivation for forward secrecy
+- **Two-level key schedule**: Session and position keys derived from the initial pre-shared key. This is not forward secrecy.
 - **Replay protection**: Counter-based state tracking with configurable window
 - **Exchange URI**: Out-of-band key sharing via `algochat-psk://` URIs
 - **Zeroized key material**: Sensitive keys are zeroized after use

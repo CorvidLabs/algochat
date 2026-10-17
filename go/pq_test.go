@@ -104,7 +104,13 @@ func TestPQParityFixture(t *testing.T) {
 	}
 	out[len(out)-1] ^= 1
 	if _, err := DecryptPQMessage(out, session); err == nil {
-		t.Fatal("tamper should fail")
+		t.Fatal("tag tamper should fail")
+	}
+	body := append([]byte(nil), out...)
+	body[len(body)-1] ^= 1
+	body[pqDataHeaderSize] ^= 1
+	if _, err := DecryptPQMessage(body, session); err == nil {
+		t.Fatal("ciphertext byte 78 should fail")
 	}
 	if !IsPQAnnouncement(append([]byte("ACPQ"), 0x01)) {
 		t.Fatal("ACPQ not recognized")

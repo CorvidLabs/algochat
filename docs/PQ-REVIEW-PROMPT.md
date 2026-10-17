@@ -33,7 +33,7 @@ The intended contract:
 - @noble/post-quantum 0.7.1 has no independent audit. The docs must not claim one.
 - All six libraries implement 0x01, 0x02, 0x04, and 0x05. algochat-web does not. Identifier 0x03 is not assigned.
 - Envelope version 0x01 uses empty associated data. Version 0x02 binds the full fixed header as payload associated data. The sender-key wrap uses empty associated data. TypeScript writes version 0x02. The other libraries write version 0x01 and read both.
-- LocalNet size matrix on 2026-10-17: 90 notes, rounds 41059 through 41154. Each library wrote empty, small, 2000-byte, and maximum plaintext for 0x01, 0x02, and 0x05, three Extra lock messages at counters 0, 1, and 2, and one 0x04 handshake. Every library opened every confirmed note. The driver is ts/scripts/pq-matrix-localnet.ts.
+- LocalNet size matrix on 2026-10-17 for the current 2366-byte handshake: rounds 41641 through 41736, 96 notes, 540 reads, no failures. Rounds 41059 through 41154 used the withdrawn 1278-byte handshake. The driver is ts/scripts/pq-matrix-localnet.ts.
 
 Check these questions and answer each with pass, fail, or not tested. Cite the file.
 1. Do the sizes in PROTOCOL.md match the constants in ts/src/pq/types.ts?
@@ -43,7 +43,7 @@ Check these questions and answer each with pass, fail, or not tested. Cite the f
 5. Is 0x03 absent from the public protocol identifiers and from the new code?
 6. Does parseKeyAnnouncement return undefined for an ACPQ note?
 7. Does implementations.json claim 0x04 and 0x05 for the six libraries, and only 0x01 and 0x02 for algochat-web?
-8. Does PARITY.md match the code, including LocalNet rounds 41059 through 41154?
+8. Does PARITY.md match the code, including LocalNet rounds 41641 through 41736, and does it mark rounds 41059 through 41154 as withdrawn?
 9. Does any doc claim an independent audit of @noble/post-quantum, or claim the hybrid session is forward secret?
 10. What must be true before a v1.3.0 git tag is honest?
 
