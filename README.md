@@ -13,13 +13,13 @@ This is the public specification and the language implementations. It is not a c
 | Path | Language | Protocols | Test |
 | --- | --- | --- | --- |
 | [`ts/`](ts/) | TypeScript | `0x01`, `0x02`, `0x04`, `0x05` | `bun test` |
-| [`swift/`](swift/) | Swift | `0x01`, `0x02` | `swift test` |
-| [`py/`](py/) | Python | `0x01`, `0x02` | `pytest` |
+| [`swift/`](swift/) | Swift | `0x01`, `0x02`, `0x04`, `0x05` | `swift test` |
+| [`py/`](py/) | Python | `0x01`, `0x02`, `0x04`, `0x05` | `pytest` |
 | [`rs/`](rs/) | Rust | `0x01`, `0x02`, `0x04`, `0x05` | `cargo test` |
-| [`kt/`](kt/) | Kotlin | `0x01`, `0x02` | `./gradlew test` |
+| [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05` | `./gradlew test` |
 | [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05` | `go test ./...` |
 
-Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). TypeScript is the reference. Rust and Go open its handshake. Swift, Python, and Kotlin do not yet.
+Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). Each library writes a handshake and a message. Each library opens the notes the others confirmed on LocalNet.
 
 Published package names stay on the existing repositories for now. This tree is where a wire-format change lands once, with the same test vectors for every library.
 

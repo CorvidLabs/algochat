@@ -10,7 +10,7 @@ spec: client.spec.md
 ## Acceptance Criteria
 
 1. **REQ-client-001**: Seed construction deterministically derives the client's encryption identity and Algorand address; `AlgoChatClientTest` and `AlgoChatTest` exercise construction and round trips.
-2. **REQ-client-002**: Key discovery parses announcements and distinguishes signed verified keys from unverified keys; `BlockchainTest` covers address decoding and announcement discovery.
+2. **REQ-client-002**: Key discovery parses announcements and distinguishes signed verified keys from unverified keys. An ACPQ note is not an X25519 key. `BlockchainTest` and `PQTest` cover address decoding, announcement discovery, and that rejection.
 3. **REQ-client-003**: Conversations deduplicate by transaction id and maintain round/offset order; `ModelsTest` covers append, merge, filtering, and reply contexts.
 4. **REQ-client-004**: The send queue enforces capacity, transition, retry, pruning, and recipient-query rules; `QueueTest` covers each queue state path.
 5. **REQ-client-005**: Storage and typed stores preserve bytes, namespaces, messages, rounds, and key verification metadata; `StorageTest` covers those persistence contracts.
@@ -34,7 +34,7 @@ Acceptance Criteria
 
 ### REQ-client-002
 
-Key discovery SHALL parse announcements and preserve whether the announcing Algorand identity verified the key signature.
+Key discovery SHALL parse announcements and preserve whether the announcing Algorand identity verified the key signature. A note that starts with ACPQ SHALL NOT be returned as an X25519 key.
 
 Acceptance Criteria
 - Existing address, signature, and discovery cases pass in `BlockchainTest`.

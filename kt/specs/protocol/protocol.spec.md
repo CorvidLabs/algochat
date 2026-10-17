@@ -7,6 +7,7 @@ files:
   - src/main/kotlin/com/corvidlabs/algochat/Envelope.kt
   - src/main/kotlin/com/corvidlabs/algochat/Keys.kt
   - src/main/kotlin/com/corvidlabs/algochat/MessagePayload.kt
+  - src/main/kotlin/com/corvidlabs/algochat/PQ.kt
   - src/main/kotlin/com/corvidlabs/algochat/Signature.kt
   - src/main/kotlin/com/corvidlabs/algochat/Types.kt
 db_tables: []
@@ -17,7 +18,7 @@ depends_on: []
 
 ## Purpose
 
-Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envelope layout, structured reply payloads, signed key announcements, protocol constants, and public failures in a form interoperable with the sibling implementations.
+Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envelope layout, structured reply payloads, signed key announcements, protocol constants, and public failures in a form interoperable with the sibling implementations. Hybrid sessions add an ML-KEM-768 handshake and a steady-state message. Those notes do not change v1 or Extra lock envelopes.
 
 ## Public API
 
@@ -31,6 +32,7 @@ Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envel
 | Internal payload codec | Encodes structured text/reply JSON, decodes structured or legacy UTF-8 payloads, and recognizes key-publish JSON. |
 | `MessagePayload`, `ReplyToPayload`, `DecryptedContent` | Serializable structured payload and decoded public content types. |
 | `Signature` | Ed25519 signing/verification for encryption keys and stable SHA-256 fingerprints. |
+| `PQ`, `PQProtocol` | ML-KEM-768 from the account seed, hybrid session key, one-note handshake, steady-state message, and ACPQ announcement. |
 | `AlgoChatException` | Public typed failures for envelope, version, cryptography, key, blockchain, storage, and payload errors. |
 
 ### Complete export index

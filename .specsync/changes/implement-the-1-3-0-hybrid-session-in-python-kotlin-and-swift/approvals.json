@@ -1,0 +1,41 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792269430,
+      "digest": "7e7f29af6b731e65a358700caa103efcca3965d3f2e646c5fdad2cd3b3d9901b",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "implement-the-1-3-0-hybrid-session-in-python-kotlin-and-swift",
+        "title": "Implement the 1.3.0 hybrid session in Python, Kotlin, and Swift",
+        "description": "Implement the 1.3.0 hybrid session in Python, Kotlin, and Swift",
+        "kind": "feature",
+        "affected_specs": [],
+        "affected_paths": [
+          "PARITY.md",
+          "Package.swift",
+          "README.md",
+          "implementations.json",
+          "kt",
+          "py",
+          "swift"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "PROTOCOL.md 1.3.0 already specifies 0x04 and 0x05. This change implements that contract in Python, Kotlin, and Swift.",
+        "acceptance_criteria": [
+          "Python, Kotlin, and Swift each open the TypeScript handshake fixture and the LocalNet note, recover the same session key, and still pass their existing 0x01 and 0x02 tests."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}

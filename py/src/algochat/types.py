@@ -160,3 +160,8 @@ class PSKEncryptionError(EncryptionError):
 class PSKDecryptionError(DecryptionError):
     """PSK decryption failed."""
     pass
+
+
+class PQError(AlgoChatError):
+    """Hybrid X25519 + ML-KEM handshake or message failed."""
+    pass

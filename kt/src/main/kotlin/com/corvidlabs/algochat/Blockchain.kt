@@ -281,6 +281,9 @@ private fun parseKeyAnnouncement(note: ByteArray, address: String): DiscoveredKe
 
     if (note.size < 32) return null
 
+    // Encapsulation-key notes start with "ACPQ" and are not X25519 keys.
+    if (PQ.isPQKeyAnnouncement(note)) return null
+
     val publicKey = note.copyOfRange(0, 32)
 
     val isVerified = if (note.size >= 96) {

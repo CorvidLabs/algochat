@@ -19,36 +19,37 @@ A library is at parity for 1.3.0 when every row below passes in that language, a
 | Tamper | One flipped ciphertext byte fails closed |
 | Announcement | Magic `ACPQ`, 1184-byte key, optional Ed25519 signature. A bad signature is rejected. An `ACPQ` note is not parsed as an X25519 key |
 | Classical | `0x01` and `0x02` vectors in TEST-VECTORS.md still pass |
-| Cross | TypeScript builds a handshake with seeds `0x11` and `0x22` and coins `0x33`. The other library opens that exact note |
+| Cross | Opens `vectors/pq-mlkem768.json`, and a note it writes is opened by the other libraries from the bytes LocalNet confirmed |
 
-The handshake note is not a frozen hex vector. The sender wrap uses a random nonce. The combiner vector is frozen. The cross check uses a note the TypeScript tests can print when `PQ_VECTOR_NOTE=1` is set. Until that fixture file is checked in, parity is not closed.
+The handshake note in that fixture is one TypeScript run, so encapsulate is not reproduced from coins. The sender wrap uses a random nonce. The combiner vector is frozen. The live check is `ts/scripts/pq-cross-localnet.ts`.
 
 ## Status
 
-| Library | `0x01` `0x02` | `0x04` `0x05` | Combiner vector | Opens a TypeScript handshake |
-| --- | --- | --- | --- | --- |
-| `ts/` | yes | yes, reference | yes | n/a, it is the reference |
-| `swift/` | yes | no | no | no |
-| `py/` | yes | no | no | no |
-| `rs/` | yes | yes | yes | yes, opens the TypeScript note |
-| `kt/` | yes | no | no | no |
-| `go/` | yes | yes | yes | yes, opens the TypeScript note |
+| Library | `0x01` `0x02` | `0x04` `0x05` | Combiner vector | Opens a TypeScript handshake | LocalNet mesh |
+| --- | --- | --- | --- | --- | --- |
+| `ts/` | yes | yes, reference | yes | n/a, it is the reference | yes |
+| `swift/` | yes | yes | yes | yes | yes |
+| `py/` | yes | yes | yes | yes | yes |
+| `rs/` | yes | yes | yes | yes | yes |
+| `kt/` | yes | yes | yes | yes | yes |
+| `go/` | yes | yes | yes | yes | yes |
 
-Go and Rust open the frozen TypeScript handshake note and recover the same session key. They also opened a handshake and message that TypeScript confirmed on LocalNet (rounds 40916 and 40917, text "localnet pq parity"). Python, Kotlin, and Swift do not yet.
+On 2026-10-17 each library wrote one handshake and one message from the same two LocalNet accounts. Algod confirmed those notes in rounds 40924 through 40935. Every library then opened every confirmed note, recovered the same session key, and returned the plaintext `cross from` plus the writer name. Go and Rust also opened the earlier TypeScript note from rounds 40916 and 40917.
 
-## Work left, per language
+## Engines
 
-Each port keeps its own package layout. It adds the same operations the TypeScript module `ts/src/pq` exports:
+The test vector decides whether the bytes match. A library that misses the vector is not parity.
 
-- Derive the ML-KEM-768 key pair from the account seed.
-- Encode and parse an `ACPQ` announcement.
-- Build a handshake, accept it, and reopen it as the sender.
-- Encrypt and decrypt a `0x05` message.
-- Reject `ACPQ` inside the X25519 announcement parser.
+| Library | ML-KEM-768 |
+| --- | --- |
+| TypeScript | `@noble/post-quantum` 0.7.1. No independent audit. |
+| Go | `crypto/mlkem` in the Go standard library |
+| Rust | `ml-kem` 0.3.3 |
+| Python | `cryptography` 50, `MLKEM768PrivateKey.from_seed_bytes` |
+| Kotlin | BouncyCastle `bcprov-jdk18on` 1.80 |
+| Swift | CryptoKit `MLKEM768` through swift-crypto 3.x. That API needs macOS 26. `swift-algorand` keeps swift-crypto below 4. |
 
-ML-KEM comes from that language's library. TypeScript uses `@noble/post-quantum` 0.7.1, which has no independent audit. Swift should use a reviewed implementation that still runs on the package's minimum OS. The test vector decides whether the bytes match. A different library that misses the vector is not parity.
-
-Do not tag `v1.3.0` until the status table is yes across every row.
+Do not tag `v1.3.0` until this table is still yes on the commit you tag.
 
 ## Limits that stay in every port
 

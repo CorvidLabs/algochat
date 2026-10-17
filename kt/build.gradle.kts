@@ -81,3 +81,11 @@ publishing {
         }
     }
 }
+
+tasks.register("pqioClasspath") {
+    dependsOn(tasks.named("testClasses"))
+    doLast {
+        val classpath = sourceSets.named("test").get().runtimeClasspath.asPath
+        layout.buildDirectory.file("pqio.classpath").get().asFile.writeText(classpath)
+    }
+}

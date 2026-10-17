@@ -31,8 +31,8 @@ The intended contract:
 - 0x01 and 0x02 behavior and vectors stay.
 - The session is not forward secret.
 - @noble/post-quantum 0.7.1 has no independent audit. The docs must not claim one.
-- Swift, Python, Rust, Kotlin, and Go do not implement 0x04 or 0x05 yet. Any sentence that says they do is a defect.
-- No cross-language interoperability test has been run for 1.3.0. The LocalNet proof was TypeScript only.
+- All six libraries implement 0x04 and 0x05. algochat-web does not.
+- LocalNet mesh on 2026-10-17: each library wrote one handshake and one message. Algod confirmed those notes in rounds 40924 through 40935. Every library opened every note and recovered the same session key. The driver is ts/scripts/pq-cross-localnet.ts. Plaintext was "cross from" plus the writer name. Go and Rust also opened the earlier TypeScript note from rounds 40916 and 40917.
 
 Check these questions and answer each with pass, fail, or not tested. Cite the file.
 1. Do the sizes in PROTOCOL.md match the constants in ts/src/pq/types.ts?
@@ -41,9 +41,9 @@ Check these questions and answer each with pass, fail, or not tested. Cite the f
 4. Does a one-byte ciphertext flip fail closed?
 5. Is 0x03 absent from the public protocol identifiers and from the new code?
 6. Does parseKeyAnnouncement return undefined for an ACPQ note?
-7. Does implementations.json claim 0x04 and 0x05 only for TypeScript?
-8. Does PARITY.md match the code, including the honest "no" cells?
-9. Is there any place the docs say all six libraries already interoperate on 1.3.0?
+7. Does implementations.json claim 0x04 and 0x05 for the six libraries, and only 0x01 and 0x02 for algochat-web?
+8. Does PARITY.md match the code, including LocalNet rounds 40924 through 40935?
+9. Does any doc claim an independent audit of @noble/post-quantum, or claim the hybrid session is forward secret?
 10. What must be true before a v1.3.0 git tag is honest?
 
 End with a short list of blockers. Do not propose a new protocol. Do not suggest using 0x03.

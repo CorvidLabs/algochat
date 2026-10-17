@@ -354,6 +354,11 @@ public actor MessageIndexer {
         from noteData: Data,
         senderAddress: Address
     ) throws -> DiscoveredKey? {
+        // ACPQ notes carry an ML-KEM encapsulation key, not an X25519 key.
+        if PQAnnouncement.isAnnouncement(noteData) {
+            return nil
+        }
+
         guard EnvelopeDecoder.isChatMessage(noteData) else {
             return nil
         }

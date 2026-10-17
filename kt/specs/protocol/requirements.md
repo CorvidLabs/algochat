@@ -15,6 +15,7 @@ spec: protocol.spec.md
 4. **REQ-protocol-004**: Structured text/reply payloads round-trip while legacy UTF-8 remains readable; `MessagePayloadTest` covers JSON, reply, legacy, malformed, and key-publish cases.
 5. **REQ-protocol-005**: Encryption-key signatures verify only for the correct key and signer, and fingerprints are deterministic; `SignatureTest` covers valid and invalid signatures and fingerprint formatting.
 6. **REQ-protocol-006**: The note ceiling is 4096 bytes. A 882-byte plaintext still encrypts into at most 1024 bytes. A 3954-byte plaintext encodes to exactly 4096 bytes. One extra byte fails before a transaction is built. At minFee 1000, notes of 1024, 2000, and 4096 bytes cost 1000, 1098, and 1308. `AlgoChatTest` covers these cases.
+7. **REQ-protocol-007**: A hybrid session uses ML-KEM-768 with X25519. The handshake is one 1278-byte note. A later message uses a 78-byte header. `PQTest` matches the TypeScript fixture, round-trips, and rejects a flipped ciphertext byte.
 
 ## Constraints
 
@@ -67,4 +68,12 @@ The note ceiling SHALL be 4096 bytes. Plaintext of 882 bytes SHALL still encrypt
 
 Acceptance Criteria
 - `AlgoChatTest` accepts an 882-byte plaintext at 1024 bytes or fewer, encodes the 3954-byte maximum to exactly 4096 bytes, rejects one extra byte, and checks fees 1000, 1098, and 1308 at minFee 1000.
+
+### REQ-protocol-007
+
+Hybrid session key derivation SHALL use HKDF-SHA256 over the X25519 secret followed by the ML-KEM secret. The handshake SHALL be one note of 1278 bytes. A steady-state message SHALL use a 78-byte header. A failed authentication tag SHALL not return plaintext.
+
+Acceptance Criteria
+- `PQTest` matches the TypeScript encapsulation key, shared secret, pinned combiner, and handshake session key.
+- The same test round-trips a message and rejects one flipped ciphertext byte.
 

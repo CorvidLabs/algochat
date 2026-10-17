@@ -2,7 +2,7 @@
 
 This document explains how AlgoChat works end to end: the keys, the envelope on the wire, how a message is encrypted and read, how peers find each other's keys, and how the envelope rides on an Algorand payment. It also covers the machinery in this repository (validation, the status dashboard, the trust gate, GitHub Pages).
 
-The narrative below describes protocol 1.2.1 (`0x01` and `0x02`). Protocol 1.3.0 adds an optional hybrid session in [PROTOCOL.md](../PROTOCOL.md) section 5.7. Only the TypeScript library implements it today. The parity bar for the other languages is [PARITY.md](../PARITY.md). The normative text is PROTOCOL.md. If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
+The narrative below describes protocol 1.2.1 (`0x01` and `0x02`). Protocol 1.3.0 adds an optional hybrid session in [PROTOCOL.md](../PROTOCOL.md) section 5.7. All six libraries implement it. On LocalNet, rounds 40924 through 40935, each library's handshake and message opened in the other five. The parity record is [PARITY.md](../PARITY.md). The normative text is PROTOCOL.md. If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
 
 Notation: `‖` means byte concatenation (PROTOCOL.md writes it `||`). `HKDF(ikm, salt, info)` is HKDF-SHA256 with a 32-byte output. `seal` and `open` are ChaCha20-Poly1305 encrypt and decrypt.
 
