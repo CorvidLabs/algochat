@@ -7,10 +7,11 @@
   "title": "Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key",
   "description": "Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key",
   "kind": "documentation",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "7a3c964ede48b01c5abff4929f9b6db880494724",
   "created_at": 1792279625,
-  "updated_at": 1792279677,
+  "updated_at": 1792279722,
   "affected_specs": [
     "protocol"
   ],

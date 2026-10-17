@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 4
+version: 5
 status: stable
 files:
   - PROTOCOL.md
@@ -40,3 +40,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-17 | Envelope version 0x02 binds the full everyday or Extra lock header as payload associated data. Version 0x01 stays valid. |
 | 2026-10-17 | prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum: Prove on LocalNet that all six libraries read and write 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, including several messages in one exchange. Go gains Extra lock. Every library accepts version 0x02 header binding the way TypeScript emits it. Identifier 0x03 stays unassigned. |
 | 2026-10-17 | state-the-hybrid-sender-wrap-and-announcement-rules-exactly-and-make-rust-and-go-follow-them: State the hybrid sender wrap and announcement rules exactly, and make Rust and Go follow them |
+| 2026-10-17 | record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key: Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key |

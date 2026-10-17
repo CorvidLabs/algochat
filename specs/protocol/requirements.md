@@ -14,6 +14,7 @@ An implementation SHALL derive the hybrid session key with HKDF-SHA256 over the 
 - A 0x04 note is 2366 bytes and both parties derive the same session key.
 - Opening the sender copy with only the X25519 secret fails.
 - A flipped 0x05 byte fails decryption.
+- A 0x05 message does not mint a new ephemeral session key.
 
 ### REQ-protocol-2
 
