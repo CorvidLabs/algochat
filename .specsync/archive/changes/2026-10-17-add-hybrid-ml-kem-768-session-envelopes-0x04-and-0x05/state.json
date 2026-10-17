@@ -7,11 +7,11 @@
   "title": "Add hybrid ML-KEM-768 session envelopes 0x04 and 0x05",
   "description": "Add hybrid ML-KEM-768 session envelopes 0x04 and 0x05",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "69ed4d66251348eff02833f5d2c68f73e5723cec",
   "created_at": 1792265787,
-  "updated_at": 1792265882,
+  "updated_at": 1792265923,
   "affected_specs": [
     "protocol"
   ],
