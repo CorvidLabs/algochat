@@ -7,11 +7,11 @@
   "title": "State the hybrid sender wrap and announcement rules exactly, and make Rust and Go follow them",
   "description": "State the hybrid sender wrap and announcement rules exactly, and make Rust and Go follow them",
   "kind": "bug_fix",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "2e4eca63bdfb2340f6bd4caca34552fea631844d",
   "created_at": 1792276711,
-  "updated_at": 1792278642,
+  "updated_at": 1792278671,
   "affected_specs": [
     "protocol"
   ],

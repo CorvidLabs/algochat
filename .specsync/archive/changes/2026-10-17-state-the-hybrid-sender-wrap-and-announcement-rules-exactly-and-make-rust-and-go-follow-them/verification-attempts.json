@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792278620,
+      "commit": "b45dce781c1b3bcd9743977ef109d03ed7431041",
+      "contract_digest": "a4884a706182a4405e9aedca1a434904bba1dd92106d1a5339ef3980f110432b",
+      "execution_digest": "42e00d8aeb07f2fa6c6023f3b9e2db35f711c01942c82c4c446341825c9f4ff0",
+      "workspace_digest": "ce1c7dc57804636c6c91e54d0c2ca2f45517cbb38803a1b6df71b0b8c6139133",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-1"
+      ]
+    },
+    {
+      "timestamp": 1792278635,
+      "commit": "b45dce781c1b3bcd9743977ef109d03ed7431041",
+      "contract_digest": "a4884a706182a4405e9aedca1a434904bba1dd92106d1a5339ef3980f110432b",
+      "execution_digest": "42e00d8aeb07f2fa6c6023f3b9e2db35f711c01942c82c4c446341825c9f4ff0",
+      "workspace_digest": "ce1c7dc57804636c6c91e54d0c2ca2f45517cbb38803a1b6df71b0b8c6139133",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-1"
+      ]
+    },
+    {
+      "timestamp": 1792278640,
+      "commit": "0bfcf093f28e0e9b8b50ff36b1f07e0c0bc31ae3",
+      "contract_digest": "a4884a706182a4405e9aedca1a434904bba1dd92106d1a5339ef3980f110432b",
+      "execution_digest": "42e00d8aeb07f2fa6c6023f3b9e2db35f711c01942c82c4c446341825c9f4ff0",
+      "workspace_digest": "8f00e3ccbb13fb9bbbe8d4e5551e2639d3ced3921eeb8f5714e5e1ce33e490f4",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-1"
+      ]
+    },
+    {
+      "timestamp": 1792278640,
+      "commit": "94b2ff94f66cbc4fc5a1b4fe9f65c6813c67349d",
+      "contract_digest": "a4884a706182a4405e9aedca1a434904bba1dd92106d1a5339ef3980f110432b",
+      "execution_digest": "42e00d8aeb07f2fa6c6023f3b9e2db35f711c01942c82c4c446341825c9f4ff0",
+      "workspace_digest": "8f00e3ccbb13fb9bbbe8d4e5551e2639d3ced3921eeb8f5714e5e1ce33e490f4",
+      "acceptance_input_digest": "05b03f920e024303507d419e796e15ec701de67a19f199c8d8fdb5fcc86e5a46",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "PROTOCOL.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7a82de5c0704c6a53398e950a947e98097ff5451cc58d99e1bc02b8fc6a9244b",
+            "entry_digest": "35c50145b6be4df4134c55749cd05e7e273b720fc2566c04d4cc1b1df15037d9",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "go/pq.go",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f0feba615f45c869e8875b60971d44488d57af66e089440cf2c6c2f3046fb013",
+            "entry_digest": "35a0e7642bbacf45bd8ca5220a32e3ae5e7503b4a40975b5957dd8f84e7dc39f",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "rs/src/blockchain.rs",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7cbdf737e938dcd104ee0922e2dac8fed3bae66888a5ce8fae206ad0a84bff36",
+            "entry_digest": "09e43e70c88ab5bef04264b8681eef49a0a61d697accfdae5f109c822d47d076",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "rs/src/pq.rs",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "930edd1b5b12b31403385336d28e424a6048473981846c62ae5ec226fb55fbfd",
+            "entry_digest": "5c3678ca7dda32eb86c74663cfd81c5c7ea617d115fc9a2d93b3ced22e1909e3",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/protocol/protocol.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bc487f27bb9eb334886ee559e1dfe24bae689c27c0004bb4752c0aad2a172937",
+            "entry_digest": "910d2e985c5065d5ff0837f1396c4c74dc7e761c562a9c4538b14cd63aae85f9",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "specs/protocol/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2825af2a290a3e0a18aa7fc0be61dac0ba74e25795c9b0da92b30062662854a8",
+            "entry_digest": "a91a3e30ffcc1ec9c0a92196f8a716c43fb6c51790af59039cd6f7f3c7421d21",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "ts/src/pq/pq.test.ts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5c19ba7d80796562f00385b905e0e2ad0615d0d6fe0f6a129840128296e7efe8",
+            "entry_digest": "1d417291f5c8532dc3f261bac37a1a915c73f880ae101bfaafd4dc4ffc9c7c9a",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-1"
+      ]
+    }
+  ]
+}
