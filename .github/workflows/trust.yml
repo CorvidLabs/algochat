@@ -5,6 +5,7 @@ on:
     paths:
       - "ts/**"
       - "swift/**"
+      - "Package.swift"
       - "py/**"
       - "rs/**"
       - "kt/**"
@@ -22,6 +23,7 @@ on:
     paths:
       - "ts/**"
       - "swift/**"
+      - "Package.swift"
       - "py/**"
       - "rs/**"
       - "kt/**"
