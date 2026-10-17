@@ -5,6 +5,12 @@ artifact: testing
 
 # Testing
 
+## Requirement evidence
+
+| Requirement | Evidence |
+| --- | --- |
+| REQ-protocol-2 | `ts/scripts/pq-matrix-localnet.ts` submitted 90 notes on LocalNet, rounds 41059 through 41154. Every library opened every note. Version 0x02 header binding matches TypeScript. Go Extra lock is in `go/psk.go`. |
+
 LocalNet must be up. The driver funds two accounts and, for each library, submits:
 
 - four `0x01` notes: empty, small, large, maximum
