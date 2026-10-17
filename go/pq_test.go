@@ -1,6 +1,8 @@
 package algochat
 
 import (
+	"crypto/ed25519"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"os"
@@ -124,6 +126,16 @@ func TestPQParityFixture(t *testing.T) {
 	bad := append(unsigned, bytesRepeat(0, 64)...)
 	if _, _, ok := ParsePQAnnouncement(bad, bytesRepeat(0x11, 32)); ok {
 		t.Fatal("bad signature accepted")
+	}
+	pub, priv, genErr := ed25519.GenerateKey(nil)
+	if genErr != nil {
+		t.Fatal(genErr)
+	}
+	sum := sha256.Sum256(append(append([]byte("AlgoChat-pq-ek-v1"), 0x01), unsigned[5:]...))
+	signed := append(append([]byte{}, unsigned...), ed25519.Sign(priv, sum[:])...)
+	got, isVerified, parsedOK := ParsePQAnnouncement(signed, pub)
+	if !parsedOK || !isVerified || hex.EncodeToString(got) != hex.EncodeToString(unsigned[5:]) {
+		t.Fatal("valid signature rejected")
 	}
 }
 

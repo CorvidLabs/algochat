@@ -404,6 +404,7 @@ fn hkdf32(ikm: &[u8], domain: &[u8], info: &[u8]) -> Result<[u8; 32]> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ed25519_dalek::Signer;
 
     fn json_field(text: &str, key: &str) -> String {
         let pat = format!("\"{key}\"");
@@ -495,6 +496,16 @@ mod tests {
         let mut bad = unsigned.clone();
         bad.extend(std::iter::repeat(0u8).take(64));
         assert!(parse_pq_announcement(&bad, Some(&[0x11u8; 32])).is_none());
+        let signing = ed25519_dalek::SigningKey::from_bytes(&[0x51u8; 32]);
+        let mut message = b"AlgoChat-pq-ek-v1".to_vec();
+        message.push(0x01);
+        message.extend_from_slice(&unsigned[5..]);
+        let digest = Sha256::digest(&message);
+        let mut signed = unsigned.clone();
+        signed.extend_from_slice(&signing.sign(&digest).to_bytes());
+        let verified = parse_pq_announcement(&signed, Some(signing.verifying_key().as_bytes())).unwrap();
+        assert!(verified.verified);
+        assert_eq!(verified.encaps_key, unsigned[5..]);
     }
 
     #[test]

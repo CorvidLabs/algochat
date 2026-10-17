@@ -87,8 +87,9 @@ These should all fail validation:
 // Too short (< 142 bytes minimum for standard, < 146 for PSK)
 0x0101AABB  // Only 4 bytes
 
-// Wrong version
-0x0201...   // Version 0x02 not supported
+// Illegal version. Version 0x02 with protocol 0x01 or 0x02 is valid.
+// Readers MUST accept it. See PROTOCOL.md section 5.4.1.
+0x0001...   // Version 0x00 is not accepted
 
 // Unknown protocol
 0x0103...   // Protocol 0x03 does not exist

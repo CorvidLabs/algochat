@@ -63,7 +63,7 @@ class PQTest {
     }
 
     @Test
-    fun `bob accepts the typescript handshake and alice reopens it`() {
+    fun `bob accepts a handshake alice built and alice reopens it`() {
         assertEquals(2366, PQProtocol.HANDSHAKE_SIZE)
         val alice = Keys.deriveKeysFromSeed(seed(0x11))
         val bob = Keys.deriveKeysFromSeed(seed(0x22))

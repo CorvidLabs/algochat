@@ -19,13 +19,13 @@ A library is at parity for 1.3.0 when every row below passes in that language, a
 | Tamper | One flipped ciphertext byte fails closed |
 | Announcement | Magic `ACPQ`, 1184-byte key, optional Ed25519 signature. A bad signature is rejected. An `ACPQ` note is not parsed as an X25519 key |
 | Classical | `0x01` and `0x02` vectors in TEST-VECTORS.md still pass |
-| Cross | Opens `vectors/pq-mlkem768.json`, and a note it writes is opened by the other libraries from the bytes LocalNet confirmed |
+| Cross | Opens the encapsulation key, ML-KEM ciphertext, shared secret, and combiner in `vectors/pq-mlkem768.json`. A 2366-byte note the library writes is opened by the sender and the recipient |
 
-The handshake note in that fixture is one TypeScript run, so encapsulate is not reproduced from coins. The sender wrap uses a random nonce. The combiner vector is frozen. The live check is `ts/scripts/pq-cross-localnet.ts`.
+`handshake_note` and `handshake_bytes` in that file are the withdrawn 1278-byte layout. They are not an acceptance test. The frozen fields are the encapsulation key, the ML-KEM ciphertext, the ML-KEM shared secret, and the combiner. A current handshake is 2366 bytes. LocalNet rounds 41641 through 41736 are the cross-library receipt. The driver is `ts/scripts/pq-matrix-localnet.ts`.
 
 ## Status
 
-| Library | `0x01` `0x02` | `0x04` `0x05` | Combiner vector | Opens a TypeScript handshake | LocalNet mesh |
+| Library | `0x01` `0x02` | `0x04` `0x05` | Combiner vector | Opens other libraries' 2366-byte handshakes | LocalNet mesh |
 | --- | --- | --- | --- | --- | --- |
 | `ts/` | yes | yes, reference | yes | n/a, it is the reference | yes |
 | `swift/` | yes | yes | yes | yes | yes |

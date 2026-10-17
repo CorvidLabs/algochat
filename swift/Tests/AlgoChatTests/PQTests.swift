@@ -97,7 +97,7 @@ struct PQTests {
         #expect(hex(secret.withUnsafeBytes { Data($0) }) == fixture.mlkem_shared_secret)
     }
 
-    @Test("accepts the TypeScript handshake, reopens it, and fails a flipped byte")
+    @Test("builds a handshake, reopens it, and fails a flipped byte")
     @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
     func acceptsTypeScriptHandshake() throws {
         let alice = try KeyDerivation.deriveEncryptionKeys(fromSeed: Data(repeating: 0x11, count: 32))

@@ -1,5 +1,5 @@
 {
-  "description": "TypeScript reference fixtures for protocol 1.3.0. Seeds are 32 repeated bytes.",
+  "description": "TypeScript reference fixtures for protocol 1.3.0. Seeds are 32 repeated bytes. handshake_note and handshake_bytes are the withdrawn 1278-byte layout and are not a current acceptance test. encaps_key, ciphertext, mlkem_shared_secret, and combiner_session_key stay valid.",
   "seed_bob": "2222222222222222222222222222222222222222222222222222222222222222",
   "seed_alice": "1111111111111111111111111111111111111111111111111111111111111111",
   "coins": "3333333333333333333333333333333333333333333333333333333333333333",
