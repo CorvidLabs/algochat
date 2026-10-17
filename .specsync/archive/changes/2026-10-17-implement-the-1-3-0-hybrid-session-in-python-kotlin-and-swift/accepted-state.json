@@ -7,11 +7,11 @@
   "title": "Implement the 1.3.0 hybrid session in Python, Kotlin, and Swift",
   "description": "Implement the 1.3.0 hybrid session in Python, Kotlin, and Swift",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "9e044821ea208dce87d04025274d57b769d88359",
   "created_at": 1792269370,
-  "updated_at": 1792270862,
+  "updated_at": 1792270883,
   "affected_specs": [],
   "affected_paths": [
     "py",

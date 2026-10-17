@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "implement-the-1-3-0-hybrid-session-in-python-kotlin-and-swift",
+  "implementation_commit": "0ba461c5a1d4f1eeecb8907e9818543befc60f5d",
+  "implementation_tree": "4ccb285dcf79c7f6b00043dd2b922793d7045e91",
+  "contract_digest": "7e7f29af6b731e65a358700caa103efcca3965d3f2e646c5fdad2cd3b3d9901b",
+  "workspace_digest": "6a2c4303656aed2646ad6f75a95c80b2350a6801d79a769798152ccd70f53d45",
+  "closing_digest": "44c61191fb3bca2feb7934a2a2ded8c7c25bb48417603f56f4e949c55929046e",
+  "review_digest": "668010c354aceaae5f2bc35b86419054e2d73a6859aa3a5107e5c3bf283d20e9",
+  "finalization_digest": "215b49f242f07f38724d395493181e21d2c4012ee9f2bf0e02663ccff5aa7577",
+  "timestamp": 1792270883
+}

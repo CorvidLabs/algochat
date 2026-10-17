@@ -1,6 +1,6 @@
 ---
 id: implement-the-1-3-0-hybrid-session-in-python-kotlin-and-swift
-state: implementing
+state: archived
 type: feature
 base_commit: 9e044821ea208dce87d04025274d57b769d88359
 ---
