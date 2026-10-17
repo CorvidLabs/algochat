@@ -21,7 +21,7 @@ This is the public specification and the language implementations. It is not a c
 
 Published package names stay on the existing repositories for now. This tree is where a wire-format change lands once, with the same test vectors for every library.
 
-Swift Package Manager looks for `Package.swift` at the repository root. The manifest is in [`swift/`](swift/). Depend on [swift-algochat](https://github.com/CorvidLabs/swift-algochat) until that package is published from this repository.
+Swift Package Manager looks for `Package.swift` at the repository root. The manifest is in [`swift/`](swift/). Existing packages still resolve from the archived [swift-algochat](https://github.com/CorvidLabs/swift-algochat) repository, which stays public and readable.
 
 ## Protocol
 
