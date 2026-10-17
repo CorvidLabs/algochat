@@ -1,0 +1,37 @@
+name: Protocol
+
+on:
+  pull_request:
+    paths:
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "SECURITY.md"
+      - "IMPLEMENTATION.md"
+      - "README.md"
+      - "implementations.json"
+      - "scripts/**"
+      - "hi/**"
+      - ".github/workflows/protocol.yml"
+  push:
+    branches: [main]
+    paths:
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "SECURITY.md"
+      - "IMPLEMENTATION.md"
+      - "README.md"
+      - "implementations.json"
+      - "scripts/**"
+      - "hi/**"
+      - ".github/workflows/protocol.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: oven-sh/setup-bun@v2
+      - run: bun scripts/validate.ts

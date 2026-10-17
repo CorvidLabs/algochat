@@ -1,0 +1,25 @@
+name: Rust
+
+on:
+  pull_request:
+    paths:
+      - "rs/**"
+      - ".github/workflows/rs.yml"
+  push:
+    branches: [main]
+    paths:
+      - "rs/**"
+      - ".github/workflows/rs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rs
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - run: cargo test
