@@ -1,4 +1,4 @@
-# Lesson bundle — describe-the-repository-and-run-each-library-ci-only-when-that-library-changes
+# Lesson bundle: describe-the-repository-and-run-each-library-ci-only-when-that-library-changes
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
