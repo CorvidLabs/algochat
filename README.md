@@ -1,7 +1,7 @@
 # AlgoChat
 
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](https://github.com/CorvidLabs/algochat/blob/main/LICENSE)
-[![Protocol](https://img.shields.io/badge/protocol-1.2.1-2ea44f)](PROTOCOL.md)
+[![Protocol](https://img.shields.io/badge/protocol-1.3.0-2ea44f)](PROTOCOL.md)
 [![Docs](https://img.shields.io/badge/docs-corvidlabs.xyz-1f6feb)](https://corvidlabs.xyz/algochat/)
 
 End-to-end encrypted messages carried as notes on Algorand payments. One protocol. Six libraries. Your keys stay with you.

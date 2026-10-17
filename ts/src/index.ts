@@ -195,3 +195,25 @@ export {
     decryptPSKMessage,
     PSKEncryptionError,
 } from './psk/index.js';
+
+export {
+    PQ_PROTOCOL,
+    PQ_HANDSHAKE_SIZE,
+    PQ_DATA_HEADER_SIZE,
+    PQ_MAX_PAYLOAD_SIZE,
+    PQError,
+    type MLKEMKeyPair,
+    type PQSession,
+    deriveHybridPQKey,
+    deriveMLKEMKeyPair,
+    initiatePQSession,
+    acceptPQSession,
+    openPQSessionAsSender,
+    encryptPQMessage,
+    decryptPQMessage,
+    isPQHandshake,
+    isPQMessage,
+    encodePQKeyAnnouncement,
+    parsePQKeyAnnouncement,
+    isPQKeyAnnouncement,
+} from './pq/index.js';

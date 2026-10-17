@@ -20,7 +20,7 @@
       "status": "active-dev",
       "description": "Node.js, Browsers",
       "testCommand": "bun test",
-      "protocols": ["0x01", "0x02"]
+      "protocols": ["0x01", "0x02", "0x04", "0x05"]
     },
     {
       "id": "py-algochat",

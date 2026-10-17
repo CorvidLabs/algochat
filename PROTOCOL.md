@@ -1,6 +1,6 @@
 # AlgoChat Protocol Specification
 
-**Version**: 1.2.1
+**Version**: 1.3.0
 **Status**: Stable
 
 ## 1. Overview
@@ -126,6 +126,8 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 |------------|------|--------|-------------|
 | `0x01` | Standard | Stable | X25519 ECDH with ephemeral keys |
 | `0x02` | Ratcheting PSK | Stable (v1.1) | Hybrid X25519 + ratcheting pre-shared key. Provides defense-in-depth against quantum key exchange attacks. |
+| `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
+| `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
 
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
@@ -160,6 +162,49 @@ The `ratchet_counter` field is a monotonically increasing 32-bit unsigned intege
 A plaintext of 3950 bytes encrypts to a note of exactly 4096 bytes. One byte past that maximum MUST fail before a transaction is built. A note of 4097 bytes is not legal.
 
 A plaintext of 878 bytes still encrypts. That envelope is 1024 bytes. It remains valid and is no longer the maximum.
+
+### 5.7 Hybrid session (protocols `0x04` and `0x05`)
+
+This mode is optional. A peer with no ML-KEM encapsulation key still receives `0x01` or `0x02`. Identifier `0x03` is not assigned.
+
+ML-KEM-768 (FIPS 203, category 3) is combined with X25519. The session key requires both shared secrets. The long-term ML-KEM key opens every handshake sent to that account. This is not forward secrecy.
+
+The encapsulation key is derived from the same 32-byte account seed as the X25519 key, with HKDF-SHA256 salt `AlgoChat-v1-mlkem768` and info `mlkem768-d` and `mlkem768-z`. Those 32-byte outputs are concatenated and passed to ML-KEM key generation.
+
+An announcement note is a self-payment:
+
+```
+magic "ACPQ" (4) | version 0x01 (1) | encapsulation key (1184) | Ed25519 signature (64, optional)
+```
+
+The signature is over SHA-256 of `AlgoChat-pq-ek-v1`, the version byte, and the encapsulation key. A bad signature is rejected. No signature means the key is unverified. Implementations MUST NOT parse an `ACPQ` note as an X25519 announcement.
+
+The handshake is one note of 1278 bytes:
+
+```
+version 0x02 | protocol 0x04 | sender X25519 (32) | recipient X25519 (32)
+ephemeral X25519 (32) | ML-KEM ciphertext (1088) | SHA-256(encapsulation key) (32)
+nonce (12) | wrapped session key (48)
+```
+
+The wrapped session key lets the sender reopen the session from the note and the long-term X25519 key. The recipient decapsulates and runs X25519, then derives the same key.
+
+Session key, HKDF-SHA256, 32 bytes:
+
+```
+salt = UTF-8 "algochat-pq-v1"
+ikm  = X25519 shared secret || ML-KEM shared secret
+info = UTF-8 "algochat-pq-v1" || ephemeral public || ML-KEM ciphertext
+       || sender X25519 || recipient X25519 || SHA-256(encapsulation key)
+```
+
+A `0x05` message header is 78 bytes:
+
+```
+version 0x02 | protocol 0x05 | sender X25519 (32) | SHA-256(handshake note) (32) | nonce (12)
+```
+
+The ciphertext and 16-byte tag follow. Maximum plaintext is 4002 bytes (4096 - 78 - 16). A 3-byte message is a 97-byte note. The handshake is paid once. Later messages stay under 1024 bytes unless the plaintext itself is long.
 
 ## 6. Encryption
 
@@ -672,3 +717,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.1 | Add ratcheting PSK mode (protocol `0x02`). |
 | 1.2 | Account agility: payments MAY be Falcon-1024 `pqsig` as well as Ed25519 `sig`. Encryption seed is mnemonic entropy, not a signing-key prefix. Falcon min fee is 3×. Envelope bytes and 1.1 test vectors are unchanged. |
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
+| 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. `0x01` and `0x02` are unchanged. `0x03` is not assigned. |

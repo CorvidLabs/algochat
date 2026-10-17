@@ -1,6 +1,6 @@
 # AlgoChat Test Vectors
 
-**Version**: 1.2.1
+**Version**: 1.3.0
 **Purpose**: Cross-implementation verification
 
 These test vectors enable implementations to verify correctness by using deterministic inputs and checking outputs match exactly.
@@ -14,6 +14,10 @@ Protocol 1.2.1 does not add envelope vectors either. It is a capacity and
 fee change on the same envelopes as 1.2. The note limit is 4096 bytes.
 Standard plaintext maximum is 3954 bytes. PSK plaintext maximum is 3950
 bytes. The ciphertext bytes in this file are unchanged.
+
+Protocol 1.3.0 adds one hybrid session-key vector. The handshake note itself
+is not pinned here because the sender wrap uses a random nonce. Implementations
+MUST match the session key for the inputs below.
 
 ## 1. Key Derivation
 
@@ -466,3 +470,20 @@ Protocol Constants:
   standardNotePrefix  = 0x0101
   pskNotePrefix       = 0x0102
 ```
+
+## 1.3 Hybrid session key
+
+Inputs are raw bytes, not the account seed. `recipient_encaps_key` is the ML-KEM-768 encapsulation key derived from seed `0x22` repeated 32 times, using section 5.7. The other fields are the stated fill bytes. `kem_ciphertext` is 1088 bytes.
+
+```
+x25519_shared = 0x05 repeated 32 times
+mlkem_shared  = 0x06 repeated 32 times
+ephemeral_pub = 0x01 repeated 32 times
+kem_ciphertext = 0x02 repeated 1088 times
+sender_x25519 = 0x03 repeated 32 times
+recipient_x25519 = 0x04 repeated 32 times
+
+session_key = 9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734
+```
+
+A real handshake with account seeds `0x11` and `0x22` and ML-KEM coins `0x33` (each repeated 32 times) MUST produce one 1278-byte `0x04` note, and both parties MUST derive the same session key. That session key is not this vector. This vector pins the combiner only.
