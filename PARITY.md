@@ -30,11 +30,11 @@ The handshake note is not a frozen hex vector. The sender wrap uses a random non
 | `ts/` | yes | yes, reference | yes | n/a, it is the reference |
 | `swift/` | yes | no | no | no |
 | `py/` | yes | no | no | no |
-| `rs/` | yes | no | no | no |
+| `rs/` | yes | yes | yes | yes, opens the TypeScript note |
 | `kt/` | yes | no | no | no |
-| `go/` | yes | no | no | no |
+| `go/` | yes | yes | yes | yes, opens the TypeScript note |
 
-No cross-language run has been done for 1.3.0. The LocalNet proof was two TypeScript accounts in one process.
+Go and Rust open the frozen TypeScript handshake note and recover the same session key. Python, Kotlin, and Swift do not yet. The live LocalNet proof was two TypeScript accounts in one process.
 
 ## Work left, per language
 

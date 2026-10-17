@@ -42,7 +42,7 @@
       "status": "active-dev",
       "description": "Cargo crate",
       "testCommand": "cargo test",
-      "protocols": ["0x01", "0x02"]
+      "protocols": ["0x01", "0x02", "0x04", "0x05"]
     },
     {
       "id": "kt-algochat",
@@ -64,7 +64,7 @@
       "status": "active-dev",
       "description": "Go module",
       "testCommand": "go test ./...",
-      "protocols": ["0x01", "0x02"]
+      "protocols": ["0x01", "0x02", "0x04", "0x05"]
     },
     {
       "id": "algochat-web",
