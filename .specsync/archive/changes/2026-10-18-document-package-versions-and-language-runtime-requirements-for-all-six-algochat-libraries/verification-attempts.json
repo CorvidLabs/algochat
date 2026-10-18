@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792330421,
+      "commit": "c9ad6deb013b0965ca00db29a32b4795f1c4dad9",
+      "contract_digest": "87db07dd1bcf7bdee5904914c4b6f8530da368e88ccf1530ff3f12aca467e787",
+      "execution_digest": "1c94d3edb1564f7db59e715e6da7c0a9c87f06b9ce243fe1247e1b45581c3609",
+      "workspace_digest": "177e399fc5535e89212dec60032aa143ea5169f6f000fe72294a45205c746b7d",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release --strict",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1792330424,
+      "commit": "4aa4f6d0a8e6f2f773e902dc219db067d4fa6d63",
+      "contract_digest": "87db07dd1bcf7bdee5904914c4b6f8530da368e88ccf1530ff3f12aca467e787",
+      "execution_digest": "1c94d3edb1564f7db59e715e6da7c0a9c87f06b9ce243fe1247e1b45581c3609",
+      "workspace_digest": "177e399fc5535e89212dec60032aa143ea5169f6f000fe72294a45205c746b7d",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release --strict",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1792330424,
+      "commit": "d0d9fb80a22fd6c158dabf658ecdd82aa1c04645",
+      "contract_digest": "87db07dd1bcf7bdee5904914c4b6f8530da368e88ccf1530ff3f12aca467e787",
+      "execution_digest": "1c94d3edb1564f7db59e715e6da7c0a9c87f06b9ce243fe1247e1b45581c3609",
+      "workspace_digest": "177e399fc5535e89212dec60032aa143ea5169f6f000fe72294a45205c746b7d",
+      "acceptance_input_digest": "5aa26f7344a75635697b2db92306918d4480c4a2c72e5af6d9095dc6c0e96520",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6f101ed3c8c56639dd8f7c366349aadf84533c612fb774e2e0100e9cbf0ecac6",
+            "entry_digest": "9da2d2d33f91377036e31f70a7754d4dd5b09fccf36505158373d1409c2449d6",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "docs/HLD.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "345ea8ade80efb9dae4bd46a64eee15164c646264da7cd6395c960eb00cbcfe4",
+            "entry_digest": "0da11196bb668566b5018e3b364053ccf7bc7230cf024c103773dfa521e7f749",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "docs/RELEASE.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6bdc1714b87b69c78135f2b76f35b6bb05c4b61b6ab513bc11a44a18ce531f3f",
+            "entry_digest": "b7ede18e511c70afff67acb9e437b065388e99ad62c0cd074e69fd9d7b4949aa",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "go/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7827ee0f7e32830b1fd4d813b6168066f8fe32cd4028445219f09d9d826c4440",
+            "entry_digest": "4fe3b17318805e3ad2c51800b4b53236687a1cac06caed20c9e2e64c697d983d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d32e89d3a7d646b7ba6382f24fc20ac5b832be52103adcf9926c4eb9f6635270",
+            "entry_digest": "00d935652652b6cf46cc6417672b6d76d31159c1c60b665854a21b9c51293d1c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4cc862098509389ceda80874083c200d15083866d0465d7669973fc3cd5d6ada",
+            "entry_digest": "4587a27a1afe7719cdaeacc32b385567a88660298c05394ea7a21f8a632ec13b",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "rs/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fa622e55ae4e1034e048ff38f147c3346b7d35b2668fd6e7d0710d7788605c45",
+            "entry_digest": "cb9ca2c00a022f6e9fb326b112f0ca823ac0005bb20170ba0a8f0c72e24b3687",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/release/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "9df5b419b94532a784e2e7c7d741c0a2c4dc5ad9fe57a53efb07aa2a45d6470b",
+            "entry_digest": "c5c1fd2c1e638cb586978e4753ad568703b6f4a690bcd5f076e5c2a724965bf1",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "specs/release/release.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "676a27d1bf832abe922ffe29d1fe41ad791b6a187202e9de2e33264e161266bc",
+            "entry_digest": "682be2b9ec89d6a09f98da7e514922e8cf33a9801c036636ef972d8a19690ef6",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "specs/release/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "68852c4df4878a654b6961cc6b7281a7d43cace8fa7426cb36e1d126df3bd958",
+            "entry_digest": "6f9dc481051b4868429796b39d313a8d93bd5582f4950afd5c2f1326b4a48aad",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "specs/release/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "49736139edee376dcc2d738dfb5ef216ba809f6b41026fe5b70a92dbf0dfde7e",
+            "entry_digest": "37f3d9a3c9600ba3ec8fd77c65050e9e46dd2af40b2a5991dcfbeebb08679022",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "swift/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4d7e3ede1e7817886d73a816340249439421feec91f4d08cdb1a82944efba745",
+            "entry_digest": "2ad663cf886ab83c6089fdb5c1ae660ebc8edb9c69185c2204bc84972a6d5ac6",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "ts/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "46515e8a11811df12dc453fd223fe5b193fd43685ff8d5d9f595fbc5928ba703",
+            "entry_digest": "cb1f2532c41830eeb2ce98867976950320313b8f21f45ac1ccf3f77bb10fdfc9",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release --strict",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}

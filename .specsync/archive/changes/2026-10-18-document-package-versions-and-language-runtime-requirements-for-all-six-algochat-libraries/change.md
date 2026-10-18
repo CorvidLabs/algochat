@@ -1,6 +1,6 @@
 ---
 id: document-package-versions-and-language-runtime-requirements-for-all-six-algochat-libraries
-state: implementing
+state: archived
 type: documentation
 base_commit: 3ce096fbacaf7c4e3d962afa16bea094e0505771
 ---

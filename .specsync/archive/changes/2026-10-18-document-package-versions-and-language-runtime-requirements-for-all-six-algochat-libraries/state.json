@@ -7,11 +7,11 @@
   "title": "Document package versions and language runtime requirements for all six AlgoChat libraries",
   "description": "Document package versions and language runtime requirements for all six AlgoChat libraries",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "3ce096fbacaf7c4e3d962afa16bea094e0505771",
   "created_at": 1792329964,
-  "updated_at": 1792330426,
+  "updated_at": 1792330622,
   "affected_specs": [
     "release"
   ],
