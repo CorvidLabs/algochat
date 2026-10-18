@@ -1,0 +1,54 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792336600,
+      "digest": "56d44d3104de6df6068511225fd22b57a3fdc26625a252adedd7b184cea7e8ba",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox",
+        "title": "Implement protocols 0x06 and 0x07 in all six libraries and prove the LocalNet group mailbox",
+        "description": "Implement protocols 0x06 and 0x07 in all six libraries and prove the LocalNet group mailbox",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PARITY.md",
+          "PROTOCOL.md",
+          "README.md",
+          "SECURITY.md",
+          "TEST-VECTORS.md",
+          "docs",
+          "go",
+          "hi",
+          "implementations.json",
+          "kt",
+          "py",
+          "rs",
+          "scripts",
+          "swift",
+          "ts",
+          "vectors"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "TypeScript, Go, Rust, Python, Kotlin, and Swift seal and open the same 0x06 and 0x07 notes from vectors/group-v1.json. A LocalNet run creates a group of three, adds a fourth, removes one, and posts one 0x07 payment to that group's mailbox. Every library opens that message. Opening it with the removed member's previous group key fails. A repeated sender, epoch, and counter fails. PROTOCOL.md section 5.8.4, TEST-VECTORS.md, and PARITY.md record the bytes and the run. Identifier 0x03 stays unassigned."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "34c3029983c145a3b3bbd067d00088568e1f82f2c802779b1a0716039952a50e"
+      }
+    }
+  ],
+  "reopenings": []
+}
