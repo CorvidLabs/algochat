@@ -8,7 +8,7 @@ These normative requirements define the accepted contract for the implemented pa
 
 ### REQ-algochat-001
 
-The package SHALL expose the Swift 6 `AlgoChat` library and `algochat` executable with strict concurrency enabled, async client operations, actor isolation for shared mutable state, and the declared Apple and Linux platform support.
+The package SHALL expose the Swift 6 `AlgoChat` library and `algochat` executable with strict concurrency enabled, async client operations, actor isolation for shared mutable state, and the declared Apple and Linux platform support. Hybrid ML-KEM methods SHALL be compiled only where `MLKEM768` exists. On Linux those methods are omitted and the rest of the library still builds.
 
 #### Acceptance Criteria
 

@@ -133,11 +133,13 @@ public struct PQSession: Sendable {
             && bytes.dropFirst().first == PQProtocol.messageID
     }
 
+#if !os(Linux)
     /// ML-KEM-768 private key from the 32-byte account seed. Seed is `d || z`.
     @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
     public static func encapsulationPrivateKey(fromAccountSeed seed: Data) throws -> MLKEM768.PrivateKey {
         try MLKEM.privateKey(fromAccountSeed: seed)
     }
+#endif
 
     /// HKDF-SHA256 session key. `ikm` is the X25519 secret followed by the ML-KEM secret.
     public static func deriveHybridKey(
@@ -171,6 +173,7 @@ public struct PQSession: Sendable {
         return hkdf(ikm: ikm, salt: Data("algochat-pq-v1".utf8), info: info)
     }
 
+#if !os(Linux)
     /// Builds a `0x04` handshake. Encapsulation coins are random; CryptoKit has no public coins argument.
     @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
     public static func initiate(
@@ -285,6 +288,7 @@ public struct PQSession: Sendable {
         }
         return sessionFrom(note, sessionKey, fields.senderPublicKey, fields.recipientPublicKey)
     }
+#endif
 
     /// Seals a UTF-8 message under the session key. The header is 78 bytes and is the AEAD associated data.
     public func encrypt(_ plaintext: String) throws -> Data {
@@ -347,6 +351,7 @@ public struct PQSession: Sendable {
 
 // MARK: - ML-KEM
 
+#if !os(Linux)
 @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
 private enum MLKEM {
     static func privateKey(fromAccountSeed seed: Data) throws -> MLKEM768.PrivateKey {
@@ -393,6 +398,7 @@ private enum MLKEM {
         return bytes
     }
 }
+#endif
 
 // MARK: - Handshake layout
 

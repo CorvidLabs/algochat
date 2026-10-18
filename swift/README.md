@@ -23,7 +23,7 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 - **Reply Support** - Thread conversations with reply context
 - **Biometric Storage** - Protect encryption keys with Face ID / Touch ID
 - **Cross-Implementation** - Compatible with [ts-algochat](https://github.com/CorvidLabs/ts-algochat), [rs-algochat](https://github.com/CorvidLabs/rs-algochat), [py-algochat](https://github.com/CorvidLabs/py-algochat), [kt-algochat](https://github.com/CorvidLabs/kt-algochat)
-- **Multi-Platform** - iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, visionOS 1+. The hybrid ML-KEM session needs macOS 26 and is not covered by a Linux CI job.
+- **Multi-Platform** - iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, visionOS 1+. The hybrid ML-KEM session needs macOS 26. Linux builds the library without those methods, because swift-crypto has no `MLKEM768` there.
 
 ## Installation
 

@@ -3,13 +3,23 @@ import AlgoChat
 import Foundation
 
 /// LocalNet mesh tool. One JSON object per stdin line.
+#if os(Linux)
+do {
+    try FileHandle.standardError.write(contentsOf: Data("ML-KEM-768 needs macOS 26\n".utf8))
+} catch {
+    // The process is about to exit. The message is best effort.
+}
+exit(1)
+#else
 if #available(macOS 26, *) {
     PQCross.run()
 } else {
     fputs("ML-KEM-768 needs macOS 26\n", stderr)
     exit(1)
 }
+#endif
 
+#if !os(Linux)
 @available(macOS 26, *)
 private enum PQCross {
     static func run() {
@@ -273,3 +283,4 @@ private enum PQCross {
         fflush(stdout)
     }
 }
+#endif
