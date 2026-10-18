@@ -7,10 +7,11 @@
   "title": "Record this repository as the source for every AlgoChat library",
   "description": "Record this repository as the source for every AlgoChat library",
   "kind": "documentation",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "b522d8c8f347050d17b44d53758650c65702530f",
   "created_at": 1792288512,
-  "updated_at": 1792288579,
+  "updated_at": 1792288611,
   "affected_specs": [
     "release"
   ],
