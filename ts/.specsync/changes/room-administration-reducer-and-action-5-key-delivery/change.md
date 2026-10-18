@@ -1,6 +1,6 @@
 ---
 id: room-administration-reducer-and-action-5-key-delivery
-state: implementing
+state: verifying
 type: feature
 base_commit: d71341d1cc6e2f43fd49ddb47d902a0741048d11
 ---

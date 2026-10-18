@@ -11,7 +11,7 @@
   "canonical_applied": true,
   "base_commit": "d71341d1cc6e2f43fd49ddb47d902a0741048d11",
   "created_at": 1792357146,
-  "updated_at": 1792358141,
+  "updated_at": 1792359928,
   "affected_specs": [
     "algochat"
   ],
@@ -20,6 +20,7 @@
     "src/pq/group-admin.test.ts",
     "src/pq/index.ts",
     "src/pq/group.ts",
+    "src/pq/session.ts",
     "specs/algochat/algochat.spec.md",
     "ts/specs/algochat/algochat.spec.md",
     "ts/specs/algochat/requirements.md"
