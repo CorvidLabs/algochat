@@ -29,15 +29,15 @@ def validate(directory, sha):
         if lane not in REQUIRED or lane in seen:
             raise ValueError('unknown or duplicate lane')
         seen.add(lane)
-        if data['schema'] != 1 or data['sha'] != sha or data['tree_state'] != 'clean':
+        if type(data['schema']) is not int or data['schema'] != 1 or data['sha'] != sha or data['tree_state'] != 'clean':
             raise ValueError('stale or dirty source evidence')
-        if data['category'] != 'hosted' or not isinstance(data['platform'], str) or not data['platform'] or not isinstance(data['toolchain'], dict) or not data['toolchain']:
+        if data['category'] != 'hosted' or not isinstance(data['platform'], str) or not data['platform'] or not isinstance(data['toolchain'], dict) or not data['toolchain'] or any(not isinstance(k, str) or not k or not isinstance(v, str) or not v for k, v in data['toolchain'].items()):
             raise ValueError('missing hosted platform/toolchain evidence')
         if lane == 'swift' and not data['platform'].startswith('Darwin'):
             raise ValueError('required Apple lane absent')
-        if not data['commands'] or any(type(c['exit_code']) is not int or c['exit_code'] != 0 or not isinstance(c['argv'], list) or not c['argv'] or any(not isinstance(a, str) for a in c['argv']) for c in data['commands']):
+        if not isinstance(data['commands'], list) or not data['commands'] or any(type(c['exit_code']) is not int or c['exit_code'] != 0 or not isinstance(c['argv'], list) or not c['argv'] or any(not isinstance(a, str) for a in c['argv']) for c in data['commands']):
             raise ValueError('missing or failed command')
-        if not data['artifacts']:
+        if not isinstance(data['artifacts'], list) or not data['artifacts']:
             raise ValueError('missing artifact')
         names = [a['path'] for a in data['artifacts']]
         if any(not any(fnmatch.fnmatchcase(name, pattern) for name in names) for pattern in EXPECTED[lane]):

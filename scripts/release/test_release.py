@@ -41,7 +41,7 @@ class EvidenceTests(unittest.TestCase):
         mutations = [lambda d:d.update(sha='b'*40), lambda d:d.update(tree_state='dirty'),
             lambda d:d.update(category='author-reported'), lambda d:d.update(commands=[]),
             lambda d:d['commands'][0].update(exit_code=1), lambda d:d['commands'][0].update(exit_code=False), lambda d:d['commands'][0].update(argv='fake'), lambda d:d.update(artifacts=[]),
-            lambda d:d.update(toolchain={}), lambda d:d.update(lane='unknown'),
+            lambda d:d.update(toolchain={}), lambda d:d.update(toolchain={'compiler':False}), lambda d:d.update(schema=True), lambda d:d.update(lane='unknown'),
             lambda d:d['artifacts'][0].update(path='../escape'),
             lambda d:d['artifacts'][0].update(sha256='0'*64), lambda d:d.update(schema=2), lambda d:d['artifacts'][0].update(path='commands.json')]
         for mutation in mutations:

@@ -155,8 +155,9 @@ tasks.register("smoke") { doLast {
         run(['swift', 'build'])
         if lane == 'swift-linux':
             # Expected failure is a successful assertion, not a successful ML-KEM call.
-            code = "import subprocess; p=subprocess.run(['swift','run','--skip-build','pqcross'],capture_output=True); assert p.returncode==1 and p.stdout==b'' and p.stderr==b'ML-KEM-768 needs macOS 26\\n', (p.returncode,p.stdout,p.stderr)"
-            run(['python3', '-c', code])
+            binary = Path(run(['swift', 'build', '--show-bin-path']).strip()) / 'pqcross'
+            code = "import subprocess,sys; p=subprocess.run([sys.argv[1]],capture_output=True); assert p.returncode==1 and p.stdout==b'' and p.stderr==b'ML-KEM-768 needs macOS 26\\n', (p.returncode,p.stdout,p.stderr)"
+            run(['python3', '-c', code, binary])
         archive = source_archive(output, lane, ['Package.swift', 'swift/Sources', 'swift/Tests', 'LICENSE'])
         package = work / 'algochat'
         package.mkdir()
@@ -185,6 +186,8 @@ def main():
     try:
         with tempfile.TemporaryDirectory(prefix='algochat-consumer-') as work:
             qualify(args.lane, output, Path(work))
+        if run(['git', 'rev-parse', 'HEAD']).strip() != sha:
+            raise ValueError('candidate changed during qualification')
         if run(['git', 'diff', '--exit-code', 'HEAD']).strip():
             raise ValueError('tracked tree changed during qualification')
         write(output / 'commands.json', json.dumps(COMMANDS, indent=2))
