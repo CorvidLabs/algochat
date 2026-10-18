@@ -1,0 +1,79 @@
+{
+  "corruptKeyFile": {
+    "error": "decryptionFailed",
+    "returnedKey": false
+  },
+  "pqOversizedDecrypt": {
+    "accepted": true,
+    "noteBytes": 4097,
+    "plaintextBytes": 4003
+  },
+  "pskDecoder": [
+    {
+      "accepted": false,
+      "error": "invalidEnvelope(\"Data too short for PSK envelope: 145 bytes\")",
+      "size": 145
+    },
+    {
+      "accepted": true,
+      "size": 146
+    },
+    {
+      "accepted": true,
+      "size": 4096
+    },
+    {
+      "accepted": true,
+      "size": 4097
+    },
+    {
+      "accepted": true,
+      "size": 8192
+    }
+  ],
+  "pskFailedDecryptCounter": {
+    "badReadMessages": 0,
+    "goodAfterBadMessages": 1
+  },
+  "pskSameTransactionReopen": {
+    "firstReadMessages": 1,
+    "sameTxAfterManagerRestartMessages": 0,
+    "sameTxSecondReadMessages": 0
+  },
+  "pskStorage": {
+    "filePermissions": 420,
+    "initialPSKRecoverableFromPlainJSON": true
+  },
+  "queueStorage": {
+    "filePermissions": 384,
+    "plaintextMarkerReadable": true
+  },
+  "sendCounterAtMax": {
+    "firstReturned": 4294967295,
+    "nextStored": 1,
+    "secondReturned": 0
+  },
+  "standardDecoder": [
+    {
+      "accepted": false,
+      "error": "invalidEnvelope(\"Data too short: 141 bytes\")",
+      "size": 141
+    },
+    {
+      "accepted": true,
+      "size": 142
+    },
+    {
+      "accepted": true,
+      "size": 4096
+    },
+    {
+      "accepted": true,
+      "size": 4097
+    },
+    {
+      "accepted": true,
+      "size": 8192
+    }
+  ]
+}

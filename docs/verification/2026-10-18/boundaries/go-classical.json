@@ -1,0 +1,11 @@
+{
+  "authenticated_psk4097_bytes": 4097,
+  "authenticated_psk4097_decrypt_rejected": false,
+  "authenticated_psk4097_plaintext_bytes": 3951,
+  "authenticated_standard4097_bytes": 4097,
+  "authenticated_standard4097_decrypt_rejected": false,
+  "authenticated_standard4097_plaintext_bytes": 3955,
+  "psk_state_validation": "No send/receive state or advance/window helpers in Go API; counter parameter is uint32, cannot represent 2^32; applications own policy",
+  "psk_uint32max_roundtrip": true,
+  "standard4097_decode_rejected": false
+}

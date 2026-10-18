@@ -1,0 +1,42 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "human:leif",
+      "timestamp": 1792335108,
+      "digest": "450e254a3d628b5989e33462aad2d5b4272457d43b4a3d8cb09f85ea2f4c9195",
+      "note": "User explicitly requested the PR after receiving the completed local audit. Approval covers preserving the reported evidence and portable probes, not behavior fixes or full-parity acceptance.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "preserve-the-verified-six-language-parity-audit-with-portable-replay-scripts-and-explicit-rust-replay-and-swift-history",
+        "title": "Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes",
+        "description": "Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes",
+        "kind": "documentation",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          "docs/ACCURACY.md",
+          "docs/verification",
+          "scripts/parity",
+          "specs/release"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "The PR preserves a dated audit tied to237a974 with exact tested counts, runtime/fixture limitations, raw interoperability receipts, all84 unchanged intent criteria and explicit open defects; provides portable six-language offline replay plus Rust concurrent-replay and Swift same-transaction-history probes that fail when required behavior is violated; keeps probes isolated from tracked library source and fails on missing tools/errors; validates the replay scripts and root Trust/strict SpecSync; opens and attaches the PR without claiming full parity, statistical95percent correctness, behavior fixes or release authorization."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {
+        "release": "8450950b55e03698ceedfa51618b83075fd0fef64d65b299e10abbfa70c8dca2"
+      }
+    }
+  ],
+  "reopenings": []
+}

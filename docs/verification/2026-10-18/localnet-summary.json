@@ -1,0 +1,20 @@
+{
+  "candidate": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "localnet_notes": 96,
+  "handshakes": 6,
+  "message_notes": 90,
+  "successful_reader_calls": 540,
+  "failed_reader_calls": 0,
+  "round_min": 45227,
+  "round_max": 45322,
+  "libraries": [
+    "go",
+    "kt",
+    "py",
+    "rs",
+    "swift",
+    "ts"
+  ],
+  "raw_note_hashes_valid": true,
+  "scope": "Existing low-level driver; both sender and recipient opens inside helpers; fresh local sandbox only; transaction signatures are localnet Ed25519, not proof of Falcon payment integration"
+}

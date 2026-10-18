@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "candidate": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "tree": "511fa0cbeb39127a971370008bef055ad94b2676",
+  "audit_started_utc": "2026-10-18T14:26:32.880424+00:00",
+  "audit_completed_utc": "2026-10-18T14:45:57.192750+00:00",
+  "verdict": "tested_low_level_interop_passes_full_parity_has_reproduced_gaps",
+  "statistical_95_percent_correctness_claim": false,
+  "primary_native_unique_tests": 1807,
+  "primary_native_count_definition": "270TS+90Go+520Python+(234Rust library+14integration)+307Kotlin+372SwiftApple; excludes generated TS duplicates,nested Go subtests,repeated runtimes,SwiftLinux repeats,additional conformance/probes.",
+  "native": {
+    "ts": {
+      "unique_tests": 270,
+      "generated_dist_duplicates": 270,
+      "conformance_checks": 85,
+      "boundary_checks": 436,
+      "bun": "1.4.0",
+      "typescript": "5.9.3",
+      "node_runtime_smoke": {
+        "versions": [
+          "18.0.0",
+          "20.20.2",
+          "26.10.0"
+        ],
+        "checks_each": 28
+      }
+    },
+    "go": {
+      "top_level_tests": 90,
+      "nested_subtests": 7,
+      "versions": [
+        "1.25.0",
+        "1.27.1"
+      ],
+      "race": true,
+      "skip": 0,
+      "fail": 0,
+      "build_vet": "pass",
+      "boundary_test_functions": 4,
+      "boundary_subcases": 297
+    },
+    "py": {
+      "unique_tests": 520,
+      "versions": [
+        "3.10.20",
+        "3.11.17",
+        "3.12.13",
+        "3.13.16",
+        "3.14.6"
+      ],
+      "fail": 0,
+      "skip_with_generated_peer_fixtures": 0,
+      "initial_missing_fixture_skips": 198,
+      "cryptography": "50.0.2",
+      "pytest": "9.1.1",
+      "ruff_default_diagnostics": 176
+    },
+    "rs": {
+      "library_tests": 234,
+      "integration_tests": 14,
+      "rustc": "1.95.0",
+      "cargo": "1.95.0",
+      "legacy_peer_fixture_tests_activated": 10,
+      "peer_decryptions": 204,
+      "minimum_rust1_85": "fails:ctutils0.4.3 requires1.87",
+      "library_clippy": "pass",
+      "format": "fail",
+      "all_target_clippy_test_diagnostics": 8
+    },
+    "kt": {
+      "tests": 307,
+      "suites": 31,
+      "fail": 0,
+      "skip": 0,
+      "java": "17.0.20.1",
+      "gradle": "8.14.3",
+      "default_path_gradle": "9.8.0",
+      "declared_wrapper_properties": "8.11 but custom gradlew delegates PATH"
+    },
+    "swift_apple": {
+      "tests": 372,
+      "suites": 51,
+      "swift": "6.3.3",
+      "macOS": "26.5.2",
+      "exported_source_pq_tests": 6
+    },
+    "swift_linux": {
+      "reported_tests": 369,
+      "localnet_paths_return_early": 21,
+      "swift": "6.3.3",
+      "target": "aarch64-unknown-linux-gnu",
+      "exported_source_pq_tests": 3,
+      "mlkem_runtime": "expected unsupported; not a successful hybrid runtime"
+    }
+  },
+  "interop": {
+    "offline_assertions": 2388,
+    "offline_reader_calls": 1080,
+    "offline_message_envelopes": 180,
+    "offline_additional_handshakes": 12,
+    "directed_language_pairs": 36,
+    "account_pairs": 2,
+    "localnet_confirmed_notes": 96,
+    "localnet_handshakes": 6,
+    "localnet_messages": 90,
+    "localnet_reader_calls": 540,
+    "localnet_rounds": [
+      45227,
+      45322
+    ],
+    "falcon_typescript_high_level_checks": 7
+  },
+  "human_intent": {
+    "criteria": 84,
+    "root": 14,
+    "ts": 34,
+    "swift": 36,
+    "accepted_ids_and_text_changed": false
+  },
+  "structural": {
+    "specs": 15,
+    "strict_errors": 0,
+    "strict_warnings": 0,
+    "language_source_inventory": "154/154",
+    "root_source_inventory": "0/0, not language coverage",
+    "baseline_markdown_files": 88,
+    "baseline_local_targets_checked": 453,
+    "baseline_missing_targets": 0,
+    "baseline_unclosed_fences": 0
+  },
+  "root_gate_at_audit_candidate": {
+    "release_checks": 18,
+    "trust": "pass",
+    "augur_verdict": "proceed",
+    "augur_risk": 34,
+    "attest_verdict": "review",
+    "attest_human_approved": false,
+    "remote_note_push": false
+  },
+  "limits": [
+    "Historical audit candidate only; this evidence is not a whole-suite rerun or release approval for later commits.",
+    "Selected evidence and hash catalogs are committed; the full original local bundle, package archives, generated wallet secrets and repeated raw plaintext replies are not.",
+    "No independent security audit, older Apple platforms,Android,remote-registry provenance,high-level automatic PQ acceptance or numerical95percent claim."
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "standard_minimum_frame": [
+    {
+      "length": 125,
+      "decoded": false,
+      "detected": false
+    },
+    {
+      "length": 126,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 127,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 128,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 129,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 130,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 131,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 132,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 133,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 134,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 135,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 136,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 137,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 138,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 139,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 140,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 141,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 142,
+      "decoded": true,
+      "detected": true
+    }
+  ],
+  "standard_4097_decode": true,
+  "psk_minimum_frame": [
+    {
+      "length": 129,
+      "decoded": false,
+      "detected": false
+    },
+    {
+      "length": 130,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 131,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 132,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 133,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 134,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 135,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 136,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 137,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 138,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 139,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 140,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 141,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 142,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 143,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 144,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 145,
+      "decoded": true,
+      "detected": true
+    },
+    {
+      "length": 146,
+      "decoded": true,
+      "detected": true
+    }
+  ],
+  "psk_4097_decode": true,
+  "psk_send_exhaustion": {
+    "first": 4294967295,
+    "second": 4294967296,
+    "next": 4294967297,
+    "future_counter_accepted": true,
+    "second_encode_error": "OverflowError: int too big to convert"
+  },
+  "authenticated_pq_4097": {
+    "length": 4097,
+    "accepted": true,
+    "plaintext_length": 4003
+  },
+  "pq_tamper": {
+    "cases": 80,
+    "unexpected_acceptances": []
+  },
+  "readme_examples": {
+    "standard": "executed exact block",
+    "psk": "executed exact block",
+    "storage": "executed with temporary address/key/base_dir parameters"
+  },
+  "storage": {
+    "bytes": 92,
+    "mode": "0600",
+    "roundtrip": true,
+    "wrong_password_rejected": true
+  }
+}

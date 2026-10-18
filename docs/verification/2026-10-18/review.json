@@ -1,0 +1,163 @@
+{
+  "schema": 1,
+  "candidate": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "reviewed_utc": "2026-10-18T14:46:23.169832+00:00",
+  "role": "independent evidence review; no implementation or intent changes; no duplicate heavy test runs",
+  "verdict": "The finite tested interop paths pass; documented runtime and behavior mismatches remain. Full feature parity and blanket 95% confidence are not established.",
+  "independently_recomputed": {
+    "mesh": {
+      "unique_assertions": 2388,
+      "all_pass": true,
+      "message_envelopes": 180,
+      "additional_handshakes": 12,
+      "reader_calls": 1080,
+      "directed_writer_reader_pairs": 36,
+      "reader_calls_per_pair": 30,
+      "scope": "Low-level helpers, two deterministic account pairs; expected sender and recipient plaintext; negative body/tag/truncation/wrong-recipient/wrong-PSK checks. Stateful replay and automatic high-level PQ are outside mesh scope."
+    },
+    "localnet": {
+      "unique_transactions": 96,
+      "handshake_notes": 6,
+      "message_notes": 90,
+      "reader_calls": 540,
+      "all_read_replies_ok": true,
+      "all_sender_equals_recipient": true,
+      "raw_note_length_and_sha256_checks_pass": true,
+      "scope": "Local sandbox Ed25519 payment note round trip. Each helper asserts both sender and recipient against expected text. This does not qualify Falcon payments or public-network deployments."
+    },
+    "rust_repro_integrity": "The isolated rs/src/algochat.rs equals current source plus exactly rust-replay-regression.rs; no runtime implementation changes.",
+    "swift_linux": {
+      "reported_tests": 369,
+      "framework_reported_pass": true,
+      "localnet_early_returns": 21,
+      "exported_source_pq_tests": 3,
+      "scope": "Swift6.3.3 Linux compile, non-network source tests, source consumer; PQ operation correctly reports unsupported. No Linux ML-KEM operation pass or Linux LocalNet pass."
+    },
+    "go_declared_minimum_qualification": {
+      "version": "1.25.0",
+      "receipt": "ts-go/qualification-go125-network/receipt.json",
+      "all_commands_exit_zero": true,
+      "scope": "Unchanged network-permitted retry supersedes prior DNS-only block; module archive and independent consumer pass."
+    },
+    "falcon_localnet": {
+      "checks": 7,
+      "all_pass": true,
+      "scope": "TS high-level Falcon sender transaction, confirmation, both sender/recipient decrypt and indexer recovery on local sandbox. Earlier harness local-sandbox predicate error is retained and excluded. Source falconChatAccount installs SDK Falcon signer and sendMessage calls that signer. SignatureFields names alone are not proof of populated fields."
+    }
+  },
+  "confirmed_high_impact": [
+    {
+      "id": "RUST-CONCURRENT-REPLAY",
+      "observation": "Both concurrent receives returned plaintext in 100 of 100 iterations; the desired replay regression test fails. Sequential replay test passing does not cover the race.",
+      "source": "rs/src/algochat.rs:430",
+      "mechanism": "Counter validation happens under read lock, decryption occurs after releasing it, and successful receipt is recorded under write lock without revalidation.",
+      "evidence": [
+        "py-rs/rust-replay-regression.rs",
+        "py-rs/rust-concurrent-replay.log"
+      ]
+    },
+    {
+      "id": "SWIFT-SAME-TX-REOPEN",
+      "observation": "Public MessageIndexer fetch returns one PSK message initially, zero for identical transaction on repeated fetch, and zero after creating new PSKManager over persisted storage.",
+      "accepted_criterion": "swift/hi/psk.md PSK-4.c",
+      "source": [
+        "swift/Sources/AlgoChat/Blockchain/MessageIndexer.swift:450",
+        "swift/Sources/AlgoChat/PSK/PSKManager.swift:131"
+      ],
+      "evidence": [
+        "swift-kt/swift-boundaries.json",
+        "swift-kt/swift-boundary-consumer/Sources/BoundaryChecks/main.swift"
+      ]
+    },
+    {
+      "id": "RUST-DECLARED-MINIMUM",
+      "observation": "The current dependency lock resolution fails rustc1.85.0 because ctutils0.4.3 requires1.87; source manifest declares1.85. This is specific to the tested resolution, not proof that no compatible older dependency resolution exists.",
+      "evidence": [
+        "py-rs/rust-minimum-test.log",
+        "py-rs/rust-msrv-dependency.log"
+      ]
+    },
+    {
+      "id": "TS-DOCS-AND-PACKAGE-EXPORTS",
+      "observation": "README sendReply supplies5 arguments including an object but actual public signature requires6-7 positional args. FileKeyStorage/FileSendQueueStorage are absent from root exports, and the suggested Node subpath is not exported.",
+      "evidence": [
+        "ts-go/ts-readme-reply-typecheck.log",
+        "ts-go/ts-storage-package-exports.json"
+      ],
+      "source": [
+        "ts/README.md:143",
+        "ts/src/services/algorand.service.ts:225",
+        "ts/package.json",
+        "ts/src/index.ts:73"
+      ]
+    }
+  ],
+  "other_confirmed_observations": [
+    "Swift/Kotlin and Rust send counters wrap at UInt32 maximum; Python and TS exceed representable wire counters. Key-input reuse or send failure is demonstrated; nonce reuse and confidentiality compromise are not demonstrated.",
+    "Python/Rust/Kotlin accept standard and PSK frames missing the payload authentication tag; this is parser-contract drift, not an authenticated decryption bypass.",
+    "All six lanes show inbound size ceiling gaps in at least tested decoders/PQ helpers; authenticated4097-byte decrypt receipts demonstrate successful local decrypt paths, not that such a note can be accepted by a chain enforcing4096.",
+    "Kotlin low-level receive accepts distant future counters and wraps MAX to0; high-level unauthenticated forgery is not claimed.",
+    "Swift plaintext PSK/queue contents are confirmed; file0644 within0700 parent directory does not alone establish broad unauthorized readability.",
+    "TS Node18.0.0 and20.20.2 have28 passing packed-runtime smoke checks using existing dependencies; this is not a fresh full install qualification.",
+    "Python520 unique cases pass on3.10/3.11/3.12/3.13/3.14 with current peer fixtures; wheel consumers are exercised on3.10/3.11/3.13. Each runtime repeats the same case set, not new independent cases.",
+    "Go1.25.0 race and clean package archive/consumer qualification pass; unchanged network-permitted retry supersedes initial DNS failure."
+  ],
+  "wording_and_scope_limits": [
+    "The mesh contains180 message envelopes plus12 handshakes. The summary notes180 excludes handshakes.",
+    "Do not add source suite counts, generated assertions, and runtime repeats into one independent-trial confidence estimate.",
+    "No random sampling model or independent Bernoulli trial population exists to justify a blanket95% product/security/parity probability.",
+    "Use high confidence in specific reproduced defects and named passing paths; keep remaining feature/platform/runtime/registry assurance unproven.",
+    "Hi mapping tested_scope means scoped evidence, not accepted/completed criteria. Preserve the accepted84 intent sentences.",
+    "Swift Linux369 reported tests include21 network early returns; macOS372 includes those LocalNet paths. Three Linux PQ tests cover constants/KDF/ACPQ, while six macOS PQ tests include ML-KEM runtime paths."
+  ],
+  "mistaken_tests_found": [],
+  "report_review": {
+    "reviewed_utc": "2026-10-18T14:45:21.175329+00:00",
+    "report_sha256_at_review": "9dc76b2f278e347778acdd9933a6ee8669e514ffdbc425a38802da7710496823",
+    "hi_map_sha256_at_review": "294eea6edc44aa39f83078f94d6493b5ced6d6f1b3ec2a83c2c89388334b3645",
+    "criteria": {
+      "total": 84,
+      "root": 14,
+      "ts": 34,
+      "swift": 36,
+      "unique_root_id_pairs": 84,
+      "accepted_sentence_mismatches": 0,
+      "completion_percentage_claimed": false
+    },
+    "precision_improvement": "Resolved:1807 explicitly counts90 Go top-level tests and excludes7 nested subtests.",
+    "shared_pq_addendum": "Retained pq_inbound_ceiling.py, request and raw replies independently checked. Request has0205 prefix and4097 bytes; ChaCha20Poly1305 open against mesh test-session key authenticates header and returns4003 expected bytes. All6 raw helper replies have correct sender/recipient plaintext and match summary hashes. This is a synthetic input rejection test, not an on-chain note or production nonce test.",
+    "other_assessment": "Verdict and95percent limits are appropriately bounded. No numeric confidence or intent-completion percentage is claimed. Aggregate counts1807 and84 recompute exactly under stated top-level counting.",
+    "status": "complete; all identified report/map corrections resolved; parent creates final manifest/archive after this write",
+    "resolved_corrections": [
+      {
+        "finding": "Raw encoders do not all enforce4096",
+        "correction": "Replace Outgoing encoders enforce the tested budget with Tested outgoing encryption/writer helpers reject max+1.",
+        "basis": "TS encodeEnvelope, Kotlin ChatEnvelope.encode, Swift ChatEnvelope.encode directly serialize arbitrary ciphertext."
+      },
+      {
+        "finding": "Swift KEY-6 map still says Linux paths not exercised",
+        "correction": "Acknowledge password-file tests exercised on macOS and Linux; keep remaining platform and default-fallback limits."
+      },
+      {
+        "finding": "Consolidated artifact refs retain worker-relative paths",
+        "correction": "Normalize evidence artifact refs or state per-root resolution bases/source_repo_root so swift-boundaries.json and ../mesh-summary.json resolve correctly."
+      },
+      {
+        "finding": "Node18 stock qualification failure missing from report",
+        "correction": "Record standard qualifier failure due npm8 scoped-tarball filename mismatch and distinguish successful manual clean Node18 consumer from standard Node26 receipt."
+      }
+    ],
+    "reference_resolution": "Explicit artifact bases/source_repo_root now permit all evidence refs to resolve except final MANIFEST.sha256, which parent intentionally creates after this review. TS SEND-5 natural-language placeholder replaced with exact mesh/localnet summary paths.",
+    "remaining_corrections": [],
+    "completion_json_read": {
+      "completed_utc": "2026-10-18T14:45:57.192750+00:00",
+      "sha": "237a97488ac663fdf326e07badc383b4452db4ad",
+      "tracked_and_untracked_status_clean": true,
+      "intent_sentences_and_ids_unchanged": 84,
+      "verdict": "full_parity_fails_reproduced_gaps",
+      "statistical_95_percent_correctness_claim": false,
+      "scope": "Local validation and temporary evidence only; local git note records actual audit, verdict review. No source commits, remote notes push, PR, tag, package publication or deployment."
+    }
+  },
+  "selection_note": "Historical review of the original local bundle. Artifact names in quoted review prose are historical identifiers, not promised files. The selected HI map uses its own typed portable references. Original reviewer bytes are identified in omitted-artifacts.json; this is not an independent review of subsequent PR edits."
+}

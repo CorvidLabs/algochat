@@ -1,0 +1,40 @@
+{
+  "runtime": "v18.0.0",
+  "checks": [
+    {
+      "name": "AlgorandService",
+      "unreadableSkipped": true,
+      "bothSidesRecovered": true,
+      "order": [
+        "earlier-received",
+        "later-sent"
+      ],
+      "ledgerIntraRoundOrderCorrect": true
+    },
+    {
+      "name": "exported MessageIndexer",
+      "unreadableSkipped": true,
+      "bothSidesRecovered": true,
+      "order": [
+        "later-sent",
+        "earlier-received"
+      ],
+      "ledgerIntraRoundOrderCorrect": false
+    },
+    {
+      "name": "abstract MessageIndexer",
+      "unreadableSkipped": true,
+      "bothSidesRecovered": true,
+      "order": [
+        "later-sent",
+        "earlier-received"
+      ],
+      "ledgerIntraRoundOrderCorrect": false
+    }
+  ],
+  "conversationEqualTimestampOrder": [
+    "later",
+    "earlier"
+  ],
+  "scope": "Actual fetch/decrypt against stub indexer transactions with valid encrypted standard notes; all transactions share one round and timestamp, distinct intra-round offsets. No network request or local persistent state used."
+}

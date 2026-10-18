@@ -2,6 +2,8 @@
 
 Reviewed on **2026-10-18**, starting from source commit `b4cbfaf0c40156c5c3bffcc6b14cb3fd22e6153f`. This pass corrects documentation and descriptions of existing APIs. It does not implement the behavior gaps below, change the wire format, or establish independent security review.
 
+A later [local parity verification dated 2026-10-18](verification/2026-10-18-parity.md) records native suites, package consumers, cross-language and LocalNet checks at candidate `237a974`, all 84 intent evidence dispositions, and the reproduced gaps that remain open.
+
 ## What the checks establish
 
 Three parallel source audits covered the six language implementations, READMEs, canonical specs and companions, root protocol/security/implementation documents, HLDs, package manifests, workflows, and Human Intent. The source/export inventories are checked separately for each language; the root configuration alone does not measure them because its configured `src/` directory does not contain these libraries.

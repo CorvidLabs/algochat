@@ -1,0 +1,290 @@
+{
+  "candidate": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "kind": "hash_catalog",
+  "original_full_local_bundle_available_in_repository": false,
+  "scope": "Selected original local log/receipt/package identities only. No file link or availability promise is implied by an id. Generated wallet identity-secret files and session keys were intentionally not included.",
+  "entries": [
+    {
+      "id": "MANIFEST.sha256",
+      "bytes": 42226,
+      "sha256": "26b96679c0a2c1489d3976aa5f41b210ea384ee3e0c8231fb1f1f7e35eb7184c",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "REPORT.md",
+      "bytes": 14425,
+      "sha256": "9dc76b2f278e347778acdd9933a6ee8669e514ffdbc425a38802da7710496823",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-py/commands.json",
+      "bytes": 12899,
+      "sha256": "f7f93f9e7e1899fa464e91f2c656a9c292fa59e4c9a23820bdc76dca221572e4",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-py/py_algochat-0.2.0-py3-none-any.whl",
+      "bytes": 39699,
+      "sha256": "34ddfc726c3e3d4929a8fe5a1716b7f38ee63e815d4a5a5d4e528af34b8c9859",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-py/py_algochat-0.2.0.tar.gz",
+      "bytes": 99374,
+      "sha256": "706bc35fef19a0ba2f1e91c4fd3ce890b0b2556549a1e9c2e7e4a5178ed81f5b",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-py/receipt.json",
+      "bytes": 4426,
+      "sha256": "b68803692fefd46d1847490694f08276b9ca822aba96c547cde7852df85547cd",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-rs/Cargo.lock",
+      "bytes": 25554,
+      "sha256": "c22296f6ab6b0061341d866faf2bae3c1f2ad145c15957b74ebf5608b67e204e",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-rs/algochat-0.3.0.crate",
+      "bytes": 115001,
+      "sha256": "70b63f2b5746becabce22749f7dd252993ee6a5b201f7ca30b8a97fb3ee2616e",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-rs/commands.json",
+      "bytes": 21293,
+      "sha256": "1ad8f18f8e627e55da7061ae06a17dc7d54c701b3bf42b21cbf4840931b5826f",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/qualification-rs/receipt.json",
+      "bytes": 2477,
+      "sha256": "00e499127aa3a16a56a95d98b26cf3f49a168ccb4a881944ae2cee8a8a91b82d",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/rust-concurrent-replay.log",
+      "bytes": 3648,
+      "sha256": "35a781fa662d3aecc3cd9b2cf66767267f15bf40155b2bb6dbc237da9a4f5859",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/rust-minimum-test.log",
+      "bytes": 301,
+      "sha256": "e47d0a8cb85700acb2aaf96c6d05cf48df2e0e43521148748dd815c2ef1f30cc",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "py-rs/summary.json",
+      "bytes": 6571,
+      "sha256": "6a5c19cc95d179cf9a27bd000d8a46ec4e629cf791a09d73d4f42465d070ad42",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "reviewer.json",
+      "bytes": 15833,
+      "sha256": "2bdc7a60e978e1021ec95738f82dbeb2c0fd4b30717f4721449b7400f2a0f42c",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-kt/commands.json",
+      "bytes": 3760,
+      "sha256": "c08ca222cda6c7d34f1de33f830fe04dae5dd74e963b416448396ac02c3c75d3",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-kt/kt-algochat-0.2.0-javadoc.jar",
+      "bytes": 261,
+      "sha256": "9218eef94289c1ba26c3108ab6409520d8f2b4b08ab7ad36efb1ac6b56aaa97a",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-kt/kt-algochat-0.2.0-sources.jar",
+      "bytes": 38397,
+      "sha256": "31cd034a5451d37f84f3e941fbca719b386a5f95f9ac4dfeb51cffdb6e1b2b60",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-kt/kt-algochat-0.2.0.jar",
+      "bytes": 248800,
+      "sha256": "0e61a9cd4eeb3fa4e9f27c21a3689c04f95a8a473261c17ab72aea19025aece0",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-kt/pom-default.xml",
+      "bytes": 2297,
+      "sha256": "0c71ec7e19e415fc56c275018de455d362303e14c172df1cc9083b07ea973dcb",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-kt/receipt.json",
+      "bytes": 3368,
+      "sha256": "004372d18505bccd14c3978d944b895bef44b572c001bed56c0bedd4509d6c2f",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-swift/commands.json",
+      "bytes": 162454,
+      "sha256": "a1ceee46eb8c10cc86f1535d9b43d1d20f209505dc2665d59e50837422357166",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-swift/distribution-limit.txt",
+      "bytes": 123,
+      "sha256": "097b6ddc53d180fd5b66a7615b5fbfa5ee59512e46e2af7810bbe5b5735cb473",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-swift/receipt.json",
+      "bytes": 3022,
+      "sha256": "8f9017efdddcb667f50588305029bf89c36398ad5506f3f6d820584fb66e2c8e",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/qualification-swift/swift-source.tar",
+      "bytes": 757760,
+      "sha256": "d368ca3d7590fd80616c9e33a5216b616b079f8fbd70001a2661f2d5795ca5ca",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-kt/summary.json",
+      "bytes": 7299,
+      "sha256": "78be3b917d54dc1c0a3889e4c3ed5be1337177534f1855fe1b81bf9a1f9e5974",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-linux/container.log",
+      "bytes": 165367,
+      "sha256": "57e15df9dd3788c65fb5e9ab04debdca80199a8f0c561fc3eab59a95041ecf97",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-linux/qualification-swift-linux/commands.json",
+      "bytes": 168541,
+      "sha256": "868159d9d6ee13de02ee2150b015ce21158892e6a7351169e408340781793965",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-linux/qualification-swift-linux/distribution-limit.txt",
+      "bytes": 123,
+      "sha256": "097b6ddc53d180fd5b66a7615b5fbfa5ee59512e46e2af7810bbe5b5735cb473",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-linux/qualification-swift-linux/receipt.json",
+      "bytes": 2985,
+      "sha256": "13beca1dd7e1fff32eb99ef051b2006c5f9d826882a81276e6f70c4d05f9582d",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "swift-linux/qualification-swift-linux/swift-linux-source.tar",
+      "bytes": 757760,
+      "sha256": "d368ca3d7590fd80616c9e33a5216b616b079f8fbd70001a2661f2d5795ca5ca",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go/commands.json",
+      "bytes": 2736,
+      "sha256": "802faed5482b8ea7370e494133d84ac2b5f8bb4fa8201232c4f70df263ab6781",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go/distribution-limit.txt",
+      "bytes": 129,
+      "sha256": "d4548b478784e2d1ff7739c79dd7bbc7840a32521f5c1654dc22f33550326c32",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go/go-source.tar",
+      "bytes": 368640,
+      "sha256": "afb9e5edae6c38ff316e749d5150b62c1e1b3d03d315678d1016f8d64487f3c9",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go/receipt.json",
+      "bytes": 3049,
+      "sha256": "bd9e7dfa8d1e27dabb4b68ede8ae251915eb08028369ec51a7baddbfac1bf333",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go125-network/commands.json",
+      "bytes": 2791,
+      "sha256": "2613454e9cabbac094e13535214d7f9b5dff8d8b08eb7740e5c3dda538aa5727",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go125-network/distribution-limit.txt",
+      "bytes": 129,
+      "sha256": "d4548b478784e2d1ff7739c79dd7bbc7840a32521f5c1654dc22f33550326c32",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go125-network/go-source.tar",
+      "bytes": 368640,
+      "sha256": "afb9e5edae6c38ff316e749d5150b62c1e1b3d03d315678d1016f8d64487f3c9",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-go125-network/receipt.json",
+      "bytes": 3060,
+      "sha256": "4dd81605df8a177e34bce7485eff99f0f8736705ab87e974fd35039a3df1c36d",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-ts-network/commands.json",
+      "bytes": 88373,
+      "sha256": "198c21216755cc11cfdb066b4d8bf1db04f84d7b5aadedb278cd278d2a7298ef",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-ts-network/corvidlabs-ts-algochat-0.9.0.tgz",
+      "bytes": 210382,
+      "sha256": "ba64a1c1dd476bc87bf12b0f5d6e5375c49c8dbd5b408eb410b7374c1b29791c",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/qualification-ts-network/receipt.json",
+      "bytes": 3443,
+      "sha256": "d12ecf628d46816b6721ed125cdd5e43b206d662c0ad330b7b2e5551ec190216",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/summary.json",
+      "bytes": 10072,
+      "sha256": "c5804bdfece970d4a9c6f0490907d8c5d66f1ec9b0261125afbb50b44f589530",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/ts-commands.json",
+      "bytes": 1253,
+      "sha256": "3a2078942c4d0481f1324774f77c311fbe5c279f2aa2e5f9b5b81d7dd20c67f4",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/ts-conformance.log",
+      "bytes": 29,
+      "sha256": "2f3e1387d91412e27502e8b08216a38ffa55fea4d3fec97b4e1a4031e4f192a0",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/ts-qualification-node18-npm819.log",
+      "bytes": 82644,
+      "sha256": "fea2a1cbfab71b8524e18b04c86fef3b18d9914bb66cbb94545a2da6d5f977d9",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/ts-qualification-node18.log",
+      "bytes": 82615,
+      "sha256": "e2ff490f4f644ed8daaa671d9796840c4345d513244f404648747c59ce2eee82",
+      "bytes_in_repository": false
+    },
+    {
+      "id": "ts-go/ts-source-tests.log",
+      "bytes": 23865,
+      "sha256": "140e6b3c876e0f4cee954bd816587002243a90469c87a32ed3e5f952e6728933",
+      "bytes_in_repository": false
+    }
+  ]
+}

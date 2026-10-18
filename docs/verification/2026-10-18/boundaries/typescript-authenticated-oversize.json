@@ -1,0 +1,15 @@
+{
+  "standard": {
+    "bytes": 4097,
+    "decoded": true,
+    "plaintextBytes": 3955,
+    "rejected": false
+  },
+  "psk": {
+    "bytes": 4097,
+    "decoded": true,
+    "plaintextBytes": 3951,
+    "rejected": false
+  },
+  "scope": "Authenticated envelopes produced by independent AEAD calls beyond writers limits; standard and PSK are current version2 full-header AAD. No oversized note submitted to chain."
+}
