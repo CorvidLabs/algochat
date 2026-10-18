@@ -1,13 +1,18 @@
 # ts-algochat
 
-[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/ts-algochat/ci.yml?label=CI&branch=main)](https://github.com/CorvidLabs/ts-algochat/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@corvidlabs/ts-algochat)](https://www.npmjs.com/package/@corvidlabs/ts-algochat)
-[![License](https://img.shields.io/github/license/CorvidLabs/ts-algochat)](https://github.com/CorvidLabs/ts-algochat/blob/main/LICENSE)
-[![Version](https://img.shields.io/github/v/release/CorvidLabs/ts-algochat?display_name=tag)](https://github.com/CorvidLabs/ts-algochat/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/ts.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/ts.yml)
+[![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
+[![Source version](https://img.shields.io/badge/source-0.9.0-blue)](package.json)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
 TypeScript implementation of the AlgoChat protocol for encrypted messaging on Algorand.
+
+## Version and requirements
+
+- Package: `@corvidlabs/ts-algochat` **0.9.0**, implementing protocol **1.3.0**.
+- [Declared runtime](package.json): Node.js **18.0.0+**. Development uses TypeScript **`^5.7.0`**, resolved by the Bun lockfile.
+- Qualification is configured for **Node.js 22** and **Bun 1.3.6**; Node.js 18 remains unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Features
 
@@ -47,15 +52,17 @@ TypeScript implementation of the AlgoChat protocol for encrypted messaging on Al
 
 ## Installation
 
+The package's configured registry is GitHub Packages. Set `@corvidlabs:registry=https://npm.pkg.github.com` in your npm configuration and authenticate with a token that has `read:packages`. The source version above does not by itself confirm publication; see [the release record](../docs/RELEASE.md#package-versions-and-distribution).
+
 ```bash
 # npm
-npm install @corvidlabs/ts-algochat
+npm install @corvidlabs/ts-algochat@0.9.0
 
 # bun
-bun add @corvidlabs/ts-algochat
+bun add @corvidlabs/ts-algochat@0.9.0
 
 # pnpm
-pnpm add @corvidlabs/ts-algochat
+pnpm add @corvidlabs/ts-algochat@0.9.0
 ```
 
 ## Quick Start

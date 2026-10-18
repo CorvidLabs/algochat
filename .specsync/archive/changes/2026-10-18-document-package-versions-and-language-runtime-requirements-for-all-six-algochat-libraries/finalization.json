@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "document-package-versions-and-language-runtime-requirements-for-all-six-algochat-libraries",
+  "implementation_commit": "d0d9fb80a22fd6c158dabf658ecdd82aa1c04645",
+  "implementation_tree": "7104a814908613f59ac889230aeb08f38b88a48a",
+  "contract_digest": "87db07dd1bcf7bdee5904914c4b6f8530da368e88ccf1530ff3f12aca467e787",
+  "workspace_digest": "177e399fc5535e89212dec60032aa143ea5169f6f000fe72294a45205c746b7d",
+  "closing_digest": "3f85eeb2a3c25c33f7c2e2d99e97268757b08dcb3642d606f15b70e0c3f9bd05",
+  "review_digest": "edede93a5bc1e1b8d3c47428c56e2445e8b33751c66a73536a9d78fa83b1feef",
+  "finalization_digest": "e7d17f612b3613e04fd77cf2d82f0a53c0a70534831a65864a281293bb7a3e2d",
+  "timestamp": 1792330601
+}

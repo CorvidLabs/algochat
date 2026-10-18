@@ -1,0 +1,52 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "human:leif",
+      "timestamp": 1792330382,
+      "digest": "87db07dd1bcf7bdee5904914c4b6f8530da368e88ccf1530ff3f12aca467e787",
+      "note": "User explicitly approved the prepared documentation scope and edits and requested a PR: Approve make a pr.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "document-package-versions-and-language-runtime-requirements-for-all-six-algochat-libraries",
+        "title": "Document package versions and language runtime requirements for all six AlgoChat libraries",
+        "description": "Document package versions and language runtime requirements for all six AlgoChat libraries",
+        "kind": "documentation",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          "README.md",
+          "docs/HLD.md",
+          "docs/RELEASE.md",
+          "go/README.md",
+          "kt/README.md",
+          "py/README.md",
+          "rs/README.md",
+          "swift/README.md",
+          "ts/README.md"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "Documentation correction only: expose the existing package identities and versions from REQ-release-5 and the declared toolchain constraints, distinguishing configured qualification environments from untested minima; no implementation, manifest, protocol, CI, or release changes.",
+        "acceptance_criteria": [
+          "The root README, all six language READMEs, and release/HLD docs clearly state the current package or module versions and language/runtime requirements from repository manifests; protocol 1.3.0, envelope versions, and library releases are distinguished; configured CI toolchains and unqualified minimum-runtime gaps are labeled; manifests, code, publishing, and protocol behavior do not change."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792330601,
+      "digest": "3f85eeb2a3c25c33f7c2e2d99e97268757b08dcb3642d606f15b70e0c3f9bd05",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

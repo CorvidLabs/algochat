@@ -2,11 +2,15 @@
 
 The Swift package is the root of [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). The package name is `algochat`. The product is `AlgoChat`. CI is the monorepo Swift workflow. The archived swift-algochat repository remains at tag `0.4.0` for apps that have not switched the URL.
 
-> **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
-
 > **Security Notice**: This library has not been independently audited. While it uses well-established cryptographic primitives from [swift-crypto](https://github.com/apple/swift-crypto), use in production is at your own risk.
 
 Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 and async/await.
+
+## Version and requirements
+
+- Package: `algochat`, product `AlgoChat`, **1.3.0** via repository tag **`v1.3.0`**, implementing protocol **1.3.0**. The archived repository's **0.4.0** tag belongs to the previous distribution.
+- [Root manifest](../Package.swift): Swift tools **6.0+**; iOS **15+**, macOS **12+**, tvOS **15+**, watchOS **8+**, and visionOS **1+**.
+- Hybrid ML-KEM methods require Apple OS **26** APIs. Qualification covers **macOS 26** and a separate Linux build without ML-KEM; exact runner compiler versions are recorded in receipts. Older platform minima are unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Features
 
@@ -32,7 +36,7 @@ The package manifest is at the root of [CorvidLabs/algochat](https://github.com/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/CorvidLabs/algochat.git", branch: "main")
+    .package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.3.0")
 ]
 ```
 
@@ -243,7 +247,7 @@ algokit localnet stop
 
 - Swift 6.0+
 - iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+
-- Linux is not covered by CI for the hybrid ML-KEM session. That session needs macOS 26.
+- Hybrid ML-KEM methods require iOS 26 / macOS 26 / tvOS 26 / watchOS 26 / visionOS 26 / Mac Catalyst 26. Qualification covers macOS 26; the Linux lane builds without those methods.
 - [AlgoKit CLI](https://github.com/algorandfoundation/algokit-cli) (optional, for localnet testing)
 
 ## Security

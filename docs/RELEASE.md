@@ -3,7 +3,7 @@
 A green **Release qualification / complete** check means the candidate passed the
 seven hosted lanes below. It does not authorize a release, establish historical
 provenance, or prove registry permissions. Protocol **1.3.0** and each library's
-package version are distinct. This PR does not change either.
+package version are distinct. The [package version table](#package-versions-and-distribution) records the release set; the language/runtime requirements are below.
 
 ## Candidate and evidence
 
@@ -39,6 +39,23 @@ python3 scripts/release/qualify.py ts /tmp/algochat-ts-candidate
 It runs tests, builds and installs dependencies for the selected lane; obtain
 local dependency/toolchain authorization first. Local receipts remain `local`
 and cannot satisfy the hosted all-six aggregator. No wallet or LocalNet is used.
+
+## Language and runtime versions
+
+These are the versions declared in the current source tree and the toolchains configured by the root qualification workflows. A configured lane is not evidence that a particular candidate passed; use that candidate's receipts for exact compiler versions and results.
+
+| Library | Declared language/runtime | Build tools and configured qualification environment |
+| --- | --- | --- |
+| TypeScript | [Node.js `>=18.0.0`; development compiler TypeScript `^5.7.0`](../ts/package.json) | [Bun 1.3.6 and Node.js 22](../.github/workflows/ts.yml); the frozen lockfile selects the compiler |
+| Swift | [Swift tools 6.0+](../Package.swift) | [macOS runner compiler](../.github/workflows/swift.yml) and [Linux runner compiler](../.github/workflows/release-qualification.yml); exact versions recorded in receipts |
+| Python | [Python `>=3.10`](../py/pyproject.toml) | [Python 3.12](../.github/workflows/py.yml) |
+| Rust | [Rust `>=1.85`, edition 2021](../rs/Cargo.toml) | [Runner-provided Rust compiler](../.github/workflows/rs.yml); exact version recorded in receipts |
+| Kotlin | [Kotlin JVM/serialization plugins 2.1.20; JDK 17 toolchain](../kt/build.gradle.kts) | [Gradle wrapper 8.11](../kt/gradle/wrapper/gradle-wrapper.properties) builds/tests the library; [JDK 17 and Gradle 8.14](../.github/workflows/kt.yml) for the external consumer |
+| Go | [Go `1.25.0` minimum](../go/go.mod) | [Go 1.25](../.github/workflows/go.yml) |
+
+Swift's manifest declares iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, and visionOS 1+. The [hybrid ML-KEM methods](../swift/Sources/AlgoChat/Crypto/PQSession.swift) require version 26 of those Apple platforms (also Mac Catalyst 26); their qualification lane covers macOS 26. Linux excludes those methods. Older Apple minima and other Apple platforms are not established by that macOS run.
+
+Node.js 18, Python 3.10, Rust 1.85, older Apple platforms, and Android remain unqualified minimum-runtime gaps. Kotlin's pinned compiler and Gradle versions describe the build, not a promise of compatibility with every Kotlin compiler or Android runtime. The qualification scripts themselves require Python 3.11+, independently of the Python library's 3.10 declaration.
 
 ## Qualification coverage and limits
 
@@ -95,7 +112,7 @@ Recheck live evidence; this observation does not establish the owner's final ran
 An agent may record its own actual verification on its own candidate. It must not
 claim another author's historical actions or fabricate human implementation acceptance.
 
-## Distribution decisions
+## Package versions and distribution
 
 `CorvidLabs/algochat` is the source. Archived language repositories stay archived. These identities are the release set. Creating the tags and publishing still need a separate authorization.
 

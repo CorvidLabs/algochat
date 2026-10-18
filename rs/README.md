@@ -1,14 +1,18 @@
 # rs-algochat
 
-[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/rs-algochat/ci.yml?label=CI&branch=main)](https://github.com/CorvidLabs/rs-algochat/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/algochat)](https://crates.io/crates/algochat)
-[![License](https://img.shields.io/github/license/CorvidLabs/rs-algochat)](https://github.com/CorvidLabs/rs-algochat/blob/main/LICENSE)
-[![Version](https://img.shields.io/github/v/release/CorvidLabs/rs-algochat?display_name=tag)](https://github.com/CorvidLabs/rs-algochat/releases)
-![spec coverage](https://img.shields.io/endpoint?url=https://corvidlabs.github.io/rs-algochat/badges/coverage.json)
+[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/rs.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/rs.yml)
+[![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
+[![Source version](https://img.shields.io/badge/source-0.3.0-blue)](Cargo.toml)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
 Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand.
+
+## Version and requirements
+
+- Crate: `algochat` **0.3.0**, implementing protocol **1.3.0**.
+- [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
+- Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. The source version does not establish crates.io availability. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Installation
 
@@ -16,7 +20,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-algochat = "0.3"
+algochat = "0.3.0"
 ```
 
 ## Usage

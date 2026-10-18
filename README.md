@@ -55,16 +55,22 @@ sequenceDiagram
 
 Fenced `mermaid` blocks render on GitHub. The Pages site renders the same fences with Mermaid 11. [_includes/head-custom.html](_includes/head-custom.html) turns a kramdown `language-mermaid` block into a diagram.
 
-This repository is the source for the protocol and all six libraries. Archived language repositories stay archived.
+## Versions and requirements
 
-| Library | Package | Version for this release |
-| --- | --- | --- |
-| Protocol and Swift | tag `v1.3.0` on `CorvidLabs/algochat` | `1.3.0` |
-| TypeScript | `@corvidlabs/ts-algochat` | `0.9.0` |
-| Python | `py-algochat` | `0.2.0` |
-| Rust | `algochat` | `0.3.0` |
-| Kotlin | `com.corvidlabs:kt-algochat` | `0.2.0` |
-| Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.2.0` |
+This repository is the source for the protocol and all six libraries. Archived language repositories stay archived. Protocol **1.3.0** is the specification version; each library has its own package version. The table records the versions and requirements declared by this source tree, not registry publication status.
+
+| Library | Package | Package version / tag | Declared language and runtime |
+| --- | --- | --- | --- |
+| Swift | package `algochat`, product `AlgoChat` | `1.3.0` / `v1.3.0` | [Swift tools 6.0+](Package.swift) |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.9.0` | [Node.js 18.0.0+; TypeScript `^5.7.0` for development](ts/package.json) |
+| Python | `py-algochat` | `0.2.0` | [Python 3.10+](py/pyproject.toml) |
+| Rust | `algochat` | `0.3.0` | [Rust 1.85+; edition 2021](rs/Cargo.toml) |
+| Kotlin | `com.corvidlabs:kt-algochat` | `0.2.0` | [Kotlin 2.1.20; JDK 17 toolchain](kt/build.gradle.kts) |
+| Go | `github.com/CorvidLabs/algochat/go` | `0.2.0` / `go/v0.2.0` | [Go 1.25.0+](go/go.mod) |
+
+Swift declares iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, and visionOS 1+. Its hybrid ML-KEM methods require Apple OS 26 APIs; release qualification covers macOS 26, and Linux builds without those methods.
+
+Declared requirements and configured CI versions differ. Qualification uses Node.js 22 with Bun 1.3.6, Python 3.12, JDK 17, and Go 1.25; Rust and Swift record the runner's compiler version. The Kotlin wrapper uses Gradle 8.11, while its external consumer uses Gradle 8.14. See [the complete toolchain matrix and unqualified minimum versions](docs/RELEASE.md#language-and-runtime-versions).
 
 The Swift package name is `algochat`. The library product is `AlgoChat`.
 
