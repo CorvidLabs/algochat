@@ -21,7 +21,7 @@ This is the public specification and the language implementations. It is not a c
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
 
-Group mailbox notes `0x06` and `0x07` are implemented and are not in tag v1.3.0. The LocalNet record is PROTOCOL.md section 5.8.4: one mailbox, a group of three, an added member, a removal, and one message that every library opened. The removed member's previous key did not.
+Group mailbox notes `0x06` and `0x07` are implemented and are not in tag v1.3.0. PROTOCOL.md section 5.8.4 records two LocalNet runs. One creates a group of three, adds a member, removes one, and posts one message. The other puts all six libraries in one group, and each library posts its own line. Every library opened every line.
 
 ```mermaid
 flowchart LR

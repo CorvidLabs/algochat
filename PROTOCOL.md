@@ -279,6 +279,8 @@ On 2026-10-18 the driver `ts/scripts/group-matrix-localnet.ts` ran on LocalNet. 
 
 `vectors/group-v1.json` is the frozen membership note, message key, and message note. The session key in that file is an input, not a handshake output. Tag v1.3.0 does not include this run.
 
+A second run, `ts/scripts/group-talk-localnet.ts`, put all six libraries in one group. TypeScript created a hybrid session with each other library. That library accepted the session and opened its own `0x06` note. The mailbox was funded in round 46375. Membership notes confirmed in rounds 46376 (Go), 46377 (Rust), 46378 (Python), 46379 (Kotlin), and 46380 (Swift). Each library then posted its own `0x07` line to that mailbox: TypeScript round 46381, Go 46382, Rust 46383, Python 46384, Kotlin 46385, and Swift 46386. Every library opened every line, 36 opens, with no failures. Identifier `0x03` was not used.
+
 ## 6. Encryption
 
 ### 6.1 Message Encryption (Sender → Recipient)
