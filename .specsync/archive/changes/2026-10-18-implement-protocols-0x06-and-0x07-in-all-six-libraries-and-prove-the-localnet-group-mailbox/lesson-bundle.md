@@ -1,4 +1,4 @@
-# Lesson bundle — implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox
+# Lesson bundle: implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
