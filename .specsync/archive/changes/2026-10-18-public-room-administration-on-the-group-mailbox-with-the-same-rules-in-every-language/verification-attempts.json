@@ -162,6 +162,90 @@
       "requirement_ids": [
         "REQ-protocol-6"
       ]
+    },
+    {
+      "timestamp": 1792360216,
+      "commit": "27ffaf2fb1441e662b8021242b27ff19df558872",
+      "contract_digest": "740624a5ae04c6bcd157df0f7b2ce46456d74ca4c36c7b3c7fe96fd565bb7d36",
+      "execution_digest": "62da2f5b21b4c814347e42aa826594224a52b76cf6b098d2a2c2d524d74d29ae",
+      "workspace_digest": "5a2614b3a3b3af5f724f3327f14264a57e80db97ffeb67626cfbe7734ac7c049",
+      "acceptance_input_digest": "6e3fd9e8761f579dc7566727b5ed9adcb0cab6d7ffa496b967798b7de2b37e31",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": ".github/workflows/spec-sync.yml",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c34a87c9d8502ec5d8c2096032ab64721821ecb6020fa6fb9f7e7968192fbf39",
+            "entry_digest": "f9025c4962641ec04d063dd30a5527ef6224343967e7ffdd3fc8092df5177cb4",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "PROTOCOL.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e1ffda38f35dfdca3b16e3202f91a4f92b4d16d59ae766153f0c963b1e5a3982",
+            "entry_digest": "874c0ad56d0d7450342193225298965f6c916f0a1c68e59e28578f6faecf1bff",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "TEST-VECTORS.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ad53f5cf4d6c9f209656da5e936316d3486128a83cee272991d604a000181846",
+            "entry_digest": "42bd444945572063c079b3ba5311543d8a323c7dfa88e6d6fb73e5d2627e9a9c",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "specs/protocol/protocol.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5bac0cd799bb8d6b26578f99aef6fe1470d2b25e7e3f0271a1d893cf07da95ff",
+            "entry_digest": "c840055c11f439acfcbf3dabc353549e7d1e5a25356fdc994311f13eef920759",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "specs/protocol/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bba2b3a738ecfed8ac27dba9085cd0e0964111bfb13b7e8f1168224e5d131c62",
+            "entry_digest": "ceaaabd5a5a38f88c7401954e3226d4ffe48791c8e7a63f98daf1e35e83f6d71",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "vectors/group-admin-v1.json",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ac1eb277c5ab4f0fd15daae96f11096edc1b954e2afde037f26150be8ca85631",
+            "entry_digest": "a934e75c9d20d1da3b55c3f3adf36181569d9f289545b1c16bfaadce7e1c70d9",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-6"
+      ]
     }
   ]
 }

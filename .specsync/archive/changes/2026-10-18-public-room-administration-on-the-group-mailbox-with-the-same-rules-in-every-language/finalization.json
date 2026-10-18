@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language",
+  "implementation_commit": "27ffaf2fb1441e662b8021242b27ff19df558872",
+  "implementation_tree": "0df620dad13438df30ecc5740db96f19b4e80702",
+  "contract_digest": "740624a5ae04c6bcd157df0f7b2ce46456d74ca4c36c7b3c7fe96fd565bb7d36",
+  "workspace_digest": "5a2614b3a3b3af5f724f3327f14264a57e80db97ffeb67626cfbe7734ac7c049",
+  "closing_digest": "f9c6eb285e19391f74471221b17344211c4a20a9e234f8fbbe95c1816d483d52",
+  "review_digest": "6a86510a310062ff29b7bcfe83d1629ddc773e11e9eb4bdffd013dc1337b4124",
+  "finalization_digest": "f5bfc619dab8a2f15469e05de9f8e48fc899a5b1618766280c020cc16bb23527",
+  "timestamp": 1792360252
+}

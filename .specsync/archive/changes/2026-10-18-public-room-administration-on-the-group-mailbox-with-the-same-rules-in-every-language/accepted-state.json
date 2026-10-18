@@ -7,11 +7,11 @@
   "title": "Public room administration on the group mailbox, with the same rules in every language",
   "description": "Public room administration on the group mailbox, with the same rules in every language",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "d71341d1cc6e2f43fd49ddb47d902a0741048d11",
   "created_at": 1792356915,
-  "updated_at": 1792360217,
+  "updated_at": 1792360252,
   "affected_specs": [
     "protocol"
   ],
