@@ -95,16 +95,22 @@ Recheck live evidence; this observation does not establish the owner's final ran
 An agent may record its own actual verification on its own candidate. It must not
 claim another author's historical actions or fabricate human implementation acceptance.
 
-## Distribution decisions requiring owners
+## Distribution decisions
 
-| Library | Preserved identity/destination | Open decision |
-| --- | --- | --- |
-| TypeScript | `@corvidlabs/ts-algochat` 0.9.0; GitHub Packages | Confirm package ownership, repository binding and separately supplied publish permission |
-| Python | `py-algochat` 0.2.0; PyPI | Existing nested publisher names repository `py-algochat`; confirm trusted-publisher binding/environment for any authorized future flow |
-| Rust | `algochat` 0.3.0; crates.io | Confirm existing trusted-publisher repository/environment and permissions |
-| Kotlin | configured `com.corvidlabs:kt-algochat:0.2.0`; GitHub Packages at `CorvidLabs/kt-algochat` | Generated POM is checked; README advertises `com.corvidlabs:algochat:0.2.0`. Public published identity is unverified. Owner must resolve documentation/distribution mismatch; no identity migration here |
-| Go | `github.com/CorvidLabs/go-algochat` | Define how approved monorepo source reaches that existing module path and tag; local replacement is not distribution proof |
-| Swift | root `AlgoChat` product; existing archived `swift-algochat` 0.4.0 consumers remain | Decide root repository tag/package version and transition; no unarchiving or tag creation here |
+`CorvidLabs/algochat` is the source. Archived language repositories stay archived. These identities are the release set. Creating the tags and publishing still need a separate authorization.
+
+| Library | Identity | Version | Where a later publish goes |
+| --- | --- | --- | --- |
+| Protocol and Swift | package `algochat`, product `AlgoChat` | repository tag `v1.3.0` | this repository |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.9.0` | GitHub Packages for this repository |
+| Python | `py-algochat` | `0.2.0` | PyPI, trusted publisher still not configured |
+| Rust | `algochat` | `0.3.0` | crates.io, trusted publisher still not configured |
+| Kotlin | `com.corvidlabs:kt-algochat` | `0.2.0` | GitHub Packages for this repository |
+| Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.2.0` | this repository |
+
+Kotlin's README now matches the POM. The old coordinate `com.corvidlabs:algochat:0.2.0` was the documentation error. Go consumers use `go get github.com/CorvidLabs/algochat/go@v0.2.0` after tag `go/v0.2.0`. A root tag `v1.3.0` does not select that nested module. Apps still on archived `swift-algochat` `0.4.0` keep that URL. New Swift apps use this repository from `1.3.0`.
+
+Runtime gaps accepted for this release: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not the runners that passed qualification. Swift hybrid remains macOS 26 only. Linux builds the Swift library without ML-KEM.
 
 Nested legacy workflows remain historical references, not active root publication
 flows. Do not move them to root to activate publishing. Any future publication
@@ -113,12 +119,12 @@ or trusted-publisher bindings; none are configured by qualification.
 
 ## Release checklist
 
-- [ ] Owner selects baseline, package versions and candidate; no automatic alignment to protocol 1.3.0.
-- [ ] All seven exact-head qualification lanes and aggregate pass; archive logs/hashes/run URL.
-- [ ] Declared minimum-runtime/platform gaps above are resolved or explicitly accepted by owner.
-- [ ] Direct release-range Attest policy verification passes with truthful evidence.
-- [ ] Resolve Kotlin metadata mismatch, Go module mapping, Swift tag strategy and destination permissions.
-- [ ] Owner reconciles historical `hi/repo.md` REPO-2 (only 0x01/0x02 import intent). Preserve it until then.
-- [ ] Record LocalNet status honestly: author reports rounds 41641–41736, six 2366-byte handshakes, 90 messages and 540 reader invocations. This work does not independently reproduce it. Withdrawn 1278-byte layout and rounds 41059–41154 are not acceptance evidence.
+- [x] Owner selects this repository as the source. Protocol tag `v1.3.0`. Library versions stay TypeScript `0.9.0`, Python `0.2.0`, Rust `0.3.0`, Kotlin `0.2.0`, and Go tag `go/v0.2.0`.
+- [ ] All seven exact-head qualification lanes and aggregate pass on the final candidate; archive logs, hashes, and the run URL.
+- [x] Declared minimum-runtime gaps are accepted: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not qualified. Swift hybrid is macOS 26 only.
+- [x] `attest verify` from `v1.2.1` through `a7db7d2` passes. Notes for `d53ecbb`, `40dcc7b`, and `a7db7d2` are on the remote. Attest the merge commit of this change after its checks pass, before the tag.
+- [x] Kotlin coordinates, the Go module path, and the Swift package name are recorded above.
+- [x] `hi/repo.md` REPO-2 now includes protocols `0x04` and `0x05`. Identifier `0x03` stays unassigned.
+- [x] LocalNet: rounds 41739 through 41834, six 2366-byte handshakes, 90 messages, 540 reads, 0 failures, on the squashed 1.3.0 tree. Earlier rounds 41641 through 41736 are the same wire on the pre-squash commit. Rounds 41059 through 41154 are the withdrawn 1278-byte layout.
 - [ ] Obtain human implementation acceptance separately from definition approval.
-- [ ] Obtain separate authorization before tagging, releasing, publishing or deploying.
+- [ ] Obtain separate authorization before tagging, releasing, publishing, or deploying.

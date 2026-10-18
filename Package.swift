@@ -5,7 +5,7 @@ import PackageDescription
 // The Swift package lives at the repository root so Swift Package Manager can
 // fetch CorvidLabs/algochat. Sources stay in swift/.
 let package = Package(
-    name: "swift-algochat",
+    name: "algochat",
     platforms: [
         .iOS(.v15),
         .macOS(.v12),

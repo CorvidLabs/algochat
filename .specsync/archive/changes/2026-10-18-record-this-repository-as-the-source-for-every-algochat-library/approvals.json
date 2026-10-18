@@ -1,0 +1,50 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792288579,
+      "digest": "7bd2baf5d09a026a729ea5ea9b0794b5db5df351501e86f7586de48e22691f24",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "record-this-repository-as-the-source-for-every-algochat-library",
+        "title": "Record this repository as the source for every AlgoChat library",
+        "description": "Record this repository as the source for every AlgoChat library",
+        "kind": "documentation",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          "Package.swift",
+          "docs/RELEASE.md",
+          "go/go.mod",
+          "scripts/release"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "CorvidLabs/algochat is the source. Go module is github.com/CorvidLabs/algochat/go. Swift package name is algochat. Kotlin coordinate is com.corvidlabs:kt-algochat:0.2.0. Protocol tag v1.3.0 stays distinct from the library versions. No publish step is added."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "constraints": "The release lesson that preserved the old package identities is superseded for the Go module path and the Swift package name. Publication stays unconfigured, and protocol 1.3.0 stays distinct from the library versions.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "release": "4db0920ff63e1b367680de6e237ba7b5d6ddf4ada7f9ac6b6eae592b3a4bbde2"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792288638,
+      "digest": "67001c412612f82465eed1b76c4617c8839eaa01c1d905aaf897c4ca22d0f068",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

@@ -84,7 +84,7 @@ flowchart TB
     STATUS --> PAGES
 ```
 
-The implementation and client lists come from [README.md](../README.md) and [implementations.json](../implementations.json). The two lists differ slightly (see [§10](#10-open-questions-found-while-writing-this)).
+The implementation and client lists come from [README.md](../README.md) and [implementations.json](../implementations.json). Both list Go in this monorepo, `CorvidLabs/algochat`.
 
 
 ## 3. Components
@@ -622,7 +622,7 @@ These are places where the documents disagree or are silent. None changes the wi
 - **Unknown: minimum length check.** The reference deserializer accepts anything at least as long as the header (126 or 130 bytes); [TEST-VECTORS.md Test Case 2.2](../TEST-VECTORS.md#test-case-22-invalid-envelopes-standard-mode) says anything under 142 or 146 bytes (header plus tag) is invalid. Either way decryption of a tagless note fails; the question is which error is reported.
 - **Unknown: order of PSK checks.** [PROTOCOL.md §8.4](../PROTOCOL.md#84-psk-decryption) checks replay before the window; the IMPLEMENTATION.md pseudocode checks the window first. Both reject; only the reported error differs.
 - **Unknown: must a client check `sender_pubkey` against the transaction's sender address?** §10.2 names the payment signature as the binding, but no step in the decryption pseudocode compares the envelope's key with the key already known for `txn.sender`.
-- **Registry and README differ.** The README lists `go-algochat` and marks `algochat-web` archived. `implementations.json` and `status.yml` do not include Go and still test `algochat-web` as `active-dev`.
+- **Registry and README agree on Go.** `implementations.json` lists `go-algochat` in this monorepo (`CorvidLabs/algochat`, path `go`). The README names this repository as the source for all six libraries. `algochat-web` is a separate client entry in `implementations.json`, not one of those libraries.
 
 
 ## 11. Glossary

@@ -363,10 +363,7 @@ bun test
 ## Cross-Implementation Compatibility
 
 This implementation is fully compatible with:
-- [swift-algochat](https://github.com/CorvidLabs/swift-algochat) (Swift)
-- [rs-algochat](https://github.com/CorvidLabs/rs-algochat) (Rust)
-- [py-algochat](https://github.com/CorvidLabs/py-algochat) (Python)
-- [kt-algochat](https://github.com/CorvidLabs/kt-algochat) (Kotlin)
+- [AlgoChat](https://github.com/CorvidLabs/algochat) (Swift, Rust, Python, Kotlin, and Go)
 
 ## License
 

@@ -10,7 +10,7 @@ Kotlin implementation of the AlgoChat protocol for encrypted messaging on Algora
 
 ## Installation
 
-Releases are published to [GitHub Packages](https://github.com/CorvidLabs/kt-algochat/packages).
+Releases are published to GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages). The coordinate is `com.corvidlabs:kt-algochat:0.2.0`. The archived kt-algochat repository is not the source.
 GitHub Packages requires authentication even for public packages, so you must
 configure a GitHub username and a personal access token (with the `read:packages`
 scope) and reference the CorvidLabs Maven repository.
@@ -28,7 +28,7 @@ export GITHUB_TOKEN=your-personal-access-token
 repositories {
     mavenCentral()
     maven {
-        url = uri("https://maven.pkg.github.com/CorvidLabs/kt-algochat")
+        url = uri("https://maven.pkg.github.com/CorvidLabs/algochat")
         credentials {
             username = System.getenv("GITHUB_ACTOR")
             password = System.getenv("GITHUB_TOKEN")
@@ -37,7 +37,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.corvidlabs:algochat:0.2.0")
+    implementation("com.corvidlabs:kt-algochat:0.2.0")
 }
 ```
 
@@ -47,7 +47,7 @@ dependencies {
 repositories {
     mavenCentral()
     maven {
-        url = uri("https://maven.pkg.github.com/CorvidLabs/kt-algochat")
+        url = uri("https://maven.pkg.github.com/CorvidLabs/algochat")
         credentials {
             username = System.getenv("GITHUB_ACTOR")
             password = System.getenv("GITHUB_TOKEN")
@@ -56,7 +56,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.corvidlabs:algochat:0.2.0'
+    implementation 'com.corvidlabs:kt-algochat:0.2.0'
 }
 ```
 
@@ -327,10 +327,7 @@ PSK envelope wire format (130-byte header):
 ## Cross-Implementation Compatibility
 
 This implementation is fully compatible with:
-- [swift-algochat](https://github.com/CorvidLabs/swift-algochat) (Swift)
-- [ts-algochat](https://github.com/CorvidLabs/ts-algochat) (TypeScript)
-- [py-algochat](https://github.com/CorvidLabs/py-algochat) (Python)
-- [rs-algochat](https://github.com/CorvidLabs/rs-algochat) (Rust)
+- [AlgoChat](https://github.com/CorvidLabs/algochat) (TypeScript, Swift, Python, Rust, and Go)
 
 ## License
 

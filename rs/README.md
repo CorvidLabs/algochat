@@ -139,10 +139,7 @@ let text = decrypt_psk_message(&decoded, &recipient_private, &recipient_public, 
 ## Cross-Implementation Compatibility
 
 This implementation is fully compatible with:
-- [swift-algochat](https://github.com/CorvidLabs/swift-algochat) (Swift)
-- [ts-algochat](https://github.com/CorvidLabs/ts-algochat) (TypeScript)
-- [py-algochat](https://github.com/CorvidLabs/py-algochat) (Python)
-- [kt-algochat](https://github.com/CorvidLabs/kt-algochat) (Kotlin)
+- [AlgoChat](https://github.com/CorvidLabs/algochat) (TypeScript, Swift, Python, Kotlin, and Go)
 
 ## License
 

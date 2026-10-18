@@ -1,6 +1,6 @@
-# swift-algochat: High-Level Design
+# Swift package algochat: High-Level Design
 
-This document explains how swift-algochat works end to end: the package targets, the AlgoChat protocol as this
+This document explains how the Swift package `algochat` works end to end: the package targets, the AlgoChat protocol as this
 package implements it, the send, receive, key-discovery and PSK flows, local storage, how the package is built and
 released, the trust model, and the known limits. It describes `main` as of September 2026. Every statement is
 traceable to a file in this repository, or to the public protocol specification where that is named. Where the code
@@ -27,7 +27,7 @@ what the Swift code does; if the two disagree, that is a bug in one of them.
 
 ## 1. Purpose
 
-swift-algochat is the Swift implementation of AlgoChat: end-to-end encrypted messages carried in the note field of
+The Swift library lives in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat) under package name `algochat`. It is the Swift implementation of AlgoChat: end-to-end encrypted messages carried in the note field of
 Algorand payment transactions. It ships a library, `AlgoChat`, for Apple platforms and Linux, and an interactive
 terminal client, `algochat`. There is no AlgoChat server. The Algorand ledger is the transport and the permanent
 record, an Algorand indexer is the read and discovery path, and the encryption key is derived from the Algorand
@@ -104,7 +104,7 @@ against (comment in `Package.swift`).
 
 ```mermaid
 flowchart TB
-    subgraph pkg["swift-algochat package"]
+    subgraph pkg["algochat package"]
         cli["AlgoChatCLI<br/>executable algochat"]
         tests["AlgoChatTests"]
         subgraph lib["AlgoChat library"]
@@ -222,10 +222,9 @@ then still hands the plain `Account` to `AlgoChat`.
 
 ## 4. Protocol
 
-swift-algochat implements the two wire formats of protocol 1.1: standard mode (protocol byte `0x01`) and ratcheting
-PSK mode (`0x02`). Protocol revision 1.2.1 raises the note ceiling to 4,096 bytes and prices each byte past 1,024.
+The Swift package `algochat` implements protocols `0x01`, `0x02`, `0x04`, and `0x05`: standard mode (protocol byte `0x01`), ratcheting PSK mode (`0x02`), the hybrid handshake (`0x04`), and session messages (`0x05`). Identifier `0x03` is unassigned. Protocol revision 1.2.1 raises the note ceiling to 4,096 bytes and prices each byte past 1,024.
 It does not add a version byte. Protocol 1.2's optional Falcon-1024 account authorization has no code in this
-repository. This change is not protocol 1.3.
+repository. That note-ceiling revision is not itself the `0x04` and `0x05` session.
 
 ### 4.1 Identity and key derivation
 
@@ -334,7 +333,7 @@ flowchart TB
 - Nonces come from `SecRandomCopyBytes` on Apple platforms and `/dev/urandom` elsewhere. Ephemeral keys come from
   swift-crypto's `Curve25519.KeyAgreement.PrivateKey()`.
 
-### 4.4 PSK mode (protocol 1.1)
+### 4.4 PSK mode (protocol `0x02`)
 
 [`PSKRatchet.swift`](../Sources/AlgoChat/Crypto/PSKRatchet.swift),
 [`PSKState.swift`](../Sources/AlgoChat/Models/PSKState.swift),
@@ -673,7 +672,7 @@ mnemonic.
 
 ## 7. Runtime and deployment
 
-swift-algochat is a SwiftPM source package. Consumers depend on a git tag; nothing is deployed and no binaries are
+The Swift package name is `algochat` in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). Consumers depend on a git tag of that repository. The archived swift-algochat tag `0.4.0` remains only for apps that have not switched. Nothing is deployed and no binaries are
 published. The `algochat` CLI is built and run from source (`swift run algochat`).
 
 Local verification is defined in [`fledge.toml`](../fledge.toml): tasks `build`, `test-crypto`, `test-unit` and

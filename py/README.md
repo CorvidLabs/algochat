@@ -158,10 +158,7 @@ Counter state tracks send/receive counters with replay protection:
 ## Cross-Implementation Compatibility
 
 This implementation is fully compatible with:
-- [swift-algochat](https://github.com/CorvidLabs/swift-algochat) (Swift)
-- [ts-algochat](https://github.com/CorvidLabs/ts-algochat) (TypeScript)
-- [rs-algochat](https://github.com/CorvidLabs/rs-algochat) (Rust)
-- [kt-algochat](https://github.com/CorvidLabs/kt-algochat) (Kotlin)
+- [AlgoChat](https://github.com/CorvidLabs/algochat) (TypeScript, Swift, Rust, Kotlin, and Go)
 
 ## License
 
