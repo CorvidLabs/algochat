@@ -93,6 +93,10 @@ A note of 1024 bytes or fewer pays one minimum fee, 0.001 ALGO for an Ed25519 si
 | No forward secrecy | The 25 words open that account's past messages |
 | About 4.5 seconds | Algorand finality |
 
+## Release qualification
+
+See [the manual release checklist](docs/RELEASE.md) for six-language consumer checks, exact-candidate evidence and unresolved distribution/provenance gates. Qualification does not publish packages.
+
 ## Trust
 
 [fledge](https://corvidlabs.xyz/fledge/), [spec-sync](https://corvidlabs.xyz/spec-sync/) 6.1.1, [augur](https://corvidlabs.xyz/augur/), [attest](https://corvidlabs.xyz/attest/), and [hi](https://corvidlabs.xyz/hi/). Human intent is in [`hi/`](hi/).

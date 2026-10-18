@@ -1,17 +1,9 @@
 name: Swift
 
+# Called by release-qualification so every candidate runs all six libraries.
 on:
-  pull_request:
-    paths:
-      - "swift/**"
-      - "Package.swift"
-      - ".github/workflows/swift.yml"
-  push:
-    branches: [main]
-    paths:
-      - "swift/**"
-      - "Package.swift"
-      - ".github/workflows/swift.yml"
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,6 +11,20 @@ permissions:
 jobs:
   test:
     runs-on: macos-latest
+    timeout-minutes: 40
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - run: swift test
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Test and qualify package consumer
+        run: python3 scripts/release/qualify.py swift "${{ runner.temp }}/qualification-swift"
+      - name: Preserve commands and candidate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-swift
+          path: ${{ runner.temp }}/qualification-swift/
+          if-no-files-found: error

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792284953,
+      "commit": "d53ecbb3864e089b2ec4cdc6a18dcc209a212af2",
+      "contract_digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+      "execution_digest": "0a6d615059767d6d3378038ad1fab486664098c3a8a52850b8bb40673d77830a",
+      "workspace_digest": "26f93a33b38fe766ac97fed268611530d83e2778a83ca9f548eae020022755e1",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-release-1",
+        "REQ-release-2",
+        "REQ-release-3",
+        "REQ-release-4",
+        "REQ-release-5",
+        "REQ-release-6",
+        "REQ-release-7",
+        "REQ-release-8"
+      ]
+    },
+    {
+      "timestamp": 1792285003,
+      "commit": "d53ecbb3864e089b2ec4cdc6a18dcc209a212af2",
+      "contract_digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+      "execution_digest": "0a6d615059767d6d3378038ad1fab486664098c3a8a52850b8bb40673d77830a",
+      "workspace_digest": "2fed827bd9e5faa7bfcd473867112b6ee039eca0affe3af2aa5cff7d8d13607d",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-release-1",
+        "REQ-release-2",
+        "REQ-release-3",
+        "REQ-release-4",
+        "REQ-release-5",
+        "REQ-release-6",
+        "REQ-release-7",
+        "REQ-release-8"
+      ]
+    },
+    {
+      "timestamp": 1792285045,
+      "commit": "d53ecbb3864e089b2ec4cdc6a18dcc209a212af2",
+      "contract_digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+      "execution_digest": "0a6d615059767d6d3378038ad1fab486664098c3a8a52850b8bb40673d77830a",
+      "workspace_digest": "41a81bc16b1cb876f2db9d2c6c29c1a7369debda6609b8f1dc87607e8c9f9e9a",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-release-1",
+        "REQ-release-2",
+        "REQ-release-3",
+        "REQ-release-4",
+        "REQ-release-5",
+        "REQ-release-6",
+        "REQ-release-7",
+        "REQ-release-8"
+      ]
+    }
+  ]
+}
