@@ -7,11 +7,7 @@ package version are distinct. The [package version table](#package-versions-and-
 
 ## Candidate and evidence
 
-The orchestrator calls the six existing language workflows plus Swift Linux on
-every PR, main push and manual dispatch. Checkout uses the PR **head SHA**, not
-GitHub's synthetic merge SHA. This also covers shared vectors, manifests and
-scripts without path-filter omissions. Credentials are not persisted; permissions
-are `contents: read`. There are no registry publishing steps or OIDC grants.
+A change inside one language tree runs that language's workflow, including Swift on Linux when the Swift tree or root package manifest changes. Markdown-only edits in that tree do not. The orchestrator calls every language workflow, plus its own Swift Linux job, only when the pull request or main push changes the protocol, test vectors, `scripts/release`, or the orchestrator workflow. A root README, docs, or intent change does not start those lanes. Manual dispatch still runs the full matrix. Checkout uses the PR **head SHA**, not GitHub's synthetic merge SHA. Credentials are not persisted; permissions are `contents: read`. There are no registry publishing steps or OIDC grants.
 
 The scripts require Python 3.11+. Each lane starts from a clean checkout, records platform/tool versions and every
 command with exit code/output, exercises an external consumer, and uploads

@@ -16,12 +16,12 @@
     "scripts/release/packages.py": "de14c88e87c8ae667519bc3b160bf4f1602ff7dd41ae51bf2e19298ac6545d70",
     "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
     "scripts/release/qualify.py": "6893cec04fccfdfed4203c5f7235dfff6dd3181232487849dc14daafedd4dc47",
-    "scripts/release/test_release.py": "206cdccb8c045d91254d765dc81d604b5f774825b8816363b6b6f2b748b81819",
+    "scripts/release/test_release.py": "c4417cf08e0d1e372484e913cf7c9910084bed631ce4073207d8f261d04572de",
     "specs/protocol/protocol.spec.md": "5bac0cd799bb8d6b26578f99aef6fe1470d2b25e7e3f0271a1d893cf07da95ff",
     "specs/protocol/requirements.md": "bba2b3a738ecfed8ac27dba9085cd0e0964111bfb13b7e8f1168224e5d131c62",
-    "specs/release/context.md": "60b83b623f37f08f59f413dd8827654582055e4aaa35540f6a36183cc76738b6",
-    "specs/release/release.spec.md": "99f48f3ed4e900770343b07f739eeaf990400b5ce76fa80932f17ba72273f64c",
-    "specs/release/requirements.md": "f3b814392fd674786c2d05c671f5ba07b2ee9e255573e4b2a9b8e5b7d628dec7",
+    "specs/release/context.md": "d856018c90b58aa4d4dcdeb8f3573ccc0d19328d4322cea27b45598b891cb6da",
+    "specs/release/release.spec.md": "f01b60c18950a1b1be842673c1f47de5767959e02fc5d0bd5f9fc5b5e8be9108",
+    "specs/release/requirements.md": "5d7ccd517116ace4053146ef086a7cf7d96f09a431a686c186b1cda1bee1597d",
     "specs/release/testing.md": "680d3fd38c38a8fd9baaf835f257c55a20c07aee4372acfbe108c274506994c7"
   },
   "snapshots": {

@@ -100,6 +100,7 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | Date | Change |
 | --- | --- |
 | 2026-10-18 | Preserve dated local parity evidence and portable low-level replay / required-behavior probes. |
+| 2026-10-18 | Run a language qualification lane only when that tree changes, and the full matrix only for protocol, vector, or release-script changes. |
 | 2026-10-18 | Add credential-free qualification, external consumers, evidence checks and manual release checklist under approved definition. |
 | 2026-10-18 | prepare-reproducible-six-language-release-qualification-without-publishing-or-altering-protocol-behavior: Prepare reproducible six-language release qualification without publishing or altering protocol behavior |
 | 2026-10-18 | record-this-repository-as-the-source-for-every-algochat-library: Record this repository as the source for every AlgoChat library |

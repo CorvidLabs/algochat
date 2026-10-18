@@ -1,9 +1,21 @@
 name: Rust
 
-# Called by release-qualification so every candidate runs all six libraries.
+# Own-tree changes run this lane by itself. Shared protocol, vector, and
+# release-script changes run the full matrix from release-qualification.yml.
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "rs/**"
+      - ".github/workflows/rs.yml"
+      - "!**/*.md"
+  push:
+    branches: [main]
+    paths:
+      - "rs/**"
+      - ".github/workflows/rs.yml"
+      - "!**/*.md"
 
 permissions:
   contents: read

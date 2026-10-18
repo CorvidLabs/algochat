@@ -1,9 +1,21 @@
 name: TypeScript
 
-# Called by release-qualification so every candidate runs all six libraries.
+# Own-tree changes run this lane by itself. Shared protocol, vector, and
+# release-script changes run the full matrix from release-qualification.yml.
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "ts/**"
+      - ".github/workflows/ts.yml"
+      - "!**/*.md"
+  push:
+    branches: [main]
+    paths:
+      - "ts/**"
+      - ".github/workflows/ts.yml"
+      - "!**/*.md"
 
 permissions:
   contents: read

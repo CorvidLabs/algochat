@@ -234,5 +234,29 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotRegex(script, r"['\"](?:publish|publishAllPublicationsToGitHubPackagesRepository|publishMavenPublicationToGitHubPackagesRepository)['\"]")
         self.assertIn("'publishToMavenLocal'",script)
 
+    def test_readme_does_not_run_the_language_matrix(self):
+        root = Path(__file__).resolve().parents[2]
+        orchestrator = (root / '.github/workflows/release-qualification.yml').read_text()
+        self.assertIn('paths:', orchestrator)
+        self.assertNotIn('"README.md"', orchestrator)
+        self.assertNotIn('"docs/**"', orchestrator)
+        self.assertNotIn('"hi/**"', orchestrator)
+        lanes = {
+            'ts': 'ts/**',
+            'py': 'py/**',
+            'rs': 'rs/**',
+            'kt': 'kt/**',
+            'go': 'go/**',
+            'swift': 'swift/**',
+        }
+        for name, own in lanes.items():
+            text = (root / '.github/workflows' / f'{name}.yml').read_text()
+            self.assertIn(f'"{own}"', text)
+            self.assertIn('"!**/*.md"', text)
+            self.assertNotIn('"README.md"', text)
+        swift = (root / '.github/workflows/swift.yml').read_text()
+        self.assertIn("github.event_name != 'workflow_call'", swift)
+        self.assertIn('swift-linux', swift)
+
 
 if __name__ == '__main__': unittest.main()

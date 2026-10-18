@@ -10,7 +10,9 @@ Qualification SHALL run each existing language test lane plus safe build/package
 
 #### Acceptance Criteria
 
-- all six run on the exact final PR commit and preserve distinct per-language evidence.
+- a change to one language tree runs that language on the PR head and preserves its evidence
+- a change to the protocol, vectors, or release scripts runs all six, plus Swift Linux, on that same head
+- a README, docs, or intent-only change does not start those lanes
 
 ### REQ-release-2
 
