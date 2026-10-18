@@ -258,7 +258,8 @@ class AlgoChatClient private constructor(
             timestamp = timestamp,
             confirmedRound = tx.confirmedRound,
             direction = direction,
-            replyContext = replyContext
+            replyContext = replyContext,
+            intraRoundOffset = tx.intraRoundOffset
         )
 
         // Update conversation

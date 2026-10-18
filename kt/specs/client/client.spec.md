@@ -1,6 +1,6 @@
 ---
 module: client
-version: 1.0.2
+version: 1.0.3
 status: active
 files:
   - src/main/kotlin/com/corvidlabs/algochat/AccountIdentity.kt
@@ -163,8 +163,8 @@ SpecSync's Kotlin member parser additionally exposes the following constructor p
 
 ## Invariants
 
-1. An `AlgoChatClient` derives its X25519 identity from the supplied 32-byte mnemonic entropy and rejects a caller address that does not match that seed under the active signature scheme. Ed25519 is the default. Falcon-1024 accepts the Falcon address of that entropy and rejects its Ed25519 address.
-2. Conversation merge never duplicates a transaction id and keeps messages ordered by confirmed round then intra-round offset.
+1. An `AlgoChatClient` derives its X25519 identity from the supplied 32-byte mnemonic entropy and rejects a caller address that does not match that seed under the active signature scheme. Ed25519 is the default. Falcon-1024 accepts the Falcon address of that entropy and rejects its Ed25519 address. That derivation does not retain the entropy in process-global state.
+2. Conversation merge never duplicates a transaction id and keeps messages ordered by confirmed round then intra-round offset. An indexed note carries that offset, and processing or syncing it copies the offset onto the message.
 3. A discovered key is marked verified only when its announcement carries a valid signature for the announcing Algorand address.
 4. Queue size never exceeds `maxQueueSize`; state transitions update retry metadata consistently and retry selection respects `retryDelay` and `maxRetries`.
 5. Storage implementations isolate caller-owned byte arrays from stored state, and typed stores use stable namespaced keys.
@@ -200,6 +200,7 @@ Then A remains singular and B follows it in deterministic chain order
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.0.3 | 2026-10-18 | Drop the Falcon entropy cache and copy intra-round offsets from indexed notes. |
 | 1.0.2 | 2026-10-18 | Check the supplied address against the seed and sort history by round then offset. |
 | 1.0.0 | 2026-07-14 | Canonically document the existing client, blockchain, model, queue, and storage behavior. |
 | 2026-07-14 | CHG-0002-run-the-existing-jdk-17-and-21-ci-matrix-when-trust-and-specsync-governance-file: Complete Kotlin AlgoChat SDD adoption and run the native CI matrix |
@@ -214,6 +215,6 @@ The normative identity, round/offset ordering, private-key persistence, and byte
 
 - `fromSeed` calls `keyStorage.store(..., requireBiometric=false)`, and `FileKeyStorage` persists encryption private keys. This exceeds the stated no-private-key-persistence boundary in the requirements.
 - `decrypt` ignores its `senderPublicKeyBytes` parameter and delegates to `decryptFull`; identity discovery is a separate `processTransaction` path.
-- Address matching and chain order are enforced. Falcon address derivation uses Bouncy Castle Falcon-1024 from the domain-separated seed `SHA-512/256("PQK" || "f1" || entropy)`. It is not a claim that this public key matches every other Falcon implementation.
+- Address matching and chain order are enforced. Falcon address derivation uses Bouncy Castle Falcon-1024 from the domain-separated seed `SHA-512/256("PQK" || "f1" || entropy)` and does not store that entropy in process-global state. It is not a claim that this public key matches every other Falcon implementation. `processTransaction` copies `NoteTransaction.intraRoundOffset` onto the message.
 
 Source-grounded API descriptions above do not waive these stronger contracts. See the [accuracy ledger](../../../docs/ACCURACY.md).

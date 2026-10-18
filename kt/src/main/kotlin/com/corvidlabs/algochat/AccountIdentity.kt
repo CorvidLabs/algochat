@@ -11,7 +11,6 @@ import org.bouncycastle.pqc.crypto.falcon.FalconKeyPairGenerator
 import org.bouncycastle.pqc.crypto.falcon.FalconParameters
 import org.bouncycastle.pqc.crypto.falcon.FalconPublicKeyParameters
 import java.security.MessageDigest
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Payment-authorization scheme used to derive an account address from a seed.
@@ -34,7 +33,6 @@ enum class SigningScheme {
  */
 object AlgorandIdentity {
     private const val ADDRESS_LENGTH = 58
-    private val falconPublicKeys = ConcurrentHashMap<String, ByteArray>()
 
     /** Address for [seed] under [scheme]. */
     fun address(seed: ByteArray, scheme: SigningScheme = SigningScheme.ED25519): String {
@@ -67,17 +65,13 @@ object AlgorandIdentity {
     }
 
     private fun falconPublicKey(entropy: ByteArray): ByteArray {
-        val cacheKey = entropy.joinToString("") { "%02x".format(it) }
-        falconPublicKeys[cacheKey]?.let { return it.copyOf() }
         val keySeed = sha512256("PQK".toByteArray(Charsets.US_ASCII) + "f1".toByteArray(Charsets.US_ASCII) + entropy)
         val random = SP800SecureRandomBuilder(seededEntropy(keySeed))
             .buildHash(SHA256Digest(), keySeed, false)
         val generator = FalconKeyPairGenerator()
         generator.init(FalconKeyGenerationParameters(random, FalconParameters.falcon_1024))
         val pair: AsymmetricCipherKeyPair = generator.generateKeyPair()
-        val encoded = (pair.public as FalconPublicKeyParameters).getH()
-        falconPublicKeys[cacheKey] = encoded
-        return encoded.copyOf()
+        return (pair.public as FalconPublicKeyParameters).getH().copyOf()
     }
 
     /** Entropy that repeats a hash of the seed. Key generation stays deterministic. */

@@ -4,8 +4,12 @@ import kotlinx.coroutines.test.runTest
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.lang.reflect.Modifier
 import java.security.MessageDigest
+import java.util.ArrayDeque
+import java.util.IdentityHashMap
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -112,6 +116,18 @@ class AlgoChatClientTest {
                 indexer = FakeIndexerClient()
             )
         }
+    }
+
+    @Test
+    fun `falcon derivation drops caller entropy without a global raw-entropy key`() {
+        val entropy = ByteArray(32) { (it + 7).toByte() }
+        val snapshot = entropy.copyOf()
+        val address = AlgorandIdentity.address(entropy, SigningScheme.FALCON_1024)
+        entropy.fill(0)
+
+        assertEquals(58, address.length)
+        assertEquals(address, AlgorandIdentity.address(snapshot, SigningScheme.FALCON_1024))
+        assertFalse(identityStateRetains(snapshot))
     }
 
     @Test
@@ -571,6 +587,76 @@ class AlgoChatClientTest {
         assertTrue(messages.isEmpty())
     }
 
+    @Test
+    fun `sync orders reversed same-round transactions by intra-round offset`() = runTest {
+        val bobKeys = Keys.deriveKeysFromSeed(BOB_SEED)
+        val bobPubBytes = Keys.publicKeyToBytes(bobKeys.publicKey)
+        val indexer = FakeIndexerClient()
+        indexer.addTransaction(
+            NoteTransaction(
+                txid = "bob_key_announce",
+                sender = BOB_ADDRESS,
+                receiver = BOB_ADDRESS,
+                note = bobPubBytes,
+                confirmedRound = 50,
+                roundTime = 500
+            )
+        )
+
+        val alice = AlgoChatClient.fromSeed(
+            seed = ALICE_SEED,
+            address = ALICE_ADDRESS,
+            config = AlgoChatConfig.localnet(),
+            algod = FakeAlgodClient(),
+            indexer = indexer
+        )
+
+        // Indexer order is newest-first inside the round. Offset must win over insertion.
+        val reversed = listOf(
+            Triple("later", 2, "third"),
+            Triple("middle", 1, "second"),
+            Triple("earlier", 0, "first")
+        )
+        for ((id, offset, text) in reversed) {
+            indexer.addTransaction(
+                NoteTransaction(
+                    txid = id,
+                    sender = ALICE_ADDRESS,
+                    receiver = BOB_ADDRESS,
+                    note = alice.encrypt(text, bobPubBytes),
+                    confirmedRound = 100,
+                    roundTime = 1_700_000_000,
+                    intraRoundOffset = offset
+                )
+            )
+        }
+
+        val synced = alice.sync()
+        assertEquals(listOf("later", "middle", "earlier"), synced.map { it.id })
+        assertEquals(listOf(2, 1, 0), synced.map { it.intraRoundOffset })
+        assertEquals(listOf("third", "second", "first"), synced.map { it.content })
+
+        val conv = alice.conversations().single()
+        assertEquals(BOB_ADDRESS, conv.participant)
+        assertEquals(listOf("earlier", "middle", "later"), conv.messages.map { it.id })
+        val boundary = conv.messages.first()
+        assertEquals(
+            listOf("middle", "later"),
+            conv.messagesAfter(boundary.confirmedRound, boundary.intraRoundOffset).map { it.id }
+        )
+
+        val cached = alice.messageCache().retrieve(ALICE_ADDRESS)
+        assertEquals(listOf("earlier", "middle", "later"), cached.map { it.id })
+        assertEquals(
+            listOf("middle", "later"),
+            alice.messageCache().retrieve(
+                ALICE_ADDRESS,
+                boundary.confirmedRound,
+                boundary.intraRoundOffset
+            ).map { it.id }
+        )
+    }
+
     // ========================================================================
     // sendQueue / messageCache / publicKeyCache accessors
     // ========================================================================
@@ -608,4 +694,48 @@ class AlgoChatClientTest {
         val mainnet = AlgoChatConfig.mainnet()
         assertTrue(mainnet.network.algodUrl.contains("mainnet"))
     }
+}
+
+/**
+ * True when process-global identity state still holds [secret] or its hex form.
+ * Caller-local copies are not part of this graph.
+ */
+private fun identityStateRetains(secret: ByteArray): Boolean {
+    val hex = secret.joinToString("") { "%02x".format(it) }
+    val seen = IdentityHashMap<Any, Boolean>()
+    val pending = ArrayDeque<Any>()
+    val classes = mutableListOf<Class<*>>(AlgorandIdentity::class.java)
+    runCatching { classes.add(Class.forName("com.corvidlabs.algochat.AccountIdentityKt")) }
+    for (clazz in classes) {
+        for (field in clazz.declaredFields) {
+            if (!Modifier.isStatic(field.modifiers) || field.isSynthetic) continue
+            field.isAccessible = true
+            field.get(null)?.let { pending.add(it) }
+        }
+    }
+    while (pending.isNotEmpty()) {
+        val value = pending.removeFirst()
+        if (seen.put(value, true) != null) continue
+        when (value) {
+            is ByteArray -> if (value.contentEquals(secret)) return true
+            is String -> if (value.equals(hex, ignoreCase = true) || value.contains(hex)) return true
+            is Map<*, *> -> {
+                value.keys.forEach { if (it != null) pending.add(it) }
+                value.values.forEach { if (it != null) pending.add(it) }
+            }
+            is Iterable<*> -> value.forEach { if (it != null) pending.add(it) }
+            is Array<*> -> value.forEach { if (it != null) pending.add(it) }
+            is Number, is Enum<*>, is Class<*> -> Unit
+            else -> {
+                val name = value.javaClass.name
+                if (!name.startsWith("com.corvidlabs.algochat") && !name.startsWith("java.util")) continue
+                for (field in value.javaClass.declaredFields) {
+                    if (field.isSynthetic || Modifier.isStatic(field.modifiers)) continue
+                    field.isAccessible = true
+                    runCatching { field.get(value) }.getOrNull()?.let { pending.add(it) }
+                }
+            }
+        }
+    }
+    return false
 }
