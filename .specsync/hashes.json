@@ -17,8 +17,8 @@
     "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
     "scripts/release/qualify.py": "6893cec04fccfdfed4203c5f7235dfff6dd3181232487849dc14daafedd4dc47",
     "scripts/release/test_release.py": "206cdccb8c045d91254d765dc81d604b5f774825b8816363b6b6f2b748b81819",
-    "specs/protocol/protocol.spec.md": "a8c03100ba15b7096532a1b329bbc2aef5e92358c2fc639b11e79399bd587b82",
-    "specs/protocol/requirements.md": "6a538fed136e3fa038d3f5dea975d04baf7e81641e06750acbbb7ea1944dc682",
+    "specs/protocol/protocol.spec.md": "5bac0cd799bb8d6b26578f99aef6fe1470d2b25e7e3f0271a1d893cf07da95ff",
+    "specs/protocol/requirements.md": "bba2b3a738ecfed8ac27dba9085cd0e0964111bfb13b7e8f1168224e5d131c62",
     "specs/release/context.md": "60b83b623f37f08f59f413dd8827654582055e4aaa35540f6a36183cc76738b6",
     "specs/release/release.spec.md": "99f48f3ed4e900770343b07f739eeaf990400b5ce76fa80932f17ba72273f64c",
     "specs/release/requirements.md": "f3b814392fd674786c2d05c671f5ba07b2ee9e255573e4b2a9b8e5b7d628dec7",
@@ -31,8 +31,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "cd8acb9fbf2bdd79da230cc0c5147fe33c229267cd13d8dddde36d2b8d32e531",
-      "snapshot_digest": "0320f9cb56a9a415e027e61920274346a7cec6dac639f5b6d14034e92b6d1df7"
+      "input_digest": "cb28ac119f61fe6793fb5306d6c46f7ebb89d0ddb0e2ec99f7b434387133c79c",
+      "snapshot_digest": "99dc46a1c067e47df5fe788d9b10241818e1379ee536cc3afdd5240c828afa1a"
     },
     "specs/release/release.spec.md": {
       "snapshot_version": 1,
@@ -40,8 +40,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "7d5abe0515ae6d50bd3be08e751e58ee189367f8ac8b6185ce343cd8c536ef58",
-      "snapshot_digest": "6950419a206f6f6c66dbf4167d0e0262d0ece18b75c6bd68d15cf84bb274f959"
+      "input_digest": "32a31d475a6b53d7a9cfc812dfea17fc0acebeeb1cb2dc4857f50d0186bb51a3",
+      "snapshot_digest": "5118f201140dfebf2e92f54657305dc33936846375971e05976c670a37f6ba38"
     }
   }
 }
