@@ -182,6 +182,17 @@ struct ChatEnvelopeFormatTests {
             try ChatEnvelope.decode(from: data)
         }
     }
+
+    @Test("Decode rejects a note longer than 4096 bytes")
+    func testDecodeRejectsOversizedNote() {
+        var data = Data(repeating: 0x00, count: ChatEnvelope.maxNoteSize + 1)
+        data[0] = ChatEnvelope.version
+        data[1] = ChatEnvelope.protocolID
+
+        #expect(throws: ChatError.self) {
+            try ChatEnvelope.decode(from: data)
+        }
+    }
 }
 
 @Suite("Encryption Tests")

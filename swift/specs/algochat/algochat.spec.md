@@ -428,7 +428,7 @@ The existing `encode`, `parse`, `encrypt` and `decrypt` names also apply to hybr
 
 ## Implementation status
 
-Standard/PSK writers emit version `0x01`; decoding/decryption also accepts version `0x02` with header AAD. Their inbound decoders check minimum length without rejecting notes over 4096 bytes. Unsupported-platform `KeychainKeyStorage` uses ephemeral process memory, and PSK contact/state files and the file send queue are plaintext JSON. These facts remain gaps against accepted size/storage requirements and do not relax them; see the [accuracy ledger](../../../docs/ACCURACY.md).
+Standard/PSK writers emit version `0x01`; decoding/decryption also accepts version `0x02` with header AAD. Inbound standard and PSK decoders reject a note longer than 4096 bytes before they return an envelope, and they still require a complete authentication tag. Unsupported-platform `KeychainKeyStorage` uses ephemeral process memory, and PSK contact/state files and the file send queue are plaintext JSON. Those storage facts remain gaps and do not relax the accepted requirements; see the [accuracy ledger](../../../docs/ACCURACY.md).
 
 ## Invariants
 
