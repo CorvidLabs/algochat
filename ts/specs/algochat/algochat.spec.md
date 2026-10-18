@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 8
+version: 9
 status: stable
 files:
   - src/index.ts
@@ -257,6 +257,41 @@ Provides the TypeScript implementation of the AlgoChat encrypted-messaging proto
 | `PSK_PREFIX_AAD_SIZE` | Source PSK fixed-header prefix size before the sender wrap. |
 | `StandardHeaderFields` | Source standard AAD header inputs. |
 | `PskHeaderFields` | Source PSK AAD header inputs including ratchet counter. |
+| `GROUP_INFO_LABEL` | Group message HKDF info label. |
+| `GROUP_ACTION` | Legacy 0x06 actions 1 through 4. |
+| `GROUP_MEMBERSHIP_PLAINTEXT_SIZE` | Legacy membership plaintext size, 101 bytes. |
+| `GROUP_MEMBERSHIP_NOTE_SIZE` | Legacy membership note size, 195 bytes. |
+| `GROUP_MESSAGE_HEADER_SIZE` | 0x07 header size, 54 bytes. |
+| `GROUP_MAX_PAYLOAD_SIZE` | Maximum 0x07 plaintext. |
+| `GroupMembership` | Legacy membership plaintext. |
+| `GroupCounter` | Accepted sender epoch and counter. |
+| `OpenedGroupMessage` | Opened 0x07 message. |
+| `isGroupMembership` | Recognizes a 195-byte legacy membership note. |
+| `isGroupMessage` | Recognizes a 0x07 mailbox note. |
+| `sealGroupMembership` | Seals a legacy 0x06 membership note. |
+| `openGroupMembership` | Opens a legacy 0x06 membership note. |
+| `deriveGroupMessageKey` | Derives one 0x07 message key. |
+| `sealGroupMessage` | Seals one 0x07 mailbox note. |
+| `openGroupMessage` | Opens one 0x07 mailbox note. |
+| `GROUP_ADMIN_PROTOCOL` | Public room administration protocol byte 0x03. |
+| `GROUP_DELIVER_ACTION` | 0x06 action 5, key delivery. |
+| `GROUP_NAME_MAX` | Maximum room name, 64 bytes. |
+| `GROUP_ADMIN_MAX` | Maximum admins, 16. |
+| `GROUP_MEMBER_MAX` | Maximum members, 100. |
+| `GROUP_DELIVER_PLAINTEXT_SIZE` | Action-5 plaintext size, 133 bytes. |
+| `JOINING` | Invite-only and ask-to-join policy bytes. |
+| `ADMIN_OP` | Room administration operation bytes. |
+| `RoomState` | Accepted room roster. |
+| `AdminEvent` | One administration transaction input. |
+| `AcceptedAdmin` | One accepted administration record. |
+| `ReduceAdminResult` | Reducer output. |
+| `encodeAdminRecord` | Encodes one 0x03 note. |
+| `draftAdmin` | Drafts the authorized next 0x03 note. |
+| `reduceAdmin` | Reduces administration transactions. |
+| `senderMayPost` | Whether a member may post at an epoch. |
+| `deliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `sealGroupKeyDelivery` | Seals a 227-byte action-5 delivery. |
+| `openGroupKeyDelivery` | Opens a 227-byte action-5 delivery. |
 
 The package root re-exports the hybrid APIs listed in `src/index.ts`. Header helpers and other source-only symbols are not package subpath exports; `package.json` declares only `.`. This inventory describes existing capabilities without claiming high-level hybrid orchestration.
 
@@ -332,7 +367,7 @@ Then SendQueue processes eligible entries in order, records failures for retry, 
 | 6 | 2026-09-20 | Remove the raven mailbox router. Delivery is encrypted payment notes only. Falcon-1024 `pqsig` remains the default authorizer for new accounts. |
 | 7 | 2026-09-20 | remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum: Remove the Raven mailbox router transport and keep AlgoChat as encrypted note messaging with Falcon-1024 post-quantum account support |
 | 8 | 2026-10-16 | Raise the note ceiling to 4096 bytes (protocol 1.2.1). Standard plaintext max 3954, PSK plaintext max 3950. Fee is scheme fee plus the consensus surcharge past 1024 bytes. |
-| 8 | 2026-10-18 | room-administration-reducer-and-action-5-key-delivery: Room administration reducer and action-5 key delivery |
+| 9 | 2026-10-18 | room-administration-reducer-and-action-5-key-delivery: Room administration reducer and action-5 key delivery |
 
 ## Room administration
 
