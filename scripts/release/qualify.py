@@ -10,6 +10,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from evidence import REQUIRED, digest
+from packages import validate_package
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMANDS = []
@@ -46,7 +47,7 @@ def extract(archive, target):
     with tarfile.open(archive) as tar:
         # Only generated git/cargo archives, still reject path traversal and links.
         for member in tar.getmembers():
-            if not (target / member.name).resolve().is_relative_to(target.resolve()) or member.issym() or member.islnk():
+            if not (target / member.name).resolve().is_relative_to(target.resolve()) or not (member.isfile() or member.isdir()):
                 raise ValueError('unsafe archive member')
         tar.extractall(target)
 
@@ -62,11 +63,7 @@ def qualify(lane, output, work):
         run(['bun', 'run', 'build'], ROOT / 'ts')
         packed = json.loads(run(['npm', 'pack', '--ignore-scripts', '--json', '--pack-destination', output], ROOT / 'ts'))
         archive = output / packed[0]['filename']
-        with tarfile.open(archive) as tar:
-            names = set(tar.getnames())
-            assert {'package/dist/index.js', 'package/dist/index.d.ts', 'package/package.json'} <= names
-            manifest = json.load(tar.extractfile('package/package.json'))
-            assert manifest['name'] == '@corvidlabs/ts-algochat'
+        validate_package(lane, archive)
         write(consumer / 'package.json', '{"private":true,"type":"module"}')
         run(['npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', archive], consumer)
         write(consumer / 'smoke.mjs', "import * as chat from '@corvidlabs/ts-algochat'; if (!Object.keys(chat).length) throw Error('empty exports');\n")
@@ -114,7 +111,7 @@ def qualify(lane, output, work):
         root = ET.parse(pom).getroot()
         ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
         coords = [root.find('m:' + key, ns).text for key in ('groupId', 'artifactId', 'version')]
-        assert coords == ['com.corvidlabs', 'kt-algochat', '0.2.0'], coords
+        validate_package(lane, pom)
         copy_artifact(pom, output)
         for jar in (ROOT / 'kt/build/libs').glob('*.jar'):
             copy_artifact(jar, output)
@@ -136,8 +133,9 @@ tasks.register("smoke") { doLast {
         run(['go', 'test', './...'], ROOT / 'go')
         run(['go', 'build', './...'], ROOT / 'go')
         assert run(['go', 'list', '-m'], ROOT / 'go').strip() == 'github.com/CorvidLabs/go-algochat'
-        archive = source_archive(output, 'go', ['go'])
+        archive = source_archive(output, 'go', ['go', 'vectors'])
         extract(archive, work)
+        run(['go', 'test', '-run', '^TestPQParityFixture$', './...'], work / 'go')
         write(consumer / 'go.mod', 'module release-consumer\n\ngo 1.25.0\n\nrequire github.com/CorvidLabs/go-algochat v0.0.0\nreplace github.com/CorvidLabs/go-algochat => ' + str(work / 'go') + '\n')
         write(consumer / 'main.go', 'package main\nimport _ "github.com/CorvidLabs/go-algochat"\nfunc main() {}\n')
         run(['go', 'mod', 'tidy'], consumer)
@@ -158,10 +156,11 @@ tasks.register("smoke") { doLast {
             binary = Path(run(['swift', 'build', '--show-bin-path']).strip()) / 'pqcross'
             code = "import subprocess,sys; p=subprocess.run([sys.argv[1]],capture_output=True); assert p.returncode==1 and p.stdout==b'' and p.stderr==b'ML-KEM-768 needs macOS 26\\n', (p.returncode,p.stdout,p.stderr)"
             run(['python3', '-c', code, binary])
-        archive = source_archive(output, lane, ['Package.swift', 'swift/Sources', 'swift/Tests', 'LICENSE'])
+        archive = source_archive(output, lane, ['Package.swift', 'swift/Sources', 'swift/Tests', 'vectors', 'LICENSE'])
         package = work / 'algochat'
         package.mkdir()
         extract(archive, package)
+        run(['swift', 'test', '--filter', 'PQTests'], package)
         write(consumer / 'Package.swift', '// swift-tools-version: 6.0\nimport PackageDescription\nlet package = Package(name:"Consumer", platforms:[.macOS(.v12)], dependencies:[.package(path:' + json.dumps(str(package)) + ')], targets:[.executableTarget(name:"Consumer", dependencies:[.product(name:"AlgoChat", package:"algochat")])])\n')
         write(consumer / 'Sources/Consumer/main.swift', 'import AlgoChat\nprint("AlgoChat consumer import succeeded")\n')
         run(['swift', 'run', 'Consumer'], consumer)
@@ -194,6 +193,8 @@ def main():
         files = sorted(p for p in output.iterdir() if p.is_file())
         if not any(p.name not in {'commands.json', 'distribution-limit.txt'} for p in files):
             raise ValueError('no package artifact generated')
+        for artifact in files:
+            validate_package(args.lane, artifact)
         receipt = {'schema': 1, 'lane': args.lane, 'sha': sha, 'tree_state': 'clean',
                    'category': 'hosted' if os.environ.get('GITHUB_ACTIONS') == 'true' else 'local',
                    'platform': platform.system() + '-' + platform.platform(), 'toolchain': VERSIONS,

@@ -3,6 +3,7 @@ module: release
 version: 2
 status: active
 files:
+  - scripts/release/packages.py
   - scripts/release/evidence.py
   - scripts/release/provenance.py
   - scripts/release/qualify.py
@@ -41,7 +42,15 @@ Internal Python helpers (not a library contract):
 | `SHA` | Test-only candidate SHA fixture. |
 | `EvidenceTests` | Positive and rejection cases for receipts. |
 | `ProvenanceTests` | Range and Attest failure cases. |
-| `ArchiveTests` | Unsafe archive rejection. |
+| `ArchiveTests` | Unsafe archive rejection and real source-bundle extraction. |
+| `PackageTests` | Malformed formats, missing members and wrong identities fail semantic validation. |
+| `WorkflowTests` | Bounded read-only/no-publication workflow regression checks. |
+| `make_package` | Generate minimal valid package fixtures for negative tests. |
+| `check_workflow` | Reject write permissions, credentials and remote publication in qualification workflow text. |
+| `safe_name` | Reject absolute or traversing archive paths. |
+| `contents` | Read ZIP/tar members after rejecting links, special files and duplicate entries. |
+| `require` | Require a named nonempty package member. |
+| `validate_package` | Check package format, required source/runtime files and existing package identity. |
 
 ## Invariants
 
@@ -57,7 +66,7 @@ Missing languages, stale SHA, dirty sources, failed commands, malformed evidence
 
 ## Dependencies
 
-Python standard library, git, Attest, each language toolchain and existing package dependencies. Hosted workflows obtain toolchains; local installation requires authorization.
+Python 3.11+ standard library, git, Attest, each language toolchain and existing package dependencies. Hosted workflows obtain toolchains; local installation requires authorization.
 
 ## Change Log
 

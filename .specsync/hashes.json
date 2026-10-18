@@ -5,13 +5,14 @@
     "PROTOCOL.md": "58bf1a3a2afd656f706c799ccb7f535f251593f2332e82f2715c733d9b8b5dcb",
     "TEST-VECTORS.md": "33e788f1ed6f6e8790fc24e64c3e1166778165518f20efb14e39e15fbedf0e2f",
     "scripts/release/evidence.py": "b28cdd457ae4a30fd7c0417e7aa376cdcf9980d4d8ff90034f61fcba14d02c67",
+    "scripts/release/packages.py": "b7b095429a9e2fc29813d87ae7afde93f741c3b8c69a1ec196aedc667e2bd40c",
     "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
-    "scripts/release/qualify.py": "4a1d08a7ecece4d2e292d87082e538689b1e89066604478367ba54222d466d82",
-    "scripts/release/test_release.py": "5da98a62a76f9d63a8df8bf706c0b6080aa6e12513864cda30ebf6b26617ab61",
+    "scripts/release/qualify.py": "c5f49204b97645d4ff4cef7d8cb39dfed1c68fdbcf3377ce6553157d8faa59ff",
+    "scripts/release/test_release.py": "be6d1d8edabcbf3ec6c44f2097e82d0b8fcafd1124abda84492656eff8db112d",
     "specs/protocol/protocol.spec.md": "8fcf9f636a9b741ba596f00435db8706879b05ff76026dacde6e33bb3816edda",
     "specs/protocol/requirements.md": "ee2d881caa36d0080d01e7d54e9157b2825f20044862c8e514a60434e9e052ef",
     "specs/release/context.md": "9df5b419b94532a784e2e7c7d741c0a2c4dc5ad9fe57a53efb07aa2a45d6470b",
-    "specs/release/release.spec.md": "ae9cb482dc86ae3fe9bb10fe0556975370b9a0ccba11aee1b7577e905d902b5f",
+    "specs/release/release.spec.md": "7fad33e4dd3abec96359ff87c51e5458771c4c168b8114d289525e7ec5c6aa6c",
     "specs/release/requirements.md": "5ae515cdb2a18e2c0df19ba0f27ef2f0b2104a9e9a007c98601281e246529025",
     "specs/release/testing.md": "49736139edee376dcc2d738dfb5ef216ba809f6b41026fe5b70a92dbf0dfde7e"
   },
@@ -31,8 +32,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "ba479c94e1fb2805bbd6af326b87e21367cbe1daa4ecbc90ee65472b252a1d3b",
-      "snapshot_digest": "73a11008bf1916808c3ed50d9d9620589ba8a74ec8d2c41bbf6c31bb3c8cfc07"
+      "input_digest": "88f5081e3c668ac286e86a230187c7744f03c5afad9d2c94f6a4fba125ced7a6",
+      "snapshot_digest": "703b4110888a62122b13189608c253d89b9dc95fb32febef5d6c89d9f6746cde"
     }
   }
 }

@@ -8,8 +8,46 @@ from unittest.mock import patch
 from evidence import REQUIRED, EXPECTED, digest, validate
 from provenance import release_range
 from qualify import extract
+from packages import validate_package
+import io
+import tarfile
+import zipfile
+import re
 
 SHA = 'a' * 40
+
+def make_package(lane, path, wrong_identity=False, missing_member=False):
+    name = 'wrong' if wrong_identity else None
+    if path.name == 'Cargo.lock':
+        path.write_text('version = 4\n'); return
+    if path.suffix == '.xml':
+        path.write_text('<project xmlns="http://maven.apache.org/POM/4.0.0"><groupId>com.corvidlabs</groupId><artifactId>' + (name or 'kt-algochat') + '</artifactId><version>0.2.0</version></project>'); return
+    if lane == 'ts':
+        files={'package/package.json':json.dumps({'name':name or '@corvidlabs/ts-algochat'}).encode(), 'package/dist/index.js':b'export {};', 'package/dist/index.d.ts':b'export {};'}
+    elif lane == 'py' and path.suffix == '.whl':
+        files={'py_algochat-0.2.0.dist-info/METADATA':('Name: '+(name or 'py-algochat')+'\nVersion: 0.2.0\n').encode(), 'algochat/__init__.py':b'# package'}
+    elif lane == 'py':
+        files={'py_algochat-0.2.0/pyproject.toml':('[project]\nname="'+(name or 'py-algochat')+'"\n').encode(), 'py_algochat-0.2.0/src/algochat/__init__.py':b'# package'}
+    elif lane == 'rs':
+        files={'algochat-0.3.0/Cargo.toml':('[package]\nname="'+(name or 'algochat')+'"\n').encode(), 'algochat-0.3.0/src/lib.rs':b'// source'}
+    elif lane == 'kt':
+        files={('wrong.class' if wrong_identity else 'com/corvidlabs/algochat/Keys.class'):b'CAFEBABE'}
+    elif lane == 'go':
+        files={'go/go.mod':('module '+(name or 'github.com/CorvidLabs/go-algochat')+'\n').encode(), 'go/chat.go':b'package algochat'}
+    else:
+        files={'Package.swift':('.library(name: "'+(name or 'AlgoChat')+'", targets: ["AlgoChat"])').encode(), 'swift/Sources/AlgoChat/Chat.swift':b'// source'}
+    if lane in {'go', 'swift', 'swift-linux'}:
+        files['vectors/pq-mlkem768.json'] = b'{"handshake_bytes":2366}'
+    if missing_member:
+        del files[next(iter(files))]
+    if path.suffix in {'.whl','.jar'}:
+        with zipfile.ZipFile(path,'w') as archive:
+            for member, data in files.items(): archive.writestr(member,data)
+    else:
+        with tarfile.open(path,'w:gz' if path.name.endswith(('.tgz','.tar.gz','.crate')) else 'w') as archive:
+            for member,data in files.items():
+                info=tarfile.TarInfo(member);info.size=len(data);archive.addfile(info,io.BytesIO(data))
+
 
 class EvidenceTests(unittest.TestCase):
     def setUp(self):
@@ -20,7 +58,7 @@ class EvidenceTests(unittest.TestCase):
             path = self.root / lane
             path.mkdir()
             names = [pattern.replace('*', 'package') for pattern in EXPECTED[lane]]
-            for name in names: (path / name).write_bytes(b'candidate bytes')
+            for name in names: make_package(lane, path / name)
             record = {'schema':1, 'lane':lane, 'sha':SHA, 'tree_state':'clean', 'category':'hosted',
                 'platform':'Darwin-26' if lane == 'swift' else 'Linux', 'toolchain':{'tool':'1'},
                 'commands':[{'argv':['test'], 'exit_code':0}],
@@ -74,6 +112,34 @@ class EvidenceTests(unittest.TestCase):
         (copy_path/'receipt.json').write_text((self.root/'ts/receipt.json').read_text())
         with self.assertRaises(ValueError): validate(self.root,SHA)
 
+class PackageTests(unittest.TestCase):
+    def test_wrong_identity_and_malformed_packages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for lane, patterns in EXPECTED.items():
+                for pattern in patterns:
+                    path=Path(directory)/pattern.replace('*','package')
+                    if path.name == 'Cargo.lock': continue
+                    with self.subTest(lane=lane,artifact=path.name):
+                        make_package(lane,path)
+                        validate_package(lane,path)
+                        if path.suffix != '.xml':
+                            make_package(lane,path,missing_member=True)
+                            with self.assertRaises(ValueError): validate_package(lane,path)
+                        make_package(lane,path,wrong_identity=True)
+                        with self.assertRaises(ValueError): validate_package(lane,path)
+                        path.write_bytes(b'candidate bytes')
+                        with self.assertRaises(ValueError): validate_package(lane,path)
+
+    def test_receipt_integrity_is_distinct_from_package_validation(self):
+        fixture=EvidenceTests();fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        artifact=fixture.root/'ts/package.tgz'
+        artifact.write_bytes(b'candidate bytes')
+        fixture.mutate(lambda data:data['artifacts'][0].update(sha256=digest(artifact)))
+        validate(fixture.root,SHA)  # A hash is not semantic validation or an attestation.
+        with self.assertRaises(ValueError): validate_package('ts',artifact)
+
+
 class ProvenanceTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
@@ -121,13 +187,22 @@ class ArchiveTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
             archive = work / 'swift.tar'
-            subprocess.run(['git', 'archive', '-o', str(archive), 'HEAD', 'Package.swift', 'swift/Sources', 'swift/Tests', 'LICENSE'], cwd=root, check=True)
+            subprocess.run(['git', 'archive', '-o', str(archive), 'HEAD', 'Package.swift', 'swift/Sources', 'swift/Tests', 'vectors', 'LICENSE'], cwd=root, check=True)
             target = work / 'consumer'
             target.mkdir()
             extract(archive, target)
+            self.assertTrue((target / 'vectors/pq-mlkem768.json').is_file())
             self.assertTrue((target / 'Package.swift').is_file())
             self.assertTrue((target / 'swift/Sources/AlgoChat').is_dir())
 
+
+    def test_reject_links_and_special_files(self):
+        for kind in (tarfile.SYMTYPE,tarfile.LNKTYPE,tarfile.FIFOTYPE,tarfile.CHRTYPE,tarfile.BLKTYPE):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                root=Path(directory); archive=root/'unsafe.tar'
+                with tarfile.open(archive,'w') as tar:
+                    member=tarfile.TarInfo('unsafe');member.type=kind;member.linkname='outside';tar.addfile(member)
+                with self.assertRaises(ValueError): extract(archive,root/'consumer')
 
     def test_reject_traversal(self):
         import tarfile
@@ -135,5 +210,29 @@ class ArchiveTests(unittest.TestCase):
             root=Path(directory); archive=root/'bad.tar'
             with tarfile.open(archive,'w') as tar: tar.addfile(tarfile.TarInfo('../escape'))
             with self.assertRaises(ValueError): extract(archive,root/'consumer')
+
+def check_workflow(text):
+    if re.findall(r'(?m)^permissions:\n  contents: ([^\n]+)',text) != ['read']:
+        raise ValueError('qualification requires explicit read-only permissions')
+    if re.search(r'(?i)\b(write|id-token|secrets|publish)\b',text):
+        raise ValueError('publication-capable workflow configuration')
+    if 'persist-credentials: false' not in text:
+        raise ValueError('checkout credentials must not persist')
+
+
+class WorkflowTests(unittest.TestCase):
+    def test_no_publication_workflows(self):
+        root=Path(__file__).resolve().parents[2]
+        for name in ['ts','py','rs','kt','go','swift','release-qualification']:
+            text=(root/'.github/workflows'/f'{name}.yml').read_text()
+            check_workflow(text)
+            for extra in ['\n  packages: write', '\n  id-token: write', '\n  run: npm publish', '\n  env: ${{ secrets.TOKEN }}']:
+                with self.assertRaises(ValueError): check_workflow(text+extra)
+        script=(root/'scripts/release/qualify.py').read_text()
+        # Bounded command regression guard, not a general malicious-code sandbox.
+        self.assertNotRegex(script, r"['\"](?:npm|cargo)['\"]\s*,\s*['\"]publish['\"]")
+        self.assertNotRegex(script, r"['\"](?:publish|publishAllPublicationsToGitHubPackagesRepository|publishMavenPublicationToGitHubPackagesRepository)['\"]")
+        self.assertIn("'publishToMavenLocal'",script)
+
 
 if __name__ == '__main__': unittest.main()

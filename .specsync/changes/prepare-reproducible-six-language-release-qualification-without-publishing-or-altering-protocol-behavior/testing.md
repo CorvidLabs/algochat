@@ -27,3 +27,5 @@ Additional negative cases: stale SHA, missing language, absent artifact, failed 
 | REQ-release-6 | qualify.py receipts separate local/hosted; evidence.py rejects non-hosted receipts. docs/RELEASE.md separates author-reported LocalNet and platform/minimum-runtime gaps. |
 | REQ-release-7 | EvidenceTests reject stale SHA, dirty source, missing lanes/Apple/platform/tools/artifacts, failed command and tampered hashes; workflow also rejects failed/skipped jobs. |
 | REQ-release-8 | qualify.py creates temporary consumers outside checkout for every lane; docs/RELEASE.md labels Go local replacement and unqualified runtime minima. Hosted real consumer results remain pending. |
+
+Follow-up review repairs: shared packages.py rejects malformed archives, missing required members and wrong identities; receipt integrity remains explicitly separate. ArchiveTests reject links, FIFOs and devices. WorkflowTests guard read-only/no-publication qualification. Go/Swift exports include vectors and execute extracted parity tests. Rust packaged full-suite fixture reproducibility remains explicitly unqualified.

@@ -13,12 +13,12 @@ GitHub's synthetic merge SHA. This also covers shared vectors, manifests and
 scripts without path-filter omissions. Credentials are not persisted; permissions
 are `contents: read`. There are no registry publishing steps or OIDC grants.
 
-Each lane starts from a clean checkout, records platform/tool versions and every
+The scripts require Python 3.11+. Each lane starts from a clean checkout, records platform/tool versions and every
 command with exit code/output, exercises an external consumer, and uploads
 `qualification-<lane>` containing artifacts and a `receipt.json` with SHA-256
 hashes. Failed runs retain command logs but never emit a passing receipt. The
 final job requires all jobs to succeed and validates all seven receipts and every
-listed hash against the requested SHA. Evidence is a CI record, not a signed
+listed hash against the requested SHA. `packages.py` separately validates package formats, required members and identities before a lane emits a receipt. `evidence.py` verifies receipt integrity, not package semantics or the authenticity of a self-authored receipt; real hosted consumers remain the usability check. Evidence is a CI record, not a signed
 attestation; obtain artifacts only from the verified run on the expected repository
 and head. Record the run URL and artifact retention deadline before release.
 
@@ -48,13 +48,13 @@ and cannot satisfy the hosted all-six aggregator. No wallet or LocalNet is used.
 | Python | pytest; wheel and sdist; separate venv install/import for each | Python 3.12; declared Python 3.10 minimum not qualified |
 | Rust | cargo tests and verified package; packaged-source consumer | Runner compiler recorded; declared Rust 1.85 minimum not qualified |
 | Kotlin | tests; jars/POM; isolated Maven-local repository and Gradle consumer | Java 17; Android not qualified |
-| Go | tests/build; source archive; consumer with explicit local module replacement | Go 1.25; remote module/tag distribution not proved |
-| Swift Apple | macOS 26+ tests/build; root source package; external consumer | Hosted Apple evidence only; older Apple platform minima not qualified |
-| Swift Linux | tests/build; exact unsupported `pqcross` assertion; root source consumer | Hybrid methods absent; no Linux ML-KEM claim |
+| Go | tests/build; source/fixture archive; extracted parity test; consumer with explicit local module replacement | Go 1.25; remote module/tag distribution not proved |
+| Swift Apple | macOS 26+ tests/build; root source/fixture package; extracted PQ tests; external consumer | Hosted Apple evidence only; older Apple platform minima not qualified |
+| Swift Linux | tests/build; exact unsupported `pqcross` assertion; extracted PQ tests and root source consumer | Hybrid methods absent; no Linux ML-KEM claim |
 
 The Kotlin `publishToMavenLocal` command only writes an isolated temporary local
 Maven repository. It never invokes `publish` or a remote publishing task and uses
-no registry credentials. Swift and Go source archives are not registry packages.
+no registry credentials. Swift and Go source archives are not registry packages. They include root `vectors/` and rerun their extracted parity tests. The Rust crate consumer validates compilation/import, not its packaged full test suite: `rs/src/pq.rs` reads `../vectors/pq-mlkem768.json`, outside the published crate. Rust full tests run in the checkout; self-contained packaged-test fixtures remain a release packaging decision, not a claimed pass.
 
 Bun uses its existing frozen lockfile with install scripts disabled. Rust resolves
 and archives Cargo.lock before locked tests/package verification. Python, Maven,
