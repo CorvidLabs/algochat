@@ -16,29 +16,47 @@ class PSKState(
     val peerId: String,
     /** Initial send counter value. */
     sendCounter: UInt = 0u,
-    /** Initial receive counter value. */
+    /** Next receive counter. Zero with an empty history means no message yet. */
     receiveCounter: UInt = 0u
 ) {
     private val mutex = Mutex()
 
     private var _sendCounter: UInt = sendCounter
+    private var _sendExhausted: Boolean = false
     private var _receiveCounter: UInt = receiveCounter
+    private var highestAccepted: UInt? = if (receiveCounter == 0u) null else receiveCounter - 1u
     private val _receivedCounters: MutableSet<UInt> = mutableSetOf()
 
-    /** The current send counter. */
+    /** The current send counter. Stays at [UInt.MAX_VALUE] after that value is issued. */
     val sendCounter: UInt get() = _sendCounter
 
-    /** The current receive counter (highest accepted). */
+    /** True after [UInt.MAX_VALUE] has been issued. A later send does not wrap to 0. */
+    val sendExhausted: Boolean get() = _sendExhausted
+
+    /**
+     * The next receive counter.
+     *
+     * This is one past the highest accepted counter, except after
+     * [UInt.MAX_VALUE], where it stays at [UInt.MAX_VALUE] instead of wrapping.
+     */
     val receiveCounter: UInt get() = _receiveCounter
 
     /**
      * Gets the next send counter and advances it.
      *
      * @return The counter value to use for the next message
+     * @throws IllegalStateException when the counter is exhausted
      */
     suspend fun nextSendCounter(): UInt {
         mutex.withLock {
+            if (_sendExhausted) {
+                throw IllegalStateException("PSK send counter is exhausted")
+            }
             val current = _sendCounter
+            if (current == UInt.MAX_VALUE) {
+                _sendExhausted = true
+                return current
+            }
             _sendCounter = current + 1u
             return current
         }
@@ -47,15 +65,9 @@ class PSKState(
     /**
      * Validates and accepts a received counter value.
      *
-     * The counter is accepted if:
-     * - It has not been seen before (replay protection)
-     * - It is not more than [PSKProtocol.COUNTER_WINDOW] behind the highest
-     *   accepted counter
-     *
-     * This implementation accepts arbitrarily far-ahead counters, advancing the
-     * window, and enforces only the lower bound and seen-counter check. The
-     * protocol recommends rejecting counters more than COUNTER_WINDOW ahead
-     * (SHOULD); that upper-window recommendation is not enforced here.
+     * The counter is accepted if it has not been seen and it lies in the
+     * window of [PSKProtocol.COUNTER_WINDOW] around the highest accepted
+     * counter. Before any receive, only `0` through `200` are accepted.
      *
      * @param counter The received counter value
      * @return True if the counter is valid and was accepted
@@ -74,10 +86,7 @@ class PSKState(
      * Validates a received counter, runs the decrypt action, then records the
      * counter only if decryption succeeds.
      *
-     * Checks the seen-counter set and lower window bound before decryption,
-     * and does not record counters for failed decryption or rejected replays.
-     * These checks depend on retained state; callers must preserve it across
-     * restarts. The upper-window recommendation is not enforced here.
+     * A failed decryption does not record the counter or move the window.
      *
      * @param counter The ratchet counter from the received envelope
      * @param decrypt A block that performs decryption and returns the result; it
@@ -106,21 +115,14 @@ class PSKState(
      * Checks whether a counter would be accepted without mutating any state.
      *
      * @param counter The counter to test
-     * @return True if the counter is neither a replay nor too far behind the window
+     * @return True if the counter is inside the window and has not been seen
      */
     private fun isCounterAcceptable(counter: UInt): Boolean {
         if (counter in _receivedCounters) {
             return false
         }
-
-        // Reject counters that are too far behind the highest accepted counter.
-        val windowStart = if (_receiveCounter >= PSKProtocol.COUNTER_WINDOW.toUInt()) {
-            _receiveCounter - PSKProtocol.COUNTER_WINDOW.toUInt()
-        } else {
-            0u
-        }
-
-        return counter >= windowStart
+        val (lower, upper) = windowBounds()
+        return counter in lower..upper
     }
 
     /**
@@ -130,12 +132,13 @@ class PSKState(
     private fun recordCounter(counter: UInt) {
         _receivedCounters.add(counter)
 
-        // Advance receive counter if needed
-        if (counter >= _receiveCounter) {
-            _receiveCounter = counter + 1u
+        val highest = highestAccepted
+        if (highest == null || counter > highest) {
+            highestAccepted = counter
+            // Do not wrap. Accepting the maximum must not make 0 the next counter.
+            _receiveCounter = if (counter == UInt.MAX_VALUE) UInt.MAX_VALUE else counter + 1u
         }
 
-        // Prune old counters outside the window
         pruneReceivedCounters()
     }
 
@@ -164,20 +167,32 @@ class PSKState(
     suspend fun reset() {
         mutex.withLock {
             _sendCounter = 0u
+            _sendExhausted = false
             _receiveCounter = 0u
+            highestAccepted = null
             _receivedCounters.clear()
         }
+    }
+
+    /**
+     * Accepts unseen counters from `max(0, N - window)` through
+     * `min(max, N + window)`, where N is the highest accepted counter.
+     * Before any receive, N is absent and the window is `0..=window`.
+     */
+    private fun windowBounds(): Pair<UInt, UInt> {
+        val window = PSKProtocol.COUNTER_WINDOW.toUInt()
+        val highest = highestAccepted ?: return 0u to window
+        val lower = if (highest >= window) highest - window else 0u
+        val room = UInt.MAX_VALUE - highest
+        val upper = if (room < window) UInt.MAX_VALUE else highest + window
+        return lower to upper
     }
 
     /**
      * Removes received counter entries that are outside the current window.
      */
     private fun pruneReceivedCounters() {
-        val windowStart = if (_receiveCounter >= PSKProtocol.COUNTER_WINDOW.toUInt()) {
-            _receiveCounter - PSKProtocol.COUNTER_WINDOW.toUInt()
-        } else {
-            0u
-        }
-        _receivedCounters.removeAll { it < windowStart }
+        val (lower, _) = windowBounds()
+        _receivedCounters.removeAll { it < lower }
     }
 }

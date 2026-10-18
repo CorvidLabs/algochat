@@ -14,8 +14,8 @@ class AlgoChatClientTest {
     companion object {
         val ALICE_SEED = ByteArray(32) { 0x01 }
         val BOB_SEED = ByteArray(32) { 0x02 }
-        const val ALICE_ADDRESS = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ"
-        const val BOB_ADDRESS = "7777777777777777777777777777777777777777777777777774MSJUVU"
+        val ALICE_ADDRESS = AlgorandIdentity.address(ALICE_SEED)
+        val BOB_ADDRESS = AlgorandIdentity.address(BOB_SEED)
 
         /** Compute an Algorand address from a 32-byte Ed25519 public key. */
         fun algorandAddressFromPublicKey(publicKey: ByteArray): String {
@@ -76,6 +76,42 @@ class AlgoChatClientTest {
 
         assertEquals(ALICE_ADDRESS, client.address)
         assertEquals(32, client.encryptionPublicKey.size)
+    }
+
+    @Test
+    fun `fromSeed rejects an address from a different scheme or seed`() = runTest {
+        val falcon = AlgorandIdentity.address(ALICE_SEED, SigningScheme.FALCON_1024)
+        assertTrue(falcon != ALICE_ADDRESS)
+
+        val falconClient = AlgoChatClient.fromSeed(
+            seed = ALICE_SEED,
+            address = falcon,
+            config = AlgoChatConfig.localnet(),
+            algod = FakeAlgodClient(),
+            indexer = FakeIndexerClient(),
+            scheme = SigningScheme.FALCON_1024
+        )
+        assertEquals(falcon, falconClient.address)
+
+        assertThrows<IllegalArgumentException> {
+            AlgoChatClient.fromSeed(
+                seed = ALICE_SEED,
+                address = ALICE_ADDRESS,
+                config = AlgoChatConfig.localnet(),
+                algod = FakeAlgodClient(),
+                indexer = FakeIndexerClient(),
+                scheme = SigningScheme.FALCON_1024
+            )
+        }
+        assertThrows<IllegalArgumentException> {
+            AlgoChatClient.fromSeed(
+                seed = ALICE_SEED,
+                address = falcon,
+                config = AlgoChatConfig.localnet(),
+                algod = FakeAlgodClient(),
+                indexer = FakeIndexerClient()
+            )
+        }
     }
 
     @Test

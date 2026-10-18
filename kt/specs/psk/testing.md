@@ -14,4 +14,4 @@ spec: psk.spec.md
 
 ## Evidence limits
 
-The receive-wrapper rollback/replay tests cover mutex-protected validate/decrypt/record. Existing window tests do not establish a bound on future jumps, and current arithmetic does not enforce fail-before-wrap send exhaustion. These remain separate implementation gaps.
+The receive-wrapper rollback/replay tests cover mutex-protected validate/decrypt/record. `PSKTest` also rejects a fresh counter of `1000000`, keeps `0` rejected after `UInt.MAX_VALUE`, and refuses a second send after that maximum. Decoder tests reject 145-byte PSK frames and notes longer than 4096 bytes.

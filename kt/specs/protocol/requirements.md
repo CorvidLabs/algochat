@@ -29,7 +29,7 @@ spec: protocol.spec.md
 
 ### REQ-protocol-001
 
-The v1 envelope codec SHALL preserve every fixed-width field and reject short or unsupported headers.
+The v1 envelope codec SHALL preserve every fixed-width field and reject unsupported headers. Decode SHALL reject a standard frame shorter than 142 bytes and a note longer than 4096 bytes. A PQ open SHALL reject a note longer than 4096 bytes before returning plaintext.
 
 Acceptance Criteria
 - Existing round-trip, recognition, equality, short-input, and header-version cases pass in `EnvelopeTest`.

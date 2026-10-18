@@ -318,6 +318,7 @@ object PQ {
 
     /** Open a handshake with the recipient's long-term X25519 and ML-KEM keys. */
     fun acceptPQSession(note: ByteArray, recipient: KeyPair, kem: MLKEMKeyPair): PQSession {
+        rejectOversizedNote(note)
         val fields = parseHandshake(note)
         val recipientPublicKey = Keys.publicKeyToBytes(recipient.publicKey)
         if (!fields.recipientPublicKey.contentEquals(recipientPublicKey)) {
@@ -345,6 +346,7 @@ object PQ {
 
     /** Sender recovers the session from the handshake note and the long-term X25519 key. */
     fun openPQSessionAsSender(note: ByteArray, sender: KeyPair, senderKem: MLKEMKeyPair): PQSession {
+        rejectOversizedNote(note)
         val fields = parseHandshake(note)
         val senderPublicKey = Keys.publicKeyToBytes(sender.publicKey)
         if (!fields.senderPublicKey.contentEquals(senderPublicKey)) {
@@ -389,6 +391,7 @@ object PQ {
 
     /** Open a steady-state message. A failed tag does not return plaintext. */
     fun decryptPQMessage(note: ByteArray, session: PQSession): String {
+        rejectOversizedNote(note)
         if (!isPQMessage(note)) {
             throw AlgoChatException.InvalidEnvelope("Not a PQ message")
         }
@@ -503,6 +506,14 @@ object PQ {
 
     private fun sha256(data: ByteArray): ByteArray {
         return MessageDigest.getInstance("SHA-256").digest(data)
+    }
+
+    private fun rejectOversizedNote(note: ByteArray) {
+        if (note.size > Protocol.MAX_NOTE_SIZE) {
+            throw AlgoChatException.InvalidEnvelope(
+                "Note is ${note.size} bytes (maximum ${Protocol.MAX_NOTE_SIZE})"
+            )
+        }
     }
 
     private fun requireSize(name: String, value: ByteArray, size: Int) {

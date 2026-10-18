@@ -9,4 +9,4 @@ spec: psk.spec.md
 - [x] Record all six PSK production files in canonical coverage.
 
 - [x] Show the atomic `receive` wrapper and CSPRNG-generated PSK in README usage.
-- [ ] Close counter exhaustion and stronger bounded-window intent through separately approved implementation work; see the [accuracy ledger](../../../docs/ACCURACY.md).
+- [x] Fail closed on send-counter exhaustion and enforce the two-sided receive window.

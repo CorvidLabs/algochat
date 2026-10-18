@@ -23,7 +23,8 @@ class InMemoryMessageCacheTest {
         recipient: String = "BOB",
         content: String = "hello",
         round: Long = 100,
-        timestamp: Instant = Instant.ofEpochSecond(1700000000)
+        timestamp: Instant = Instant.ofEpochSecond(1700000000),
+        intraRoundOffset: Int = 0
     ) = Message(
         id = id,
         sender = sender,
@@ -31,7 +32,8 @@ class InMemoryMessageCacheTest {
         content = content,
         timestamp = timestamp,
         confirmedRound = round,
-        direction = MessageDirection.SENT
+        direction = MessageDirection.SENT,
+        intraRoundOffset = intraRoundOffset
     )
 
     @Test
@@ -68,16 +70,29 @@ class InMemoryMessageCacheTest {
     }
 
     @Test
-    fun `store maintains chronological order`() = runTest {
+    fun `store orders by round then offset and pages on that boundary`() = runTest {
         val cache = InMemoryMessageCache()
-        val later = makeMessage("tx1", timestamp = Instant.ofEpochSecond(2000000000))
-        val earlier = makeMessage("tx2", timestamp = Instant.ofEpochSecond(1000000000))
+        val laterRound = makeMessage("round20", round = 20, timestamp = Instant.ofEpochSecond(1))
+        val earlierRound = makeMessage(
+            "round10",
+            round = 10,
+            timestamp = Instant.ofEpochSecond(2_000_000_000)
+        )
+        val secondOffset = makeMessage("offset2", round = 10, intraRoundOffset = 2, timestamp = Instant.ofEpochSecond(1))
+        val firstOffset = makeMessage(
+            "offset1",
+            round = 10,
+            intraRoundOffset = 1,
+            timestamp = Instant.ofEpochSecond(2_000_000_000)
+        )
 
-        cache.store(listOf(later, earlier), "BOB")
+        cache.store(listOf(laterRound, secondOffset, earlierRound, firstOffset), "BOB")
         val retrieved = cache.retrieve("BOB")
+        assertEquals(listOf("round10", "offset1", "offset2", "round20"), retrieved.map { it.id })
 
-        assertEquals("tx2", retrieved[0].id) // earlier first
-        assertEquals("tx1", retrieved[1].id) // later second
+        val boundary = retrieved[1]
+        val nextPage = cache.retrieve("BOB", boundary.confirmedRound, boundary.intraRoundOffset)
+        assertEquals(listOf("offset2", "round20"), nextPage.map { it.id })
     }
 
     @Test

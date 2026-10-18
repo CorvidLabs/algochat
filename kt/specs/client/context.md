@@ -19,4 +19,4 @@ The client composes the wire-level primitives into application-facing coroutine 
 
 ## Accuracy audit
 
-The actual public storage types are `MessageCache`, `PublicKeyCache`, and `EncryptionKeyStorage` with their concrete implementations, rather than `Storage`/`ConversationStore`. The build has no Algorand Java SDK dependency; transport is application supplied. The normative identity, ordering, and persistence constraints remain in place while the [accuracy ledger](../../../docs/ACCURACY.md) records their current implementation gaps.
+The actual public storage types are `MessageCache`, `PublicKeyCache`, and `EncryptionKeyStorage` with their concrete implementations, rather than `Storage`/`ConversationStore`. The build has no Algorand Java SDK dependency; transport is application supplied. Address matching and round/offset order are implemented. Private-key persistence remains an open gap in the [accuracy ledger](../../../docs/ACCURACY.md).

@@ -7,12 +7,12 @@ import Testing
 import Security
 #endif
 
-/// FORWARD SECRECY PROOF DEMONSTRATION
-/// This test suite provides cryptographic proof that the implementation is correct.
-/// Each test demonstrates a specific security property with visible evidence.
+/// Per-message key separation checks.
+/// A fresh ephemeral key gives each message its own symmetric key.
+/// That is not forward secrecy: a long-term key still opens past messages.
 
-@Suite("PROOF: Forward Secrecy Implementation", .serialized)
-struct ForwardSecrecyProof {
+@Suite("Per-message key separation", .serialized)
+struct KeySeparationProof {
 
     // MARK: - PROOF 1: Ephemeral Keys Are Unique Per Message
 
@@ -117,7 +117,7 @@ struct ForwardSecrecyProof {
         )
 
         print("\n--- ENCRYPTED ENVELOPE ---")
-        print("Version:            0x\(String(format: "%02x", ChatEnvelope.version)) (forward secrecy + bidirectional)")
+        print("Version:            0x\(String(format: "%02x", ChatEnvelope.version)) (per-message key + bidirectional)")
         print("Sender static key:  \(envelope.senderPublicKey.prefix(8).hexString)...")
         print("Ephemeral key:      \(envelope.ephemeralPublicKey.prefix(8).hexString)...")
         print("Nonce:              \(envelope.nonce.hexString)")
@@ -188,12 +188,12 @@ struct ForwardSecrecyProof {
         #expect(authFailed, "Tampered message must be rejected")
     }
 
-    // MARK: - PROOF 5: Forward Secrecy Property
+    // MARK: - PROOF 5: Only the participants hold the message key
 
     @Test("PROOF 5: Third party cannot decrypt messages")
-    func proof5_forwardSecrecyProperty() throws {
+    func proof5_participantKeySeparation() throws {
         print("\n" + String(repeating: "=", count: 70))
-        print("PROOF 5: FORWARD SECRECY PROPERTY")
+        print("PROOF 5: PARTICIPANT KEY SEPARATION")
         print(String(repeating: "=", count: 70))
 
         let sender = Curve25519.KeyAgreement.PrivateKey()
@@ -202,7 +202,7 @@ struct ForwardSecrecyProof {
 
         // Send a message (ephemeral key is generated and discarded)
         let envelope = try MessageEncryptor.encrypt(
-            message: "This message has forward secrecy",
+            message: "This message uses its own key",
             senderPrivateKey: sender,
             recipientPublicKey: recipient.publicKey
         )
@@ -244,8 +244,8 @@ struct ForwardSecrecyProof {
         print("\n✅ PROOF: Only sender and recipient can decrypt")
 
         #expect(!eveSucceeded, "Third party must not decrypt")
-        #expect(senderDecrypted?.text == "This message has forward secrecy")
-        #expect(recipientDecrypted?.text == "This message has forward secrecy")
+        #expect(senderDecrypted?.text == "This message uses its own key")
+        #expect(recipientDecrypted?.text == "This message uses its own key")
     }
 
     // MARK: - PROOF 6: Nonce Security

@@ -1,8 +1,9 @@
 ---
 module: client
-version: 1.0.1
+version: 1.0.2
 status: active
 files:
+  - src/main/kotlin/com/corvidlabs/algochat/AccountIdentity.kt
   - src/main/kotlin/com/corvidlabs/algochat/AlgoChat.kt
   - src/main/kotlin/com/corvidlabs/algochat/Blockchain.kt
   - src/main/kotlin/com/corvidlabs/algochat/Models.kt
@@ -37,7 +38,7 @@ Provide the coroutine-based Kotlin client, Algorand transport abstractions, conv
 | Export | Description |
 |---|---|
 | `Message`, `MessageDirection`, `ReplyContext` | Immutable received/sent message data and reply preview metadata. |
-| `Conversation` | Deduplicates messages by transaction id, currently sorts by timestamp, and exposes directional queries. Canonical round/offset ordering remains an implementation gap. |
+| `Conversation` | Deduplicates messages by transaction id, sorts by confirmed round then intra-round offset, and exposes directional queries. `messagesAfter` pages on that same key so a boundary item is not skipped or repeated. |
 | `DiscoveredKey` | Public-key bytes plus verification and chain-discovery provenance. |
 | `SendOptions`, `SendResult` | Confirmation, indexer, reply, and amount controls plus the resulting transaction/message. |
 | `PendingMessage`, `PendingStatus`, `QueueConfig`, `SendQueue` | Retryable queued delivery with bounded capacity, state transitions, retry delay, and pruning. |
@@ -158,11 +159,11 @@ Provide the coroutine-based Kotlin client, Algorand transport abstractions, conv
 
 SpecSync's Kotlin member parser additionally exposes the following constructor properties and callable members. They retain the semantics of their owning types described above:
 
-`AlgoChatConfig`, `network`, `autoDiscoverKeys`, `cachePublicKeys`, `cacheMessages`, `AlgoChatClient`, `address`, `AlgorandConfig`, `algodUrl`, `algodToken`, `indexerUrl`, `indexerToken`, `TransactionInfo`, `txid`, `confirmedRound`, `NoteTransaction`, `sender`, `receiver`, `note`, `roundTime`, `SuggestedParams`, `fee`, `minFee`, `firstValid`, `lastValid`, `genesisId`, `genesisHash`, `AccountInfo`, `amount`, `minBalance`, `AlgodClient`, `getSuggestedParams`, `getAccountInfo`, `submitTransaction`, `waitForConfirmation`, `getCurrentRound`, `IndexerClient`, `searchTransactions`, `searchTransactionsBetween`, `getTransaction`, `waitForIndexer`, `discoverEncryptionKey`, `ReplyContext`, `messageId`, `preview`, `MessageDirection`, `Message`, `id`, `recipient`, `content`, `timestamp`, `direction`, `replyContext`, `intraRoundOffset`, `Conversation`, `participant`, `participantEncryptionKey`, `DiscoveredKey`, `publicKey`, `isVerified`, `discoveredInTx`, `discoveredAtRound`, `discoveredAt`, `SendOptions`, `timeoutRounds`, `indexerTimeoutSecs`, `customAmount`, `SendResult`, `message`, `PendingStatus`, `PendingMessage`, `createdAt`, `retryCount`, `lastAttempt`, `status`, `lastError`, `QueueConfig`, `maxRetries`, `retryDelay`, `maxQueueSize`, `SendQueue`, `MessageCache`, `store`, `retrieve`, `getLastSyncRound`, `setLastSyncRound`, `getCachedConversations`, `clear`, `clearFor`, `InMemoryMessageCache`, `key`, `verified`, `expiresAt`, `CachedKey`, `PublicKeyCache`, `EncryptionKeyStorage`, `hasKey`, `delete`, `listStoredAddresses`, `InMemoryKeyStorage`, and `FileKeyStorage`.
+`AlgoChatConfig`, `network`, `autoDiscoverKeys`, `cachePublicKeys`, `cacheMessages`, `AlgoChatClient`, `address`, `AlgorandConfig`, `algodUrl`, `algodToken`, `indexerUrl`, `indexerToken`, `TransactionInfo`, `txid`, `confirmedRound`, `NoteTransaction`, `sender`, `receiver`, `note`, `roundTime`, `SuggestedParams`, `fee`, `minFee`, `firstValid`, `lastValid`, `genesisId`, `genesisHash`, `AccountInfo`, `amount`, `minBalance`, `AlgodClient`, `getSuggestedParams`, `getAccountInfo`, `submitTransaction`, `waitForConfirmation`, `getCurrentRound`, `IndexerClient`, `searchTransactions`, `searchTransactionsBetween`, `getTransaction`, `waitForIndexer`, `discoverEncryptionKey`, `ReplyContext`, `messageId`, `preview`, `MessageDirection`, `Message`, `id`, `recipient`, `content`, `timestamp`, `direction`, `replyContext`, `intraRoundOffset`, `Conversation`, `participant`, `participantEncryptionKey`, `DiscoveredKey`, `publicKey`, `isVerified`, `discoveredInTx`, `discoveredAtRound`, `discoveredAt`, `SendOptions`, `timeoutRounds`, `indexerTimeoutSecs`, `customAmount`, `SendResult`, `message`, `PendingStatus`, `PendingMessage`, `createdAt`, `retryCount`, `lastAttempt`, `status`, `lastError`, `QueueConfig`, `maxRetries`, `retryDelay`, `maxQueueSize`, `SendQueue`, `MessageCache`, `store`, `retrieve`, `getLastSyncRound`, `setLastSyncRound`, `getCachedConversations`, `clear`, `clearFor`, `InMemoryMessageCache`, `key`, `verified`, `expiresAt`, `CachedKey`, `PublicKeyCache`, `EncryptionKeyStorage`, `hasKey`, `delete`, `listStoredAddresses`, `InMemoryKeyStorage`, `FileKeyStorage`, `SigningScheme`, `ED25519`, `FALCON_1024`, `AlgorandIdentity`, `ed25519PublicKey`, `encodeAddress`, `messagesAfter`, and `sendExhausted`.
 
 ## Invariants
 
-1. An `AlgoChatClient` derives its X25519 and Ed25519 identity from the supplied seed and exposes the corresponding Algorand address.
+1. An `AlgoChatClient` derives its X25519 identity from the supplied 32-byte mnemonic entropy and rejects a caller address that does not match that seed under the active signature scheme. Ed25519 is the default. Falcon-1024 accepts the Falcon address of that entropy and rejects its Ed25519 address.
 2. Conversation merge never duplicates a transaction id and keeps messages ordered by confirmed round then intra-round offset.
 3. A discovered key is marked verified only when its announcement carries a valid signature for the announcing Algorand address.
 4. Queue size never exceeds `maxQueueSize`; state transitions update retry metadata consistently and retry selection respects `retryDelay` and `maxRetries`.
@@ -199,6 +200,7 @@ Then A remains singular and B follows it in deterministic chain order
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.0.2 | 2026-10-18 | Check the supplied address against the seed and sort history by round then offset. |
 | 1.0.0 | 2026-07-14 | Canonically document the existing client, blockchain, model, queue, and storage behavior. |
 | 2026-07-14 | CHG-0002-run-the-existing-jdk-17-and-21-ci-matrix-when-trust-and-specsync-governance-file: Complete Kotlin AlgoChat SDD adoption and run the native CI matrix |
 
@@ -210,9 +212,8 @@ The client contract was established from the existing production sources and `Al
 
 The normative identity, round/offset ordering, private-key persistence, and byte-isolation requirements remain unchanged. Current source differs in these places:
 
-- `fromSeed` derives X25519 and Ed25519 keys but accepts the caller's address verbatim, without deriving/checking it.
 - `fromSeed` calls `keyStorage.store(..., requireBiometric=false)`, and `FileKeyStorage` persists encryption private keys. This exceeds the stated no-private-key-persistence boundary in the requirements.
-- `Conversation.append` sorts by timestamp alone, rather than confirmed round/intra-round offset.
 - `decrypt` ignores its `senderPublicKeyBytes` parameter and delegates to `decryptFull`; identity discovery is a separate `processTransaction` path.
+- Address matching and chain order are enforced. Falcon address derivation uses Bouncy Castle Falcon-1024 from the domain-separated seed `SHA-512/256("PQK" || "f1" || entropy)`. It is not a claim that this public key matches every other Falcon implementation.
 
 Source-grounded API descriptions above do not waive these stronger contracts. See the [accuracy ledger](../../../docs/ACCURACY.md).

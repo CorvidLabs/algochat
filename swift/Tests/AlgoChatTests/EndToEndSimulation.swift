@@ -458,14 +458,13 @@ struct SecurityBoundaryTests {
         }
 
         // Note: With the compromised recipient key, the attacker CAN decrypt all old messages.
-        // This is expected behavior - the implementation provides sender-side forward secrecy,
-        // not protection against recipient key compromise. Compromising the recipient's
-        // long-term key reveals all past messages encrypted to that key.
+        // A fresh ephemeral key only separates message keys. It is not forward secrecy.
+        // Compromising the recipient's long-term key reveals all past messages encrypted to that key.
 
         print("  Old messages attacker could decrypt: \(oldMessagesDecrypted)/50")
 
-        // Verify: recipient key compromise DOES expose old messages (expected behavior)
-        // This documents the security model - sender-side forward secrecy, not recipient protection
+        // Verify: recipient key compromise DOES expose old messages (expected behavior).
+        // Per-message keys do not protect history after that long-term key is known.
         #expect(oldMessagesDecrypted == 50, "All 50 old messages should be decryptable with compromised recipient key")
 
         // Phase 4: Bob rotates to new key

@@ -65,6 +65,9 @@ public enum ChatError: Error, Sendable {
 
     /// PSK counter replay detected (duplicate counter value)
     case pskCounterReplay
+
+    /// The send counter has already issued `UInt32.max` and cannot advance
+    case pskSendExhausted
 }
 
 extension ChatError: LocalizedError {
@@ -106,6 +109,8 @@ extension ChatError: LocalizedError {
             "PSK ratchet counter exceeds valid range"
         case .pskCounterReplay:
             "PSK ratchet counter replay detected"
+        case .pskSendExhausted:
+            "PSK send counter is exhausted"
         }
     }
 }

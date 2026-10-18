@@ -42,7 +42,7 @@ Acceptance Criteria
 
 ### REQ-psk-003
 
-PSK state SHALL advance sends atomically, reject replays and out-of-window receives, and commit receive counters only after decryption succeeds.
+PSK state SHALL advance sends atomically, reject replays and out-of-window receives, and commit receive counters only after decryption succeeds. A fresh state SHALL reject counter `1000000`. Accepting `4294967295` SHALL NOT make `0` acceptable or wrap the next send counter to `0`. Decode SHALL reject PSK frames shorter than 146 bytes and notes longer than 4096 bytes.
 
 Acceptance Criteria
 - Existing counter, replay, window, rollback, and reset cases pass in `PSKTest`.

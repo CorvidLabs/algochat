@@ -20,4 +20,4 @@ The PSK variant adds an out-of-band secret and ratchet position to the normal as
 
 ## Implementation gap status
 
-The current window bounds how far behind a counter can be; it does not bound future jumps. Unsigned send-counter arithmetic wraps rather than failing before reuse. Stronger counter-exhaustion/window intent remains open in the [accuracy ledger](../../../docs/ACCURACY.md).
+The receive window is 200 counters in both directions, and `nextSendCounter` fails instead of wrapping. `acceptReceiveCounter` still records before decryption; callers that need rollback use `receive`.

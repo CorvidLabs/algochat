@@ -5,7 +5,7 @@ spec: algochat.spec.md
 ## Key Decisions
 
 - Standard mode uses a fresh X25519 ephemeral key per message and authenticated encryption. That separates message keys. It does not provide forward secrecy.
-- PSK mode is optional defense-in-depth. It adds a deterministic ratchet and replay window without replacing authenticated ECDH.
+- PSK mode is optional defense-in-depth. It adds a deterministic ratchet and replay window without replacing authenticated ECDH. Accepted transaction ids are stored with the counters, so reading the same transaction again is not a replay. The send counter does not wrap.
 - Transaction notes are the immutable transport; the indexer is the read/discovery plane and local caches are accelerators, not authorities.
 - Durable queues and platform-specific key storage sit behind async `Sendable` protocols so applications can substitute implementations.
 

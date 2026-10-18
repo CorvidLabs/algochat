@@ -1,6 +1,6 @@
 ---
 module: psk
-version: 1.0.2
+version: 1.0.3
 status: active
 files:
   - src/main/kotlin/com/corvidlabs/algochat/PSKCrypto.kt
@@ -78,14 +78,14 @@ Define the optional AlgoChat v1 pre-shared-key protocol: deterministic ratchet d
 
 The complete member-level PSK contract also includes these operations, fields, and constants:
 
-`encryptMessage`, `encryptReply`, `decryptMessage`, `PSKEnvelopeCodec`, `encode`, `decode`, `isPSKMessage`, `address`, `psk`, `label`, `deriveSessionPSK`, `derivePositionPSK`, `derivePSKAtCounter`, `deriveHybridSymmetricKey`, `deriveSenderKey`, `initialPSK`, `peerId`, `VERSION`, `PROTOCOL_ID`, `HEADER_SIZE`, `TAG_SIZE`, `ENCRYPTED_SENDER_KEY_SIZE`, `MAX_PAYLOAD_SIZE`, `SESSION_SIZE`, `COUNTER_WINDOW`, `NONCE_SIZE`, `PUBLIC_KEY_SIZE`, `COUNTER_SIZE`, `SESSION_SALT`, `POSITION_SALT`, `HYBRID_KEY_INFO_PREFIX`, `SENDER_KEY_INFO_PREFIX`, `PSKEnvelope`, `ratchetCounter`, `senderPublicKey`, `ephemeralPublicKey`, `nonce`, `encryptedSenderKey`, and `ciphertext`.
+`encryptMessage`, `encryptReply`, `decryptMessage`, `PSKEnvelopeCodec`, `encode`, `decode`, `isPSKMessage`, `address`, `psk`, `label`, `deriveSessionPSK`, `derivePositionPSK`, `derivePSKAtCounter`, `deriveHybridSymmetricKey`, `deriveSenderKey`, `initialPSK`, `peerId`, `sendCounter`, `sendExhausted`, `receiveCounter`, `nextSendCounter`, `acceptReceiveCounter`, `receive`, `currentSendPSK`, `pskAtCounter`, `reset`, `VERSION`, `PROTOCOL_ID`, `HEADER_SIZE`, `TAG_SIZE`, `ENCRYPTED_SENDER_KEY_SIZE`, `MAX_PAYLOAD_SIZE`, `SESSION_SIZE`, `COUNTER_WINDOW`, `NONCE_SIZE`, `PUBLIC_KEY_SIZE`, `COUNTER_SIZE`, `SESSION_SALT`, `POSITION_SALT`, `HYBRID_KEY_INFO_PREFIX`, `SENDER_KEY_INFO_PREFIX`, `PSKEnvelope`, `ratchetCounter`, `senderPublicKey`, `ephemeralPublicKey`, `nonce`, `encryptedSenderKey`, and `ciphertext`.
 
 ## Invariants
 
 1. PSK envelope protocol id is distinct from the base protocol and includes a big-endian unsigned ratchet counter before the base key/nonce fields.
 2. Ratchet derivations are deterministic for identical PSK, peer context, and counter, but domain-separated across sessions, positions, hybrid keys, and sender keys.
-3. Sending consumes monotonically increasing counters and fails before unsigned wraparound.
-4. Receiving rejects replays and counters outside the configured forward window; failed decryption does not consume a counter.
+3. Sending consumes monotonically increasing counters and fails before unsigned wraparound. Issuing `4294967295` leaves the stored counter there; a later `nextSendCounter` throws `IllegalStateException` and does not return `0`.
+4. Receiving rejects replays and counters outside the 200-counter window in both directions. A fresh state accepts only `0` through `200`, so `1000000` is rejected. Accepting `4294967295` does not make `0` acceptable. Failed decryption does not consume a counter.
 5. Hybrid encryption requires both the correct 32-byte PSK and the correct X25519 identity; neither factor alone yields plaintext.
 6. Exchange decoding requires the v1 scheme, an address, and exactly 32 decoded PSK bytes.
 7. A PSK note is at most 4096 bytes. The header stays 130 bytes and the tag stays 16 bytes, so plaintext is at most 3950 bytes. A plaintext of 878 bytes still fits in 1024 bytes. One byte past 3950 is rejected before a transaction is built.
@@ -114,7 +114,7 @@ Then EncryptionFailed is thrown and no envelope is returned
 
 | Error | When | Behavior |
 |---|---|---|
-| `InvalidEnvelope` | PSK envelope length, version, protocol id, or field widths are invalid. | Reject before cryptographic processing. |
+| `InvalidEnvelope` | PSK envelope is shorter than 146 bytes, longer than 4096 bytes, or has a bad version, protocol id, or field width. | Reject before cryptographic processing. |
 | `DecryptionFailed` | PSK, asymmetric identity, nonce, counter, or ciphertext authentication is wrong. | Return no plaintext and do not commit receive state. |
 | `IllegalArgumentException` | Exchange URI scheme/parameters or PSK size is invalid. | Reject the exchange value. |
 | `IllegalStateException` | Send counter would wrap or receive counter violates replay/window policy. | Preserve a valid prior state. |
@@ -131,6 +131,7 @@ Then EncryptionFailed is thrown and no envelope is returned
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-07-14 | Canonically document the existing PSK envelope, ratchet, state, crypto, and exchange behavior. |
+| 1.0.3 | 2026-10-18 | Enforce the two-sided receive window, refuse send-counter wrap, and reject short or oversized PSK notes. |
 | 1.0.2 | 2026-10-16 | Raise the PSK plaintext max to 3950 so a full note is 4096 bytes. Header stays 130 and the tag stays 16. |
 | 2026-07-14 | CHG-0002-run-the-existing-jdk-17-and-21-ci-matrix-when-trust-and-specsync-governance-file: Complete Kotlin AlgoChat SDD adoption and run the native CI matrix |
 
@@ -140,4 +141,4 @@ The PSK contract was established from the existing production sources and the kn
 
 ## Implementation gap status (2026-10-18)
 
-`PSKState.receive(counter) { decrypt() }` is atomic under one mutex and records only after successful decryption. The lower-level `acceptReceiveCounter` records immediately, so it cannot replace the authenticated receive wrapper. Current `nextSendCounter` wraps at `UInt.MAX_VALUE`; receive validation accepts any future counter, with a trailing window only. Preserve stronger fail-before-wrap and bounded-counter intent as unresolved work rather than treating the current arithmetic as proof. See the [accuracy ledger](../../../docs/ACCURACY.md).
+`PSKState.receive(counter) { decrypt() }` is atomic under one mutex and records only after successful decryption. The lower-level `acceptReceiveCounter` records immediately, so it cannot replace the authenticated receive wrapper. Send exhaustion and the two-sided receive window are enforced. See the [accuracy ledger](../../../docs/ACCURACY.md) for gaps that remain outside this counter contract.

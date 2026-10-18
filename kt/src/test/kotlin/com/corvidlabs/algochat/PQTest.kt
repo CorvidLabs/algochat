@@ -126,6 +126,12 @@ class PQTest {
         assertEquals("parity", PQ.decryptPQMessage(message, reopened))
         assertEquals("parity", PQ.decryptPQMessage(message, session))
 
+        val oversized = message + ByteArray(4097 - message.size)
+        assertEquals(4097, oversized.size)
+        assertThrows<AlgoChatException.InvalidEnvelope> {
+            PQ.decryptPQMessage(oversized, session)
+        }
+
         val three = PQ.encryptPQMessage("abc", session)
         assertEquals(97, three.size)
         assertEquals("abc", PQ.decryptPQMessage(three, session))

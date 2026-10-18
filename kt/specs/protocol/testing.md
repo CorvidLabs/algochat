@@ -6,7 +6,7 @@ spec: protocol.spec.md
 
 ### Unit Tests
 
-- Run `AlgoChatTest`, `EnvelopeTest`, `MessagePayloadTest`, `SignatureTest`, and `PQTest` for key, crypto, wire, payload, signature, note-ceiling, note-fee, and hybrid-session behavior.
+- Run `AlgoChatTest`, `EnvelopeTest`, `MessagePayloadTest`, `SignatureTest`, and `PQTest` for key, crypto, wire, payload, signature, note-ceiling, note-fee, and hybrid-session behavior. `EnvelopeTest` rejects a 141-byte standard frame and a note longer than 4096 bytes. `PQTest` rejects a 4097-byte authenticated PQ note before plaintext is returned.
 
 ### Integration Tests
 
