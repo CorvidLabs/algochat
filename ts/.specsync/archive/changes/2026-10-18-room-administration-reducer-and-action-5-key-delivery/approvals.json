@@ -121,6 +121,13 @@
       "approved_delta_digests": {
         "algochat": "6ec34ca042eb1508abe54b2234e61c9b012caacc3e80c84f53fe6eaf1ac9ad0a"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792359948,
+      "digest": "e83fc4977d9a264296f4d6ba620fb202454fc058852bc8833336028f167fd64f",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []

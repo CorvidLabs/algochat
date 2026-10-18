@@ -7,11 +7,11 @@
   "title": "Room administration reducer and action-5 key delivery",
   "description": "Room administration reducer and action-5 key delivery",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "d71341d1cc6e2f43fd49ddb47d902a0741048d11",
   "created_at": 1792357146,
-  "updated_at": 1792359931,
+  "updated_at": 1792360151,
   "affected_specs": [
     "algochat"
   ],
