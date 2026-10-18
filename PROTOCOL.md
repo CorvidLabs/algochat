@@ -129,8 +129,10 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 | `0x02` | Ratcheting PSK | Stable (v1.1) | Hybrid X25519 + ratcheting pre-shared key. Provides defense-in-depth against quantum key exchange attacks. |
 | `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
 | `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
+| `0x06` | Group membership | Specified | One hybrid-session note that delivers a group key to one member. |
+| `0x07` | Group message | Specified | One note on the group mailbox under the current group key. |
 
-Identifier `0x03` is not assigned.
+Identifier `0x03` is not assigned. `0x06` and `0x07` are specified in section 5.8 and are not in the 1.3.0 parity matrix until every library passes section 5.8.4.
 
 ### 5.4.1 Envelope version
 
@@ -236,6 +238,44 @@ version 0x02 | protocol 0x05 | sender X25519 (32) | SHA-256(handshake note) (32)
 ```
 
 The ciphertext and 16-byte tag follow. Maximum plaintext is 4002 bytes (4096 - 78 - 16). A 3-byte message is a 97-byte note. The handshake is paid once. Later messages stay under 1024 bytes unless the plaintext itself is long.
+
+### 5.8 Group mailbox (protocols `0x06` and `0x07`)
+
+A group has one mailbox and one current group key. The mailbox is an Algorand address that is not a member. The creator pays 100000 microAlgos to that address once so the account exists. Later messages are 0 microAlgo payments to that address. The sender pays the fee from their own account. Readers watch payments whose receiver is the mailbox. The mailbox spending key is not required to read or to post.
+
+The group key is 32 bytes. It is delivered only inside `0x06`. A `0x06` note is a 1:1 payment to one member. It uses the hybrid session established by `0x04`. The header is the 78-byte `0x05` header with the protocol byte set to `0x06`:
+
+```
+version 0x02 | protocol 0x06 | sender X25519 (32) | SHA-256(handshake note) (32) | nonce (12)
+```
+
+Associated data is that header. The key is the hybrid session key. The plaintext is 101 bytes:
+
+```
+action (1) | epoch (4, big-endian) | group id (32) | mailbox (32) | group key (32)
+```
+
+`action` is 1 for create, 2 for add, 3 for remove, and 4 for rekey. `epoch` starts at 1 for create and increases by 1 for each later add, remove, or rekey. `group id` is 32 bytes chosen by the creator and copied into every later note. `mailbox` is the 32-byte public key of the mailbox address. `group key` is the key for that epoch. A removed member is not sent the new `0x06`. This wrap is PQ level 3: both the X25519 shared secret and the ML-KEM-768 shared secret were required to open the hybrid session. An everyday `0x01` wrap is not a legal way to deliver a group key.
+
+A `0x07` note is one payment to the mailbox. The header is 54 bytes:
+
+```
+version 0x02 | protocol 0x07 | group id (32) | epoch (4, big-endian) | counter (4, big-endian) | nonce (12)
+```
+
+Associated data is that header. The message key is HKDF-SHA256, 32 bytes:
+
+```
+salt = epoch || counter
+ikm  = group key
+info = UTF-8 "AlgoChat-group-v1" || group id || sender address (32)
+```
+
+`counter` is per sender and per epoch. It starts at 0 and increases by 1. A repeated `(sender, epoch, counter)` MUST be rejected. The ciphertext and 16-byte tag follow. Maximum plaintext is 4026 bytes (4096 - 54 - 16). The recorded PQ level of the note is 3, because that is the level of the wrap that delivered the group key. A leaked message key opens that one note. A leaked group key opens every `0x07` note for that epoch. A later theft of a member's long-term X25519 key and ML-KEM key can open that member's `0x06` wraps.
+
+#### 5.8.4 Parity
+
+`0x06` and `0x07` are in the parity matrix only after every library can create a group of three, add a fourth, remove one, and post one message to the same LocalNet mailbox, and every remaining library opens that message. The removed member's open MUST fail. Until that run is recorded, these protocol ids are specified and not claimed as shipped parity.
 
 ## 6. Encryption
 
