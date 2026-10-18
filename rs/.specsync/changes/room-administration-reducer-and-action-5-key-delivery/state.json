@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "room-administration-reducer-and-action-5-key-delivery",
+  "slug": "room-administration-reducer-and-action-5-key-delivery",
+  "title": "Room administration reducer and action-5 key delivery",
+  "description": "Room administration reducer and action-5 key delivery",
+  "kind": "feature",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "65208ae7865deaf589397c58e2396c6104731dd2",
+  "created_at": 1792358037,
+  "updated_at": 1792358104,
+  "affected_specs": [
+    "crate"
+  ],
+  "affected_paths": [
+    "src/group_admin.rs",
+    "src/lib.rs"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The module spec already names the room administration exports and source file.",
+  "acceptance_criteria": [
+    "The group_admin tests in rs/src/group_admin.rs match vectors/group-admin-v1.json, including rejected reasons and the 227-byte action-5 note."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "none",
+    "public_contract": "no"
+  }
+}
