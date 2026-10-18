@@ -1,0 +1,64 @@
+{
+  "timestamp": 1792335599,
+  "commit": "def2c7595f5569183237ccb0cbfcf15cb5784112",
+  "contract_digest": "15559297b2037f0aa61e136942f7f406a17ee0f8c623fad1b60d88b95815b3d3",
+  "execution_digest": "f719912b5c40d896e1257389fe02a727429f2b5b93ac32d3b60610cfa2a6aa63",
+  "workspace_digest": "3725f582ca673543f7060d5eb6cae2f7462f4577d434ae95e782b199404ea3d7",
+  "acceptance_input_digest": "b9619818cdf7c1aed1c732439e5e8c051091d86a0756b9c34db22e131637c2db",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "PROTOCOL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cb549cdecce21de232f598d30d8d5049672a28e6da790f9647dff56187f0f6d4",
+        "entry_digest": "87db839d2ec209db761f1ef634bf1d262f0f28a0c124b7beb47d5b43932355c0",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "SECURITY.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "861206294a3a0fc6ceede2f5723937512d6dd1c455594467c591456b8398e86f",
+        "entry_digest": "b4faadd55d9f25da70775158a8f72bd4c5832aa7fd10c9714c1610f391129afa",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/protocol/protocol.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a25f5e1480c1cf4f0b10af5499ccb383b44d4c68c2a797f6b53f60430b1d2191",
+        "entry_digest": "7738f8b0e27b33af2d160bc631cf836620b99046228b864e86f5fc9439086122",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "eea3715acad5c6ea2fba64602f364c424f22ec31632fdbf29c96665a70765dce",
+        "entry_digest": "c446c0da4304453cdf59c5e31d4eef2016c1459579aba9f0c80b96757f2fa325",
+        "owners": [
+          "protocol"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-protocol-3"
+  ]
+}

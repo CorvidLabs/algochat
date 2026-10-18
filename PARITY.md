@@ -2,7 +2,7 @@
 
 One wire format. Six libraries. A language is at parity only when it matches this contract and the bytes in [TEST-VECTORS.md](TEST-VECTORS.md). [PROTOCOL.md](PROTOCOL.md) section 5.7 is normative. If this file and PROTOCOL.md disagree, PROTOCOL.md wins.
 
-`0x01` and `0x02` stay. Identifier `0x03` is not assigned. Do not invent it.
+`0x01` and `0x02` stay. Identifier `0x03` is not assigned. Do not invent it. The PQ level of each assigned protocol is [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels).
 
 ## What 100 percent means
 

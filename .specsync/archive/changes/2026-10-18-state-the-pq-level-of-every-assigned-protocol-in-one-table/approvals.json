@@ -1,0 +1,47 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792335347,
+      "digest": "f41738b25ff4976c901f5b2c3def87887c41cfec89fd4c6226f7cef7fd44ff5e",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "state-the-pq-level-of-every-assigned-protocol-in-one-table",
+        "title": "State the PQ level of every assigned protocol in one table",
+        "description": "State the PQ level of every assigned protocol in one table",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PROTOCOL.md",
+          "SECURITY.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "PROTOCOL.md section 5.4.2 is the only PQ-level table. Everyday 0x01 is X25519 only. Extra lock 0x02 still needs the PSK after a break of X25519. Hybrid 0x04 and 0x05 need both X25519 and ML-KEM-768. 0x03 stays unassigned. A future group wrap must meet the Extra lock level or the hybrid level. SECURITY.md, the README, PARITY.md, and the six language READMEs point at that section."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "63ff967e4e031f5c41978d94b29a5b8e1998ba359357022b905c03adf832a7ef"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792335384,
+      "digest": "fe3c80f6fa098c70ac02c1bc11b62bb595c8073836eb500f9aa16bd3aeb84533",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}
