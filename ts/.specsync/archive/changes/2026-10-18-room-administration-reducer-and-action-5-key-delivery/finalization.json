@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "room-administration-reducer-and-action-5-key-delivery",
+  "implementation_commit": "6d2c88dec6b839773a8c54ceea41c78431e4df33",
+  "implementation_tree": "69c9252d9a0efb8838bf5f7e89f1b23f71e4d6f5",
+  "contract_digest": "462d9e74bf8ec5a5d05f0b691b918b372fdb6df4a93617b00da7f8254a3ade8f",
+  "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+  "closing_digest": "e83fc4977d9a264296f4d6ba620fb202454fc058852bc8833336028f167fd64f",
+  "review_digest": "38f4b3b85cd0f0123cc9b9d7a1ff8cdb87fba73646b492bde3e1a58a645fc738",
+  "finalization_digest": "301383698e53fa184a2518a051da3d422b59b6a2860815b6c2c3538b9589a1c8",
+  "timestamp": 1792359948
+}

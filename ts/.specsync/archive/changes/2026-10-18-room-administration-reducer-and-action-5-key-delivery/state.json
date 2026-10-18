@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "room-administration-reducer-and-action-5-key-delivery",
+  "slug": "room-administration-reducer-and-action-5-key-delivery",
+  "title": "Room administration reducer and action-5 key delivery",
+  "description": "Room administration reducer and action-5 key delivery",
+  "kind": "feature",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "d71341d1cc6e2f43fd49ddb47d902a0741048d11",
+  "created_at": 1792357146,
+  "updated_at": 1792360151,
+  "affected_specs": [
+    "algochat"
+  ],
+  "affected_paths": [
+    "src/pq/group-admin.ts",
+    "src/pq/group-admin.test.ts",
+    "src/pq/index.ts",
+    "src/pq/group.ts",
+    "src/pq/session.ts",
+    "specs/algochat/algochat.spec.md",
+    "ts/specs/algochat/algochat.spec.md",
+    "ts/specs/algochat/requirements.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "ts/src/pq/group-admin.test.ts matches vectors/group-admin-v1.json, including rejected reasons, delivery authorization, and the 227-byte action-5 note. Legacy group tests still open vectors/group-v1.json."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "constraints": "Keep notes within 4096 bytes. Public chain metadata, including member addresses, stays visible. Legacy 0x06 and 0x07 notes stay readable.",
+    "public_contract": "yes"
+  }
+}

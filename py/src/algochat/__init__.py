@@ -159,6 +159,20 @@ from .group import (
     seal_group_membership,
     seal_group_message,
 )
+from .group_admin import (
+    AcceptedAdmin,
+    AdminEvent,
+    GroupKeyDelivery,
+    ReduceAdminResult,
+    RejectedAdmin,
+    RoomState,
+    delivery_authorized,
+    draft_admin,
+    open_group_key_delivery,
+    reduce_admin,
+    seal_group_key_delivery,
+    sender_may_post,
+)
 
 __version__ = "0.2.0"
 
@@ -313,4 +327,17 @@ __all__ = [
     "derive_group_message_key",
     "seal_group_message",
     "open_group_message",
+    # Room administration (protocol 0x03) and 0x06 action 5
+    "RoomState",
+    "AdminEvent",
+    "AcceptedAdmin",
+    "RejectedAdmin",
+    "ReduceAdminResult",
+    "GroupKeyDelivery",
+    "draft_admin",
+    "reduce_admin",
+    "sender_may_post",
+    "delivery_authorized",
+    "seal_group_key_delivery",
+    "open_group_key_delivery",
 ]

@@ -11,6 +11,7 @@ files:
   - queue.go
   - psk.go
   - pq.go
+  - group_admin.go
   - cmd/pqcross/main.go
   - signature.go
   - storage.go
@@ -31,6 +32,20 @@ The package exposes the following existing symbols. It does not implement high-l
 
 | Export | Contract |
 |--------|----------|
+| `UnmarshalJSON` | Room administration symbol. |
+| `DraftAdmin` | Drafts an authorized 0x03 room administration note. |
+| `ReduceAdmin` | Reduces administration transactions into one room. |
+| `SenderMayPost` | Whether a member may post at an epoch. |
+| `DeliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `SealGroupKeyDelivery` | Seals a 227-byte 0x06 action-5 delivery. |
+| `OpenGroupKeyDelivery` | Opens a 227-byte 0x06 action-5 delivery. |
+| `RoomState` | Accepted room roster. |
+| `AdminDraft` | Inputs for one administration draft. |
+| `AdminEvent` | One administration transaction. |
+| `AcceptedAdmin` | One accepted administration record. |
+| `RejectedAdmin` | One rejected administration transaction. |
+| `ReduceAdminResult` | Reducer output. |
+| `GroupKeyDelivery` | Opened action-5 delivery. |
 | `ProtocolVersion` | Version-one envelope byte |
 | `ProtocolIDStandard` | Standard envelope protocol byte |
 | `ProtocolIDPSK` | Implemented pre-shared-key protocol byte `0x02` |

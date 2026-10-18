@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "let-the-swift-room-administration-tests-seal-a-note",
+  "implementation_commit": "9d2293c6b078c0f30ca8976691525ce5773ab10d",
+  "implementation_tree": "e694ffe2f54bad8b9af922222127e2ce686511c4",
+  "contract_digest": "48b0beb8a94fbd3b090f3edabd8390d76ac78418563071138315e10dc050832a",
+  "workspace_digest": "bc87bcd52b271b59a2f93e3ca0aa06360390a5d0bd1e30bb4b43137740afe50f",
+  "closing_digest": "423f9ff80dfa16ddcfd46e49a7bd32c185301e3254edc51afaa68bdcc65d1072",
+  "review_digest": "bc3572cfd29c1a2ca34bde06b1b03fb9a163672cd9b6becef5c52f30cfcd75d3",
+  "finalization_digest": "55c7309214955de75bfc67fa8566d78243cc1a6a8cd7f720d1dcdb0cbf1a5780",
+  "timestamp": 1792362611
+}

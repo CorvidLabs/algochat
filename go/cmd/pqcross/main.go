@@ -3,6 +3,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -12,29 +13,92 @@ import (
 )
 
 type request struct {
-	ID              int           `json:"id"`
-	Op              string        `json:"op"`
-	Seed            string        `json:"seed"`
-	AliceSeed       string        `json:"aliceSeed"`
-	BobSeed         string        `json:"bobSeed"`
-	Text            string        `json:"text"`
-	Handshake       string        `json:"handshake"`
-	Message         string        `json:"message"`
-	Note            string        `json:"note"`
-	PSK             string        `json:"psk"`
-	Counter         uint32        `json:"counter"`
-	Texts           []string      `json:"texts"`
-	SessionKey      string        `json:"sessionKey"`
-	SenderPublicKey string        `json:"senderPublicKey"`
-	HandshakeID     string        `json:"handshakeId"`
-	Action          int           `json:"action"`
-	Epoch           uint32        `json:"epoch"`
-	GroupID         string        `json:"groupId"`
-	Mailbox         string        `json:"mailbox"`
-	GroupKey        string        `json:"groupKey"`
-	Nonce           string        `json:"nonce"`
-	SenderAddress   string        `json:"senderAddress"`
-	Seen            []seenCounter `json:"seen"`
+	ID               int            `json:"id"`
+	Op               string         `json:"op"`
+	Seed             string         `json:"seed"`
+	AliceSeed        string         `json:"aliceSeed"`
+	BobSeed          string         `json:"bobSeed"`
+	Text             string         `json:"text"`
+	Handshake        string         `json:"handshake"`
+	Message          string         `json:"message"`
+	Note             string         `json:"note"`
+	PSK              string         `json:"psk"`
+	Counter          uint32         `json:"counter"`
+	Texts            []string       `json:"texts"`
+	SessionKey       string         `json:"sessionKey"`
+	SenderPublicKey  string         `json:"senderPublicKey"`
+	HandshakeID      string         `json:"handshakeId"`
+	Action           int            `json:"action"`
+	Epoch            uint32         `json:"epoch"`
+	GroupID          string         `json:"groupId"`
+	Mailbox          flexString     `json:"mailbox"`
+	GroupKey         string         `json:"groupKey"`
+	Nonce            string         `json:"nonce"`
+	SenderAddress    string         `json:"senderAddress"`
+	Seen             []seenCounter  `json:"seen"`
+	BasisState       *basisWire     `json:"basis_state"`
+	AdminOp          *int           `json:"admin_op"`
+	Subject          flexString     `json:"subject"`
+	NameUTF8         *string        `json:"name_utf8"`
+	Policy           *int           `json:"policy"`
+	GroupIDSnake     flexString     `json:"group_id"`
+	SessionKeySnake  flexString     `json:"session_key"`
+	SenderX25519     flexString     `json:"sender_x25519"`
+	HandshakeIDSnake flexString     `json:"handshake_id"`
+	GroupKeySnake    flexString     `json:"group_key"`
+	AdminTxID        flexString     `json:"admin_tx_id"`
+	Sender           flexString     `json:"sender"`
+	Recipient        flexString     `json:"recipient"`
+	Events           []eventWire    `json:"events"`
+	Accepted         []acceptedWire `json:"accepted"`
+	State            *basisWire     `json:"state"`
+}
+
+// flexString accepts a JSON string or null. Null is the same as an omitted field.
+type flexString string
+
+func (f *flexString) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		*f = ""
+		return nil
+	}
+	var text string
+	if err := json.Unmarshal(data, &text); err != nil {
+		return err
+	}
+	*f = flexString(text)
+	return nil
+}
+
+// basisWire is the public room roster. admin_op is the room operation because op is the command.
+type basisWire struct {
+	GroupID  string   `json:"group_id"`
+	Mailbox  string   `json:"mailbox"`
+	Owner    string   `json:"owner"`
+	Admins   []string `json:"admins"`
+	Members  []string `json:"members"`
+	Pending  []string `json:"pending"`
+	Policy   int      `json:"policy"`
+	NameHex  string   `json:"name_hex"`
+	Epoch    uint32   `json:"epoch"`
+	HeadTxID string   `json:"head_tx_id"`
+}
+
+type eventWire struct {
+	Note   string `json:"note"`
+	Sender string `json:"sender"`
+	TxID   string `json:"tx_id"`
+	Round  int    `json:"round"`
+	Offset int    `json:"offset"`
+}
+
+type acceptedWire struct {
+	TxID    string   `json:"tx_id"`
+	Sender  string   `json:"sender"`
+	Op      int      `json:"op"`
+	Epoch   uint32   `json:"epoch"`
+	Subject string   `json:"subject"`
+	Members []string `json:"members"`
 }
 
 type seenCounter struct {
@@ -128,6 +192,18 @@ func dispatch(req request) (map[string]any, error) {
 		return groupWrite(req)
 	case "groupRead":
 		return groupRead(req)
+	case "adminDraft":
+		return adminDraft(req)
+	case "adminReduce":
+		return adminReduce(req)
+	case "deliverSeal":
+		return deliverSeal(req)
+	case "deliverOpen":
+		return deliverOpen(req)
+	case "senderMayPost":
+		return senderMayPost(req)
+	case "deliveryAuthorized":
+		return deliveryAuthorized(req)
 	default:
 		return nil, fmt.Errorf("unknown op %s", req.Op)
 	}
@@ -480,7 +556,7 @@ func groupMembershipInputs(req request) (algochat.PQSession, algochat.GroupMembe
 		if err != nil {
 			return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
 		}
-		mailbox, err := hexN("mailbox", req.Mailbox, 32)
+		mailbox, err := hexN("mailbox", string(req.Mailbox), 32)
 		if err != nil {
 			return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
 		}
@@ -501,6 +577,342 @@ func groupMembershipInputs(req request) (algochat.PQSession, algochat.GroupMembe
 	copy(session.SenderPublicKey[:], sender)
 	copy(session.HandshakeID[:], hid)
 	return session, membership, nonce, nil
+}
+
+func adminDraft(req request) (map[string]any, error) {
+	state, err := reviveRoom(req.BasisState)
+	if err != nil {
+		return nil, err
+	}
+	sender, err := hex.DecodeString(string(req.Sender))
+	if err != nil {
+		return nil, err
+	}
+	var subject []byte
+	if req.Subject != "" {
+		subject, err = hex.DecodeString(string(req.Subject))
+		if err != nil {
+			return nil, err
+		}
+	}
+	var groupID []byte
+	if req.GroupIDSnake != "" {
+		groupID, err = hex.DecodeString(string(req.GroupIDSnake))
+		if err != nil {
+			return nil, err
+		}
+	}
+	var mailbox []byte
+	if req.Mailbox != "" {
+		mailbox, err = hex.DecodeString(string(req.Mailbox))
+		if err != nil {
+			return nil, err
+		}
+	}
+	op := 0
+	if req.AdminOp != nil {
+		op = *req.AdminOp
+	}
+	draft := algochat.AdminDraft{
+		Op:      op,
+		Sender:  sender,
+		Subject: subject,
+		GroupID: groupID,
+		Mailbox: mailbox,
+	}
+	if req.NameUTF8 != nil {
+		draft.Name = []byte(*req.NameUTF8)
+		draft.HasName = true
+	}
+	if req.Policy != nil {
+		draft.Policy = *req.Policy
+		draft.HasPolicy = true
+	}
+	note, err := algochat.DraftAdmin(state, draft)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"note": hex.EncodeToString(note)}, nil
+}
+
+func adminReduce(req request) (map[string]any, error) {
+	events := make([]algochat.AdminEvent, len(req.Events))
+	for i, item := range req.Events {
+		note, err := hex.DecodeString(item.Note)
+		if err != nil {
+			return nil, err
+		}
+		sender, err := hex.DecodeString(item.Sender)
+		if err != nil {
+			return nil, err
+		}
+		txID, err := hex.DecodeString(item.TxID)
+		if err != nil {
+			return nil, err
+		}
+		events[i] = algochat.AdminEvent{Note: note, Sender: sender, TxID: txID, Round: item.Round, Offset: item.Offset}
+	}
+	reduced := algochat.ReduceAdmin(events)
+	accepted := make([]acceptedWire, len(reduced.Accepted))
+	for i, item := range reduced.Accepted {
+		accepted[i] = acceptedWire{
+			TxID:    hex.EncodeToString(item.TxID),
+			Sender:  hex.EncodeToString(item.Sender),
+			Op:      item.Op,
+			Epoch:   item.Epoch,
+			Subject: hex.EncodeToString(item.Subject),
+			Members: encodeHexList(item.Members),
+		}
+	}
+	rejected := make([]map[string]any, len(reduced.Rejected))
+	for i, item := range reduced.Rejected {
+		rejected[i] = map[string]any{"tx_id": hex.EncodeToString(item.TxID), "reason": item.Reason}
+	}
+	var state any
+	if reduced.State != nil {
+		state = snapRoom(reduced.State)
+	}
+	return map[string]any{"state": state, "accepted": accepted, "rejected": rejected}, nil
+}
+
+func deliverSeal(req request) (map[string]any, error) {
+	session, err := deliverSession(req)
+	if err != nil {
+		return nil, err
+	}
+	groupID, err := hex.DecodeString(firstNonEmpty(string(req.GroupIDSnake), req.GroupID))
+	if err != nil {
+		return nil, err
+	}
+	mailbox, err := hex.DecodeString(string(req.Mailbox))
+	if err != nil {
+		return nil, err
+	}
+	groupKey, err := hex.DecodeString(firstNonEmpty(string(req.GroupKeySnake), req.GroupKey))
+	if err != nil {
+		return nil, err
+	}
+	adminTx, err := hex.DecodeString(string(req.AdminTxID))
+	if err != nil {
+		return nil, err
+	}
+	var nonce []byte
+	if req.Nonce != "" {
+		nonce, err = hex.DecodeString(req.Nonce)
+		if err != nil {
+			return nil, err
+		}
+	}
+	note, err := algochat.SealGroupKeyDelivery(session, req.Epoch, groupID, mailbox, groupKey, adminTx, nonce)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"note": hex.EncodeToString(note)}, nil
+}
+
+func deliverOpen(req request) (map[string]any, error) {
+	session, err := deliverSession(req)
+	if err != nil {
+		return nil, err
+	}
+	note, err := hex.DecodeString(req.Note)
+	if err != nil {
+		return nil, err
+	}
+	opened, err := algochat.OpenGroupKeyDelivery(note, session)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"epoch":       opened.Epoch,
+		"group_id":    hex.EncodeToString(opened.GroupID[:]),
+		"mailbox":     hex.EncodeToString(opened.Mailbox[:]),
+		"group_key":   hex.EncodeToString(opened.GroupKey[:]),
+		"admin_tx_id": hex.EncodeToString(opened.AdminTxID[:]),
+	}, nil
+}
+
+func senderMayPost(req request) (map[string]any, error) {
+	if req.State == nil {
+		return nil, fmt.Errorf("missing room")
+	}
+	state, err := reviveRoom(req.State)
+	if err != nil {
+		return nil, err
+	}
+	sender, err := hex.DecodeString(string(req.Sender))
+	if err != nil {
+		return nil, err
+	}
+	allowed, err := algochat.SenderMayPost(*state, sender, req.Epoch)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"allowed": allowed}, nil
+}
+
+func deliveryAuthorized(req request) (map[string]any, error) {
+	accepted := make([]algochat.AcceptedAdmin, len(req.Accepted))
+	for i, item := range req.Accepted {
+		txID, err := hex.DecodeString(item.TxID)
+		if err != nil {
+			return nil, err
+		}
+		sender, err := hex.DecodeString(item.Sender)
+		if err != nil {
+			return nil, err
+		}
+		subject, err := hex.DecodeString(item.Subject)
+		if err != nil {
+			return nil, err
+		}
+		members, err := decodeHexList(item.Members)
+		if err != nil {
+			return nil, err
+		}
+		accepted[i] = algochat.AcceptedAdmin{
+			TxID:    txID,
+			Sender:  sender,
+			Op:      item.Op,
+			Epoch:   item.Epoch,
+			Subject: subject,
+			Members: members,
+		}
+	}
+	adminTx, err := hex.DecodeString(string(req.AdminTxID))
+	if err != nil {
+		return nil, err
+	}
+	sender, err := hex.DecodeString(string(req.Sender))
+	if err != nil {
+		return nil, err
+	}
+	recipient, err := hex.DecodeString(string(req.Recipient))
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"allowed": algochat.DeliveryAuthorized(accepted, adminTx, sender, recipient, req.Epoch),
+	}, nil
+}
+
+func deliverSession(req request) (algochat.PQSession, error) {
+	sessionKey, err := hex.DecodeString(firstNonEmpty(string(req.SessionKeySnake), req.SessionKey))
+	if err != nil {
+		return algochat.PQSession{}, err
+	}
+	sender, err := hex.DecodeString(firstNonEmpty(string(req.SenderX25519), req.SenderPublicKey))
+	if err != nil {
+		return algochat.PQSession{}, err
+	}
+	hid, err := hex.DecodeString(firstNonEmpty(string(req.HandshakeIDSnake), req.HandshakeID))
+	if err != nil {
+		return algochat.PQSession{}, err
+	}
+	if len(sender) != algochat.KeySize {
+		return algochat.PQSession{}, fmt.Errorf("sender public key must be %d bytes, got %d", algochat.KeySize, len(sender))
+	}
+	if len(hid) != algochat.KeySize {
+		return algochat.PQSession{}, fmt.Errorf("handshake id must be %d bytes, got %d", algochat.KeySize, len(hid))
+	}
+	session := algochat.PQSession{SessionKey: sessionKey}
+	copy(session.SenderPublicKey[:], sender)
+	copy(session.HandshakeID[:], hid)
+	return session, nil
+}
+
+func reviveRoom(state *basisWire) (*algochat.RoomState, error) {
+	if state == nil {
+		return nil, nil
+	}
+	groupID, err := hex.DecodeString(state.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	mailbox, err := hex.DecodeString(state.Mailbox)
+	if err != nil {
+		return nil, err
+	}
+	owner, err := hex.DecodeString(state.Owner)
+	if err != nil {
+		return nil, err
+	}
+	admins, err := decodeHexList(state.Admins)
+	if err != nil {
+		return nil, err
+	}
+	members, err := decodeHexList(state.Members)
+	if err != nil {
+		return nil, err
+	}
+	pending, err := decodeHexList(state.Pending)
+	if err != nil {
+		return nil, err
+	}
+	name, err := hex.DecodeString(state.NameHex)
+	if err != nil {
+		return nil, err
+	}
+	head, err := hex.DecodeString(state.HeadTxID)
+	if err != nil {
+		return nil, err
+	}
+	return &algochat.RoomState{
+		GroupID:  groupID,
+		Mailbox:  mailbox,
+		Owner:    owner,
+		Admins:   admins,
+		Members:  members,
+		Pending:  pending,
+		Policy:   state.Policy,
+		Name:     name,
+		Epoch:    state.Epoch,
+		HeadTxID: head,
+	}, nil
+}
+
+func snapRoom(state *algochat.RoomState) basisWire {
+	return basisWire{
+		GroupID:  hex.EncodeToString(state.GroupID),
+		Mailbox:  hex.EncodeToString(state.Mailbox),
+		Owner:    hex.EncodeToString(state.Owner),
+		Admins:   encodeHexList(state.Admins),
+		Members:  encodeHexList(state.Members),
+		Pending:  encodeHexList(state.Pending),
+		Policy:   state.Policy,
+		NameHex:  hex.EncodeToString(state.Name),
+		Epoch:    state.Epoch,
+		HeadTxID: hex.EncodeToString(state.HeadTxID),
+	}
+}
+
+func decodeHexList(items []string) ([][]byte, error) {
+	out := make([][]byte, len(items))
+	for i, item := range items {
+		raw, err := hex.DecodeString(item)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = raw
+	}
+	return out, nil
+}
+
+func encodeHexList(items [][]byte) []string {
+	out := make([]string, len(items))
+	for i, item := range items {
+		out[i] = hex.EncodeToString(item)
+	}
+	return out
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func hexN(label, hexText string, n int) ([]byte, error) {

@@ -129,10 +129,11 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 | `0x02` | Ratcheting PSK | Stable (v1.1) | Hybrid X25519 + ratcheting pre-shared key. Provides defense-in-depth against quantum key exchange attacks. |
 | `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
 | `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
+| `0x03` | Room administration | Implemented | Public room record: owner, admins, members, joining rule, and name. Not in tag v1.3.0. |
 | `0x06` | Group membership | Implemented | One hybrid-session note that delivers a group key to one member. Not in tag v1.3.0. |
 | `0x07` | Group message | Implemented | One note on the group mailbox under the current group key. Not in tag v1.3.0. |
 
-Identifier `0x03` is not assigned. `0x06` and `0x07` are specified in section 5.8. Section 5.8.4 records the LocalNet run. Tag v1.3.0 does not include these ids.
+`0x03`, `0x06`, and `0x07` are specified in section 5.8. Section 5.8.4 records the earlier LocalNet run, which did not use `0x03`. Tag v1.3.0 does not include these ids.
 
 ### 5.4.1 Envelope version
 
@@ -160,13 +161,13 @@ PQ level is an integer from 0 to 5. Other documents in this repository MUST use 
 | --- | --- | --- |
 | `0x01` | Everyday | 0. X25519 only. |
 | `0x02` | Extra lock | 1 while the 32-byte pre-shared key stays secret. A lost or low-entropy secret drops the note to level 0. |
-| `0x03` | Not assigned | No level. This byte is not a protocol and not an envelope version. |
+| `0x03` | Room administration | No key exchange. The record is public and has no PQ level. The room key stays in `0x06`, which is level 3. |
 | `0x04` | Hybrid handshake | 3. ML-KEM-768 is FIPS 203 category 3, and the session key also requires the X25519 shared secret. Breaking only one does not open the handshake. Both long-term keys together do. |
 | `0x05` | Hybrid message | 3, the same as its `0x04` handshake. The session key opens every `0x05` note in that handshake. A leaked session key opens those notes without a new attack on ML-KEM. |
 | `0x06` | Group membership | 3. The group key is wrapped under the hybrid session. Both the X25519 shared secret and the ML-KEM-768 shared secret are required. |
 | `0x07` | Group message | 3, the same as the `0x06` wrap that delivered the group key. A leaked group key opens every `0x07` note in that epoch. |
 
-Group membership `0x06` and group message `0x07` are assigned in section 5.8. The wrap is the hybrid session, so it is PQ level 3. Level 0 does not meet the bar. This version does not define an Extra lock wrap for the group key. The group message uses the same ChaCha20-Poly1305 body as the other modes.
+Group membership `0x06` and group message `0x07` are assigned in section 5.8. The wrap is the hybrid session, so it is PQ level 3. Level 0 does not meet the bar. This version does not define an Extra lock wrap for the group key. The group message uses the same ChaCha20-Poly1305 body as the other modes. Room administration `0x03` carries no key, so it has no PQ level.
 
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
@@ -204,7 +205,7 @@ A plaintext of 878 bytes still encrypts. That envelope is 1024 bytes. It remains
 
 ### 5.7 Hybrid session (protocols `0x04` and `0x05`)
 
-This mode is optional. A peer with no ML-KEM encapsulation key still receives `0x01` or `0x02`. Identifier `0x03` is not assigned.
+This mode is optional. A peer with no ML-KEM encapsulation key still receives `0x01` or `0x02`.
 
 ML-KEM-768 ([FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), finalized August 2024, category 3) is combined with X25519. Using this standardized algorithm does not establish an implementation audit or FIPS validation. The recipient derives the session key from both shared secrets. The long-term ML-KEM key decapsulates the ML-KEM half of every handshake sent to that account; recovering the session also requires the recipient's X25519 secret. This is not forward secrecy.
 
@@ -264,25 +265,82 @@ version 0x02 | protocol 0x05 | sender X25519 (32) | SHA-256(handshake note) (32)
 
 The ciphertext and 16-byte tag follow. Maximum plaintext is 4002 bytes (4096 - 78 - 16). A 3-byte message is a 97-byte note. The handshake is paid once. Later messages stay under 1024 bytes unless the plaintext itself is long.
 
-### 5.8 Group mailbox (protocols `0x06` and `0x07`)
+### 5.8 Group mailbox (protocols `0x03`, `0x06`, and `0x07`)
 
-A group has one mailbox and one current group key. The mailbox is an Algorand address that is not a member. The creator pays 100000 microAlgos to that address once so the account exists. Later messages are 0 microAlgo payments to that address. The sender pays the fee from their own account. Readers watch payments whose receiver is the mailbox. The mailbox spending key is not required to read or to post.
+A group has one mailbox. The mailbox is an Algorand address that is not a member, not an admin, and not the owner. The creator pays 100000 microAlgos to that address once so the account exists. Later administration records and messages are 0 microAlgo payments to that address. The sender pays the fee from their own account. Readers watch payments whose receiver is the mailbox. The mailbox spending key is not required to read or to post, and holding it does not make that person the owner. Signing a payment does not by itself grant a role.
 
-The group key is 32 bytes. It is delivered only inside `0x06`. A `0x06` note is a 1:1 payment to one member. It uses the hybrid session established by `0x04`. The header is the 78-byte `0x05` header with the protocol byte set to `0x06`:
+The room key is 32 bytes. It is never written in a `0x03` record. It is delivered only inside `0x06`. An everyday `0x01` wrap is not a legal way to deliver a room key. Creating a room does not mint or require an NFT.
+
+#### 5.8.1 Legacy membership (`0x06` actions 1–4)
+
+A legacy `0x06` note is a 1:1 payment to one member. It uses the hybrid session established by `0x04`. The header is the 78-byte `0x05` header with the protocol byte set to `0x06`:
 
 ```
 version 0x02 | protocol 0x06 | sender X25519 (32) | SHA-256(handshake note) (32) | nonce (12)
 ```
 
-Associated data is that header. The key is the hybrid session key. The plaintext is 101 bytes:
+Associated data is that header. The key is the hybrid session key. Actions 1 through 4 use a 101-byte plaintext, and the note is 195 bytes:
 
 ```
 action (1) | epoch (4, big-endian) | group id (32) | mailbox (32) | group key (32)
 ```
 
-`action` is 1 for create, 2 for add, 3 for remove, and 4 for rekey. `epoch` starts at 1 for create and increases by 1 for each later add, remove, or rekey. `group id` is 32 bytes chosen by the creator and copied into every later note. `mailbox` is the 32-byte public key of the mailbox address. `group key` is the key for that epoch. A removed member is not sent the new `0x06`. This wrap is PQ level 3: both the X25519 shared secret and the ML-KEM-768 shared secret were required to open the hybrid session. An everyday `0x01` wrap is not a legal way to deliver a group key.
+`action` is 1 for create, 2 for add, 3 for remove, and 4 for rekey. In a legacy note, `epoch` starts at 1 for create and increases by 1 for each later add, remove, or rekey. `group id` is 32 bytes chosen by the creator. `mailbox` is the 32-byte public key of the mailbox address. These notes still open. They do not create an owner, and they do not authorize a later administration record. A room that wants an owner, admins, or a joining rule starts a new `0x03` chain. This wrap is PQ level 3: both the X25519 shared secret and the ML-KEM-768 shared secret were required to open the hybrid session.
 
-A `0x07` note is one payment to the mailbox. The header is 54 bytes:
+#### 5.8.2 Room administration (`0x03`)
+
+A `0x03` record is public. It is a 0-microAlgo payment to the room mailbox. The transaction sender is the actor. The note has no separate actor field.
+
+```
+version 0x02 | protocol 0x03
+parent (32) | group id (32) | mailbox (32) | epoch (4, big-endian) | op (1)
+name length (1, 0 through 64) | name (UTF-8)
+policy (1) | owner (32)
+admin count (2, big-endian) | admins (32 each)
+member count (2, big-endian) | members (32 each)
+subject (32)
+```
+
+`policy` is 1 for invite-only and 2 for ask-to-join. Admin and member lists are strictly increasing 32-byte public keys, with no duplicates. At most 16 admins and 100 members. The display name is at most 64 UTF-8 bytes. The whole note is at most 4096 bytes. Pending join requests are not stored in the note. Clients derive them.
+
+| Op | Name | Who may send it | Effect |
+| --- | --- | --- | --- |
+| 1 | create | the new owner | Epoch 1, no admins, members are the sender alone, parent and subject are 32 zero bytes. |
+| 2 | set name | owner or admin | Replaces the display name. Subject is 32 zero bytes. |
+| 3 | set policy | owner or admin | Sets invite-only or ask-to-join. Subject is 32 zero bytes. |
+| 4 | appoint admin | owner | Subject is a member, not the owner, and not already an admin. |
+| 5 | dismiss admin | owner | Subject is an admin. |
+| 6 | transfer owner | owner | Subject is a different member. That person becomes owner and leaves the admin list. The previous owner stays a member. Epoch increases by 1. |
+| 7 | add member | owner or admin | Subject is not a member and is not the mailbox. Legal under both joining rules. Epoch stays. |
+| 8 | request join | the subject | Ask-to-join only. Subject is the sender, not a member, and not already pending. |
+| 9 | accept join | owner or admin | Subject has a pending request and becomes a member. Epoch stays. |
+| 10 | decline join | owner or admin | Subject has a pending request. The request is dropped. |
+| 11 | remove member | owner or admin | Subject is a member and is not the owner. Epoch increases by 1. |
+| 12 | rekey | owner or admin | Subject is 32 zero bytes. Epoch increases by 1. |
+
+The owner cannot be removed. The owner must remain a member. Epoch starts at 1 and increases only for remove, rekey, and transfer. An increment past 4294967295 fails.
+
+The parent of create is 32 zero bytes. Every op except a join request names the transaction id of the current head. Clients accept a record only when the parent state authorized that sender to make that change, and only when the note's owner, epoch, policy, name, admins, and members equal the one next state that change produces. Applying the same transaction id twice is a replay.
+
+Chain order is confirmed round, then intra-round offset, then the transaction id bytes. When two records name the same parent, the earlier one in that order wins. The other stays rejected, even when an admin signed it. Clients recompute from the full set.
+
+A join request does not become the head, so other requests can name the same accepted record. The request must cite an already-accepted administration transaction of this room. It is checked against the current roster, name, policy, owner, and epoch, and the note repeats those fields. A request that confirms after a change to those fields is rejected, and the person asks again. A request is legal only while the room is ask-to-join.
+
+Direct add is an invite. It is legal on both joining rules. Request, accept, and decline are the ask-to-join path. A person may belong to more than one room. Membership in one room does not add them to another.
+
+#### 5.8.3 Key delivery (`0x06` action 5) and mailbox messages (`0x07`)
+
+An administered room delivers the room key with `0x06` action 5. The header is the same 78-byte hybrid header. The plaintext is 133 bytes, and the note is 227 bytes:
+
+```
+action 5 (1) | epoch (4, big-endian) | group id (32) | mailbox (32) | group key (32) | administration transaction id (32)
+```
+
+The cited administration transaction must be an accepted record sent by this same sender. The epoch must match that record. The recipient must be a member after that record. Add and accept authorize delivery only to the subject. Remove authorizes delivery to every remaining member except the subject. Rekey and transfer authorize delivery to every remaining member, including the new owner after a transfer. Create does not authorize a delivery, because the creator generated the key locally. Set name, set policy, appoint, dismiss, request, and decline do not authorize a delivery.
+
+Adding a member sends the current key only to that member and does not rotate the key. Removal, an explicit rekey, and an ownership transfer rotate the key and deliver the new key only to the members who remain. A removed person does not receive that key. Messages they already opened stay readable under the previous key. A later message uses the new epoch and does not open under the old key.
+
+A `0x07` note is one payment to the mailbox. Its wire format is unchanged. The header is 54 bytes:
 
 ```
 version 0x02 | protocol 0x07 | group id (32) | epoch (4, big-endian) | counter (4, big-endian) | nonce (12)
@@ -298,7 +356,11 @@ info = UTF-8 "AlgoChat-group-v1" || group id || sender address (32)
 
 `counter` is per sender and per epoch. It starts at 0 and increases by 1. A repeated `(sender, epoch, counter)` MUST be rejected. The ciphertext and 16-byte tag follow. Maximum plaintext is 4026 bytes (4096 - 54 - 16). The recorded PQ level of the note is 3, because that is the level of the wrap that delivered the group key. A leaked message key opens that one note. A leaked group key opens every `0x07` note for that epoch. A later theft of a member's long-term X25519 key and ML-KEM key can open that member's `0x06` wraps.
 
+Once a room has an accepted `0x03` chain, a client shows a mailbox note only when it opens under the key for that epoch and the payment sender is a member in the accepted state for that epoch. A note from anyone else is ignored. A legacy room with no `0x03` chain keeps the earlier rule: open with the known key and reject a repeated sender counter. Historical messages are opened with the key and membership of the epoch they name.
+
 #### 5.8.4 Parity
+
+This subsection records the historical membership run. It is not an administration run.
 
 On 2026-10-18 the driver `ts/scripts/group-matrix-localnet.ts` ran on LocalNet. The creator funded the mailbox with 100000 microAlgos in round 46313. Create notes for a group of three confirmed in rounds 46315 and 46316. Add notes for a fourth member confirmed in rounds 46317, 46318, and 46319. Remove notes, which were not sent to the removed member, confirmed in rounds 46320 and 46321. One `0x07` payment to the mailbox confirmed in round 46322. TypeScript, Go, Rust, Python, Kotlin, and Swift each produced the same note bytes, and each opened the mailbox note. Opening that note with the previous group key failed in every library. A repeated counter failed in every library. Identifier `0x03` was not used.
 
@@ -866,4 +928,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.2 | Account agility: payments MAY be Falcon-1024 `pqsig` as well as Ed25519 `sig`. Encryption seed is mnemonic entropy, not a signing-key prefix. Falcon min fee is 3×. Envelope bytes and 1.1 test vectors are unchanged. |
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
 | 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |
-| unreleased | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Tag v1.3.0 does not include these ids. |
+| unreleased | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Protocol `0x03` is the public room administration record. Tag v1.3.0 does not include these ids. |

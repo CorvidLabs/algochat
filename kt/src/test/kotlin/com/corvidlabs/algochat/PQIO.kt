@@ -2,6 +2,7 @@ package com.corvidlabs.algochat
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -38,6 +39,12 @@ fun main() {
             if (op == "groupSeal" || op == "groupOpen" || op == "groupWrite" || op == "groupRead") {
                 val result = groupCall(op, req)
                 reply(id, true, result.first, numbers = result.second)
+                continue
+            }
+            if (op == "adminDraft" || op == "adminReduce" || op == "deliverSeal" || op == "deliverOpen" ||
+                op == "senderMayPost" || op == "deliveryAuthorized"
+            ) {
+                replyElement(id, true, adminCall(op, req))
                 continue
             }
             val fields = when (op) {
@@ -256,6 +263,167 @@ private fun groupWrite(req: JsonObject): Map<String, String> {
     )
 }
 
+private fun adminCall(op: String, req: JsonObject): JsonObject {
+    return when (op) {
+        "adminDraft" -> buildJsonObject { put("note", bytesToHex(adminDraft(req))) }
+        "adminReduce" -> adminReduce(req)
+        "deliverSeal" -> buildJsonObject { put("note", bytesToHex(deliverSeal(req))) }
+        "deliverOpen" -> deliverOpen(req)
+        "senderMayPost" -> buildJsonObject {
+            val state = req["state"]?.jsonObject ?: throw IllegalArgumentException("missing state")
+            put(
+                "allowed",
+                GroupAdmin.senderMayPost(roomState(state), hexToBytes(req.str("sender")), req.uint32("epoch"))
+            )
+        }
+        "deliveryAuthorized" -> buildJsonObject {
+            val accepted = req["accepted"]?.jsonArray ?: throw IllegalArgumentException("missing accepted")
+            put(
+                "allowed",
+                GroupAdmin.deliveryAuthorized(
+                    accepted.map { acceptedAdmin(it.jsonObject) },
+                    hexToBytes(req.str("admin_tx_id")),
+                    hexToBytes(req.str("sender")),
+                    hexToBytes(req.str("recipient")),
+                    req.uint32("epoch")
+                )
+            )
+        }
+        else -> throw IllegalArgumentException("unknown op $op")
+    }
+}
+
+private fun adminDraft(req: JsonObject): ByteArray {
+    return GroupAdmin.draftAdmin(
+        req.stateOrNull("basis_state"),
+        req.reqInt("admin_op"),
+        hexToBytes(req.str("sender")),
+        req.hexOrNull("subject"),
+        req.utf8OrNull("name_utf8"),
+        req.intOrNull("policy"),
+        req.hexOrNull("group_id"),
+        req.hexOrNull("mailbox")
+    )
+}
+
+private fun adminReduce(req: JsonObject): JsonObject {
+    val events = req["events"]?.jsonArray ?: throw IllegalArgumentException("missing events")
+    val result = GroupAdmin.reduceAdmin(events.map { element ->
+        val item = element.jsonObject
+        AdminEvent(
+            hexToBytes(item.str("note")),
+            hexToBytes(item.str("sender")),
+            hexToBytes(item.str("tx_id")),
+            item.reqInt("round"),
+            item.reqInt("offset")
+        )
+    })
+    return buildJsonObject {
+        put("state", result.state?.let { stateJson(it) } ?: JsonNull)
+        put("accepted", JsonArray(result.accepted.map { acceptedJson(it) }))
+        put("rejected", JsonArray(result.rejected.map { rejectedJson(it) }))
+    }
+}
+
+private fun deliverSeal(req: JsonObject): ByteArray {
+    return GroupAdmin.sealGroupKeyDelivery(
+        deliverSession(req),
+        req.uint32("epoch"),
+        hexToBytes(req.str("group_id")),
+        hexToBytes(req.str("mailbox")),
+        hexToBytes(req.str("group_key")),
+        hexToBytes(req.str("admin_tx_id")),
+        hexToBytes(req.str("nonce"))
+    )
+}
+
+private fun deliverOpen(req: JsonObject): JsonObject {
+    val opened = GroupAdmin.openGroupKeyDelivery(hexToBytes(req.str("note")), deliverSession(req))
+    return buildJsonObject {
+        put("epoch", unsignedEpoch(opened.epoch))
+        put("group_id", bytesToHex(opened.groupId))
+        put("mailbox", bytesToHex(opened.mailbox))
+        put("group_key", bytesToHex(opened.groupKey))
+        put("admin_tx_id", bytesToHex(opened.adminTxId))
+    }
+}
+
+private fun deliverSession(req: JsonObject): PQSession {
+    return PQSession(
+        hexToBytes(req.str("session_key")),
+        hexToBytes(req.str("sender_x25519")),
+        ByteArray(32),
+        hexToBytes(req.str("handshake_id"))
+    )
+}
+
+private fun roomState(state: JsonObject): RoomState {
+    return RoomState(
+        hexToBytes(state.str("group_id")),
+        hexToBytes(state.str("mailbox")),
+        hexToBytes(state.str("owner")),
+        state.hexList("admins"),
+        state.hexList("members"),
+        state.hexList("pending"),
+        state.reqInt("policy"),
+        hexToBytes(state.str("name_hex")),
+        state.uint32("epoch"),
+        hexToBytes(state.str("head_tx_id"))
+    )
+}
+
+private fun acceptedAdmin(item: JsonObject): AcceptedAdmin {
+    return AcceptedAdmin(
+        hexToBytes(item.str("tx_id")),
+        hexToBytes(item.str("sender")),
+        item.reqInt("op"),
+        item.uint32("epoch"),
+        hexToBytes(item.str("subject")),
+        item.hexList("members")
+    )
+}
+
+private fun stateJson(state: RoomState): JsonObject {
+    return buildJsonObject {
+        put("group_id", bytesToHex(state.groupId))
+        put("mailbox", bytesToHex(state.mailbox))
+        put("owner", bytesToHex(state.owner))
+        put("admins", hexJson(state.admins))
+        put("members", hexJson(state.members))
+        put("pending", hexJson(state.pending))
+        put("policy", state.policy)
+        put("name_hex", bytesToHex(state.name))
+        put("epoch", unsignedEpoch(state.epoch))
+        put("head_tx_id", bytesToHex(state.headTxId))
+    }
+}
+
+private fun acceptedJson(item: AcceptedAdmin): JsonObject {
+    return buildJsonObject {
+        put("tx_id", bytesToHex(item.txId))
+        put("sender", bytesToHex(item.sender))
+        put("op", item.op)
+        put("epoch", unsignedEpoch(item.epoch))
+        put("subject", bytesToHex(item.subject))
+        put("members", hexJson(item.members))
+    }
+}
+
+private fun rejectedJson(item: RejectedAdmin): JsonObject {
+    return buildJsonObject {
+        put("tx_id", bytesToHex(item.txId))
+        put("reason", item.reason)
+    }
+}
+
+private fun hexJson(values: List<ByteArray>): JsonArray {
+    return JsonArray(values.map { JsonPrimitive(bytesToHex(it)) })
+}
+
+private fun unsignedEpoch(epoch: Int): Long {
+    return epoch.toLong() and 0xffff_ffffL
+}
+
 private fun groupRead(req: JsonObject): Pair<Map<String, String>, Map<String, Int>> {
     val opened = Group.openGroupMessage(
         hexToBytes(req.str("note")),
@@ -273,6 +441,15 @@ private fun groupRead(req: JsonObject): Pair<Map<String, String>, Map<String, In
         "epoch" to opened.epoch,
         "counter" to opened.counter
     )
+}
+
+private fun replyElement(id: Int, ok: Boolean, body: JsonObject) {
+    println(buildJsonObject {
+        put("id", id)
+        put("ok", ok)
+        for ((key, value) in body) put(key, value)
+    })
+    System.out.flush()
 }
 
 private fun reply(
@@ -305,6 +482,44 @@ private fun JsonObject.int(name: String): Int {
 private fun JsonObject.reqInt(name: String): Int {
     val value = this[name] ?: throw IllegalArgumentException("missing $name")
     return value.jsonPrimitive.int
+}
+
+private fun JsonObject.uint32(name: String): Int {
+    val raw = this[name]?.jsonPrimitive?.content ?: throw IllegalArgumentException("missing $name")
+    val parsed = raw.toLongOrNull()
+    if (parsed == null || parsed < 0L || parsed > 0xffff_ffffL) {
+        throw RoomAdminException("$name must be from 0 through 4294967295")
+    }
+    return parsed.toInt()
+}
+
+private fun JsonObject.intOrNull(name: String): Int? {
+    val value = this[name] ?: return null
+    if (value is JsonNull) return null
+    return value.jsonPrimitive.int
+}
+
+private fun JsonObject.hexOrNull(name: String): ByteArray? {
+    val value = this[name] ?: return null
+    if (value is JsonNull) return null
+    return hexToBytes(value.jsonPrimitive.content)
+}
+
+private fun JsonObject.utf8OrNull(name: String): ByteArray? {
+    val value = this[name] ?: return null
+    if (value is JsonNull) return null
+    return value.jsonPrimitive.content.toByteArray(Charsets.UTF_8)
+}
+
+private fun JsonObject.hexList(name: String): List<ByteArray> {
+    val value = this[name] ?: throw IllegalArgumentException("missing $name")
+    return value.jsonArray.map { hexToBytes(it.jsonPrimitive.content) }
+}
+
+private fun JsonObject.stateOrNull(name: String): RoomState? {
+    val value = this[name] ?: return null
+    if (value is JsonNull) return null
+    return roomState(value.jsonObject)
 }
 
 private fun JsonObject.counterList(name: String): List<GroupCounter> {

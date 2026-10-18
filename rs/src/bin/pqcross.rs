@@ -4,10 +4,12 @@ use std::io::{self, BufRead, Write};
 
 use algochat::{
     accept_pq_handshake, decrypt_message, decrypt_pq_message, decrypt_psk_message,
-    derive_group_message_key, derive_keys_from_seed, derive_mlkem768, encode_psk_envelope,
-    encrypt_message, encrypt_pq_message, encrypt_psk_message, initiate_pq_handshake,
-    open_group_membership, open_group_message, open_pq_handshake_as_sender, seal_group_membership,
-    seal_group_message, GroupMembership, PqSession,
+    delivery_authorized, derive_group_message_key, derive_keys_from_seed, derive_mlkem768,
+    draft_admin, encode_psk_envelope, encrypt_message, encrypt_pq_message, encrypt_psk_message,
+    initiate_pq_handshake, open_group_key_delivery, open_group_membership, open_group_message,
+    open_pq_handshake_as_sender, reduce_admin, seal_group_key_delivery, seal_group_membership,
+    seal_group_message, sender_may_post, AcceptedAdmin, AdminDraft, AdminEvent, GroupMembership,
+    PqSession, RoomState,
 };
 use serde_json::{json, Value};
 
@@ -68,6 +70,12 @@ fn dispatch(req: &Value) -> Result<Value, String> {
         "groupOpen" => group_open(req),
         "groupWrite" => group_write(req),
         "groupRead" => group_read(req),
+        "adminDraft" => admin_draft(req),
+        "adminReduce" => admin_reduce(req),
+        "deliverSeal" => deliver_seal(req),
+        "deliverOpen" => deliver_open(req),
+        "senderMayPost" => sender_may_post_op(req),
+        "deliveryAuthorized" => delivery_authorized_op(req),
         _ => Err(format!("unknown op {op}")),
     }
 }
@@ -236,6 +244,209 @@ fn group_seal(req: &Value) -> Result<Value, String> {
     Ok(json!({ "note": hex::encode(note) }))
 }
 
+fn admin_draft(req: &Value) -> Result<Value, String> {
+    let basis = match req.get("basis_state") {
+        None | Some(Value::Null) => None,
+        Some(value) => Some(parse_state(value)?),
+    };
+    let draft = AdminDraft {
+        op: u8_field(req, "admin_op")?,
+        sender: bytes32(req, "sender")?,
+        subject: optional_bytes32(req, "subject")?,
+        name: optional_name(req)?,
+        policy: optional_u8(req, "policy")?,
+        group_id: optional_bytes32(req, "group_id")?,
+        mailbox: optional_bytes32(req, "mailbox")?,
+    };
+    let note = draft_admin(basis.as_ref(), &draft).map_err(|error| error.to_string())?;
+    Ok(json!({ "note": hex::encode(note) }))
+}
+
+fn admin_reduce(req: &Value) -> Result<Value, String> {
+    let items = req
+        .get("events")
+        .and_then(|value| value.as_array())
+        .ok_or("missing events")?;
+    let mut events = Vec::with_capacity(items.len());
+    for item in items {
+        events.push(AdminEvent {
+            note: hex_bytes(&field(item, "note")?)?,
+            sender: bytes32(item, "sender")?,
+            tx_id: bytes32(item, "tx_id")?,
+            round: u64_field(item, "round")?,
+            offset: u64_field(item, "offset")?,
+        });
+    }
+    let reduced = reduce_admin(&events);
+    let accepted: Vec<Value> = reduced.accepted.iter().map(accepted_json).collect();
+    let rejected: Vec<Value> = reduced
+        .rejected
+        .iter()
+        .map(|item| {
+            json!({
+                "tx_id": hex::encode(item.tx_id),
+                "reason": item.reason,
+            })
+        })
+        .collect();
+    Ok(json!({
+        "state": reduced.state.as_ref().map(state_json),
+        "accepted": accepted,
+        "rejected": rejected,
+    }))
+}
+
+fn deliver_seal(req: &Value) -> Result<Value, String> {
+    let session = PqSession {
+        session_key: bytes32(req, "session_key")?,
+        sender_public: bytes32(req, "sender_x25519")?,
+        recipient_public: [0u8; 32],
+        handshake_id: bytes32(req, "handshake_id")?,
+    };
+    let note = seal_group_key_delivery(
+        &session,
+        u32_field(req, "epoch")?,
+        &bytes32(req, "group_id")?,
+        &bytes32(req, "mailbox")?,
+        &bytes32(req, "group_key")?,
+        &bytes32(req, "admin_tx_id")?,
+        &bytes12(req, "nonce")?,
+    )
+    .map_err(|error| error.to_string())?;
+    Ok(json!({ "note": hex::encode(note) }))
+}
+
+fn deliver_open(req: &Value) -> Result<Value, String> {
+    let note = hex_bytes(&field(req, "note")?)?;
+    let session = PqSession {
+        session_key: bytes32(req, "session_key")?,
+        sender_public: bytes32(req, "sender_x25519")?,
+        recipient_public: [0u8; 32],
+        handshake_id: bytes32(req, "handshake_id")?,
+    };
+    let opened = open_group_key_delivery(&note, &session).map_err(|error| error.to_string())?;
+    Ok(json!({
+        "epoch": opened.epoch,
+        "group_id": hex::encode(opened.group_id),
+        "mailbox": hex::encode(opened.mailbox),
+        "group_key": hex::encode(opened.group_key),
+        "admin_tx_id": hex::encode(opened.admin_tx_id),
+    }))
+}
+
+fn sender_may_post_op(req: &Value) -> Result<Value, String> {
+    let state = parse_state(req.get("state").ok_or("missing state")?)?;
+    let allowed = sender_may_post(&state, &bytes32(req, "sender")?, u32_field(req, "epoch")?);
+    Ok(json!({ "allowed": allowed }))
+}
+
+fn delivery_authorized_op(req: &Value) -> Result<Value, String> {
+    let items = req
+        .get("accepted")
+        .and_then(|value| value.as_array())
+        .ok_or("missing accepted")?;
+    let mut accepted = Vec::with_capacity(items.len());
+    for item in items {
+        accepted.push(AcceptedAdmin {
+            tx_id: bytes32(item, "tx_id")?,
+            sender: bytes32(item, "sender")?,
+            op: u8_field(item, "op")?,
+            epoch: u32_field(item, "epoch")?,
+            subject: bytes32(item, "subject")?,
+            members: hex_list(item, "members")?,
+        });
+    }
+    let allowed = delivery_authorized(
+        &accepted,
+        &bytes32(req, "admin_tx_id")?,
+        &bytes32(req, "sender")?,
+        &bytes32(req, "recipient")?,
+        u32_field(req, "epoch")?,
+    );
+    Ok(json!({ "allowed": allowed }))
+}
+
+fn parse_state(value: &Value) -> Result<RoomState, String> {
+    Ok(RoomState {
+        group_id: bytes32(value, "group_id")?,
+        mailbox: bytes32(value, "mailbox")?,
+        owner: bytes32(value, "owner")?,
+        admins: hex_list(value, "admins")?,
+        members: hex_list(value, "members")?,
+        pending: hex_list(value, "pending")?,
+        policy: u8_field(value, "policy")?,
+        name: hex_bytes(&field(value, "name_hex")?)?,
+        epoch: u32_field(value, "epoch")?,
+        head_tx_id: bytes32(value, "head_tx_id")?,
+    })
+}
+
+fn state_json(state: &RoomState) -> Value {
+    json!({
+        "group_id": hex::encode(state.group_id),
+        "mailbox": hex::encode(state.mailbox),
+        "owner": hex::encode(state.owner),
+        "admins": state.admins.iter().map(hex::encode).collect::<Vec<_>>(),
+        "members": state.members.iter().map(hex::encode).collect::<Vec<_>>(),
+        "pending": state.pending.iter().map(hex::encode).collect::<Vec<_>>(),
+        "policy": state.policy,
+        "name_hex": hex::encode(&state.name),
+        "epoch": state.epoch,
+        "head_tx_id": hex::encode(state.head_tx_id),
+    })
+}
+
+fn accepted_json(item: &AcceptedAdmin) -> Value {
+    json!({
+        "tx_id": hex::encode(item.tx_id),
+        "sender": hex::encode(item.sender),
+        "op": item.op,
+        "epoch": item.epoch,
+        "subject": hex::encode(item.subject),
+        "members": item.members.iter().map(hex::encode).collect::<Vec<_>>(),
+    })
+}
+
+fn optional_name(req: &Value) -> Result<Option<Vec<u8>>, String> {
+    match req.get("name_utf8") {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(text)) => Ok(Some(text.as_bytes().to_vec())),
+        Some(_) => Err("bad name_utf8".into()),
+    }
+}
+
+fn optional_u8(req: &Value, name: &str) -> Result<Option<u8>, String> {
+    match req.get(name) {
+        None | Some(Value::Null) => Ok(None),
+        Some(_) => Ok(Some(u8_field(req, name)?)),
+    }
+}
+
+fn optional_bytes32(req: &Value, name: &str) -> Result<Option<[u8; 32]>, String> {
+    match req.get(name) {
+        None | Some(Value::Null) => Ok(None),
+        Some(_) => Ok(Some(bytes32(req, name)?)),
+    }
+}
+
+fn hex_list(value: &Value, name: &str) -> Result<Vec<[u8; 32]>, String> {
+    let items = value
+        .get(name)
+        .and_then(|item| item.as_array())
+        .ok_or_else(|| format!("missing {name}"))?;
+    let mut out = Vec::with_capacity(items.len());
+    for item in items {
+        let text = item.as_str().ok_or_else(|| format!("bad {name}"))?;
+        let raw = hex_bytes(text)?;
+        out.push(
+            raw.as_slice()
+                .try_into()
+                .map_err(|_| format!("bad {name}"))?,
+        );
+    }
+    Ok(out)
+}
+
 fn group_open(req: &Value) -> Result<Value, String> {
     let note = hex_bytes(&field(req, "note")?)?;
     let opened =
@@ -318,6 +529,11 @@ fn seen_pairs(req: &Value) -> Result<Vec<(u32, u32)>, String> {
         ));
     }
     Ok(pairs)
+}
+
+fn u64_field(req: &Value, name: &str) -> Result<u64, String> {
+    let value = req.get(name).ok_or_else(|| format!("missing {name}"))?;
+    value.as_u64().ok_or_else(|| format!("bad {name}"))
 }
 
 fn u32_field(req: &Value, name: &str) -> Result<u32, String> {

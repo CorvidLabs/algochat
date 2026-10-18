@@ -3,7 +3,7 @@
 A 0x06 note is 195 bytes. It delivers a 32-byte group key under a hybrid
 session key. The header is 78 bytes and is the AEAD associated data.
 A 0x07 note is one mailbox message. Its 54-byte header is the associated
-data. The message key is HKDF-SHA256. Protocol id 0x03 is not used.
+data. The message key is HKDF-SHA256. Protocol 0x03 room administration is in group_admin.py.
 """
 
 from __future__ import annotations

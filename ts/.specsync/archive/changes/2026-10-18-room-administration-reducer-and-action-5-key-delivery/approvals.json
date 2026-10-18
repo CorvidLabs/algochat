@@ -1,0 +1,134 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792357363,
+      "digest": "5622ee7e1ad7f7546b2c813c31b8ece9072035128e475a85bad9606143f1519d",
+      "note": "Operator ordered the full SpecSync 6.1.1 lifecycle for the room administration reducer.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "room-administration-reducer-and-action-5-key-delivery",
+        "title": "Room administration reducer and action-5 key delivery",
+        "description": "Room administration reducer and action-5 key delivery",
+        "kind": "feature",
+        "affected_specs": [
+          "algochat"
+        ],
+        "affected_paths": [
+          "specs/algochat/algochat.spec.md",
+          "src/pq/group-admin.test.ts",
+          "src/pq/group-admin.ts",
+          "src/pq/group.ts",
+          "src/pq/index.ts"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "ts/src/pq/group-admin.test.ts matches vectors/group-admin-v1.json, including rejected reasons, delivery authorization, and the 227-byte action-5 note. Legacy group tests still open vectors/group-v1.json."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "constraints": "Keep notes within 4096 bytes. Public chain metadata, including member addresses, stays visible. Legacy 0x06 and 0x07 notes stay readable.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "algochat": "6ec34ca042eb1508abe54b2234e61c9b012caacc3e80c84f53fe6eaf1ac9ad0a"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792357426,
+      "digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "note": "Renewed after the spec paths were added to the change scope.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "room-administration-reducer-and-action-5-key-delivery",
+        "title": "Room administration reducer and action-5 key delivery",
+        "description": "Room administration reducer and action-5 key delivery",
+        "kind": "feature",
+        "affected_specs": [
+          "algochat"
+        ],
+        "affected_paths": [
+          "specs/algochat/algochat.spec.md",
+          "src/pq/group-admin.test.ts",
+          "src/pq/group-admin.ts",
+          "src/pq/group.ts",
+          "src/pq/index.ts",
+          "ts/specs/algochat/algochat.spec.md",
+          "ts/specs/algochat/requirements.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "ts/src/pq/group-admin.test.ts matches vectors/group-admin-v1.json, including rejected reasons, delivery authorization, and the 227-byte action-5 note. Legacy group tests still open vectors/group-v1.json."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "constraints": "Keep notes within 4096 bytes. Public chain metadata, including member addresses, stays visible. Legacy 0x06 and 0x07 notes stay readable.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "algochat": "6ec34ca042eb1508abe54b2234e61c9b012caacc3e80c84f53fe6eaf1ac9ad0a"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792359922,
+      "digest": "462d9e74bf8ec5a5d05f0b691b918b372fdb6df4a93617b00da7f8254a3ade8f",
+      "note": "Operator ordered the SpecSync 6.1.1 lifecycle. Renewal adds src/pq/session.ts, the comment that points room administration at group-admin.ts.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "room-administration-reducer-and-action-5-key-delivery",
+        "title": "Room administration reducer and action-5 key delivery",
+        "description": "Room administration reducer and action-5 key delivery",
+        "kind": "feature",
+        "affected_specs": [
+          "algochat"
+        ],
+        "affected_paths": [
+          "specs/algochat/algochat.spec.md",
+          "src/pq/group-admin.test.ts",
+          "src/pq/group-admin.ts",
+          "src/pq/group.ts",
+          "src/pq/index.ts",
+          "src/pq/session.ts",
+          "ts/specs/algochat/algochat.spec.md",
+          "ts/specs/algochat/requirements.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "ts/src/pq/group-admin.test.ts matches vectors/group-admin-v1.json, including rejected reasons, delivery authorization, and the 227-byte action-5 note. Legacy group tests still open vectors/group-v1.json."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "constraints": "Keep notes within 4096 bytes. Public chain metadata, including member addresses, stays visible. Legacy 0x06 and 0x07 notes stay readable.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "algochat": "6ec34ca042eb1508abe54b2234e61c9b012caacc3e80c84f53fe6eaf1ac9ad0a"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792359948,
+      "digest": "e83fc4977d9a264296f4d6ba620fb202454fc058852bc8833336028f167fd64f",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

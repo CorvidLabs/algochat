@@ -1,0 +1,39 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792358029,
+      "digest": "15c7b61863477b8f1215fa02b5aeaaab585d73879cbe953b6f7ac9193faa5c5b",
+      "note": "Operator ordered the full SpecSync 6.1.1 lifecycle. The module spec already records this contract.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "room-administration-reducer-and-action-5-key-delivery",
+        "title": "Room administration reducer and action-5 key delivery",
+        "description": "Room administration reducer and action-5 key delivery",
+        "kind": "feature",
+        "affected_specs": [
+          "algochat"
+        ],
+        "affected_paths": [
+          "src/algochat/__init__.py",
+          "src/algochat/group_admin.py"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The module spec already names the room administration exports and source file.",
+        "acceptance_criteria": [
+          "py/tests/test_group_admin.py matches vectors/group-admin-v1.json, including rejected reasons and the 227-byte action-5 note."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "constraints": "none",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}

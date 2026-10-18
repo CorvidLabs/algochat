@@ -1,8 +1,9 @@
 /**
  * Group mailbox notes. Protocol 0x06 delivers the group key under a hybrid
  * session. Protocol 0x07 posts one message to the mailbox.
+ * Protocol 0x03, the public room administration record, lives in group-admin.ts.
  *
- * Identifier 0x03 is not used. An everyday key is not a legal wrap.
+ * An everyday key is not a legal wrap for a group key.
  */
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha';

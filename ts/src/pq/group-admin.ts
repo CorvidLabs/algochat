@@ -1,0 +1,624 @@
+/**
+ * Public room administration (protocol 0x03) and the 0x06 key delivery that
+ * cites one accepted administration record. Legacy 0x06 actions 1–4 stay in
+ * group.ts and do not create an owner.
+ */
+
+import { chacha20poly1305 } from '@noble/ciphers/chacha';
+import { randomBytes } from '@noble/ciphers/webcrypto';
+import { uint8ArrayEquals } from '../crypto/keys.js';
+import { concatBytes, requireLength } from './bytes.js';
+import { PQ_DATA_HEADER_SIZE, PQ_PROTOCOL, PQError, type PQSession } from './types.js';
+
+export const GROUP_ADMIN_PROTOCOL = 0x03;
+export const GROUP_DELIVER_ACTION = 5;
+export const GROUP_NAME_MAX = 64;
+export const GROUP_ADMIN_MAX = 16;
+export const GROUP_MEMBER_MAX = 100;
+export const GROUP_DELIVER_PLAINTEXT_SIZE = 133;
+
+export const JOINING = {
+    INVITE: 1,
+    ASK: 2,
+} as const;
+
+export const ADMIN_OP = {
+    CREATE: 1,
+    SET_NAME: 2,
+    SET_POLICY: 3,
+    APPOINT_ADMIN: 4,
+    DISMISS_ADMIN: 5,
+    TRANSFER_OWNER: 6,
+    ADD_MEMBER: 7,
+    REQUEST_JOIN: 8,
+    ACCEPT_JOIN: 9,
+    DECLINE_JOIN: 10,
+    REMOVE_MEMBER: 11,
+    REKEY: 12,
+} as const;
+
+export interface RoomState {
+    groupId: Uint8Array;
+    mailbox: Uint8Array;
+    owner: Uint8Array;
+    admins: Uint8Array[];
+    members: Uint8Array[];
+    pending: Uint8Array[];
+    policy: number;
+    name: Uint8Array;
+    epoch: number;
+    headTxId: Uint8Array;
+}
+
+export interface AdminEvent {
+    note: Uint8Array;
+    sender: Uint8Array;
+    txId: Uint8Array;
+    round: number;
+    offset: number;
+}
+
+export interface AcceptedAdmin {
+    txId: Uint8Array;
+    sender: Uint8Array;
+    op: number;
+    epoch: number;
+    subject: Uint8Array;
+    members: Uint8Array[];
+}
+
+export interface ReduceAdminResult {
+    state: RoomState | null;
+    accepted: AcceptedAdmin[];
+    rejected: { txId: Uint8Array; reason: string }[];
+}
+
+interface DecodedAdmin {
+    parent: Uint8Array;
+    groupId: Uint8Array;
+    mailbox: Uint8Array;
+    epoch: number;
+    op: number;
+    name: Uint8Array;
+    policy: number;
+    owner: Uint8Array;
+    admins: Uint8Array[];
+    members: Uint8Array[];
+    subject: Uint8Array;
+}
+
+export function encodeAdminRecord(fields: DecodedAdmin): Uint8Array {
+    const name = canonicalName(fields.name);
+    const admins = canonicalSet(fields.admins, 'admins', GROUP_ADMIN_MAX);
+    const members = canonicalSet(fields.members, 'members', GROUP_MEMBER_MAX);
+    requireLength('parent', fields.parent, 32);
+    requireLength('group id', fields.groupId, 32);
+    requireLength('mailbox', fields.mailbox, 32);
+    requireLength('owner', fields.owner, 32);
+    requireLength('subject', fields.subject, 32);
+    requireUint32('epoch', fields.epoch);
+    if (fields.policy !== JOINING.INVITE && fields.policy !== JOINING.ASK) {
+        throw new PQError('Joining rule must be invite-only or ask-to-join');
+    }
+    if (!Object.values(ADMIN_OP).includes(fields.op as (typeof ADMIN_OP)[keyof typeof ADMIN_OP])) {
+        throw new PQError('Unknown room administration operation');
+    }
+    const out: number[] = [PQ_PROTOCOL.VERSION, GROUP_ADMIN_PROTOCOL];
+    push(out, fields.parent);
+    push(out, fields.groupId);
+    push(out, fields.mailbox);
+    pushU32(out, fields.epoch);
+    out.push(fields.op, name.length);
+    push(out, name);
+    out.push(fields.policy);
+    push(out, fields.owner);
+    pushU16(out, admins.length);
+    for (const admin of admins) push(out, admin);
+    pushU16(out, members.length);
+    for (const member of members) push(out, member);
+    push(out, fields.subject);
+    const note = Uint8Array.from(out);
+    if (note.length > 4096) throw new PQError('Administration record exceeds 4096 bytes');
+    return note;
+}
+
+export function draftAdmin(state: RoomState | null, input: {
+    op: number;
+    sender: Uint8Array;
+    subject?: Uint8Array;
+    name?: Uint8Array;
+    policy?: number;
+    groupId?: Uint8Array;
+    mailbox?: Uint8Array;
+}): Uint8Array {
+    const subject = input.subject ?? new Uint8Array(32);
+    const decoded: DecodedAdmin = {
+        parent: state?.headTxId ?? new Uint8Array(32),
+        groupId: input.groupId ?? state?.groupId ?? new Uint8Array(32),
+        mailbox: input.mailbox ?? state?.mailbox ?? new Uint8Array(32),
+        epoch: 0,
+        op: input.op,
+        name: input.name ?? state?.name ?? new Uint8Array(),
+        policy: input.policy ?? state?.policy ?? JOINING.INVITE,
+        owner: state?.owner ?? input.sender,
+        admins: state?.admins.map(copy) ?? [],
+        members: state?.members.map(copy) ?? [],
+        subject,
+    };
+    const next = input.op === ADMIN_OP.CREATE
+        ? {
+            groupId: decoded.groupId,
+            mailbox: decoded.mailbox,
+            owner: copy(input.sender),
+            admins: [] as Uint8Array[],
+            members: [copy(input.sender)],
+            pending: [] as Uint8Array[],
+            policy: decoded.policy,
+            name: decoded.name,
+            epoch: 1,
+        }
+        : expectNext(state, { ...decoded, owner: state?.owner ?? input.sender, epoch: state?.epoch ?? 1 }, input.sender);
+    return encodeAdminRecord({
+        parent: decoded.parent,
+        groupId: next.groupId,
+        mailbox: next.mailbox,
+        epoch: next.epoch,
+        op: input.op,
+        name: next.name,
+        policy: next.policy,
+        owner: next.owner,
+        admins: next.admins,
+        members: next.members,
+        subject,
+    });
+}
+
+export function reduceAdmin(events: readonly AdminEvent[]): ReduceAdminResult {
+    const ordered = [...events].sort(compareEvents);
+    let state: RoomState | null = null;
+    const accepted: AcceptedAdmin[] = [];
+    const rejected: { txId: Uint8Array; reason: string }[] = [];
+    const seen = new Set<string>();
+    // 32 zero bytes are create's parent. They are not an accepted administration id.
+    const known = new Set<string>();
+    for (const event of ordered) {
+        const key = hex(event.txId);
+        if (seen.has(key)) {
+            rejected.push({ txId: copy(event.txId), reason: 'replay' });
+            continue;
+        }
+        try {
+            const next = applyAdmin(state, event, known);
+            seen.add(key);
+            if (next.advance) known.add(hex(event.txId));
+            state = next.state;
+            accepted.push(next.accepted);
+        } catch (error) {
+            rejected.push({
+                txId: copy(event.txId),
+                reason: error instanceof Error ? error.message : 'rejected',
+            });
+        }
+    }
+    return { state, accepted, rejected };
+}
+
+export function senderMayPost(state: RoomState, sender: Uint8Array, epoch: number): boolean {
+    requireLength('sender', sender, 32);
+    return epoch === state.epoch && contains(state.members, sender);
+}
+
+export function deliveryAuthorized(
+    accepted: readonly AcceptedAdmin[],
+    adminTxId: Uint8Array,
+    sender: Uint8Array,
+    recipient: Uint8Array,
+    epoch: number,
+): boolean {
+    const record = accepted.find((item) => uint8ArrayEquals(item.txId, adminTxId));
+    if (!record || !uint8ArrayEquals(record.sender, sender) || record.epoch !== epoch) return false;
+    if (!contains(record.members, recipient)) return false;
+    if (record.op === ADMIN_OP.ADD_MEMBER || record.op === ADMIN_OP.ACCEPT_JOIN) {
+        return uint8ArrayEquals(record.subject, recipient);
+    }
+    return record.op === ADMIN_OP.REMOVE_MEMBER || record.op === ADMIN_OP.REKEY || record.op === ADMIN_OP.TRANSFER_OWNER
+        ? !uint8ArrayEquals(record.subject, recipient) || record.op === ADMIN_OP.REKEY || record.op === ADMIN_OP.TRANSFER_OWNER
+        : false;
+}
+
+export function sealGroupKeyDelivery(
+    session: PQSession,
+    epoch: number,
+    groupId: Uint8Array,
+    mailbox: Uint8Array,
+    groupKey: Uint8Array,
+    adminTxId: Uint8Array,
+    nonce: Uint8Array = randomBytes(12),
+): Uint8Array {
+    requireLength('session key', session.sessionKey, 32);
+    requireLength('sender public key', session.senderPublicKey, 32);
+    requireLength('handshake id', session.handshakeId, 32);
+    requireLength('nonce', nonce, 12);
+    const plaintext = encodeDelivery(epoch, groupId, mailbox, groupKey, adminTxId);
+    const header = new Uint8Array(PQ_DATA_HEADER_SIZE);
+    header[0] = PQ_PROTOCOL.VERSION;
+    header[1] = 0x06;
+    header.set(session.senderPublicKey, 2);
+    header.set(session.handshakeId, 34);
+    header.set(nonce, 66);
+    const sealed = chacha20poly1305(session.sessionKey, nonce, header).encrypt(plaintext);
+    return concatBytes(header, sealed);
+}
+
+export function openGroupKeyDelivery(note: Uint8Array, session: PQSession): {
+    epoch: number;
+    groupId: Uint8Array;
+    mailbox: Uint8Array;
+    groupKey: Uint8Array;
+    adminTxId: Uint8Array;
+} {
+    if (
+        note.length !== PQ_DATA_HEADER_SIZE + GROUP_DELIVER_PLAINTEXT_SIZE + PQ_PROTOCOL.TAG_SIZE
+        || note[0] !== PQ_PROTOCOL.VERSION
+        || note[1] !== 0x06
+    ) {
+        throw new PQError('Not a group key delivery');
+    }
+    const sender = note.slice(2, 34);
+    const handshakeId = note.slice(34, 66);
+    const nonce = note.slice(66, 78);
+    if (!uint8ArrayEquals(sender, session.senderPublicKey)) {
+        throw new PQError('Key delivery sender does not match the session');
+    }
+    if (!uint8ArrayEquals(handshakeId, session.handshakeId)) {
+        throw new PQError('Key delivery is for a different handshake');
+    }
+    let plain: Uint8Array;
+    try {
+        plain = chacha20poly1305(session.sessionKey, nonce, note.slice(0, PQ_DATA_HEADER_SIZE)).decrypt(
+            note.slice(PQ_DATA_HEADER_SIZE),
+        );
+    } catch {
+        throw new PQError('Group key delivery authentication failed');
+    }
+    if (plain.length !== GROUP_DELIVER_PLAINTEXT_SIZE || plain[0] !== GROUP_DELIVER_ACTION) {
+        throw new PQError('Group key delivery plaintext is not action 5');
+    }
+    const epoch = readU32(plain, 1);
+    if (epoch < 1) throw new PQError('Group epoch must be from 1 through 4294967295');
+    return {
+        epoch,
+        groupId: plain.slice(5, 37),
+        mailbox: plain.slice(37, 69),
+        groupKey: plain.slice(69, 101),
+        adminTxId: plain.slice(101, 133),
+    };
+}
+
+function applyAdmin(
+    state: RoomState | null,
+    event: AdminEvent,
+    known: Set<string>,
+): { state: RoomState; accepted: AcceptedAdmin; advance: boolean } {
+    requireLength('sender', event.sender, 32);
+    requireLength('transaction id', event.txId, 32);
+    const decoded = decodeAdmin(event.note);
+    if (uint8ArrayEquals(decoded.mailbox, event.sender)) {
+        throw new PQError('Mailbox key does not own the room');
+    }
+    const parent = state?.headTxId ?? new Uint8Array(32);
+    const request = decoded.op === ADMIN_OP.REQUEST_JOIN;
+    if (request) {
+        if (!state || isZero(decoded.parent) || !known.has(hex(decoded.parent))) {
+            throw new PQError('Join request does not cite this room');
+        }
+    } else if (!uint8ArrayEquals(decoded.parent, parent)) {
+        throw new PQError('Stale administration parent');
+    }
+    const next = expectNext(state, decoded, event.sender);
+    if (!sameState(decoded, next)) throw new PQError('Administration record does not match the authorized next state');
+    const room: RoomState = {
+        ...next,
+        headTxId: request ? copy(state!.headTxId) : copy(event.txId),
+        pending: next.pending,
+    };
+    return {
+        advance: !request,
+        state: room,
+        accepted: {
+            txId: copy(event.txId),
+            sender: copy(event.sender),
+            op: decoded.op,
+            epoch: room.epoch,
+            subject: copy(decoded.subject),
+            members: room.members.map(copy),
+        },
+    };
+}
+
+function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint8Array): Omit<RoomState, 'headTxId'> {
+    if (decoded.op === ADMIN_OP.CREATE) {
+        if (state) throw new PQError('Create requires an empty parent');
+        if (!isZero(decoded.parent) || !isZero(decoded.subject)) throw new PQError('Create parent and subject must be zero');
+        if (!uint8ArrayEquals(decoded.owner, sender)) throw new PQError('Create sender is not the owner');
+        if (decoded.epoch !== 1 || decoded.admins.length !== 0) throw new PQError('Create starts at epoch 1 with no admins');
+        if (decoded.members.length !== 1 || !uint8ArrayEquals(decoded.members[0], sender)) {
+            throw new PQError('Create membership is the owner alone');
+        }
+        rejectMailboxOverlap(decoded.mailbox, decoded.members, decoded.admins, decoded.owner);
+        return body(decoded, []);
+    }
+    if (!state) throw new PQError('Administration parent is missing');
+    if (!uint8ArrayEquals(decoded.groupId, state.groupId) || !uint8ArrayEquals(decoded.mailbox, state.mailbox)) {
+        throw new PQError('Administration record is for a different room');
+    }
+    const privileged = uint8ArrayEquals(sender, state.owner) || contains(state.admins, sender);
+    let members = state.members.map(copy);
+    let admins = state.admins.map(copy);
+    let pending = state.pending.map(copy);
+    let owner = copy(state.owner);
+    let epoch = state.epoch;
+    let name = copy(state.name);
+    let policy = state.policy;
+    const subject = decoded.subject;
+    if (decoded.op === ADMIN_OP.SET_NAME) {
+        if (!privileged || !isZero(subject)) throw new PQError('Sender cannot rename the room');
+        name = copy(decoded.name);
+    } else if (decoded.op === ADMIN_OP.SET_POLICY) {
+        if (!privileged || !isZero(subject)) throw new PQError('Sender cannot change the joining rule');
+        policy = decoded.policy;
+    } else if (decoded.op === ADMIN_OP.APPOINT_ADMIN) {
+        if (!uint8ArrayEquals(sender, state.owner)) throw new PQError('Only the owner appoints an admin');
+        if (!contains(members, subject) || uint8ArrayEquals(subject, owner) || contains(admins, subject)) {
+            throw new PQError('That person cannot be appointed');
+        }
+        admins = canonicalSet([...admins, subject], 'admins', GROUP_ADMIN_MAX);
+    } else if (decoded.op === ADMIN_OP.DISMISS_ADMIN) {
+        if (!uint8ArrayEquals(sender, state.owner) || !contains(admins, subject)) {
+            throw new PQError('Only the owner dismisses an admin');
+        }
+        admins = admins.filter((item) => !uint8ArrayEquals(item, subject));
+    } else if (decoded.op === ADMIN_OP.TRANSFER_OWNER) {
+        if (!uint8ArrayEquals(sender, state.owner) || !contains(members, subject) || uint8ArrayEquals(subject, owner)) {
+            throw new PQError('Ownership can move only from the owner to another member');
+        }
+        owner = copy(subject);
+        admins = admins.filter((item) => !uint8ArrayEquals(item, subject));
+        epoch = bump(epoch);
+    } else if (decoded.op === ADMIN_OP.ADD_MEMBER) {
+        if (!privileged || contains(members, subject) || uint8ArrayEquals(subject, state.mailbox)) {
+            throw new PQError('Sender cannot add that member');
+        }
+        members = canonicalSet([...members, subject], 'members', GROUP_MEMBER_MAX);
+        pending = pending.filter((item) => !uint8ArrayEquals(item, subject));
+    } else if (decoded.op === ADMIN_OP.REQUEST_JOIN) {
+        if (state.policy !== JOINING.ASK || !uint8ArrayEquals(sender, subject) || contains(members, subject) || contains(pending, subject)) {
+            throw new PQError('That join request is not allowed');
+        }
+        pending = canonicalSet([...pending, subject], 'pending', GROUP_MEMBER_MAX);
+    } else if (decoded.op === ADMIN_OP.ACCEPT_JOIN) {
+        if (!privileged || !contains(pending, subject)) throw new PQError('No join request to accept');
+        members = canonicalSet([...members, subject], 'members', GROUP_MEMBER_MAX);
+        pending = pending.filter((item) => !uint8ArrayEquals(item, subject));
+    } else if (decoded.op === ADMIN_OP.DECLINE_JOIN) {
+        if (!privileged || !contains(pending, subject)) throw new PQError('No join request to decline');
+        pending = pending.filter((item) => !uint8ArrayEquals(item, subject));
+    } else if (decoded.op === ADMIN_OP.REMOVE_MEMBER) {
+        if (!privileged || !contains(members, subject) || uint8ArrayEquals(subject, owner)) {
+            throw new PQError('Sender cannot remove that member');
+        }
+        members = members.filter((item) => !uint8ArrayEquals(item, subject));
+        admins = admins.filter((item) => !uint8ArrayEquals(item, subject));
+        pending = pending.filter((item) => !uint8ArrayEquals(item, subject));
+        epoch = bump(epoch);
+    } else if (decoded.op === ADMIN_OP.REKEY) {
+        if (!privileged || !isZero(subject)) throw new PQError('Sender cannot rotate the room key');
+        epoch = bump(epoch);
+    } else {
+        throw new PQError('Unknown room administration operation');
+    }
+    rejectMailboxOverlap(state.mailbox, members, admins, owner);
+    if (!contains(members, owner)) throw new PQError('The owner must remain a member');
+    return {
+        groupId: copy(state.groupId),
+        mailbox: copy(state.mailbox),
+        owner,
+        admins,
+        members,
+        pending,
+        policy,
+        name,
+        epoch,
+    };
+}
+
+function body(decoded: DecodedAdmin, pending: Uint8Array[]): Omit<RoomState, 'headTxId'> {
+    return {
+        groupId: copy(decoded.groupId),
+        mailbox: copy(decoded.mailbox),
+        owner: copy(decoded.owner),
+        admins: decoded.admins.map(copy),
+        members: decoded.members.map(copy),
+        pending,
+        policy: decoded.policy,
+        name: copy(decoded.name),
+        epoch: decoded.epoch,
+    };
+}
+
+function sameState(decoded: DecodedAdmin, next: Omit<RoomState, 'headTxId'>): boolean {
+    return uint8ArrayEquals(decoded.owner, next.owner)
+        && decoded.epoch === next.epoch
+        && decoded.policy === next.policy
+        && uint8ArrayEquals(decoded.name, next.name)
+        && sameSet(decoded.admins, next.admins)
+        && sameSet(decoded.members, next.members);
+}
+
+function decodeAdmin(note: Uint8Array): DecodedAdmin {
+    if (note.length < 141 || note[0] !== PQ_PROTOCOL.VERSION || note[1] !== GROUP_ADMIN_PROTOCOL) {
+        throw new PQError('Not a room administration record');
+    }
+    let cursor = 2;
+    const parent = take(note, cursor, 32); cursor += 32;
+    const groupId = take(note, cursor, 32); cursor += 32;
+    const mailbox = take(note, cursor, 32); cursor += 32;
+    const epoch = readU32(note, cursor); cursor += 4;
+    const op = note[cursor]; cursor += 1;
+    const nameLen = note[cursor]; cursor += 1;
+    if (nameLen > GROUP_NAME_MAX) throw new PQError('Room name is longer than 64 bytes');
+    const name = take(note, cursor, nameLen); cursor += nameLen;
+    canonicalName(name);
+    const policy = note[cursor]; cursor += 1;
+    const owner = take(note, cursor, 32); cursor += 32;
+    const adminCount = readU16(note, cursor); cursor += 2;
+    const admins: Uint8Array[] = [];
+    for (let i = 0; i < adminCount; i += 1) {
+        admins.push(take(note, cursor, 32));
+        cursor += 32;
+    }
+    const memberCount = readU16(note, cursor); cursor += 2;
+    const members: Uint8Array[] = [];
+    for (let i = 0; i < memberCount; i += 1) {
+        members.push(take(note, cursor, 32));
+        cursor += 32;
+    }
+    const subject = take(note, cursor, 32); cursor += 32;
+    if (cursor !== note.length) throw new PQError('Administration record has trailing bytes');
+    canonicalSet(admins, 'admins', GROUP_ADMIN_MAX);
+    canonicalSet(members, 'members', GROUP_MEMBER_MAX);
+    if (!strictlyIncreasing(admins) || !strictlyIncreasing(members)) {
+        throw new PQError('Administration sets must be strictly sorted');
+    }
+    if (policy !== JOINING.INVITE && policy !== JOINING.ASK) {
+        throw new PQError('Joining rule must be invite-only or ask-to-join');
+    }
+    return { parent, groupId, mailbox, epoch, op, name, policy, owner, admins, members, subject };
+}
+
+function encodeDelivery(epoch: number, groupId: Uint8Array, mailbox: Uint8Array, groupKey: Uint8Array, adminTxId: Uint8Array): Uint8Array {
+    requireUint32('epoch', epoch);
+    if (epoch < 1) throw new PQError('Group epoch must be from 1 through 4294967295');
+    requireLength('group id', groupId, 32);
+    requireLength('mailbox', mailbox, 32);
+    requireLength('group key', groupKey, 32);
+    requireLength('administration id', adminTxId, 32);
+    const out = new Uint8Array(GROUP_DELIVER_PLAINTEXT_SIZE);
+    out[0] = GROUP_DELIVER_ACTION;
+    writeU32(out, 1, epoch);
+    out.set(groupId, 5);
+    out.set(mailbox, 37);
+    out.set(groupKey, 69);
+    out.set(adminTxId, 101);
+    return out;
+}
+
+function rejectMailboxOverlap(mailbox: Uint8Array, members: Uint8Array[], admins: Uint8Array[], owner: Uint8Array): void {
+    if (uint8ArrayEquals(mailbox, owner) || contains(members, mailbox) || contains(admins, mailbox)) {
+        throw new PQError('Mailbox key does not own the room');
+    }
+}
+
+function canonicalName(name: Uint8Array): Uint8Array {
+    if (name.length > GROUP_NAME_MAX) throw new PQError('Room name is longer than 64 bytes');
+    try {
+        new TextDecoder('utf-8', { fatal: true }).decode(name);
+    } catch {
+        throw new PQError('Room name is not UTF-8');
+    }
+    return name;
+}
+
+function canonicalSet(values: Uint8Array[], label: string, max: number): Uint8Array[] {
+    const sorted = values.map(copy).sort(compareBytes);
+    for (let i = 1; i < sorted.length; i += 1) {
+        if (uint8ArrayEquals(sorted[i], sorted[i - 1])) throw new PQError(`Duplicate ${label}`);
+    }
+    if (sorted.length > max) throw new PQError(`Too many ${label}`);
+    for (const value of sorted) requireLength(label, value, 32);
+    return sorted;
+}
+
+function strictlyIncreasing(values: readonly Uint8Array[]): boolean {
+    for (let i = 1; i < values.length; i += 1) {
+        if (compareBytes(values[i - 1], values[i]) >= 0) return false;
+    }
+    return true;
+}
+
+function contains(values: readonly Uint8Array[], target: Uint8Array): boolean {
+    return values.some((item) => uint8ArrayEquals(item, target));
+}
+
+function sameSet(left: readonly Uint8Array[], right: readonly Uint8Array[]): boolean {
+    return left.length === right.length && left.every((item, index) => uint8ArrayEquals(item, right[index]));
+}
+
+function compareEvents(a: AdminEvent, b: AdminEvent): number {
+    if (a.round !== b.round) return a.round - b.round;
+    if (a.offset !== b.offset) return a.offset - b.offset;
+    return compareBytes(a.txId, b.txId);
+}
+
+function compareBytes(a: Uint8Array, b: Uint8Array): number {
+    const length = Math.min(a.length, b.length);
+    for (let i = 0; i < length; i += 1) {
+        if (a[i] !== b[i]) return a[i] - b[i];
+    }
+    return a.length - b.length;
+}
+
+function bump(epoch: number): number {
+    if (epoch >= 0xffffffff) throw new PQError('Group epoch is exhausted');
+    return epoch + 1;
+}
+
+function isZero(value: Uint8Array): boolean {
+    return value.every((byte) => byte === 0);
+}
+
+function copy(value: Uint8Array): Uint8Array {
+    return value.slice();
+}
+
+function hex(value: Uint8Array): string {
+    return Array.from(value, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function push(out: number[], value: Uint8Array): void {
+    for (const byte of value) out.push(byte);
+}
+
+function pushU32(out: number[], value: number): void {
+    out.push((value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff);
+}
+
+function pushU16(out: number[], value: number): void {
+    out.push((value >>> 8) & 0xff, value & 0xff);
+}
+
+function readU32(source: Uint8Array, offset: number): number {
+    return ((source[offset] << 24) | (source[offset + 1] << 16) | (source[offset + 2] << 8) | source[offset + 3]) >>> 0;
+}
+
+function readU16(source: Uint8Array, offset: number): number {
+    return (source[offset] << 8) | source[offset + 1];
+}
+
+function writeU32(target: Uint8Array, offset: number, value: number): void {
+    target[offset] = (value >>> 24) & 0xff;
+    target[offset + 1] = (value >>> 16) & 0xff;
+    target[offset + 2] = (value >>> 8) & 0xff;
+    target[offset + 3] = value & 0xff;
+}
+
+function take(source: Uint8Array, offset: number, length: number): Uint8Array {
+    if (offset + length > source.length) throw new PQError('Administration record is truncated');
+    return source.slice(offset, offset + length);
+}
+
+function requireUint32(name: string, value: number): void {
+    if (!Number.isInteger(value) || value < 0 || value > 0xffffffff) {
+        throw new PQError(`${name} must be from 0 through 4294967295`);
+    }
+}

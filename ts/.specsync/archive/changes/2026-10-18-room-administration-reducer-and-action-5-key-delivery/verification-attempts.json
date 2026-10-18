@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792357430,
+      "commit": "5bfa764c67456c60b740890487102cd49cec2070",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "14483d1b9706a2bc6f78cd5f1c2a0e344da33e383713bf86207a46cb0d791880",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792357514,
+      "commit": "11d87000fb2c8ec13d41c3f21004a2def3988611",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792357563,
+      "commit": "6af22b1b372aec0da6edf62c6301ff39d225bf40",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792357576,
+      "commit": "6af22b1b372aec0da6edf62c6301ff39d225bf40",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792357579,
+      "commit": "0f89c49ff27c00fd0f28aca89dc31bbcdca1ba09",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792358137,
+      "commit": "acfd1df760bb2141075c1d4d9a6500b85ab16929",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792358140,
+      "commit": "6e65e2de852fd0b857ee297ca51423f1fd087ff4",
+      "contract_digest": "d776925eaa0b4139c0d5fcc8c93b3eed70f6dc515b67f53cd0a8bdf2b3c10c66",
+      "execution_digest": "0d8779baa1a157a014e98ad82974f274de6ea3352e57e5052109ae49320e1742",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792359927,
+      "commit": "85fe85e77df2de0344dc5da0f8635ca50296609f",
+      "contract_digest": "462d9e74bf8ec5a5d05f0b691b918b372fdb6df4a93617b00da7f8254a3ade8f",
+      "execution_digest": "fe6636289eb38c031b1d29b71edfc9123cd29601827d9581af2eb9224779eda0",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792359930,
+      "commit": "5bcbf7dfc7337ca7297e17728d59b98c941d0904",
+      "contract_digest": "462d9e74bf8ec5a5d05f0b691b918b372fdb6df4a93617b00da7f8254a3ade8f",
+      "execution_digest": "fe6636289eb38c031b1d29b71edfc9123cd29601827d9581af2eb9224779eda0",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    },
+    {
+      "timestamp": 1792359930,
+      "commit": "6d2c88dec6b839773a8c54ceea41c78431e4df33",
+      "contract_digest": "462d9e74bf8ec5a5d05f0b691b918b372fdb6df4a93617b00da7f8254a3ade8f",
+      "execution_digest": "fe6636289eb38c031b1d29b71edfc9123cd29601827d9581af2eb9224779eda0",
+      "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+      "acceptance_input_digest": "d4d4475fd81bad51b59010777231e45c56cd4ad60e484719cd821b9a60f8674a",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "specs/algochat/algochat.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a5506aa76663f508b3efde10828d3eee35fd24e11da490012d3c030a1510fa03",
+            "entry_digest": "d570cc48e1417c47fb34a328b5701645b744cb4a7bb8ef03d307da824d0c486a",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "specs/algochat/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8ab13de4ff57c863594083ddeea3313914482f52f1de9d4bb29fa66cb57ccd73",
+            "entry_digest": "76e7b380803c3a883e3d3bd01b68c233ae612e5880be5f60381cde85c231b29d",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "specs/algochat/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "be6c3ea5539240db612fe3c069e040893029e76e8ded46b750d40f3cae8a8f12",
+            "entry_digest": "62bef11f570da605f6e64fe3cfbc230e5c98a8e3b429b0be95e73ac7a1ee40d8",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "specs/algochat/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0cba70ba487760819f9a50a3f7b8f774a5047871e6882ffc6ea1a7010f399306",
+            "entry_digest": "8fcc6c31286bc1d258279fcee82f0e828871f70a2de9b013e91afdd1cd1d24dc",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "specs/algochat/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1e7323a7b622c8b0f8a8c453f839bfc7f0fd851e7a403bd350cae8d4665a0c4f",
+            "entry_digest": "c4f8e7bf68997e55f98f3dfa1b7c932b5649f84136bb7f184c993b3ef5e82e06",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "src/pq/group-admin.test.ts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3a992af3f84eb94546610dd3bcdfe99dd9a19afeca51d4cadd429afbd0a23c24",
+            "entry_digest": "e5efa8c7f52545c2e3fe3fff5a7cbb8ee95a93cebd88067e0745b56ac4b5db2d",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "src/pq/group-admin.ts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "624533306b0e1ff0ff10d386227434d28afbbb5236262711a5f0e66820d03c85",
+            "entry_digest": "d1fafdd28e5af9fb2b94b03982ad6b05e1358c7201feb1e22de92d2ecd2b880e",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "src/pq/group.ts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c68b9d6b76c80c4f26a99985335160d578c4118c87305bf6e39128f2c3208a89",
+            "entry_digest": "4ce8625815ef30bdd25748b36c7d912a5a79ecc33dedf82e7b33b7f0bc9bd79b",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "src/pq/index.ts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e05dc23f0b8e4a90a8a3dcfc46e8b5d399e448fd7debf9c635e283b4ea507ed0",
+            "entry_digest": "d31f76356cddfdd084eb9a9bcdfc5366a0ed7deecc6241cc9da0ea3842a4ae5d",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "src/pq/session.ts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bce88e6e823536e5de6307c6a8e866ac64cc2d80c0b9ead9671d50f86a3cc143",
+            "entry_digest": "364ff77022d92a0577bae2da1aa4253776008ff5dfd0d0c7c68fabfbebedf5f7",
+            "owners": [
+              "algochat"
+            ]
+          },
+          {
+            "path": "ts/specs/algochat/algochat.spec.md",
+            "kind": "missing",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "ece4a00c38c51e4dde7df2bf1541fb845183363ff80d748fe32979f256b3fe00",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "ts/specs/algochat/requirements.md",
+            "kind": "missing",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "e2d8a20bd6af7c50e71c3bbcf22293fe7523aee460a806a89fe9c68ef9dd2be0",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-algochat-026"
+      ]
+    }
+  ]
+}

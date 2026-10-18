@@ -1,0 +1,85 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792357118,
+      "digest": "57969b95c1dd0abbdb7d3e8e0cf9ceecef7290fbd54e4e37b1baa3596fde5e61",
+      "note": "Operator ordered the full SpecSync 6.1.1 lifecycle. The definition is the approved room plan and GROUP-1 through GROUP-7.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language",
+        "title": "Public room administration on the group mailbox, with the same rules in every language",
+        "description": "Public room administration on the group mailbox, with the same rules in every language",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PROTOCOL.md",
+          "TEST-VECTORS.md",
+          "vectors/group-admin-v1.json"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Every library reduces vectors/group-admin-v1.json to the same accepted and rejected room states, seals the same 227-byte action-5 delivery, and still opens vectors/group-v1.json. A LocalNet invite-only room and an ask-to-join room each post one 0x07 payment. Tag v1.3.0 still does not include 0x03, 0x06, or 0x07."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "b862aa09847a94c747a6f26b0442b7680d4f5b71166a27c2bd9fd6d0cb915a10"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792360200,
+      "digest": "740624a5ae04c6bcd157df0f7b2ce46456d74ca4c36c7b3c7fe96fd565bb7d36",
+      "note": "Operator ordered the SpecSync 6.1.1 lifecycle. Renewal adds the spec-sync workflow pin to v6.1.1 with lifecycle enforcement and change audit.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language",
+        "title": "Public room administration on the group mailbox, with the same rules in every language",
+        "description": "Public room administration on the group mailbox, with the same rules in every language",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          ".github/workflows/spec-sync.yml",
+          "PROTOCOL.md",
+          "TEST-VECTORS.md",
+          "vectors/group-admin-v1.json"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Every library reduces vectors/group-admin-v1.json to the same accepted and rejected room states, seals the same 227-byte action-5 delivery, and still opens vectors/group-v1.json. A LocalNet invite-only room and an ask-to-join room each post one 0x07 payment. Tag v1.3.0 still does not include 0x03, 0x06, or 0x07."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "b862aa09847a94c747a6f26b0442b7680d4f5b71166a27c2bd9fd6d0cb915a10"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792360252,
+      "digest": "f9c6eb285e19391f74471221b17344211c4a20a9e234f8fbbe95c1816d483d52",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

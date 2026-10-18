@@ -93,7 +93,7 @@ remaining able to decode version 1 messages.
 | `is_pq_announcement` | Recognizes the ACPQ prefix. |
 | `parse_pq_announcement` | Parses exact unsigned/signed ACPQ lengths, returning an unverified unsigned key or verified signed key; invalid signatures return `None`. |
 
-Handshake id 0x04 and data id 0x05 use version 0x02; id 0x03 is unused. PQ constants and direct KEM encapsulate/decapsulate operations are private in this port. `pq::tests::parity_fixture` reads the committed `vectors/pq-mlkem768.json`; `live_localnet_note` is conditional evidence, not a required live network run. See the [accuracy ledger](../../../docs/ACCURACY.md).
+Handshake id 0x04 and data id 0x05 use version 0x02. Protocol 0x03 is room administration, not a handshake id. PQ constants and direct KEM encapsulate/decapsulate operations are private in this port. `pq::tests::parity_fixture` reads the committed `vectors/pq-mlkem768.json`; `live_localnet_note` is conditional evidence, not a required live network run. See the [accuracy ledger](../../../docs/ACCURACY.md).
 
 ## Invariants
 

@@ -8,6 +8,7 @@ files:
   - src/main/kotlin/com/corvidlabs/algochat/Keys.kt
   - src/main/kotlin/com/corvidlabs/algochat/MessagePayload.kt
   - src/main/kotlin/com/corvidlabs/algochat/PQ.kt
+  - src/main/kotlin/com/corvidlabs/algochat/GroupAdmin.kt
   - src/main/kotlin/com/corvidlabs/algochat/Signature.kt
   - src/main/kotlin/com/corvidlabs/algochat/Types.kt
 db_tables: []
@@ -24,6 +25,48 @@ Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envel
 
 | Export | Description |
 |---|---|
+| `NAME_MAX` | Room administration symbol. |
+| `ADMIN_MAX` | Room administration symbol. |
+| `MEMBER_MAX` | Room administration symbol. |
+| `DELIVER_PLAINTEXT_SIZE` | Room administration symbol. |
+| `DELIVER_ACTION` | Room administration symbol. |
+| `policy` | Room administration symbol. |
+| `epoch` | Room administration symbol. |
+| `sender` | Room administration symbol. |
+| `txId` | Room administration symbol. |
+| `round` | Room administration symbol. |
+| `offset` | Room administration symbol. |
+| `op` | Room administration symbol. |
+| `reason` | Room administration symbol. |
+| `state` | Room administration symbol. |
+| `accepted` | Room administration symbol. |
+| `rejected` | Room administration symbol. |
+| `groupId` | Room administration symbol. |
+| `mailbox` | Room administration symbol. |
+| `groupKey` | Room administration symbol. |
+| `adminTxId` | Room administration symbol. |
+| `parent` | Room administration symbol. |
+| `name` | Room administration symbol. |
+| `owner` | Room administration symbol. |
+| `admins` | Room administration symbol. |
+| `members` | Room administration symbol. |
+| `subject` | Room administration symbol. |
+| `pending` | Room administration symbol. |
+| `advance` | Room administration symbol. |
+| `GroupAdmin` | Room administration reducer and action-5 delivery. |
+| `draftAdmin` | Drafts an authorized 0x03 note. |
+| `reduceAdmin` | Reduces administration transactions. |
+| `senderMayPost` | Whether a member may post at an epoch. |
+| `deliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `sealGroupKeyDelivery` | Seals a 227-byte 0x06 action-5 delivery. |
+| `openGroupKeyDelivery` | Opens a 227-byte 0x06 action-5 delivery. |
+| `RoomState` | Accepted room roster. |
+| `AdminEvent` | One administration transaction. |
+| `AcceptedAdmin` | One accepted administration record. |
+| `RejectedAdmin` | One rejected administration transaction. |
+| `ReduceAdminResult` | Reducer output. |
+| `OpenedGroupKeyDelivery` | Opened action-5 delivery. |
+| `RoomAdminException` | Room administration error. |
 | `Protocol` | Version, protocol id, byte sizes, 4096-byte note ceiling, note payment fee, HKDF salts/info, and fixed header size for v1 envelopes. |
 | `KeyPair`, `Keys` | Deterministic seed derivation, ephemeral X25519 generation, ECDH, and public-key byte conversion. |
 | `ChatEnvelope` | Value object whose `encode`/`decode` implement the v1 binary envelope. |

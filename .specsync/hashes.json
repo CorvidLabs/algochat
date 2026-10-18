@@ -2,19 +2,27 @@
   "format_version": 1,
   "hashes": {
     ".specsync/config.toml": "893fd4e16d8de5f357c9f1c28303c76fa92fc4c0c09a73b6fe7ead0000798853",
-    "PROTOCOL.md": "d7442dba12faf20e5bc9acd2431c2c5a560f514d8441c5461a70b4a94b6684da",
-    "TEST-VECTORS.md": "47b5b71db66d19b50ce291033329ffb73b2b3dd34dc39fbe17b429037e2a49b3",
+    "PROTOCOL.md": "e1ffda38f35dfdca3b16e3202f91a4f92b4d16d59ae766153f0c963b1e5a3982",
+    "TEST-VECTORS.md": "ad53f5cf4d6c9f209656da5e936316d3486128a83cee272991d604a000181846",
+    "scripts/parity/mesh.py": "b63b3f6a4959211ac2733544b7650beb8f2b8b9f0c2b33dd371ef1c8d1ece328",
+    "scripts/parity/rust_replay.py": "9ae1026ab72174f2569570c23a655a8612a08c7eaf74cc117c6c6ef9181b4ebc",
+    "scripts/parity/rust_replay_test.rs": "6f4ba7090d3ddfe55844e1309682a5ab4f28dc8cb05e36402e4ca6a36c5a3f43",
+    "scripts/parity/swift-history/Package.swift": "0bf7a6526d97b5a30510391bdbf285f73d6886ad1f547726444f31a7f450dff3",
+    "scripts/parity/swift-history/Sources/SwiftHistoryProbe/main.swift": "3652b1df9d63c285317a1e8438ac8bbd5c166c7c083dcef1120449a58906da2f",
+    "scripts/parity/swift_history.py": "ec154e663b0b10ce7fefc14e030f7d3a685a1effedcde866d47b5d2ac7113096",
+    "scripts/parity/test_mesh.py": "7d1763c4df63f645192b18b4eb971f5b52c05a07050566d76298c5ca073b6fa6",
+    "scripts/parity/test_probes.py": "32aaf3e3f6d4ec7caf1247eea6a0eb237a1ac5cdedde75850e558eb705cb11f4",
     "scripts/release/evidence.py": "b28cdd457ae4a30fd7c0417e7aa376cdcf9980d4d8ff90034f61fcba14d02c67",
     "scripts/release/packages.py": "de14c88e87c8ae667519bc3b160bf4f1602ff7dd41ae51bf2e19298ac6545d70",
     "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
     "scripts/release/qualify.py": "6893cec04fccfdfed4203c5f7235dfff6dd3181232487849dc14daafedd4dc47",
     "scripts/release/test_release.py": "206cdccb8c045d91254d765dc81d604b5f774825b8816363b6b6f2b748b81819",
-    "specs/protocol/protocol.spec.md": "cf5ec57c974da20de16d9befcb059a7e2377d879e9618e39c0c8c713a0fee73b",
-    "specs/protocol/requirements.md": "ec4e7d8adead416a1383341d7a869966a798fc818dfa2ed04f12a7b2a338b641",
-    "specs/release/context.md": "9df5b419b94532a784e2e7c7d741c0a2c4dc5ad9fe57a53efb07aa2a45d6470b",
-    "specs/release/release.spec.md": "676a27d1bf832abe922ffe29d1fe41ad791b6a187202e9de2e33264e161266bc",
-    "specs/release/requirements.md": "68852c4df4878a654b6961cc6b7281a7d43cace8fa7426cb36e1d126df3bd958",
-    "specs/release/testing.md": "49736139edee376dcc2d738dfb5ef216ba809f6b41026fe5b70a92dbf0dfde7e"
+    "specs/protocol/protocol.spec.md": "5bac0cd799bb8d6b26578f99aef6fe1470d2b25e7e3f0271a1d893cf07da95ff",
+    "specs/protocol/requirements.md": "bba2b3a738ecfed8ac27dba9085cd0e0964111bfb13b7e8f1168224e5d131c62",
+    "specs/release/context.md": "60b83b623f37f08f59f413dd8827654582055e4aaa35540f6a36183cc76738b6",
+    "specs/release/release.spec.md": "99f48f3ed4e900770343b07f739eeaf990400b5ce76fa80932f17ba72273f64c",
+    "specs/release/requirements.md": "f3b814392fd674786c2d05c671f5ba07b2ee9e255573e4b2a9b8e5b7d628dec7",
+    "specs/release/testing.md": "680d3fd38c38a8fd9baaf835f257c55a20c07aee4372acfbe108c274506994c7"
   },
   "snapshots": {
     "specs/protocol/protocol.spec.md": {
@@ -23,8 +31,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "a66d493275e0324c557135b91c068952bcbf7b4fb3aca9609625d76775516767",
-      "snapshot_digest": "0e7b21ad2c0ca5321b18a8d3a29cb92c14f0cd442c86b323957a22b2351568ee"
+      "input_digest": "cb28ac119f61fe6793fb5306d6c46f7ebb89d0ddb0e2ec99f7b434387133c79c",
+      "snapshot_digest": "99dc46a1c067e47df5fe788d9b10241818e1379ee536cc3afdd5240c828afa1a"
     },
     "specs/release/release.spec.md": {
       "snapshot_version": 1,
@@ -32,8 +40,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "6973ddd032c4a34f3647cb6d8e971a283059682da10983c458507cf2f9d87708",
-      "snapshot_digest": "d74610d99fd9dd2ee9c3227f7b0fac03a473f1ae9e7b005d5432fd4f47fbec14"
+      "input_digest": "32a31d475a6b53d7a9cfc812dfea17fc0acebeeb1cb2dc4857f50d0186bb51a3",
+      "snapshot_digest": "5118f201140dfebf2e92f54657305dc33936846375971e05976c670a37f6ba38"
     }
   }
 }

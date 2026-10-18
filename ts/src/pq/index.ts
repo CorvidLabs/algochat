@@ -46,3 +46,23 @@ export {
     type GroupMembership,
     type OpenedGroupMessage,
 } from './group.js';
+export {
+    ADMIN_OP,
+    GROUP_ADMIN_MAX,
+    GROUP_ADMIN_PROTOCOL,
+    GROUP_DELIVER_ACTION,
+    GROUP_DELIVER_PLAINTEXT_SIZE,
+    GROUP_MEMBER_MAX,
+    GROUP_NAME_MAX,
+    JOINING,
+    deliveryAuthorized,
+    draftAdmin,
+    openGroupKeyDelivery,
+    reduceAdmin,
+    sealGroupKeyDelivery,
+    senderMayPost,
+    type AcceptedAdmin,
+    type AdminEvent,
+    type ReduceAdminResult,
+    type RoomState,
+} from './group-admin.js';

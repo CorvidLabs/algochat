@@ -223,7 +223,7 @@ then still hands the plain `Account` to `AlgoChat`.
 
 ## 4. Protocol
 
-The Swift package `algochat` implements protocols `0x01`, `0x02`, `0x04`, and `0x05`: standard mode (protocol byte `0x01`), ratcheting PSK mode (`0x02`), the hybrid handshake (`0x04`), and session messages (`0x05`). Identifier `0x03` is unassigned. Protocol revision 1.2.1 raises the note ceiling to 4,096 bytes and prices each byte past 1,024.
+The Swift package `algochat` implements protocols `0x01`, `0x02`, `0x03`, `0x04`, `0x05`, `0x06`, and `0x07`: standard mode (protocol byte `0x01`), ratcheting PSK mode (`0x02`), public room administration (`0x03`), the hybrid handshake (`0x04`), session messages (`0x05`), group-key delivery (`0x06`), and a group mailbox message (`0x07`). Protocol `0x03` has no PQ level. Protocol revision 1.2.1 raises the note ceiling to 4,096 bytes and prices each byte past 1,024.
 It does not add a version byte. This Swift package has no Falcon-1024 transaction signer; that account capability is available in the TypeScript implementation. That note-ceiling revision is not itself the `0x04` and `0x05` session.
 
 ### 4.1 Identity and key derivation

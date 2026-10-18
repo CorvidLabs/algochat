@@ -6,7 +6,8 @@ import Foundation
 
  Protocol `0x06` delivers a 32-byte group key under an established hybrid
  session. Protocol `0x07` posts one message to the mailbox. The session key
- is an input to this type. It does not run a handshake, and `0x03` is not used.
+ is an input to this type. It does not run a handshake. `0x03` and `0x06`
+ action 5 are `GroupAdmin`.
  */
 public enum GroupMailbox {
     public struct Membership: Sendable, Equatable {

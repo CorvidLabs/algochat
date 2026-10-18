@@ -366,7 +366,7 @@ The workflow is intended to record test failures as data, and generation/deploy 
 
 ### 4.7 Open a hybrid session (`0x04`, then `0x05`)
 
-Everyday `0x01` and Extra lock `0x02` stay as above. A hybrid session is optional. The sender obtains a trusted recipient X25519 key and ML-KEM encapsulation key, then publishes one handshake note. Later messages reuse that session key in shorter data notes. Byte `0x03` is not a public protocol id. The byte layout is [PROTOCOL.md](../PROTOCOL.md) section 5.7.
+Everyday `0x01` and Extra lock `0x02` stay as above. A hybrid session is optional. The sender obtains a trusted recipient X25519 key and ML-KEM encapsulation key, then publishes one handshake note. Later messages reuse that session key in shorter data notes. Byte `0x03` is the public room administration record in [PROTOCOL.md](../PROTOCOL.md) section 5.8, not a hybrid session id. The hybrid byte layout is section 5.7.
 
 ```mermaid
 sequenceDiagram
@@ -516,7 +516,7 @@ What must be kept, and where ([SECURITY.md](../SECURITY.md#key-management)):
 
 This repository contains the protocol documents and six language libraries. Protocol **1.3.0** and the library package versions are separate: Swift **1.3.0**, TypeScript **0.9.0**, Python **0.2.0**, Rust **0.3.0**, Kotlin **0.2.0**, and Go **0.2.0** (nested tag `go/v0.2.0`). See [the README version table](../README.md#versions-and-requirements) for package identities and [the release toolchain matrix](RELEASE.md#language-and-runtime-versions) for each language's requirements, configured CI versions, and unqualified minima. A package version in the source tree does not establish registry availability.
 
-- **Versioning.** The specification version is stated at the top of [PROTOCOL.md](../PROTOCOL.md) and [TEST-VECTORS.md](../TEST-VECTORS.md). Protocol `1.1.0` added Extra lock (`0x02`), and `1.2.0` added Falcon-1024 accounts without an envelope change. `1.2.1` raised the note ceiling to 4096 bytes and added a fee surcharge for note bytes past 1024. `1.3.0` adds the hybrid handshake (`0x04`) and session message (`0x05`). These protocol ids, the accepted envelope versions `0x01`/`0x02`, and library package versions are distinct; `0x03` remains unassigned.
+- **Versioning.** The specification version is stated at the top of [PROTOCOL.md](../PROTOCOL.md) and [TEST-VECTORS.md](../TEST-VECTORS.md). Protocol `1.1.0` added Extra lock (`0x02`), and `1.2.0` added Falcon-1024 accounts without an envelope change. `1.2.1` raised the note ceiling to 4096 bytes and added a fee surcharge for note bytes past 1024. `1.3.0` adds the hybrid handshake (`0x04`) and session message (`0x05`). These protocol ids, the accepted envelope versions `0x01`/`0x02`, and library package versions are distinct. `0x03` is the public room administration record and is not in tag v1.3.0.
 - **Local checks.** `fledge lanes run verify` runs `validate` (`bun scripts/validate.ts`) and `release_checks` (`python3 -m unittest discover -s scripts/release -v`). `fledge run intent` runs `hi check`. `fledge trust verify` runs the whole trust gate.
 - **Trust gate in CI.** [trust.yml](https://github.com/CorvidLabs/algochat/blob/main/.github/workflows/trust.yml) runs on pull requests and pushes to `main` that match its configured path filters. A workflow file does not establish the current branch-protection requirements.
 - **Status dashboard.** [status.yml](https://github.com/CorvidLabs/algochat/blob/main/.github/workflows/status.yml) runs as in [§4.6](#46-publish-the-status-dashboard).

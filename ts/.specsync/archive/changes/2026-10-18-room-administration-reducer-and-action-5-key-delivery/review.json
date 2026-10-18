@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "room-administration-reducer-and-action-5-key-delivery",
+  "reviewer": "leif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "6d2c88dec6b839773a8c54ceea41c78431e4df33",
+  "contract_digest": "462d9e74bf8ec5a5d05f0b691b918b372fdb6df4a93617b00da7f8254a3ade8f",
+  "execution_digest": "fe6636289eb38c031b1d29b71edfc9123cd29601827d9581af2eb9224779eda0",
+  "workspace_digest": "8885ed6bda185ca78f608c8af10bff1ef7012f8300d5d0fc76d1cb006ae63a29",
+  "timestamp": 1792359937
+}

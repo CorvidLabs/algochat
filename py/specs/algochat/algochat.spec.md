@@ -11,6 +11,7 @@ files:
   - src/algochat/keys.py
   - src/algochat/models.py
   - src/algochat/pq.py
+  - src/algochat/group_admin.py
   - src/algochat/psk_crypto.py
   - src/algochat/psk_envelope.py
   - src/algochat/psk_exchange.py
@@ -38,6 +39,50 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 
 | Export | Contract |
 |---|---|
+| `GROUP_MEMBERSHIP_NOTE_SIZE` | Room administration symbol. |
+| `GROUP_MAX_PAYLOAD_SIZE` | Room administration symbol. |
+| `GroupMembership` | Room administration symbol. |
+| `GroupCounter` | Room administration symbol. |
+| `OpenedGroupMessage` | Room administration symbol. |
+| `is_group_membership` | Room administration symbol. |
+| `is_group_message` | Room administration symbol. |
+| `seal_group_membership` | Room administration symbol. |
+| `open_group_membership` | Room administration symbol. |
+| `derive_group_message_key` | Room administration symbol. |
+| `seal_group_message` | Room administration symbol. |
+| `open_group_message` | Room administration symbol. |
+| `GROUP_ADMIN_PROTOCOL` | Room administration symbol. |
+| `GROUP_DELIVER_ACTION` | Room administration symbol. |
+| `GROUP_NAME_MAX` | Room administration symbol. |
+| `GROUP_ADMIN_MAX` | Room administration symbol. |
+| `GROUP_MEMBER_MAX` | Room administration symbol. |
+| `GROUP_DELIVER_PLAINTEXT_SIZE` | Room administration symbol. |
+| `JOINING_INVITE` | Room administration symbol. |
+| `JOINING_ASK` | Room administration symbol. |
+| `OP_CREATE` | Room administration symbol. |
+| `OP_SET_NAME` | Room administration symbol. |
+| `OP_SET_POLICY` | Room administration symbol. |
+| `OP_APPOINT_ADMIN` | Room administration symbol. |
+| `OP_DISMISS_ADMIN` | Room administration symbol. |
+| `OP_TRANSFER_OWNER` | Room administration symbol. |
+| `OP_ADD_MEMBER` | Room administration symbol. |
+| `OP_REQUEST_JOIN` | Room administration symbol. |
+| `OP_ACCEPT_JOIN` | Room administration symbol. |
+| `OP_DECLINE_JOIN` | Room administration symbol. |
+| `OP_REMOVE_MEMBER` | Room administration symbol. |
+| `OP_REKEY` | Room administration symbol. |
+| `draft_admin` | Drafts an authorized 0x03 room administration note. |
+| `reduce_admin` | Reduces administration transactions into one room. |
+| `sender_may_post` | Whether a member may post at an epoch. |
+| `delivery_authorized` | Whether one accepted record authorizes a key delivery. |
+| `seal_group_key_delivery` | Seals a 227-byte 0x06 action-5 delivery. |
+| `open_group_key_delivery` | Opens a 227-byte 0x06 action-5 delivery. |
+| `RoomState` | Accepted room roster. |
+| `AdminEvent` | One administration transaction. |
+| `AcceptedAdmin` | One accepted administration record. |
+| `RejectedAdmin` | One rejected administration transaction. |
+| `ReduceAdminResult` | Reducer output. |
+| `GroupKeyDelivery` | Opened action-5 delivery. |
 | `derive_keys_from_seed` | Derives a deterministic X25519 private/public key pair from a 32-byte seed with HKDF-SHA256. |
 | `generate_ephemeral_keypair` | Generates a random ephemeral X25519 key pair for message encryption. |
 | `encrypt_message` | Encrypts authenticated message content for a recipient and returns a standard AlgoChat envelope. |

@@ -5,6 +5,7 @@ status: active
 owner: CorvidLabs
 files:
   - src/lib.rs
+  - src/group_admin.rs
 db_tables: []
 depends_on:
   - client
@@ -32,6 +33,20 @@ implementation modules themselves remain private and expose no separate module s
 
 | Type | Description |
 |------|-------------|
+| `draft_admin` | Drafts an authorized 0x03 room administration note. |
+| `reduce_admin` | Reduces administration transactions into one room. |
+| `sender_may_post` | Whether a member may post at an epoch. |
+| `delivery_authorized` | Whether one accepted record authorizes a key delivery. |
+| `seal_group_key_delivery` | Seals a 227-byte 0x06 action-5 delivery. |
+| `open_group_key_delivery` | Opens a 227-byte 0x06 action-5 delivery. |
+| `RoomState` | Accepted room roster. |
+| `AdminDraft` | Inputs for one administration draft. |
+| `AdminEvent` | One administration transaction. |
+| `AcceptedAdmin` | One accepted administration record. |
+| `RejectedAdmin` | One rejected administration transaction. |
+| `ReduceAdminResult` | Reducer output. |
+| `GroupKeyDelivery` | Opened action-5 delivery. |
+| `GroupAdminError` | Room administration error. |
 
 ## Invariants
 

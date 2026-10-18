@@ -10,6 +10,7 @@ files:
   - Sources/AlgoChat/Crypto/KeyDerivation.swift
   - Sources/AlgoChat/Crypto/MessageEncryptor.swift
   - Sources/AlgoChat/Crypto/PQSession.swift
+  - Sources/AlgoChat/Crypto/GroupAdmin.swift
   - Sources/AlgoChat/Crypto/PSKRatchet.swift
   - Sources/AlgoChat/Crypto/SignatureVerifier.swift
   - Sources/AlgoChat/Errors/ChatError.swift
@@ -61,6 +62,48 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 
 | Symbol |
 |--------|
+| `State` | Room administration symbol. |
+| `groupID` | Room administration symbol. |
+| `mailbox` | Room administration symbol. |
+| `owner` | Room administration symbol. |
+| `admins` | Room administration symbol. |
+| `members` | Room administration symbol. |
+| `policy` | Room administration symbol. |
+| `name` | Room administration symbol. |
+| `epoch` | Room administration symbol. |
+| `headTxID` | Room administration symbol. |
+| `Event` | Room administration symbol. |
+| `note` | Room administration symbol. |
+| `txID` | Room administration symbol. |
+| `round` | Room administration symbol. |
+| `offset` | Room administration symbol. |
+| `Accepted` | Room administration symbol. |
+| `op` | Room administration symbol. |
+| `subject` | Room administration symbol. |
+| `Rejection` | Room administration symbol. |
+| `reason` | Room administration symbol. |
+| `Reduced` | Room administration symbol. |
+| `state` | Room administration symbol. |
+| `accepted` | Room administration symbol. |
+| `rejected` | Room administration symbol. |
+| `Delivery` | Room administration symbol. |
+| `groupKey` | Room administration symbol. |
+| `adminTxID` | Room administration symbol. |
+| `deliverAction` | Room administration symbol. |
+| `nameMax` | Room administration symbol. |
+| `adminMax` | Room administration symbol. |
+| `memberMax` | Room administration symbol. |
+| `deliverPlaintextSize` | Room administration symbol. |
+| `joiningInvite` | Room administration symbol. |
+| `joiningAsk` | Room administration symbol. |
+| `deliveryNoteSize` | Room administration symbol. |
+| `GroupAdmin` | Room administration reducer and action-5 delivery. |
+| `draft` | Drafts an authorized 0x03 note. |
+| `reduce` | Reduces administration transactions. |
+| `senderMayPost` | Whether a member may post at an epoch. |
+| `deliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `sealKeyDelivery` | Seals a 227-byte 0x06 action-5 delivery. |
+| `openKeyDelivery` | Opens a 227-byte 0x06 action-5 delivery. |
 | `AlgoChat` |
 | `algokit` |
 | `account` |

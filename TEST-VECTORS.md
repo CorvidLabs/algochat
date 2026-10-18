@@ -91,8 +91,8 @@ These should all fail validation. These are normative requirements; a port accep
 // Readers MUST accept it. See PROTOCOL.md section 5.4.1.
 0x0001...   // Version 0x00 is not accepted
 
-// Unknown protocol
-0x0103...   // Protocol 0x03 does not exist
+// Not an everyday note. Room administration is version 0x02 and protocol 0x03.
+0x0103...   // Version 0x01 with protocol 0x03 is not a 0x03 record
 
 // Missing data
 0x0101 + 30 bytes  // Header truncated
@@ -519,4 +519,8 @@ plaintext         = UTF-8 "group-v1"
 message_key = aa2036c95c79e0d8c7ce0aebcc3b2918292c3beea0b22b510dcd2315140ec905
 ```
 
-The membership note is 195 bytes and starts with `0x0206`. The message note starts with `0x0207`. A repeated epoch and counter MUST fail. The previous group key MUST fail authentication. Identifier `0x03` is not used.
+The membership note is 195 bytes and starts with `0x0206`. The message note starts with `0x0207`. A repeated epoch and counter MUST fail. The previous group key MUST fail authentication. This vector does not use identifier `0x03`.
+
+## Room administration
+
+`vectors/group-admin-v1.json` is the shared `0x03` record and the `0x06` action-5 key delivery. Legacy actions 1 through 4 stay in `vectors/group-v1.json`. A create record starts with `0x0203`. Action 5 is a 227-byte note: the 78-byte hybrid header, a 133-byte plaintext, and a 16-byte tag. The session key in the delivery object is an input, not a handshake output. Fill-byte addresses in that file are test ids. A transaction id is 32 bytes of one fill value.

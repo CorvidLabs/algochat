@@ -61,7 +61,10 @@ let package = Package(
         ),
         .testTarget(
             name: "AlgoChatTests",
-            dependencies: ["AlgoChat"],
+            dependencies: [
+                "AlgoChat",
+                .product(name: "Crypto", package: "swift-crypto")
+            ],
             path: "swift/Tests/AlgoChatTests",
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
