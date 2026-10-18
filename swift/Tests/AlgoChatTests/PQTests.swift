@@ -83,6 +83,7 @@ struct PQTests {
         #expect(PQAnnouncement.parse(junk, ed25519PublicKey: signingKey.publicKey.rawRepresentation) == nil)
     }
 
+#if !os(Linux)
     @Test("ML-KEM-768 key and decapsulation match the TypeScript fixture")
     @available(macOS 26, iOS 26, watchOS 26, tvOS 26, visionOS 26, macCatalyst 26, *)
     func mlkemMatchesFixture() throws {
@@ -216,6 +217,7 @@ struct PQTests {
             _ = try opened.session.encrypt(String(repeating: "x", count: PQProtocol.maxPayloadSize + 1))
         }
     }
+#endif
 }
 
 private struct PQFixture: Decodable {
