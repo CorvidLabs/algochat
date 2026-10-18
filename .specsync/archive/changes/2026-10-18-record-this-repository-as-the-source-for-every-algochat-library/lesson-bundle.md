@@ -1,4 +1,4 @@
-# Lesson bundle — record-this-repository-as-the-source-for-every-algochat-library
+# Lesson bundle: record-this-repository-as-the-source-for-every-algochat-library
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
