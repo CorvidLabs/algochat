@@ -186,3 +186,11 @@ The standard/PSK writers use header-authenticated envelope version `0x02`, while
 
 - Hiding Algorand transaction metadata, operating an indexer, wallet custody, automatic out-of-band PSK exchange, and raven mailbox / dead-drop routing.
 
+### REQ-algochat-026
+
+The TypeScript package SHALL draft and reduce protocol 0x03 room administration records and SHALL seal and open 0x06 action 5 key deliveries as PROTOCOL.md section 5.8 and vectors/group-admin-v1.json specify. A legacy group-v1 membership note SHALL still open and SHALL NOT create an owner.
+
+Acceptance Criteria
+- ts/src/pq/group-admin.test.ts matches vectors/group-admin-v1.json for REQ-algochat-026.
+- src/pq/group.test.ts still opens vectors/group-v1.json.
+

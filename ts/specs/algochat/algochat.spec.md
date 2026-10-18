@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 7
+version: 8
 status: stable
 files:
   - src/index.ts
@@ -332,3 +332,11 @@ Then SendQueue processes eligible entries in order, records failures for retry, 
 | 6 | 2026-09-20 | Remove the raven mailbox router. Delivery is encrypted payment notes only. Falcon-1024 `pqsig` remains the default authorizer for new accounts. |
 | 7 | 2026-09-20 | remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum: Remove the Raven mailbox router transport and keep AlgoChat as encrypted note messaging with Falcon-1024 post-quantum account support |
 | 8 | 2026-10-16 | Raise the note ceiling to 4096 bytes (protocol 1.2.1). Standard plaintext max 3954, PSK plaintext max 3950. Fee is scheme fee plus the consensus surcharge past 1024 bytes. |
+| 8 | 2026-10-18 | room-administration-reducer-and-action-5-key-delivery: Room administration reducer and action-5 key delivery |
+
+## Room administration
+
+`draftAdmin` builds a public 0x03 note. `reduceAdmin` accepts a record only when the parent state authorized that sender. `senderMayPost` allows a member at the current epoch. `deliveryAuthorized` checks one accepted record. `sealGroupKeyDelivery` and `openGroupKeyDelivery` use the 227-byte action-5 note.
+
+Exports: `GROUP_ADMIN_PROTOCOL`, `GROUP_DELIVER_ACTION`, `GROUP_NAME_MAX`, `GROUP_ADMIN_MAX`, `GROUP_MEMBER_MAX`, `GROUP_DELIVER_PLAINTEXT_SIZE`, `JOINING`, `ADMIN_OP`, `RoomState`, `AdminEvent`, `AcceptedAdmin`, `ReduceAdminResult`, `encodeAdminRecord`, `draftAdmin`, `reduceAdmin`, `senderMayPost`, `deliveryAuthorized`, `sealGroupKeyDelivery`, `openGroupKeyDelivery`, `GROUP_INFO_LABEL`, `GROUP_ACTION`, `GROUP_MEMBERSHIP_PLAINTEXT_SIZE`, `GROUP_MEMBERSHIP_NOTE_SIZE`, `GROUP_MESSAGE_HEADER_SIZE`, `GROUP_MAX_PAYLOAD_SIZE`, `GroupMembership`, `GroupCounter`, `OpenedGroupMessage`, `isGroupMembership`, `isGroupMessage`, `sealGroupMembership`, `openGroupMembership`, `deriveGroupMessageKey`, `sealGroupMessage`, `openGroupMessage`.
+
