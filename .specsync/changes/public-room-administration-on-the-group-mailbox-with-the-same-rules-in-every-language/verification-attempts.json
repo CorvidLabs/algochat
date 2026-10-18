@@ -144,6 +144,24 @@
       "requirement_ids": [
         "REQ-protocol-6"
       ]
+    },
+    {
+      "timestamp": 1792360216,
+      "commit": "776b55b46f469af992d7ae88b2dd5c6a162c756a",
+      "contract_digest": "740624a5ae04c6bcd157df0f7b2ce46456d74ca4c36c7b3c7fe96fd565bb7d36",
+      "execution_digest": "62da2f5b21b4c814347e42aa826594224a52b76cf6b098d2a2c2d524d74d29ae",
+      "workspace_digest": "5a2614b3a3b3af5f724f3327f14264a57e80db97ffeb67626cfbe7734ac7c049",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-6"
+      ]
     }
   ]
 }
