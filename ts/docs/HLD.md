@@ -90,7 +90,7 @@ flowchart LR
 | `storage/`, `cache/` | `EncryptionKeyStorage` (in-memory and password-encrypted file), a TTL `PublicKeyCache`, and `MessageCache`. `cache/` holds an older cache API kept for compatibility (`LegacyMessageCache`). | [`storage/index.ts`](../src/storage/index.ts), [`file-key-storage.ts`](../src/storage/file-key-storage.ts), [`cache/index.ts`](../src/cache/index.ts) |
 | `errors/` | `ChatError` with a stable `ChatErrorCode`, plus `isChatError` and `wrapError`. | [`ChatError.ts`](../src/errors/ChatError.ts) |
 
-Not everything in `src/` is reachable from the package entry point. `package.json` declares a single export (`.`). These are **not** re-exported from [`src/index.ts`](../src/index.ts): `MessageTransaction`, `MessageTooLargeError`, `MAX_NOTE_SIZE`, `MINIMUM_PAYMENT`, the interface-based `blockchain/MessageIndexer` and its `PublicKeyNotFoundError`, `x25519ECDH`, the header-AAD helpers, and the Node-only `FileKeyStorage` and `FileSendQueueStorage`. Source comments point to a `ts-algochat/node` subpath for the Node-only classes, but `package.json` declares no such export. These source-only helpers are not a supported package-root or subpath import; see [implementation gaps](../../docs/ACCURACY.md).
+Not everything in `src/` is reachable from the package entry point. `package.json` declares a single export (`.`). These are **not** re-exported from [`src/index.ts`](../src/index.ts): `MessageTransaction`, `MessageTooLargeError`, `MAX_NOTE_SIZE`, `MINIMUM_PAYMENT`, the interface-based `blockchain/MessageIndexer` and its `PublicKeyNotFoundError`, `x25519ECDH`, the header-AAD helpers, and the Node file-storage classes `FileKeyStorage` and `FileSendQueueStorage`. There is no `/node` package export. These source-only helpers are not a supported package-root or subpath import; see [implementation gaps](../../docs/ACCURACY.md).
 
 ## 4. Protocol implementation
 
@@ -169,7 +169,7 @@ The code has two ways to mix a pre-shared key into encryption. They are easy to 
 | Envelope | protocol `0x01`, 126-byte header | protocol `0x02`, 130-byte header with a 4-byte big-endian ratchet counter at offset 2 |
 | Key material | `ikm = HKDF(ECDH, salt = PSK, info 'AlgoChatV1-PSK')`, then the standard HKDF | `HKDF(ECDH ‖ positionPSK, salt = ephemeralPub, info 'AlgoChatV1-PSK' ‖ senderPub ‖ recipientPub)`. The sender wrap key uses info `'AlgoChatV1-PSK-SenderKey' ‖ senderPub` |
 | Ratchet | none: the same 32-byte PSK for every message | `sessionPSK = HKDF(initialPSK, salt 'AlgoChat-PSK-Session', info = uint32BE(counter / 100))`, then `positionPSK = HKDF(sessionPSK, salt 'AlgoChat-PSK-Position', info = uint32BE(counter % 100))` |
-| Replay control | no cryptographic replay state; copied note bytes can appear in a different transaction | `validateCounter` / `recordReceive`: reject seen counters and counters outside `peerLastCounter ± 200` |
+| Replay control | no cryptographic replay state; copied note bytes can appear in a different transaction | `validateCounter` / `recordReceive`: legal counters are integers `0..=4294967295`. Before any receive, unseen counters `0..=200` are accepted. After highest accepted `N`, unseen counters run from `max(0, N-200)` through `min(4294967295, N+200)`. `advanceSendCounter` returns `4294967295` once and then refuses; the stored counter does not become 0. This package does not persist that state. |
 | Plaintext limit | 3954 bytes | 3950 bytes |
 | Used by `AlgorandService` | yes: one PSK passed to the constructor applies to every send and fetch of that service | **no**: `isChatMessage` only accepts protocol `0x01`, so the service skips PSK v1.1 notes. Apps compose the low-level functions and their own transport |
 
@@ -538,7 +538,7 @@ What is protected, and how:
 
 What is **not** protected ([README, Security Properties](../README.md#security-properties)):
 
-- **Forward secrecy.** The ephemeral public key is stored on chain, so a leaked long-term X25519 key or mnemonic decrypts that account's whole history, sent and received.
+- **No forward secrecy.** The ephemeral public key is stored on chain, so a leaked long-term X25519 key or mnemonic decrypts that account's whole history, sent and received. Per-message ephemeral keys are key separation, not forward secrecy.
 - **Metadata.** Sender, recipient, amount, fee, round and envelope size are public.
 - **Availability.** Delivery depends on algod accepting the transaction and on the indexer serving history.
 

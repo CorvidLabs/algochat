@@ -70,7 +70,7 @@ export {
     PublicKeyCache,
     InMemoryKeyStorage,
     KeyNotFoundError,
-    // FileKeyStorage - Node.js only, import from 'ts-algochat/node' if needed
+    // FileKeyStorage is source-only. package.json does not export it or a /node subpath.
     PasswordRequiredError,
     DecryptionFailedError,
     InvalidKeyDataError,
@@ -124,7 +124,7 @@ export {
     type SyncState,
     type SyncEvents,
     type SyncManagerConfig,
-    // FileSendQueueStorage - Node.js only, import from 'ts-algochat/node' if needed
+    // FileSendQueueStorage is source-only. package.json does not export it or a /node subpath.
 } from './queue/index.js';
 
 // Blockchain interfaces (abstract)
@@ -185,6 +185,8 @@ export {
     decodePSKEnvelope,
     isPSKMessage,
     PSKEnvelopeError,
+    MAX_PSK_COUNTER,
+    PSKCounterError,
     createPSKState,
     validateCounter,
     recordReceive,

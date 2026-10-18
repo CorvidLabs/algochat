@@ -21,6 +21,8 @@ func EncodeEnvelope(env *ChatEnvelope) []byte {
 }
 
 // DecodeEnvelope deserializes bytes from a transaction note to a ChatEnvelope.
+// It does not apply a plaintext-size ceiling. Note-facing opens reject a note
+// whose total length is greater than MaxNoteSize before they return plaintext.
 func DecodeEnvelope(data []byte) (*ChatEnvelope, error) {
 	if len(data) < 2 {
 		return nil, fmt.Errorf("%w: data too short (%d bytes)", ErrInvalidEnvelope, len(data))

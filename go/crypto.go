@@ -199,7 +199,15 @@ func EncryptReply(text, replyToTxid, replyToPreview string, senderPublicKey, rec
 }
 
 // DecryptMessage decrypts a message envelope. Returns nil if the message is not for us.
+// A note longer than MaxNoteSize is rejected before plaintext is returned. This is
+// the encoded note length, not a plaintext ceiling; DecodeEnvelope still accepts
+// a longer ciphertext without returning plaintext.
 func DecryptMessage(envelope *ChatEnvelope, myPrivateKey, myPublicKey [KeySize]byte) (*DecryptedContent, error) {
+	noteLen := HeaderSize + len(envelope.Ciphertext)
+	if noteLen > MaxNoteSize {
+		return nil, fmt.Errorf("%w: note is %d bytes", ErrNoteTooLarge, noteLen)
+	}
+
 	weAreSender := myPublicKey == envelope.SenderPublicKey
 
 	var plaintext []byte

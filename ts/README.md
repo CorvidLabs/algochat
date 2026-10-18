@@ -141,11 +141,15 @@ if (validateAddress('ALGO...')) {
 // Simple message
 await service.sendMessage(account, recipient, recipientKey, 'Hello!');
 
-// Reply to a message
-await service.sendReply(account, recipient, recipientKey, 'Reply text', {
-    messageId: 'original-tx-id',
-    preview: 'Original message preview...',
-});
+// Reply to a message. The transaction id and preview are positional.
+await service.sendReply(
+    account,
+    recipient,
+    recipientKey,
+    'Reply text',
+    'original-tx-id',
+    'Original message preview...',
+);
 ```
 
 ### Fetching Messages

@@ -17,4 +17,4 @@ export {
     type SyncManagerConfig,
 } from './SyncManager.js';
 
-// FileSendQueueStorage is Node.js only - import from 'ts-algochat/node' if needed
+// FileSendQueueStorage is source-only. package.json does not export it or a /node subpath.

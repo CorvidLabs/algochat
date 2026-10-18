@@ -11,3 +11,5 @@ spec: algochat.spec.md
 
 - [x] Register existing PSK, hybrid-session and PQCross sources/exports without claiming a high-level client.
 - [x] Distinguish active root qualification from accepted historical matrix requirements and document gaps.
+- [x] Keep PSK counters caller-owned, round-trip MaxUint32, and do not add replay state.
+- [x] Reject note-facing opens longer than 4096 bytes without giving DecodeEnvelope a plaintext ceiling.

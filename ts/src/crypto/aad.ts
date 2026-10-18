@@ -43,6 +43,9 @@ export function standardHeaderAAD(fields: StandardHeaderFields): Uint8Array {
 
 /** Full PSK fixed header (PSK_PROTOCOL.HEADER_SIZE = 130). */
 export function pskHeaderAAD(fields: PskHeaderFields): Uint8Array {
+    if (!Number.isInteger(fields.ratchetCounter) || fields.ratchetCounter < 0 || fields.ratchetCounter > 0xffffffff) {
+        throw new Error(`PSK counter is not a uint32: ${String(fields.ratchetCounter)}`);
+    }
     const aad = new Uint8Array(PSK_PREFIX_AAD_SIZE + 48);
     let offset = 0;
     aad[offset++] = fields.version;

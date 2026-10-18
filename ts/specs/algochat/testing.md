@@ -9,6 +9,9 @@ spec: algochat.spec.md
 - `bun run tsc` validates every public declaration and implementation under strict TypeScript settings.
 - `bun test` runs the deterministic crypto, signature, discovery, indexer, service, mnemonic, conversation, PSK, cache, and queue suite, including Falcon vs Ed25519 scheme recovery and Falcon `pqsig` / Ed25519 `sig` send-path tests against a stubbed algod client.
 - Note-capacity tests cover plaintext 882 and 878, plaintext 3954 and 3950 encoding to 4096 bytes, one byte over failing before send, and fee vectors 1024 to 1000, 1025 to 1001, 2000 to 1098, 4096 to 1308, and Falcon 4096 to 3308 at minFee 1000.
+- Inbound tests reject an authenticated standard, PSK, or PQ note of 4097 bytes before plaintext is returned. Outbound max-plus-one rejection stays.
+- PSK state tests cover uint32 bounds, exhaustion without wrapping to 0, the 200-counter window, replay, and failed authentication leaving state unchanged. PSK state is not persisted; the tests call the pure functions.
+- History tests insert equal-timestamp messages newest-first and require round-then-offset order from `Conversation`, the abstract indexer, and the exported indexer, including a pagination boundary.
 
 ### Security and compatibility
 

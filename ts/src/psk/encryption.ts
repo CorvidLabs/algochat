@@ -11,9 +11,10 @@ import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { randomBytes } from '@noble/ciphers/webcrypto';
 import { generateEphemeralKeyPair, x25519ECDH, uint8ArrayEquals } from '../crypto/keys.js';
 import { pskHeaderAAD } from '../crypto/aad.js';
-import { type DecryptedContent } from '../models/types.js';
+import { MAX_NOTE_SIZE, type DecryptedContent } from '../models/types.js';
 import { PSK_PROTOCOL, type PSKEnvelope } from './types.js';
 import { deriveHybridSymmetricKey, deriveSenderKey } from './ratchet.js';
+import { assertLegalCounter } from './state.js';
 
 export class PSKEncryptionError extends Error {
     constructor(message: string) {
@@ -39,6 +40,7 @@ export function encryptPSKMessage(
     currentPSK: Uint8Array,
     ratchetCounter: number,
 ): PSKEnvelope {
+    assertLegalCounter(ratchetCounter);
     const messageBytes = new TextEncoder().encode(plaintext);
 
     if (messageBytes.length > PSK_PROTOCOL.MAX_PAYLOAD_SIZE) {
@@ -126,6 +128,12 @@ export function decryptPSKMessage(
     recipientPublicKey: Uint8Array,
     currentPSK: Uint8Array,
 ): DecryptedContent | null {
+    if (PSK_PROTOCOL.HEADER_SIZE + envelope.ciphertext.length > MAX_NOTE_SIZE) {
+        throw new PSKEncryptionError(
+            `Note is ${PSK_PROTOCOL.HEADER_SIZE + envelope.ciphertext.length} bytes, max ${MAX_NOTE_SIZE}`,
+        );
+    }
+
     const weAreSender = uint8ArrayEquals(recipientPublicKey, envelope.senderPublicKey);
 
     let plaintext: Uint8Array;

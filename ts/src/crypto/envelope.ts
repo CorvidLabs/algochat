@@ -2,7 +2,7 @@
  * AlgoChat Web - Envelope Encoding/Decoding
  */
 
-import { ChatEnvelope, PROTOCOL } from '../models/types.js';
+import { ChatEnvelope, MAX_NOTE_SIZE, PROTOCOL } from '../models/types.js';
 
 export class EnvelopeError extends Error {
     constructor(message: string) {
@@ -50,6 +50,10 @@ export function encodeEnvelope(envelope: ChatEnvelope): Uint8Array {
  * Decodes bytes from transaction note to ChatEnvelope
  */
 export function decodeEnvelope(data: Uint8Array): ChatEnvelope {
+    if (data.length > MAX_NOTE_SIZE) {
+        throw new EnvelopeError(`Note is ${data.length} bytes, max ${MAX_NOTE_SIZE}`);
+    }
+
     if (data.length < 2) {
         throw new EnvelopeError(`Data too short: ${data.length} bytes`);
     }

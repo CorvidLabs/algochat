@@ -106,6 +106,8 @@ export interface NoteTransaction {
     confirmedRound: number;
     /** Timestamp of the block (Unix time in seconds). */
     roundTime: number;
+    /** Position within the confirmed round. Missing sorts as 0. */
+    intraRoundOffset?: number;
 }
 
 /**

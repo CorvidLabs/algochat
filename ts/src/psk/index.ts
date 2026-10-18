@@ -27,6 +27,8 @@ export {
 
 // Counter state management
 export {
+    MAX_PSK_COUNTER,
+    PSKCounterError,
     createPSKState,
     validateCounter,
     recordReceive,

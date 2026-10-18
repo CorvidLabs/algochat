@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 5
+version: 6
 status: active
 files:
   - blockchain.go
@@ -81,7 +81,7 @@ The package exposes the following existing symbols. It does not implement high-l
 | `GenerateEphemeralKeyPair` | Generate a random X25519 pair |
 | `EncryptMessage` | Encrypt a standard payload for recipient and sender recovery |
 | `EncryptReply` | Encode reply context and encrypt it |
-| `DecryptMessage` | Decrypt as recipient or original sender |
+| `DecryptMessage` | Decrypt as recipient or original sender. Reject a reconstructed note longer than 4096 bytes before returning plaintext. |
 | `Fingerprint` | Format an X25519 key fingerprint |
 | `SignEncryptionKey` | Sign an encryption key with Ed25519 |
 | `VerifyEncryptionKey` | Verify an Ed25519 encryption-key signature |
@@ -177,8 +177,8 @@ The package exposes the following existing symbols. It does not implement high-l
 
 | Export | Contract |
 |--------|----------|
-| `EncryptPSKMessage` | Counter-derived PSK + ephemeral X25519 encryption, version `0x01`, maximum plaintext 3950 bytes. |
-| `DecryptPSKMessage` | Open version `0x01` or header-authenticated `0x02` PSK notes; caller owns replay state. |
+| `EncryptPSKMessage` | Counter-derived PSK + ephemeral X25519 encryption, version `0x01`, maximum plaintext 3950 bytes. The caller supplies the uint32 counter. `math.MaxUint32` round-trips and is not wrapped to 0. No replay state is stored. |
+| `DecryptPSKMessage` | Open version `0x01` or header-authenticated `0x02` PSK notes; caller owns replay state. A note longer than 4096 bytes is rejected before plaintext is returned. |
 | `PQSession` | Hybrid session key, participant keys and SHA-256 handshake identity. |
 | `DeriveMLKEM768` | Deterministic ML-KEM-768 derivation from the account seed. |
 | `DeriveHybridPQKey` | Transcript-bound X25519 + ML-KEM shared-secret combiner. |
@@ -186,7 +186,7 @@ The package exposes the following existing symbols. It does not implement high-l
 | `AcceptPQHandshake` | Open the hybrid handshake as recipient. |
 | `OpenPQHandshakeAsSender` | Recover the hybrid session via its sender wrap. |
 | `EncryptPQMessage` | Seal protocol `0x05` data under the session key and 78-byte header AAD; plaintext maximum 4002 bytes. |
-| `DecryptPQMessage` | Authenticate data for the session's sender and handshake. |
+| `DecryptPQMessage` | Authenticate data for the session's sender and handshake. Reject a note longer than 4096 bytes before returning plaintext, including a valid authentication tag. |
 | `IsPQAnnouncement` | Recognize the ACPQ key-announcement magic. |
 | `ParsePQAnnouncement` | Read unsigned or Ed25519-signed encapsulation-key announcements. |
 
@@ -195,7 +195,7 @@ The package exposes the following existing symbols. It does not implement high-l
 ## Invariants
 
 1. Message encryption accepts plaintext up to `MaxPayloadSize`, uses a fresh ephemeral X25519 key pair and nonce, authenticates ciphertext with ChaCha20-Poly1305, and permits the intended recipient or original sender to decrypt with the corresponding private key.
-2. Standard envelope decoding accepts version `0x01` or `0x02` and standard protocol `0x01` and at least the fixed header plus authentication tag; it copies the remaining bytes as ciphertext and does not independently enforce the encryption-time plaintext limit.
+2. Standard envelope decoding accepts version `0x01` or `0x02` and standard protocol `0x01` and at least the fixed header plus authentication tag; it copies the remaining bytes as ciphertext and does not independently enforce a decode-time plaintext ceiling, including when the note is longer than 4096 bytes. Note-facing opens (`DecryptMessage`, `DecryptPSKMessage`, `DecryptPQMessage`) reject a note whose total length is greater than 4096 before they return plaintext. That is a note-length check, not a plaintext ceiling. PSK counters stay caller-owned: there is no replay window, and `math.MaxUint32` round-trips without wrapping to 0.
 3. Encryption-key signatures use Ed25519 with explicit public-key and signature length validation; both fingerprint helpers deterministically format the first eight SHA-256 bytes as four uppercase groups.
 4. Account constructors derive the same X25519 key pair from the same 32-byte seed and split a 64-byte Algorand secret key into its seed and Ed25519 public-key halves.
 5. Conversation, queue, and in-memory storage operations synchronize shared state and preserve their documented ordering, deduplication, capacity, retry, participant-isolation, missing-key, and expiry behavior.
@@ -247,4 +247,5 @@ REQ-algochat-004 retains the accepted historical Go 1.22–1.24 matrix expectati
 | 2026-07-13 | CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-go-algochat-primitives: Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for the Go AlgoChat primitives |
 | 3 | 2026-07-14 | CHG-0003-correct-and-complete-the-go-algochat-canonical-contract-for-full-implementation: Correct and complete the Go AlgoChat canonical contract for full implementation and governance coverage |
 | 4 | 2026-10-16 | Raise the note ceiling to 4096 bytes. Max standard plaintext is 3954. PaymentFee adds the note surcharge to one minimum fee |
+| 6 | 2026-10-18 | Note-facing opens reject notes longer than 4096 bytes before plaintext. DecodeEnvelope still has no plaintext ceiling. Caller-owned PSK counters round-trip MaxUint32 and do not gain replay state. |
 

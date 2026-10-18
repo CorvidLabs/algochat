@@ -29,12 +29,71 @@ describe('Conversation', () => {
             expect(conv.lastFetchedRound).toBeUndefined();
         });
 
-        test('creates with initial messages sorted by timestamp', () => {
+        test('creates with initial messages in chain order', () => {
             const conv = new Conversation('BOB', undefined, [msg3, msg1, msg2]);
             expect(conv.messageCount).toBe(3);
             expect(conv.messages[0].id).toBe('tx1');
             expect(conv.messages[1].id).toBe('tx2');
             expect(conv.messages[2].id).toBe('tx3');
+        });
+
+        test('equal timestamps follow intra-round offset, not newest-first insertion', () => {
+            const sameTime = new Date('2026-01-01T00:00:00Z');
+            const later = makeMessage({
+                id: 'later',
+                timestamp: sameTime,
+                confirmedRound: 10,
+                intraRoundOffset: 1,
+            });
+            const earlier = makeMessage({
+                id: 'earlier',
+                timestamp: sameTime,
+                confirmedRound: 10,
+                intraRoundOffset: 0,
+            });
+            const missing = makeMessage({
+                id: 'missing',
+                timestamp: sameTime,
+                confirmedRound: 10,
+            });
+            const conv = new Conversation('BOB', undefined, [later, earlier]);
+            expect(conv.messages.map((message) => message.id)).toEqual(['earlier', 'later']);
+            const missingFirst = new Conversation('BOB', undefined, [later, missing]);
+            expect(missingFirst.messages.map((message) => message.id)).toEqual(['missing', 'later']);
+        });
+
+        test('timestamp does not override confirmed round', () => {
+            const lowRound = makeMessage({
+                id: 'low',
+                confirmedRound: 5,
+                intraRoundOffset: 0,
+                timestamp: new Date('2026-02-01T00:00:00Z'),
+            });
+            const highRound = makeMessage({
+                id: 'high',
+                confirmedRound: 6,
+                intraRoundOffset: 0,
+                timestamp: new Date('2026-01-01T00:00:00Z'),
+            });
+            const conv = new Conversation('BOB', undefined, [lowRound, highRound]);
+            expect(conv.messages.map((message) => message.id)).toEqual(['low', 'high']);
+            expect(conv.messagesAfterRound(5).map((message) => message.id)).toEqual(['high']);
+            expect(conv.messagesAfterRound(4).map((message) => message.id)).toEqual(['low', 'high']);
+        });
+
+        test('a shared boundary round is neither skipped nor duplicated', () => {
+            const sameTime = new Date('2026-03-01T00:00:00Z');
+            const first = makeMessage({ id: 'first', confirmedRound: 10, intraRoundOffset: 0, timestamp: sameTime });
+            const second = makeMessage({ id: 'second', confirmedRound: 10, intraRoundOffset: 1, timestamp: sameTime });
+            const third = makeMessage({ id: 'third', confirmedRound: 11, intraRoundOffset: 0, timestamp: sameTime });
+            const conv = new Conversation('BOB', undefined, [third, second, first]);
+            const throughBoundary = conv.messages.filter((message) => message.confirmedRound <= 10);
+            const afterBoundary = conv.messagesAfterRound(10);
+            const ids = [...throughBoundary, ...afterBoundary].map((message) => message.id);
+            expect(throughBoundary.map((message) => message.id)).toEqual(['first', 'second']);
+            expect(afterBoundary.map((message) => message.id)).toEqual(['third']);
+            expect(new Set(ids).size).toBe(ids.length);
+            expect(ids).toEqual(['first', 'second', 'third']);
         });
 
         test('stores participant public key and last fetched round', () => {

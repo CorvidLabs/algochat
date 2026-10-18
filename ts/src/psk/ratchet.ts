@@ -9,6 +9,7 @@
 
 import { hkdf } from '@noble/hashes/hkdf';
 import { sha256 } from '@noble/hashes/sha256';
+import { assertLegalCounter } from './state.js';
 import { PSK_PROTOCOL } from './types.js';
 
 const SESSION_SALT = new TextEncoder().encode('AlgoChat-PSK-Session');
@@ -48,6 +49,7 @@ export function derivePositionPSK(sessionPSK: Uint8Array, position: number): Uin
  * @returns 32-byte derived PSK for this counter
  */
 export function derivePSKAtCounter(initialPSK: Uint8Array, counter: number): Uint8Array {
+    assertLegalCounter(counter);
     const sessionIndex = Math.floor(counter / PSK_PROTOCOL.SESSION_SIZE);
     const position = counter % PSK_PROTOCOL.SESSION_SIZE;
 
@@ -101,6 +103,7 @@ export function deriveSenderKey(
  * Encodes a number as a 4-byte big-endian Uint8Array.
  */
 function uint32BE(value: number): Uint8Array {
+    assertLegalCounter(value);
     const buf = new Uint8Array(4);
     buf[0] = (value >>> 24) & 0xff;
     buf[1] = (value >>> 16) & 0xff;

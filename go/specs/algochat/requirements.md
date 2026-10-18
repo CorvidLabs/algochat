@@ -54,12 +54,15 @@ Acceptance Criteria
 
 ### REQ-algochat-005
 
-The envelope codec SHALL encode and decode the standard version-one transaction-note layout without claiming a decode-time plaintext-size limit.
+The envelope codec SHALL encode and decode the standard version-one transaction-note layout without claiming a decode-time plaintext-size limit. Note-facing opens SHALL reject a note longer than 4096 bytes before returning plaintext. That rejection is a note-length check, not a plaintext ceiling.
 
 Acceptance Criteria
 - Encoding writes version, protocol ID, sender key, ephemeral key, nonce, encrypted sender key, and ciphertext at the documented offsets, and decoding reconstructs those fields.
 - Decoding rejects data shorter than two bytes, unsupported versions, unsupported protocol IDs, and data shorter than `HeaderSize + TagSize`.
+- Decoding a 4097-byte note with a supported header still returns the envelope and does not apply a plaintext ceiling.
+- `DecryptMessage`, `DecryptPSKMessage`, and `DecryptPQMessage` return `ErrNoteTooLarge` for a note longer than 4096 bytes before plaintext, including when the authentication tag is valid.
 - `IsChatMessage` returns true exactly when at least two bytes contain the supported version and standard protocol ID.
+- `EncryptPSKMessage` with `math.MaxUint32` writes that counter and `DecryptPSKMessage` returns the plaintext. A second decrypt of the same note still returns the plaintext. The package does not add replay state. Outbound plaintext one byte past the maximum still fails before an envelope or note is returned.
 
 ### REQ-algochat-006
 
@@ -90,4 +93,4 @@ Acceptance Criteria
 
 ## Current implementation status
 
-The accepted SHALL requirements above retain their intended behavior. Current standard/PSK readers accept version `0x02` as well as legacy `0x01`; writers emit `0x01`. Low-level PSK and hybrid APIs exist independently of the standard codec and high-level network client. Active root qualification uses Go 1.25; the previously accepted 1.22–1.24 nested matrix is not an active monorepo workflow. These scope differences and remaining requirements are tracked in the [accuracy ledger](../../../docs/ACCURACY.md).
+The accepted SHALL requirements above retain their intended behavior. Current standard/PSK readers accept version `0x02` as well as legacy `0x01`; writers emit `0x01`. Low-level PSK and hybrid APIs exist independently of the standard codec and high-level network client. PSK counters remain caller-owned. `DecodeEnvelope` still has no plaintext ceiling; note-facing opens reject total note length over 4096 bytes. Active root qualification uses Go 1.25; the previously accepted 1.22–1.24 nested matrix is not an active monorepo workflow. These scope differences and remaining requirements are tracked in the [accuracy ledger](../../../docs/ACCURACY.md).

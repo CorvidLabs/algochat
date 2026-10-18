@@ -7,8 +7,9 @@ import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { hkdf } from '@noble/hashes/hkdf';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/ciphers/webcrypto';
-import { PROTOCOL } from '../models/types.js';
+import { MAX_NOTE_SIZE, PROTOCOL } from '../models/types.js';
 import { deriveEncryptionKeys, generateEphemeralKeyPair, uint8ArrayEquals, x25519ECDH } from './keys.js';
+import { standardHeaderAAD } from './aad.js';
 import { encryptMessage, decryptMessage } from './encryption.js';
 import { encodeEnvelope, decodeEnvelope, isChatMessage } from './envelope.js';
 
@@ -497,3 +498,61 @@ describe('legacy VERSION 0x01 no-AAD decrypt path (#232)', () => {
         expect(envelope.version).toBe(PROTOCOL.VERSION);
     });
 });
+
+describe('standard inbound note ceiling', () => {
+    test('rejects an authenticated note longer than 4096 before returning plaintext', () => {
+        const sender = deriveEncryptionKeys(new Uint8Array(32).fill(9));
+        const recipient = deriveEncryptionKeys(new Uint8Array(32).fill(8));
+        const plaintext = new TextEncoder().encode('A'.repeat(PROTOCOL.MAX_PAYLOAD_SIZE + 1));
+        const ephemeral = generateEphemeralKeyPair();
+        const shared = x25519ECDH(ephemeral.privateKey, recipient.publicKey);
+        const info = concatBytes(
+            new TextEncoder().encode('AlgoChatV1'),
+            sender.publicKey,
+            recipient.publicKey,
+        );
+        const symmetric = hkdf(sha256, shared, ephemeral.publicKey, info, 32);
+        const nonce = randomBytes(12);
+        const senderShared = x25519ECDH(ephemeral.privateKey, sender.publicKey);
+        const senderInfo = concatBytes(new TextEncoder().encode('AlgoChatV1-SenderKey'), sender.publicKey);
+        const senderKey = hkdf(sha256, senderShared, ephemeral.publicKey, senderInfo, 32);
+        const encryptedSenderKey = chacha20poly1305(senderKey, nonce).encrypt(symmetric);
+        const version = PROTOCOL.VERSION_AAD;
+        const aad = standardHeaderAAD({
+            version,
+            protocolId: PROTOCOL.PROTOCOL_ID,
+            senderPublicKey: sender.publicKey,
+            ephemeralPublicKey: ephemeral.publicKey,
+            nonce,
+            encryptedSenderKey,
+        });
+        const ciphertext = chacha20poly1305(symmetric, nonce, aad).encrypt(plaintext);
+        const opened = chacha20poly1305(symmetric, nonce, aad).decrypt(ciphertext);
+        expect(opened.length).toBe(PROTOCOL.MAX_PAYLOAD_SIZE + 1);
+
+        const envelope = {
+            version,
+            protocolId: PROTOCOL.PROTOCOL_ID,
+            senderPublicKey: sender.publicKey,
+            ephemeralPublicKey: ephemeral.publicKey,
+            nonce,
+            encryptedSenderKey,
+            ciphertext,
+        };
+        const note = encodeEnvelope(envelope);
+        expect(note.length).toBe(MAX_NOTE_SIZE + 1);
+        expect(() => decodeEnvelope(note)).toThrow();
+        expect(() => decryptMessage(envelope, recipient.privateKey, recipient.publicKey)).toThrow();
+        expect(() => encryptMessage('A'.repeat(PROTOCOL.MAX_PAYLOAD_SIZE + 1), sender.publicKey, recipient.publicKey)).toThrow();
+    });
+});
+
+function concatBytes(...arrays: Uint8Array[]): Uint8Array {
+    const out = new Uint8Array(arrays.reduce((sum, array) => sum + array.length, 0));
+    let offset = 0;
+    for (const array of arrays) {
+        out.set(array, offset);
+        offset += array.length;
+    }
+    return out;
+}
