@@ -96,13 +96,15 @@ def validate_package(lane, path):
         elif lane == 'go':
             require(files, 'vectors/pq-mlkem768.json')
             module = require(files, 'go/go.mod').decode()
-            if not re.search(r'^module\s+github\.com/CorvidLabs/go-algochat\s*$', module, re.M):
+            if not re.search(r'^module\s+github\.com/CorvidLabs/algochat/go\s*$', module, re.M):
                 raise ValueError('unexpected Go module identity')
             if not any(name.startswith('go/') and name.endswith('.go') for name in files):
                 raise ValueError('Go sources missing')
         elif lane in {'swift', 'swift-linux'}:
             require(files, 'vectors/pq-mlkem768.json')
             manifest = require(files, 'Package.swift').decode()
+            if not re.search(r'name:\s*"algochat"', manifest):
+                raise ValueError('unexpected Swift package name')
             if not re.search(r'\.library\(\s*name:\s*"AlgoChat"', manifest):
                 raise ValueError('AlgoChat Swift product missing')
             if not any(name.startswith('swift/Sources/AlgoChat/') and name.endswith('.swift') for name in files):

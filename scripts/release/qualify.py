@@ -132,15 +132,15 @@ tasks.register("smoke") { doLast {
         VERSIONS['go'] = run(['go', 'version']).strip()
         run(['go', 'test', './...'], ROOT / 'go')
         run(['go', 'build', './...'], ROOT / 'go')
-        assert run(['go', 'list', '-m'], ROOT / 'go').strip() == 'github.com/CorvidLabs/go-algochat'
+        assert run(['go', 'list', '-m'], ROOT / 'go').strip() == 'github.com/CorvidLabs/algochat/go'
         archive = source_archive(output, 'go', ['go', 'vectors'])
         extract(archive, work)
         run(['go', 'test', '-run', '^TestPQParityFixture$', './...'], work / 'go')
-        write(consumer / 'go.mod', 'module release-consumer\n\ngo 1.25.0\n\nrequire github.com/CorvidLabs/go-algochat v0.0.0\nreplace github.com/CorvidLabs/go-algochat => ' + str(work / 'go') + '\n')
-        write(consumer / 'main.go', 'package main\nimport _ "github.com/CorvidLabs/go-algochat"\nfunc main() {}\n')
+        write(consumer / 'go.mod', 'module release-consumer\n\ngo 1.25.0\n\nrequire github.com/CorvidLabs/algochat/go v0.0.0\nreplace github.com/CorvidLabs/algochat/go => ' + str(work / 'go') + '\n')
+        write(consumer / 'main.go', 'package main\nimport _ "github.com/CorvidLabs/algochat/go"\nfunc main() {}\n')
         run(['go', 'mod', 'tidy'], consumer)
         run(['go', 'run', '.'], consumer)
-        write(output / 'distribution-limit.txt', 'Consumer uses an explicit local replacement of an exported candidate source tree. Remote module/tag distribution is NOT qualified.\n')
+        write(output / 'distribution-limit.txt', 'Consumer uses an explicit local replacement of github.com/CorvidLabs/algochat/go. The release tag go/v0.2.0 is not fetched here.\n')
     elif lane in {'swift', 'swift-linux'}:
         VERSIONS['swift'] = run(['swift', '--version']).strip()
         if lane == 'swift':

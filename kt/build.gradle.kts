@@ -44,7 +44,7 @@ publishing {
             pom {
                 name.set("AlgoChat")
                 description.set("Kotlin implementation of the AlgoChat protocol for encrypted messaging on Algorand")
-                url.set("https://github.com/CorvidLabs/kt-algochat")
+                url.set("https://github.com/CorvidLabs/algochat")
 
                 licenses {
                     license {
@@ -62,9 +62,9 @@ publishing {
                 }
 
                 scm {
-                    connection.set("scm:git:git://github.com/CorvidLabs/kt-algochat.git")
-                    developerConnection.set("scm:git:ssh://github.com/CorvidLabs/kt-algochat.git")
-                    url.set("https://github.com/CorvidLabs/kt-algochat")
+                    connection.set("scm:git:git://github.com/CorvidLabs/algochat.git")
+                    developerConnection.set("scm:git:ssh://github.com/CorvidLabs/algochat.git")
+                    url.set("https://github.com/CorvidLabs/algochat")
                 }
             }
         }
@@ -73,7 +73,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/CorvidLabs/kt-algochat")
+            url = uri("https://maven.pkg.github.com/CorvidLabs/algochat")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")

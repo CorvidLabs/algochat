@@ -33,9 +33,9 @@ def make_package(lane, path, wrong_identity=False, missing_member=False):
     elif lane == 'kt':
         files={('wrong.class' if wrong_identity else 'com/corvidlabs/algochat/Keys.class'):b'CAFEBABE'}
     elif lane == 'go':
-        files={'go/go.mod':('module '+(name or 'github.com/CorvidLabs/go-algochat')+'\n').encode(), 'go/chat.go':b'package algochat'}
+        files={'go/go.mod':('module '+(name or 'github.com/CorvidLabs/algochat/go')+'\n').encode(), 'go/chat.go':b'package algochat'}
     else:
-        files={'Package.swift':('.library(name: "'+(name or 'AlgoChat')+'", targets: ["AlgoChat"])').encode(), 'swift/Sources/AlgoChat/Chat.swift':b'// source'}
+        files={'Package.swift':('let package = Package(name: "'+('wrong' if wrong_identity else 'algochat')+'")\n.library(name: "'+(name or 'AlgoChat')+'", targets: ["AlgoChat"])').encode(), 'swift/Sources/AlgoChat/Chat.swift':b'// source'}
     if lane in {'go', 'swift', 'swift-linux'}:
         files['vectors/pq-mlkem768.json'] = b'{"handshake_bytes":2366}'
     if missing_member:

@@ -55,19 +55,28 @@ sequenceDiagram
 
 Fenced `mermaid` blocks render on GitHub. The Pages site renders the same fences with Mermaid 11. [_includes/head-custom.html](_includes/head-custom.html) turns a kramdown `language-mermaid` block into a diagram.
 
-Published package names stay on the existing repositories for now. This tree is where a wire-format change lands once, with the same test vectors for every library.
+This repository is the source for the protocol and all six libraries. Archived language repositories stay archived.
 
-Add the Swift library from this repository:
+| Library | Package | Version for this release |
+| --- | --- | --- |
+| Protocol and Swift | tag `v1.3.0` on `CorvidLabs/algochat` | `1.3.0` |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.9.0` |
+| Python | `py-algochat` | `0.2.0` |
+| Rust | `algochat` | `0.3.0` |
+| Kotlin | `com.corvidlabs:kt-algochat` | `0.2.0` |
+| Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.2.0` |
+
+The Swift package name is `algochat`. The library product is `AlgoChat`.
 
 ```swift
-.package(url: "https://github.com/CorvidLabs/algochat.git", branch: "main")
+.package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.3.0")
 ```
 
 ```swift
 .product(name: "AlgoChat", package: "algochat")
 ```
 
-The product is `AlgoChat`. Sources stay in [`swift/`](swift/). Tag `0.4.0` on the archived [swift-algochat](https://github.com/CorvidLabs/swift-algochat) repository still resolves for apps that have not switched the URL.
+Tag `0.4.0` on the archived [swift-algochat](https://github.com/CorvidLabs/swift-algochat) repository still resolves for apps that have not switched the URL. Those tags are not created by this document.
 
 ## Protocol
 

@@ -1,13 +1,10 @@
-# go-algochat
+# Go
 
-🔐 Go implementation of the AlgoChat protocol for encrypted messaging on Algorand.
+Go implementation of the AlgoChat protocol. The source lives in this repository.
 
 ## Status
 
-Early / in development. The core AlgoChat client (send, receive, key discovery) is
-tracked in [issue #2](https://github.com/CorvidLabs/go-algochat/issues/2). The
-cryptography, envelope, queue, storage, and model primitives are in place; the
-high-level client is not yet implemented.
+The envelope, handshake, and announcement primitives are here. A high-level client is not.
 
 ## Requirements
 
@@ -21,7 +18,7 @@ authenticated encryption. Encryption keys are derived from an Algorand account s
 ## Install
 
 ```sh
-go get github.com/CorvidLabs/go-algochat
+go get github.com/CorvidLabs/algochat/go@v0.2.0
 ```
 
 ## License

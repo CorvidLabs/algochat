@@ -1,4 +1,4 @@
-module github.com/CorvidLabs/go-algochat
+module github.com/CorvidLabs/algochat/go
 
 go 1.25.0
 

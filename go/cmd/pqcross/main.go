@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	algochat "github.com/CorvidLabs/go-algochat"
+	algochat "github.com/CorvidLabs/algochat/go"
 )
 
 type request struct {

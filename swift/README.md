@@ -1,9 +1,6 @@
-# swift-algochat
+# Swift
 
-[![macOS](https://img.shields.io/github/actions/workflow/status/CorvidLabs/swift-algochat/macOS.yml?label=macOS&branch=main)](https://github.com/CorvidLabs/swift-algochat/actions/workflows/macOS.yml)
-[![Linux](https://img.shields.io/github/actions/workflow/status/CorvidLabs/swift-algochat/linux.yml?label=Linux&branch=main)](https://github.com/CorvidLabs/swift-algochat/actions/workflows/linux.yml)
-[![License](https://img.shields.io/github/license/CorvidLabs/swift-algochat)](https://github.com/CorvidLabs/swift-algochat/blob/main/LICENSE)
-[![Version](https://img.shields.io/github/v/release/CorvidLabs/swift-algochat)](https://github.com/CorvidLabs/swift-algochat/releases)
+The Swift package is the root of [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). The package name is `algochat`. The product is `AlgoChat`. CI is the monorepo Swift workflow. The archived swift-algochat repository remains at tag `0.4.0` for apps that have not switched the URL.
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -52,7 +49,7 @@ Then add the dependency to your target:
 
 Or add it via Xcode:
 1. File > Add Package Dependencies
-2. Enter: `https://github.com/CorvidLabs/swift-algochat.git`
+2. Enter: `https://github.com/CorvidLabs/algochat.git`
 
 ## Quick Start
 
