@@ -1147,12 +1147,12 @@ mod tests {
         assert_eq!(accepted.state.as_ref().unwrap().head_tx_id, [10u8; 32]);
 
         let session = PqSession {
-            session_key: [0x42u8; 32],
+            session_key: rand::random(),
             sender_public: [0x11u8; 32],
             recipient_public: [0u8; 32],
             handshake_id: [0x43u8; 32],
         };
-        let nonce = [0x55u8; 12];
+        let nonce: [u8; 12] = rand::random();
         let note = seal_group_key_delivery(&session, 1, &group_id, &mailbox, &[4u8; 32], &[10u8; 32], &nonce).unwrap();
         assert_eq!(open_group_key_delivery(&note, &session).unwrap().epoch, 1);
         let mut other_sender = session.clone();

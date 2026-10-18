@@ -124,10 +124,10 @@ struct GroupAdminTests {
 
     @Test("action 5 binds version, the supplied session, and a positive epoch")
     func bindsDelivery() throws {
-        let key = fill(0x42)
+        let key = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
         let sender = fill(0x11)
         let handshake = fill(0x43)
-        let nonce = Data(repeating: 0x55, count: 12)
+        let nonce = Data((0..<12).map { _ in UInt8.random(in: 0...255) })
         let groupID = fill(7)
         let mailbox = fill(9)
         let note = try GroupAdmin.sealKeyDelivery(
