@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792287823,
+      "commit": "91deebd67fe55b8c3180bfe81ebf5574d2ceea39",
+      "contract_digest": "f405ad1218223a353e95000d687bce56935fb72c70501f06b9e6bec5aa41f963",
+      "execution_digest": "03d84d5637b97651c8965b503f138b673defc5d5e086a53527bd59a83c18d23d",
+      "workspace_digest": "08bf79d166a98e012220c974b6032fda01750c965af6276c7de6f177217c30f9",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1792287828,
+      "commit": "81b210782713e31256944b2a71a9f13aeed803bc",
+      "contract_digest": "f405ad1218223a353e95000d687bce56935fb72c70501f06b9e6bec5aa41f963",
+      "execution_digest": "03d84d5637b97651c8965b503f138b673defc5d5e086a53527bd59a83c18d23d",
+      "workspace_digest": "08bf79d166a98e012220c974b6032fda01750c965af6276c7de6f177217c30f9",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1792287828,
+      "commit": "f752c908abaa45f517b880af088feadf22186810",
+      "contract_digest": "f405ad1218223a353e95000d687bce56935fb72c70501f06b9e6bec5aa41f963",
+      "execution_digest": "03d84d5637b97651c8965b503f138b673defc5d5e086a53527bd59a83c18d23d",
+      "workspace_digest": "08bf79d166a98e012220c974b6032fda01750c965af6276c7de6f177217c30f9",
+      "acceptance_input_digest": "ec3286f3f89867b0e7b5f09045094f0a80bb8a7f76c2e6e822c3d648f691061f",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "go/go.mod",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6f1636194bf4340e5afc5422e24e5fac9877f47b71e173a4d7663b05f5c883cb",
+            "entry_digest": "e927cf3906a06018c0d4ebe18968e6649b0147d302d36b38a0a8243d19f17f20",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "go/go.sum",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a8ca9acfc6877ad3e7768a122a78034ca99517739679e15db99188eb03d28370",
+            "entry_digest": "352da5a08bf04604218f9084fec7f0b4144280584bd0734df7ef116bcd1eecc4",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}

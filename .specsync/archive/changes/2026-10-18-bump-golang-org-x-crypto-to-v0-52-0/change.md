@@ -1,6 +1,6 @@
 ---
 id: bump-golang-org-x-crypto-to-v0-52-0
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 40dcc7b57803c0638f75d00c8d3fee14498d652c
 ---
