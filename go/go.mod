@@ -2,6 +2,6 @@ module github.com/CorvidLabs/go-algochat
 
 go 1.25.0
 
-require golang.org/x/crypto v0.48.0
+require golang.org/x/crypto v0.52.0
 
-require golang.org/x/sys v0.41.0 // indirect
+require golang.org/x/sys v0.45.0 // indirect

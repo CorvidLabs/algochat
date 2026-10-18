@@ -1,0 +1,36 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792287809,
+      "digest": "f405ad1218223a353e95000d687bce56935fb72c70501f06b9e6bec5aa41f963",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "bump-golang-org-x-crypto-to-v0-52-0",
+        "title": "Bump golang.org/x/crypto to v0.52.0",
+        "description": "Bump golang.org/x/crypto to v0.52.0",
+        "kind": "bug_fix",
+        "affected_specs": [],
+        "affected_paths": [
+          "go/go.mod",
+          "go/go.sum"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The Go module still uses ChaCha20-Poly1305, Curve25519, and HKDF from golang.org/x/crypto. This version bump does not change the public API or the protocol.",
+        "acceptance_criteria": [
+          "go.mod requires golang.org/x/crypto v0.52.0, go test passes, and the Go sources still import only chacha20poly1305, curve25519, and hkdf."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}
