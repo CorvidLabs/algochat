@@ -15,7 +15,7 @@ This repository uses one trust gate. Every session must use it and must not bypa
 ## Human intent
 
 This repository should use [hi (Human Intent)](https://corvidlabs.xyz/hi): plain
-sentences saying what people want, each with a permanent id, kept in `hi/`.
+sentences saying what people want, each with a permanent id, kept in the one root `hi/`. Language directories do not keep another copy.
 Tickets and specs are generated from them.
 
 If there is no `hi/` here yet, start one from real work rather than from the code:

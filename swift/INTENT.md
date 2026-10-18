@@ -4,10 +4,4 @@ The Swift library lives in [CorvidLabs/algochat](https://github.com/CorvidLabs/a
 
 To a developer it should feel like an ordinary async Swift client, and to the person using an app built on it, like sending a text. It should also be plain about what a public chain always reveals, who talked to whom, when, and at what cost, and about what it cannot promise, so nobody mistakes it for more protection than it gives.
 
-## Features
-
-<!-- hi:index -->
-- [key](hi/key.md): KEY (11 criteria)
-- [message](hi/message.md): MESSAGE (15 criteria)
-- [psk](hi/psk.md): PSK (10 criteria)
-<!-- /hi:index -->
+Accepted intent lives only in the repository root [`hi/`](../hi/), indexed from [`INTENT.md`](../INTENT.md). This page introduces the Swift library. It is not a second intent root.
