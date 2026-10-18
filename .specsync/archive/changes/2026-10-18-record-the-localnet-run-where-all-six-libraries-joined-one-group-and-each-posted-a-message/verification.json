@@ -1,0 +1,2562 @@
+{
+  "timestamp": 1792338113,
+  "commit": "75b7c6c6368a1bc7270f861a5b1e5026953ea3bb",
+  "contract_digest": "0476f873ff25465a78c159b5aa0bdaa22140f7020a54ca5d90851cba7969bda3",
+  "execution_digest": "cdc53b082a3b9e063a189ab151b216d2c4c51e9f658103f2374abeb86667ede1",
+  "workspace_digest": "0abe2bad8f554aaadd8f906789451e497a04e77346e35b1e66020774dbbeaa54",
+  "acceptance_input_digest": "b384d5cc5d83a559a06c639caa2260b39c8c62095eb58199b4b087d2d24439d6",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "PARITY.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2b5ddd1dd9ffda3ec858e749d9a8c68fbca80658480fa83acd7b875aab6365d1",
+        "entry_digest": "9acb47b30ac3b1e4f2f6d79f699533993793486c282eb126eaf9a41c89c545fc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "PROTOCOL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3c7425cf350b0713a517bc8ca15290f69fcfa6cd713daa7e5f482f606fd4d194",
+        "entry_digest": "94a7d9480b920ce167ce15a860832743a1a22f038ed415b8229d5fd8444547c8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "README.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3eb7495c37378d3934e8c4920da558ddb8d41915e35dac8a4804a6a078237e12",
+        "entry_digest": "40bbad1cb2bf3b8da11cadb1e70337207bb206fc5327701cf44c2d911c16e5ba",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "97c61113287cad7e5674c07d2d183c8789fe65bc0db314dd0e1b6a858f518da0",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.attest.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2581fe52873327db0bbac357a5102a0dbb18a1eea5a690b7b75eaa571e50cf65",
+        "entry_digest": "5f00978c7022127509c34347a4b23a19a67ecae811eba8e3329a935918e5a658",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.augur.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "17f6ad5b84b4db012f0e3f398a96a478c1324fd47e72e1dd2a13c7cf9a432983",
+        "entry_digest": "1b142c0e5371570b26421990736b9c3fe78bae66d1f9a8c7a1740a293aabf741",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.claude/commands/specsync/audit.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6d8662ba5837b27234cf116b612a0262f1c68c5a8a46f1cd04d32347c02d86ed",
+        "entry_digest": "3b24aa3c0156bb029c0e73cecb66c2c32cad71de746d6bab2dcc742cf010ed82",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.claude/commands/specsync/check.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d702ffea18c2a51bb3ccc3c2228691df8190b4aeab728b949b938df377146536",
+        "entry_digest": "20963691f0a9c583f3d49c87d8697b737c5d4847c68293b6933964b6c4ddf39a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.claude/commands/specsync/create-change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "826e4f473728c8c6f680455b580a9937189370132b0299fccaf10a4a7390d2e3",
+        "entry_digest": "cf71ebd284fd76021c95937d25f597c892983317fec56a6e09fe2437a3283fee",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.claude/commands/specsync/create-spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b1bff9be92176be0d8ad24d09fdf5ef2a9494f1c2b0f19b2161d739e55cca948",
+        "entry_digest": "b368da8c0fd37c4d54b8702edb1811f297303075264abc4598301c4a77c5817a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.claude/skills/spec-sync/SKILL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "605bb5e15a39e406e00bf3276afe7bcef56bf55b16e8399cb23a7c9264fa7d05",
+        "entry_digest": "ce65d37858805235b0c8f4457526350e4c21f7060e8347e98c2d91ba1cab3e32",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.codex/skills/spec-sync/SKILL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "605bb5e15a39e406e00bf3276afe7bcef56bf55b16e8399cb23a7c9264fa7d05",
+        "entry_digest": "0b2eec673fd066708a5734b6d6dde5cf9177203c889598c338bbdf33c2a4025c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.cursor/commands/specsync-audit.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f985b018f264a57bdc2c116c40515cc7e39e773d24011b4c3b274739a0655b27",
+        "entry_digest": "14b733e057172af9bc595f8004c542046fe790e28cf0112c8a33708f121ed369",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.cursor/commands/specsync-check.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "65d7ca5c8408f2b6035fa048313560cbb289bd16930cf13795ff252a09bbf3c6",
+        "entry_digest": "b367c9b9ff5d692ec4b5e8b6dce55fae39e9532295cf67264ed06c8b35c11b7c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.cursor/commands/specsync-create-change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "058565cf4e6fb0920212f39f51eddee0b10fd2a1bf2c6a9fe0841a6b49540a2d",
+        "entry_digest": "cdad3271c4d7ea9aed226bd33d1670a9da227f32a95af4c0435d22b3f10fee12",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.cursor/commands/specsync-create-spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "96a88bac62a30f969fe784a6e5f7c113849db5b25caa2d9fea920a7cffc44d93",
+        "entry_digest": "a5672e45fcb209df1e946acf9ecee9bced70356ad4bc6ed71b7a75ed8dc21c04",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.cursor/skills/spec-sync/SKILL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "605bb5e15a39e406e00bf3276afe7bcef56bf55b16e8399cb23a7c9264fa7d05",
+        "entry_digest": "2194e501ef501a99f4215858643cfb55a0c8749f167a87b1c38a7577f49ca1b1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.gemini/commands/specsync/audit.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3ed5c3f6021094e467f2b62b5ff0662dbee17e5115227599ca5565b080bbd6ea",
+        "entry_digest": "b54ee1a8e2168ae957947a2c982e97cc55144e089abee5609c06c8434fd001eb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.gemini/commands/specsync/check.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0a1a97f92e65fbdb710f90d94cd3aa80fc61466245c4c4bcae081da709368fde",
+        "entry_digest": "13688dad4d5a703b524216354fe101d543bf71b69167039becdee0ccf5cc89e4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.gemini/commands/specsync/create-change.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "38e8c2b702c02c36eb782f909a9e1a3ca25ddeda4b2afafb46a92548f1399fd5",
+        "entry_digest": "05681e8c732714f1d6305f02cef82a5461dd56dae936d9c752cfec7e2caee93a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.gemini/commands/specsync/create-spec.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d61f2b1c01cd34c5865c94abc14589721c524c1c1f1a5fd556c624249dc1d1bf",
+        "entry_digest": "ae84a040e372e78adb844087bc8fc3281f8f21f190d2f83a91eb8363ba2c645f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.gemini/skills/spec-sync/SKILL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "605bb5e15a39e406e00bf3276afe7bcef56bf55b16e8399cb23a7c9264fa7d05",
+        "entry_digest": "9e2a334f2de52d78c59a09afbd0fb77c2e27398166bed491b4efa979d4a9c8bb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.github/workflows/ci.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5e2806279d09dac44279c1645574b947f0901189088a47af15fdb37274e5e04e",
+        "entry_digest": "a86a2b39f03d5f420bb8c2cd8a546610e0fc37588c8f3c0618afd6f90d05a8be",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.github/workflows/conformance.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7c01f15af426825391fbc3e4a9ff527a369c610fa6c0b941948713e1d4781c66",
+        "entry_digest": "abc59e727d35f39e38f42ffc018628c12f6604664dcd243cc686403a96b77c17",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.github/workflows/docs.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "dd7bd520232910ff93cc692ccf52e4ef4120210486e1c00fb05a481c22e96db6",
+        "entry_digest": "1e4d527d6467fc56e76192c122ffe9e485df217effc786b19ba582c900561267",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.github/workflows/trust.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7a349118c42cf286fb53fc1dac62dd3b7b2422af6332f75d2f4f0c49ccc67218",
+        "entry_digest": "21b566f518a4a1d99888490ecafc964b9ce14fb4eb6eef4d4ac488e649ca1386",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.gitignore",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e6f2f06acee815089e9bea02f42fc7cce7b94260353bc90ce2b6d4bb23c40560",
+        "entry_digest": "5f28a6800813d7bcdf8bbbcd71699aa924ca2c4fefd6a2242d00cba0b084afd2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/.gitignore",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a505253bd2fdfb84f8121e89e48bbc67144082b5a88f439ee6acfb45424799b0",
+        "entry_digest": "1ebaa655a0107cc86549cc1ba518079bfff7d920f5c40f5dc75ffa3e6a872698",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/adoption-report.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "93caca447b8ca77ecf1f17aa00808cf862deaa5d97b5e9e04bb3b4065fc3e674",
+        "entry_digest": "8c37a04d63f7fe32966b405341bcd907d5cc26ecefa37399c35f10b3ab6cf0e5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/agent-artifacts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2dac8759c38c21b2bf5ce15367ed129eeda721a678a8b8bd61ae6c9e628c83f7",
+        "entry_digest": "876c70e3e8ff7154a59cb19f51f8c11931ab67da7fa48be68962c19948e064bb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "430fca6ecabf157a5b9b8b39a2fc3debf191bc13c67c4d18dfb1913f3a13c324",
+        "entry_digest": "a12f253fca16877a5d10a8af131f1d70d6df0581a2bceb3cb507a7fee0c60539",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "594b32e1c1ef281c8cc35fbacc63013f70c2a1e6fdad1f7bad2a0dea44299ee5",
+        "entry_digest": "1aa0a119486a8f9dfa4c709516e8a8b733e03d18d803ea36dd02ea8461486d81",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "abc9a7c3a1465d2d23cfe171d709c22eae96a291eb81ad705e4390980771cad9",
+        "entry_digest": "f1dfe20e06204439fdcd4cecb02b08ea7533a360911c2c9737ab42f214acb432",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/design.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bc0cfe060c0d674d19bb6159d0e3431c56eec8a35bf14ecc4d49bf72bf17f9d7",
+        "entry_digest": "6dec3de74463ac89143660a09d34f45028255017e7a868651c2aff2bb3af2157",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3c90a542a4bc99f98857f0f8a870cd0a7db5b0d6301d4933643405b46aacf852",
+        "entry_digest": "2d0ba8a47ebded970b957ed1c5da97655abd202b9a0bb699116aeccab47fca9f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "667079ed1c0c4343103caa18be996f039ee31d7f9e704c4ef592725f00a71f36",
+        "entry_digest": "7b73411816c0c577232324ed4725a70077d636545c8d8444ef91eabfc229feb3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/research.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3665ce30837c2d41174e97147421e7e508b86cec93508f72e3de3b931448fc6e",
+        "entry_digest": "19210314329a1ae20f38db18544fcf511de003ee821b601bb7158f0d4fae0088",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2fb119ca60a9b44133af5d97004e6ab7aa52760f3fdb6b04f78fdd3cf9565628",
+        "entry_digest": "79f661e9965c81b44b5fbc0c93e248e2d17378f03b1c110a97c987d7e07b6df3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9c71b9211851d7c0f935c8a5f9fefc8aa9aef1bf2c906eb4e76c9c5c95b2b16e",
+        "entry_digest": "2acb75a5a153559bc14d331ca675fdaa2ce1778897805ce6a68d6b3058fc9955",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1e4f083e8c325e408005353b886264691d465c974b3d1cc0543262833e9c31e3",
+        "entry_digest": "9588e41289387d4c0c4921091325652c4e5841e829b61e13bbeec5b9ac582835",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/verification-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c234233bd0f8e9aa7eebc7a8ad972d92a751ce5753686e39ec9d39ca4c379e29",
+        "entry_digest": "2f03124cfcbdbee2ccde4f3bfc8bba29b87d294674fc0d2030d8179bbbbfd903",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-typescript-algochat/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bb62d6cd2df6304effaa7d9135686c9bb262864496a8aac8e7477c15420ad87e",
+        "entry_digest": "d97edc11ef004eeef5d4e76db6b2fd2e314c64c60ff1638887a0f9215ccc908e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "38b91e552e0bdc3b9719366a494b07f6dbe3fd16a7ef5188b0ec427401f07aa3",
+        "entry_digest": "c4a93efdfc7f1ef0bb20e29ea0b9e85d1f00bc02808263476fe9b6b3077e8100",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d8c86aff6790d2ea6c10e718cb7d6305ad8e0490b46afecfc97e8c9ba5664a31",
+        "entry_digest": "8682d5bd41dd116348fd6a0ae8f78cb01c330510223f5f29ab029c1977e1846a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b3323399a1b98149a1ecb35d58e6ff61eca33a7b79764d1d0ec7d9e2e9eab5ef",
+        "entry_digest": "8db173cf5f11681f4127e14213d14674ebeb3a8e99dfe61e105b1ee0fed61dc2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/deltas/algochat.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e9cb85b585ee71c32a27d046442cc66482e327c5e36930b507da0385f1391978",
+        "entry_digest": "c4a3dac7975f691d57e513503dd9142f01f87fabaee98f095c74946ff96b052a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/design.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e1de227b21ca4ef04bab7f73446f537ff35323f86c9a1b74629522fe5e0f1209",
+        "entry_digest": "61f0bbf9236a8671e37c3e72c60bdbc55f07690c51cce1d0cbee93fa91dd643c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "14307d4639bfa879fed8b8cd284cc52c2c69ac6aa4f3c6f6e37852691b9d2d9c",
+        "entry_digest": "cce73d2f78d4b05afdc059c241ea53d6eaeecce0e0685b10aadcdf33e3d499c0",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "da4754b8e515117982c4c33529cbc0ee8041d6f972ec7e9a95f4bc55b2c9d05d",
+        "entry_digest": "124be7992550c47e149479f9736bf9a4b66a740a3da2d8278bfd7bc83f52c87b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/research.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fd22b3351e33ba3b8ce68630ad61a9eb26227f87224d32b866a4114d643337b4",
+        "entry_digest": "bb4f2e8c23c73ecfc80d139b776e57f9341208c615f5e3edca9cc763e3890724",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0a96923bcbf67298757680254ac4e06165dfd529bae7d01b1580e2bbf3c6bd39",
+        "entry_digest": "0b6e13730fe82a0827224133a6bbeec077d7ce212c9cd5a50c79cad902deee07",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5e1f81e4fa550dd7d130b584b5743a1594a350de0a8a81bd2a7fdda814b22ec3",
+        "entry_digest": "9176289e76ceef2516a05166f16df7676f74c2b759cfc5cafbad0334c1456c64",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "56d2ff0424ea589d3186c5d4f60fa5050483427829b5647e59218c46f069be83",
+        "entry_digest": "901b0ae248c6da648b47e0b6e564c4a55f66ba9d26002d4b673c3e23e487bc5b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/verification-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a43c269786e710139c9e19111bcfb5565676741bd2007ff63b25ff397deea591",
+        "entry_digest": "b7b9c2109b05a09784e32fcd145d0d9f98abafc31ae1d3ad5014313bdd9e4543",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0002-replace-the-incomplete-no-spec-rationale-with-a-stable-full-library-algochat-con/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1e9b1c1f53f6faa5c887b72aced5676593458dd8b80a0791f3370c4d60bb6210",
+        "entry_digest": "5b61bb658725d4efc3ae190ffcae33c90ff14488d4c92852ec41ae095b7cd1a6",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "498971b127e3f8f0d76769597f907172a612b2f75d29cda01b2121bb47b33f8c",
+        "entry_digest": "8cd0b8368a5c83282323cd510b701a7700c50f078ad78a66c9df2fef7a284508",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2eef70f1bbb5775f47120bc93cd1d4c5303cc7b5f439ec5b768fa5f11015c921",
+        "entry_digest": "db6d0e8178578881ec66b74c7b25f3d133b892570eea7372ba9c5a4e3bcd32b1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "caecb3bce5e1e8d0ca74c153a9a378b906d06da126505bb26f8efa26a8194656",
+        "entry_digest": "a24a04d84236bc572658460a18d8e573c4386267b02859ec6f95b7a563048f71",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/design.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c18d320d85fda76b4091b111e5e3b98d1fe1a8515eb667e494e8e11e0f5e5c47",
+        "entry_digest": "613cef9e97c5d77d49120356372c6b66786116459245bdacc4179aed64c2f813",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6550f570e616ac5b7d96ca829a46936442d7ebbce78625e34e52a0847fde435b",
+        "entry_digest": "c27fd7999a208e049e8d7167c716f570f13557e069a067d3e47b66031afa64df",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "99d1578ff8ab4e51ce064c90f271b35b409182b19354185a7152345939e43085",
+        "entry_digest": "d4c006fdd807025f0017cee40342f8810f08dab35ee3583e4d9167f80a46e839",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/research.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "faea2ab8579a6d0c1ea8b247e7f2a53147e7a25c9cb673a4c352e576f73c4177",
+        "entry_digest": "3b7ab19e2e3ad55782eed22639311ed20edd122f55b0e0288628c41e9fe1cee9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e7ea949cf254c3b27cdf59d5dd6a6b8a72e7ee0e2a29d4d3ec43c4623aa22a38",
+        "entry_digest": "8206942a0f5190388dacf89ecb23ae015b9fc058b9d6ee9948e2cfa2837b5e47",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "16cca66b200a505b30a97497f4d787ca046a9f7cc73aa8baf7f97860f03f91de",
+        "entry_digest": "28c097f94be2aa6661d2fa76d2028f181c03404b63d7c8180b353edc00e107c8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "241c7d415be739ae680fbf4197e74cbd58f3251e9157ed485094e495d5cf3a5a",
+        "entry_digest": "351ea68e78a51803355bc716c6e53bbedb915e3ee2e06e88ca1e151285fe7d20",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0003-migrate-the-typescript-algochat-package-to-nodenext-module-resolution-so-the-com/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1bb16b95eb7b5742ef1b4edfb9614480db0670795a88d925af1901a98c9a6c72",
+        "entry_digest": "e86dbe3cd43f6261ffc33e508867af0d55dd966567f6836e781bb0ece8057d06",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fdd67df8352cdda3f3c268f707f3e8aec66e4079c9c5ec856ae12134b57841d3",
+        "entry_digest": "c1f590e4abe2fdf875dfdf678272b5de115b1fb4c4e7a9a7420781eb2862eb2f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "aeb0746b9c0839a50b169b56fe535e399ea96e76c8f60866a2116dc4bfa411f0",
+        "entry_digest": "d37a09e746ed617921543939531f97c735651316c374a9b8a09549e9a498efa3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "eea8b3fadb096af37ccd018dad5bbe6214003bf0bc84d51f0f947d6b105a8bc4",
+        "entry_digest": "7832d71143da6bf155aba7fc1b182062c65951f802a9d9707de8fe8272b08518",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "402cd03dad6115897fe729fff14999aafd3609091822938def1e92300e4ea4cc",
+        "entry_digest": "03d14f1f6dacc30ec747934f9c4a274e6db21ad5e10f9b7d26bc05b419e91101",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4f0212bafb50cd517dbe1f4283d78983742033d762bd188e68dc2c0cb9db6c6f",
+        "entry_digest": "c573768410e0204b9ffecd795dc92220540c68329eb9e1425e3897f49bfc7a7d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bc52c23224c4f21c519d970bb328820a17d4bde4f47ee1ce424dc828099acf23",
+        "entry_digest": "db8e43ff8c114d7e59351f6022a3e84dacec2db9a7b165e111928c7542fe04bb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e23d53e7a7e31640cb9b2ccf0bdc1c5682f59355d13c45b13b64bb9805a70295",
+        "entry_digest": "07ca55f9179e3c1a18103e3f3dd571bda1d86f1af7bcffea94061fb98ac209b8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "173e9f6e6f918793b4f06be9c9301168a5d91dff56235341324e380216d36a4a",
+        "entry_digest": "2b8f1c177e46772ef6578ada6394e57cd0428431f78c5d31f5c3cbf01e196f9c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b1d6cc1f894c6a3c1a12a937bfface07c78b93056b2d4d0a8aa366909de4cbf4",
+        "entry_digest": "8efaf6d728a6978636a9b22a3a65abe1733220f59b2812c0d54cd3e61f078e76",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0004-install-the-conformance-ci-workflow-delivered-with-the-test-vector-suite-so-ever/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "baf79b3a8a21f6e5742e8c020db6cc23bf55bf1a18c036eca93696630f7f4641",
+        "entry_digest": "2919e446279c2c144456518557a67365fc52371ba5731c92b5f7cd157b954387",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7e0111e7e5928606c951cb62ce7b3dc66022dd5df4ce9af6d4c3a1a6e2232eca",
+        "entry_digest": "e80be76c8b294d93cbbe1556e1897b5979aac642e98933675ad3fd37d231827f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9cf921c6494a654ac36d5b7e4189fe818cc38f2b4e84cce26f9bb580ca37b802",
+        "entry_digest": "f443bd8d52f062edb5fcb1e303b8edd83498d370c74b34175486dcf288e532b7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9d19f58e8acf605af46ec24dfb54ade8c730828c9c5a17bdbb062ab701d1ddc2",
+        "entry_digest": "cd924f9fbbdea43b254d9cd887fc4807d7450d94b1b115536c41f38d7b7720a9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f83207cd97bb077aa286f01bb3054918c2e4cbc676625497e0fc9c4fc869a2b6",
+        "entry_digest": "f5a377ef7db2be26d3244d864f859fff68a465eb88dfb48312b72199d5a3bbd1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6b3ef305af8ecaeea1fe0aea1839138f9f436719550af6233db84f07ab722e08",
+        "entry_digest": "e5542356b2b2ebce771bab7730f9a197e3717c577807b172654153e1fdb45ebb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "89c72a1f53f464af631b163d217da8285f1de4e6ca4a730251117615f9651161",
+        "entry_digest": "db02bd0ead564d71ca1a0023abc983f400f56c91f3745cb1c67b2a45b3797032",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "41786055c313a64c5455884d016dbb18dd2556fd4e529d9f6f532e8b956be3f0",
+        "entry_digest": "c0ac0b888d6d0721752ed146727b942553c88c17f2434bf893e6df842f205fc2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6c77c11635f94f3e44dca87f739217ef3412e5f213447832b0af68b0f6b2b4a3",
+        "entry_digest": "ed66c47742943a317581d961517295c763dbfaefc15d51a62be407884cd09800",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5569d40780637e2d028c45b3ec98cc3021ec9fcbc7aa0697b5e38390f598dfb7",
+        "entry_digest": "59ba3f38bf2a8a2fd7db4a67ec3af1d4d9200f336f5bfe151e6a190db8541228",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0005-install-the-conformance-ci-workflow-so-every-push-to-main-and-every-pull-request/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "735f5d8c0203b0e067a94ffcd83b69168b062b0116b24cacf2c583449e51bcdc",
+        "entry_digest": "277ae1b6f715489a58c0bb7d29a255611a683f6bd97e3932b4262f095437aad6",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cfcf87eee573ea1fa5e0de97a0ae67a38f4903968397ba96ae0cda65a8f74cbf",
+        "entry_digest": "64c3f4cb7a1d1b01b6f7a98df17189cc173acab149718ac30cbc10ad26bf6e76",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4fffa6cbd3e8752428a31c9ef8759f5dda8041eddff6eb97475f416489b0eaa7",
+        "entry_digest": "edb07c1bedb4dcb01f02cb19142577219f2226d64f15081cff7446ce25053182",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7267fedb7d291e5c7b159398f36b0de854bb92f2aac3fc0587fdea7196c2602e",
+        "entry_digest": "64cebd553e0a920e3f4567e738f56d8c8540be7b5dd8eebcb14c9144a497695b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/deltas/algochat.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f99c9f52cf8f021f8c97679ac285cf27f845e3d12b082f691cd1cbf66a7b4ecf",
+        "entry_digest": "c3d96d7365db83edd39292d81be98e605d2c7c0e933942f8c5947c9c46fff13e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/design.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "496f0530cb8202a47ba846da97e7a330f6c7f96680afdd254faeb01e94ae59a4",
+        "entry_digest": "f6d5459aacfa2c3d085483c8bee399ce7b0d4e9f5743a5bfb0bef17e7db8c898",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "723ca65e78c13f8abc126ec70a0e19ad764faf2f7ecf7f54a3a821d7022b412f",
+        "entry_digest": "b3f48d41207325b7ba55fc4031d3026ad281c0554ef42a0194de70a712622b44",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "669ed1c8e2c44fd6cb56d5c941ec4b14a37521911e29bd02b2bf31fbe66c2a77",
+        "entry_digest": "53d45a950fffd3cfb50480907dc570cf851df39716dfceb3e0f26dd89d19d81d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9809288924c1086aae65323955f4db96e60ec98e4c84744cb8e3f3148302f075",
+        "entry_digest": "d4d64f8098436705f265db551815283618ff1d0f6bc953f4dbc6fa6ec379a968",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/research.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9617c534596e0e203d9aaa3a550d50ad8e36c72b945282be7a1745f67d70d49e",
+        "entry_digest": "21ad8ba8d5052a43cb1acb754d610a9d1e88aebfcb834d92d7197f890647b6ee",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f49a4c5a1956134267515c67819ade7747ec2158c8989023510226de8daa20b3",
+        "entry_digest": "7206fd8156f9fa129022682ef4628eddc3b1dc99f905aceee7bfafd43252ea97",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b2f1549aa12083dbd6e362154b9506c7a914a64e79a9dc42c60f084253bb1053",
+        "entry_digest": "0f0473e8f2dcb921e6fede0731c2e05d600ebfa580ae7f39ab4f0c62b3c16838",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b43201c3f5e6eb6ea77ec15f06b96eeeb5519b98a64ba6f221988233c0004a68",
+        "entry_digest": "e98afba5096917ee7235a6ed489b4ddb619a7a01a6f9930b085e005a1ad305d9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-07-19-CHG-0006-add-an-opt-in-mailboxroutertransport-speaking-the-raven-mailbox-protocol-per-co/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "affa785f6dd68cf98465fbc14cf4a85cb343da1061ab187e1509191e857ac076",
+        "entry_digest": "2b042f1c58b0aefb9a6603305b82f8a70a08fc6e64473cc294ed26357900875b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/accepted-state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2cda0f719e292dc18952dbb701ba0dfd120a079a388101341907ac7e2d0501ad",
+        "entry_digest": "eb50b536b679c8041f0744ebd9d4da616a66879e082deb93d843e8b9625bd403",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1617cf51e2b9990fb10ce01e11c8a466f2feb457cd4d147d1214c2740d707ce0",
+        "entry_digest": "8dbae27b896bebc77d6540c73a38d52acf3f85fad31cc059764424fcb5716e9f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "af1a97978678dfa17a836ca46f86201656e9284da34dc759646ed9222ede463b",
+        "entry_digest": "68f1e21cdea41a1021303b10b6d7f85517e2d24cbc9a420e663c78234c39917a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "182912bd176e6448b85841edfd16c11b4737ee6a8b11939974e6f1182ff31719",
+        "entry_digest": "7f59efb8f2efe1291f5c67b49c2374c145db2cb3aff377426734d361584a2619",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/deltas/algochat.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "75a8768fa0a9c761926a95b7dcfe71210ed1fe1ed0c52a19dcb239d0a6dead59",
+        "entry_digest": "c0809bdb4db758aef24302477dbeea1a187a82210f33bc1287ff6d38229727ed",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/design.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ad9f9cd0f24f4a9b4d25eeb1e8be3534cebbe580d8f9317d0de67d026961d8e8",
+        "entry_digest": "4aaa1233382d1a693b4ef1ed1a271dcfdb311bf782809479102450d2707a50db",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "061893859015c5161f110cfb8a01edc3e2b9b5acd0e33c1f32b452f1b428f16a",
+        "entry_digest": "b6842fad4f7475e879b0ab83d4c0cfa1cb9e830c1d0776d97b0c203dac54c44f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "01b9e4b5536cc6c78e6e4c1e056ddd2af82ab160923d4a100928820721001996",
+        "entry_digest": "4e82195c2dae615bae93734926e1c06812fb8c7cbc0509a9a51d64724bbc3a48",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9bd9b3b2c36d5a6bbf4c8f5b1944ec82ddc10b2f0b4aa4ffbf42d88c75bf1b90",
+        "entry_digest": "ff77c43f302a1ac88ecee9eb0e67d63c2546c90db2512b88964b2e1d75783a1d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/research.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cc61594b8acce377ed5d447e46c4c94751687a9e1b35f3ef26804850ee162130",
+        "entry_digest": "cbff63f05d97aeedd1cfb978ceb83c4ae9f693279186026fc686c6feedf448d0",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/review-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0f2b3c31f71ccca2a3217144c9b6038e3a2722aff664e35fd7338755d9c00658",
+        "entry_digest": "3831062689c142c3df68d4f07a4434e0e54f237a7794719e14554a0670c2b708",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/review.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2ba67649182d2c3e93f7ef5878f84196d133ee7323eb003a345ce9170eaaaca9",
+        "entry_digest": "a757592f624bf2ed8d55299e52bc738a5b010a890e4ecd64de93d3eb1b920343",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ee0aeeb93091a5d202001323b9c2f126be774f72dc92e60e8f29982ffcdd5b95",
+        "entry_digest": "1e3745ecfc86e853121a9313eaec5539e67ea75850e87c9350f72e3762c2ee82",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ff3f74e515291f6e69f25914e16e5486cb7e81a2d76ae73009faca5bd7bea6d6",
+        "entry_digest": "8b6b62f464f14c26f37b62f84f8a2880dddd69f0a2738e0740ab172b7c0c8637",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fdc2933f1fe640fea5f94bc3b7e57d4c0cef91c4598ce0eb716a3aa1636e7567",
+        "entry_digest": "f0eaf59d0f1b866c5f6fbd2ec5c6320bf458c2f18424878774c6b21434990f40",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/verification-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "626d5f666effd65e95be8d09eedfdb803aed3bb725d811a04ad927cae806a860",
+        "entry_digest": "3cf8530f6ad339c5576291ed0271b6005a5eb037644f3fdc05adc199c136ad43",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-27-CHG-0007-falcon-default-chataccounts/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "11653230be24086a1cdac3a442a475810dea269d28f0489853bedc9ee4cd3a7c",
+        "entry_digest": "f00b877fec589257c38b2f1d88c48b7025422946744a7d99085dd14e11e9cedd",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/accepted-state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4785ef6d9c6eeb268c6df7117d129955444284a795104a58a0a1b37ec8cfdfbc",
+        "entry_digest": "e916177437ecddba3140e3c8170d768aa3a4d1aad3121124dc0886a24a0cfeac",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9cca78c05b5389726ddc4645ddc6fc7593344b7678fdb5737e49af77d8828e49",
+        "entry_digest": "5ae0e94f73becfae53aaca3712d8d118d9a18e0ae8ea3d1c385ae7a51829ce89",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6d99ecdd0f60b2e010ccdb19452ee1e70538eccdbdbe445e8d2f4c0ff6c719bc",
+        "entry_digest": "879561c9ec8bd77e1754831b35ec6980500a3e27472f1b35adedf9109a8fd747",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d6315d14c6e92dfb0da0bdb38847b160bbbff12e2df63d2767af006467e15734",
+        "entry_digest": "16401065184eef9658dc56aebfa4e3c00840f241efa1e6722b2d2a77430c2271",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "66ae72d3893346ef20f8c0f6e6dfd8f7f55b675d0184c2420fa4889222eda212",
+        "entry_digest": "dc332a1da5f7f01fbbd1e6716e227b6f0073c2616859fc42336792201781c238",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1085071ec1a6df1587efdcc6e110505418e2cc1b2723ac588c840dfbc58964c2",
+        "entry_digest": "c6f76cb62e1d2cba1a388910b786e1168c05e82a5c70ae323afce898eaca705f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7b4ee1320ae9cdcf4c0525a74abc332ebeb979f3ef07297f486e70a2c62ab7a6",
+        "entry_digest": "6fc120001bb1c93ce2b460b38aaf713bfe0825587825e744d53be88f8d30f34e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/verification-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0274f7b836f30ce5db6361319b8826746549edc366c91696a313fc7d3927d8ca",
+        "entry_digest": "0209b4f8721c35494d23acd8e4bc4ef3b3f16c610c3ac4a4eef70a71d15f6ea8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-08-28-pin-trust-1-2-0-rc-1-so-ci-uses-specsync-6-0-0-rc-9/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5f232334f362d9977ec9bb242371174b60b469e40c96b928b3bfd48fdd2d4e1c",
+        "entry_digest": "39bd180ecc6541b900855d2efdb2d2eb0be914cefa0b0d7316eba9f6430e9282",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/accepted-state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "efeef59245a4d5475f4aacc199d814af49d023211555cc65d39a563e3e9fb71e",
+        "entry_digest": "5549a49b5bd35bedd1ffc62eb7fdf4183ab557687a93e99523668fc6b0e2b1a1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/approvals.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "67ec892f7d611b8645f0acadb7dd8cef5b472a7f9f771b3449ffe0c920009dfa",
+        "entry_digest": "f381cec37c98541c5a90406154e716fcd93a3dcd18cbd4f9e060145e6d46ca35",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/change.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "88de4b0cd3bb3dbb4772eb8b3012e295bbb7d812acb2de31f85ec2f50678c361",
+        "entry_digest": "e6410350a8d14280a472c395ac94932984edbd2b838ca458edea0775d9803683",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f894089250494157350acf40ca4a2de02e8cd581b403af21aa8d64a2836d1f06",
+        "entry_digest": "c96b8f6af35f31cbe917a58da2d0d3c520285f2ec05170592f5eba450e508206",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/deltas/algochat.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "500877493cdec2edb4df05b2910d993ef4d77d86a6b5ac41b1060bc37a8ca16a",
+        "entry_digest": "6641e51f4e02d7cf63c34654c3725afa5217a0620242d62c3faee34bb00f8a7a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/design.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "554bdd2431586e23c352eaa7326114f1feeb3d32863b1199eb4b612fb8d91eff",
+        "entry_digest": "a4830283822c87ac24b78a1bcd8b40861f31311626cca3d0dbceaa9ddbeeeea2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/docs.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "25f296c8216846dce5a4e701e8e6e768cb947db86ebb058da1719c00badbf317",
+        "entry_digest": "8624d7c5a734452cf936ea1ee18915d9d35a96ef7a45e9c5021e788a9421f981",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/plan.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fa256951aaa60d0f0ea357cebf084676e8b6581fbf00ac7a9d5e2b8a946c7c5e",
+        "entry_digest": "cbc7fd35a7c53243114961a393c2e1672109c86c22956418c43fc44e1487cc51",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "75d9d495743d459c5ef74c899266e076d1860ad3156674509761040ba3c31d23",
+        "entry_digest": "0e96f1e57baee7e8aac9b08b04c8bffcbd114e6e21a15dbc9e47bca7e0caeeaa",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/research.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "576267e84a80b96107a10a4d6fcd9991e302471dfa87786c14a8094007ee2e83",
+        "entry_digest": "edc14d993e30e55ecaf0e8453642d5992ff8232b8230691f89d5da65a7acf0bc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/review-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1d9fdbedae7f45f118805ddd48b803da7cf77d7b67568a089ebe6ccb3da19904",
+        "entry_digest": "c6a78dfa70dad27f142bac173247725999b5d9acddfddb3eb76d04b6433e2f7a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/review.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "45b8654282d0e920f42873896459ab7dba476a0421b9ed57a04392a211a1586a",
+        "entry_digest": "c007fca9322b4de9da52540bb0e24115da8a8b2da55d1f1d6f0e933359223ed4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/state.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0c78587a74b0eb9f288e80149b78b93d3c3e3172f6da63476f42fe2c4d53750a",
+        "entry_digest": "0a55b873239ef726a9839e8cc9978e98db2d621f10fae447c6b71a89168b7b0a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b0b256706077a1f73dd3cf0dd99ad110f3db9445edbd0cef06d24f5111119343",
+        "entry_digest": "3dde8a51a5b50150777539ee7f9438bf9c8c7495a9ced2fefb508b7178e91171",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "04901a03af91f2fa6d8a5afd11e214a53c80cf95a680e3347bc5c84523d5579f",
+        "entry_digest": "02676678b18cd07fb4a7d426b527ac586e98bbad1ee3b85e11b149fcc1d42c01",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/verification-attempts.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8de526c0f7ab254c781e251e23423d810b391bf0be95c668eb97a8174aedf335",
+        "entry_digest": "4b6f396debfaae131d15c9c023c4019cdc4104cf754a07df5cf805f57ca71c73",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/archive/changes/2026-09-20-remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum/verification.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cd84361cc683ecb66642f66fee6c6f5e257b25b9ceaa5bfe9912f9bba7fe6a81",
+        "entry_digest": "d0c694ab4b60e4942c1fc01baf93c137387775676d5aebe21369c221daac0dfe",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/change-sequence.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b5ffd9b80a4c22baba0e6613c3aeceaa59f1d12f217ddee67ff6d70ddc1760fb",
+        "entry_digest": "35d489a973f91f0680b5447547cea214a32d2cc2ac566a9ad2470ac8900c1730",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/change.lock",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "f598e8ae01d9126f4a857eee84a1b261c10ef0d85a054c84481413a02ed95d19",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/config.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "eb3a246bf1056b7e0ad091d549819f5c408e659ed97f52f0220467c410629001",
+        "entry_digest": "cbc982313ca819412213c9ca07ff1b4ee7e981779c1bf9c6ccb9d9b455efbec5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/registry.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9913942c5ce7634173fe8a59ccb7f3113375a65daf267aa53138b8408442b6f4",
+        "entry_digest": "f5444a12abe6533c4f15b3868bca5cff8243f7529d1cabb979e134930a4e0e22",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/sdd.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a13dc13d597f0d0cfcfd55a3b1ca78b74cd6251e7d704cda17095c686f0bbec0",
+        "entry_digest": "cb3a73a1ed425921ce575b6797aa0a7e574a5b3cd1885d1e3ded67cb4806d25b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/version",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "23b6867924dfeb9cf532753438dc919669bf93ad88215e11c15630a4acbf4299",
+        "entry_digest": "a63a76e116323f755411d72d0b8f9e4c444d84041e7cee45456701bd5e0d1789",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.specsync/workflow-v2-baseline.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3fb2a21b105a42db77fab98a7705588887b88895cb4fddac686fb152857ed700",
+        "entry_digest": "cdef67b11df3fcb147eb70232f61baa6146c73ce8b0a20331d362f5c40cfa05d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/.trust.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "256745bfc9a8355e24eeb67e41171d387fa3f72c65bf998f3eba41fd7dd48e24",
+        "entry_digest": "bb03cfd660435d912fae94b9a7654f81271d77ad008b77420eee13b063c54198",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/AGENTS.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d2561f21b1519604865b1ae0c4a6586f5f2bea591c9b3b7d8c4ae0f274b73df5",
+        "entry_digest": "c9fe01aa299b0ffc94ba2d06f6c19d7d1da23dc1ec435f4980b62bf25540cb4d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/CHANGELOG.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3cb4a1c297c5deb4d8c2716880863d175e9cb3826a885e16582a51ceca0cceac",
+        "entry_digest": "54ca460b6cfb8bc7cf528f603f7ee3b6477fdd74da7c5c8aef23326c8563ded1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/INTENT.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a61c9ea1a284590d9dff18822dd701de451c003bb4e37ff7a4053893b20daa39",
+        "entry_digest": "1254de3e62cbc116b88e485dc01a05651b54afeda38fcc851f3b93b8c38b4a24",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/LICENSE",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5638332e5ac192a4425efe43297a6efe26aa57ad37a38a2e54d49306bc818e12",
+        "entry_digest": "75c12826fec608ef8274b6b0ebbc3026a5ec2dbf52cb6e9c53924af8bc46a5f4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/README.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "20a05e31a42167f893af6e452736a04e62ca9080ca8b9e0a382927f4533ee1b5",
+        "entry_digest": "c9a73af4315d5df33fb83345bdcf1c1744b92ea31c9f68955525a097906b9f43",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/bun.lock",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "37e869704951b8403f4739c7b5362c53dce27c643157531d247daefaa6210781",
+        "entry_digest": "ca570612c800e660812c4a0070c1603a61846b51e606a0840d29f8ddbecf6e52",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/README.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0c3e966f740041bfd11e2e11a8a7fa8c417550d6d9f9f0350b9aa01e716a7308",
+        "entry_digest": "40991f0211af336388a45fc0508e4df74aa3d5d85aa90ece494fac897106ccc8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/ci/conformance.yml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7c01f15af426825391fbc3e4a9ff527a369c610fa6c0b941948713e1d4781c66",
+        "entry_digest": "0ed099a8b55560fb4528bd827fb99af5c0c6e26be1f5c919298b5a5d646c54e8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/tools/generate.mjs",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4db99216ff6eae43ee5387ae23cc90f3d28ec507756454c13bce858374dbbdd6",
+        "entry_digest": "c64729be0439d26c0a03de6e3f6ee6a4e864b2d0ba3d5af2e6c19d38253ddb17",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/tools/verify.mjs",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e14e37d9b2a383dedf14a1b4552a7479bcec1075f24b83d12b75827cfcbf8d27",
+        "entry_digest": "1b35ba20c55beb709349af86a81abcee83df5dd6208e7a8a95d2fc74749bab97",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/00-protocol-constants.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9705e264ab0c4ed2b50f78ded9042b539f7440e987bbe84e06d9a2d51e8bb472",
+        "entry_digest": "64801aeb1ea6197ecdff4337aaf47f30006adc7ecd490986b16df0ff228bc8bb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/01-key-derivation.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0bea38b1b7a2368ed8299043baf6a88cc084dc85830e43aa5a80de13f4e1cb5e",
+        "entry_digest": "e773ff7c00d31d2f57045dbf51ba01d277148827c16b5e11f4cfd8cbe427bb80",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/02-standard-envelope.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "56c01dbfa13897659549b491a632ec4c1a3b964a784a2fa525ef9471260ff479",
+        "entry_digest": "3d7fc7cbabdecbba93f81d4d70abaca1376e480cc3672371dd0d0821e1e23989",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/03-psk-ratchet.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b7fb17809d332d298fd781e7ccd10576e9478d8a2282ecae1bf51e7a96b9e87a",
+        "entry_digest": "e965dba6ab50b1d5caca5b8394e29f7c8e6a8ce4b0a42f7f8cbf44a163fed9d0",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/04-psk-envelope.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9760ddbedfee0ba63c1134cf15fff41325d97ed168a0015254694c58922f2b7f",
+        "entry_digest": "9e679fe89bf4de4b9f457d49927684c8293f2ffddcae60e20506afe9789d5c86",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/05-psk-exchange.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "77af4b4a3554819e54f2ce8e41920b17d533b96cb02b053784b86e1aa6f58025",
+        "entry_digest": "94749da072cd48f7c411a9453f4e82eeddfd2c5ba65fa3d36dca110673d777de",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/conformance/vectors/06-negative-cases.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "010526e9569c118022a09ea87e94540323c6c43b81b9aec0e1a6fb1e643697d4",
+        "entry_digest": "fead89bc468c95dfd5e45fd9069dbacf73738e62d5ef0a6d59eaa56b7249f6a7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/docs/HLD.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1e6023ad5ebd54c1358fee7af7b13542ae915b7cb45670df44ef64b39ae0646c",
+        "entry_digest": "e89800e65e718ce0f95f87b903e0b7842b721f0bd42b0262fab3c8a65c98c184",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/docs/assets/mermaid.js",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a5680a17f79648b6e8ad8d63000bebab42d53207b87eda90da3b921c8fe7dd6e",
+        "entry_digest": "6654c496be87d42152e7ae2a29c5a0534a08c0c878510c14208e4c02764ba463",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/fledge.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5324c30a8a8fb70c6b4c84154d155adf1bcdb4eb6e9edb88abe74932c0cd561c",
+        "entry_digest": "264d5f588f45b8f108dd76219d0d5ee9babaea3be5e9890eeab76d40ac5a3049",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/hi/AGENTS.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "47d814098350959a88d360eabc9881b92c5f3197b5cd79e04657a3f8f53fe4cb",
+        "entry_digest": "cff7806df57e1df4af86171e59865d3edda99b6cba23ee2d3f9254b4dd5a1c83",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/hi/CLAUDE.md",
+        "kind": "symlink",
+        "mode": 40960,
+        "payload_digest": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+        "entry_digest": "5c72928fcc316cd88d28ea8bc8a4f5c1f78ad29431ba704e953f2e95331f6253",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/hi/keys.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "becdd1ed6cc228347e5b28ac320ae552943d5ae3b947b5ccadcd3103fef2c8c2",
+        "entry_digest": "630579a09906883719fc6ed7d3f2915d91aa85022909833817aa6bb65faf615f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/hi/private.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "43bbffefe7722ad51eef29d6e59693ff59e4e32f2d1bb6200e8eca9a7c08b473",
+        "entry_digest": "fef8dd1d77fb801c69d007a41ed41facad2f34fea130ab961407134d063d96c1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/hi/send.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "33767ac8d7db83a904971131871936eb6e4d8d0756e4fc5124f784cc91382cbf",
+        "entry_digest": "71117b7b625ae6d7741bbecd3a67e3e1c6556588e18658f7d2107bd25f1eb779",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/index.html",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d66bd33f53540b763e52dbd119dbb979f37c003ae1e5af42454b94797f186265",
+        "entry_digest": "82a2da52838fb7ae5079d9e3ae2d220ae0a5ab7eb70b3cbe756d48444c49eb1d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/package.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6c8e6888664e472c6e2ea692ca385f085c0f018a9e580d707d18124533fef9e9",
+        "entry_digest": "c0e968abd36394fedff7c1b14536fe914b429881cb4eb7b1c063d4e5023651c4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/scripts/group-matrix-localnet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "89c54a89e25eb26eec87dad17994dd6dc139a9787dd5ed126663ea8ad8f2f1e5",
+        "entry_digest": "4eaddb7882955e3f175d85261a9b61a4c5eafb6be3b182c356d57df99097b6a6",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/scripts/group-talk-localnet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "52ded775c6fcd22d9804164f20c9781759e763a921800ab4e61c6859382f55c9",
+        "entry_digest": "0e472a93b78e62aaa1c01fc82702736fce3f023582bd25e6688834230dba7f85",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/scripts/pq-cross-localnet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "48a130ab81ddc78e4caae70cdb40258a0192b9d0821aace832a42fee43c8d4c2",
+        "entry_digest": "3a64852dfe86ab049a3433d0c78b86ceae1cf9c0caefa23b0cbc37c18e928b39",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/scripts/pq-io.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4c1ce51af94fd481505e938bbab5c5eed59894cef4ef340738220725a47c3342",
+        "entry_digest": "5b9616f05c39c305195983457c998fe3d4de245ffff979833bd98097cec43ec1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/scripts/pq-localnet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "061282523fa275cf6f709391156e9d7b2b384cbac21500c6a88b1591e4058c72",
+        "entry_digest": "3e303365f90a486e390b7fcc2344240cc293771808f2002fbc9d70941414d5aa",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/scripts/pq-matrix-localnet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e258bde6b80c59dd8aaff0a9dde51edc7950322392461d0635a9d408bd473feb",
+        "entry_digest": "e715ae3ad398dcf2f19b14067954bf0216605883ce8da24c4f751974a34f8b33",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/specs/algochat/algochat.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8dbda2112fd344868baac5b0fd9413e041f4ec021da91d38999d391bda05dc09",
+        "entry_digest": "230a4c1823dc54eff988714e5591b9a9bb5602e67f482b91e6cd90861007b2ed",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/specs/algochat/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8ab13de4ff57c863594083ddeea3313914482f52f1de9d4bb29fa66cb57ccd73",
+        "entry_digest": "10132f9fe1f51b572a295896a44651f4ed5eacb1c969d1208a5f14e5e9331a1e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/specs/algochat/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f6bd4546e71ebf05ce0fac6477f80bb40887a79eedbcb82557544f9ad1aea856",
+        "entry_digest": "8fd9551b0cf02dbbecc5af8ac1ddea8aee7d2d765f5495dd178e910085af81bd",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/specs/algochat/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0cba70ba487760819f9a50a3f7b8f774a5047871e6882ffc6ea1a7010f399306",
+        "entry_digest": "1be8c00bbc5964b009f1b59c0cbce695d1c8e2b1b0d6784c06152ef436197411",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/specs/algochat/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1e7323a7b622c8b0f8a8c453f839bfc7f0fd851e7a403bd350cae8d4665a0c4f",
+        "entry_digest": "fd80cce1fbebbd26ae2d6cd64fa8411f98fe0923b3eaa05b68fc5c63582c7ce7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/discovery.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "865c54ef29580f31b230cea48cf6c16f72778b471d26c6ab81853c3573abc173",
+        "entry_digest": "e89e89987c9972d2a846fd393c70e6bd64955f3826cdef22dd4909d07b6391ed",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/discovery.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9f23b3e2ed466027b85b3342684e55be2ce23c98604187306ab4e81eb0f2b48c",
+        "entry_digest": "65883a140eb34b5efb05b6744708f3a60c6a0490ea962e7e6017405135dad413",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3291c6b6ec16d9d0c9dc053ca6c80c532a18c4c946011d9b30eda48f0d28254e",
+        "entry_digest": "c6d4c0889f0ffc3acdde81a67d5320d61528ab597226ba65a057fb4f43087e83",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/interfaces.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c256a71c19e732ddf81819126d5028d75d6b191136724943f4313326b066a9d8",
+        "entry_digest": "3296b525416a7e504be1e4aa07220eb8465bb92a267a9bfd836cca38b569df47",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/message-indexer.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "db346069f2d02f3b8dda18a5ea2bcf67a096a682afd58a16527c6fb45a09303d",
+        "entry_digest": "1e5697cfc886310d93b0f5f79edaebddc6e93ed1b7ce83dbeeb7adc842811eaa",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/message-indexer.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6fceae4b6a8b43f71bcdabc1dc29c77372fd07e433a165c70d21803caf3710e8",
+        "entry_digest": "cf4b96401275f3f681084cc4941c30846621adc7894b4d7c48d24f22ff81142c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/message-transaction.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2187369f6388cc06725645c672f1b4fe0ce0ebca181caafc78f37e70348c55f5",
+        "entry_digest": "2e98a1a41dc3406f5340986031b4bcff5bd27db60e670bac85f703999754f0f2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/note-fee.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "60db5d988e9a60bb90579967b105d6c8121385321cefdc1eb4806a572659916c",
+        "entry_digest": "dfe95cfb4978fdf7841940ca5bc047025db99f3dbb3ace8b62fd3d6eedfbb21f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/blockchain/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f049438802c463996a2316852a1fa27f664e66ff49bcddce072dbe2111b4fc73",
+        "entry_digest": "953922dd207cdd24e96b5374d3bbf8bc2afd08312a83526c6fa045e23834a1f2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/cache/MessageCache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3e01b25568f3215a7e5909e44f21459630d936f7acef65abd37f96d9573a99f8",
+        "entry_digest": "a6ab7be6675b10e75bf3a5de50b233774de20a1adc52a671831903a5604652f5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/cache/PublicKeyCache.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cd8b28963a9e2608cedf85b64a81ff24fabad7f73cfd99931a8ff0da12091e5f",
+        "entry_digest": "91672276c52249a30513a62a3b679083128254186e47a0c7d2a683efca5b385f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/cache/PublicKeyCache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0d58bafc79ec9d085d4c746227e79aae12b43180a2a798a1f5bc051b0ed52e9c",
+        "entry_digest": "61e29ec95141a1360121e76c9535a1a2bd0498380ceacf6c4903929375912f92",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/cache/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f787b6efdc2ac43b57e880a207a0e67550189ed792cf7d79a6285df9a3fb25e5",
+        "entry_digest": "9b1e3b86d7fa96d1890c8f794d0da158b931dd169fe60f67690c28493083086d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/aad.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6911b2684f0b84c14f46b0b2dabfadb0a70455bace52066fda08ae0200a0d2ea",
+        "entry_digest": "5beb2a7b5becc97f48b5ef42c43e3ae880bbb564b600e3f3edc3c49e5c108abd",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/encryption.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b8db96e891a184284f667c914845226748d180fa7b640ee0e54c6265b88c3c5b",
+        "entry_digest": "f2f0f3a53a926d16b6fb8d02e7876bef39e243108bcb3e06ca4b6f0a08188de2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/encryption.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "301e4879f42b797d00e1a7e440de89269553153472e80b34ee527462268a4499",
+        "entry_digest": "b943166a2aa663b1c23c4fab5a92a81c2129d18dbaec22c2fad1c02309af8a00",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/envelope.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b2c6721fbadc65748ff1f45690c52eb344ce71643db3e9efbb7fc0e3b3e439bb",
+        "entry_digest": "21b05a33dddb44ce1c9fda480a389a2f08d81350417403d67dccd11aea2195e7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "235bdd4c1ea39beca405a1f14b84c3a2a11653b2e7e39dc4578010e6a50b2524",
+        "entry_digest": "1129e8b4dc7777a28d276b453ea6e41c93a4454f9834560f00c1732e10210b7a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/keys.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f08d9c99e8465ecabf4082e82fcff02e473fa986796f858141b09b2f600e08b1",
+        "entry_digest": "236ab60d6f6a6ef94a6a30619b6419f4188246f4c8d93a19a1b4aad52784791f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/signature.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f6e73a16246e8a6f634be5489c4b3bfd01312def577ddf050e1c69a9c14e9218",
+        "entry_digest": "e7ca20a85ef2f3a6b81468651b8b7b0d3b9fd927bf69df0b58985326d7427d25",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/crypto/signature.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "651843a3ca8db604b33d65d479e86273c66896aca099f446c468c202749d7928",
+        "entry_digest": "71e12359a2d16bfe47714b800faab472574de361c5ba50db261e2449921c5b8a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/errors/ChatError.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "052e99a46163a1f5a50c2b80c7c44146b25ac21901f247b06f1731a34b90e9a4",
+        "entry_digest": "11703a6792add1182b758564adc6a7278145ae2906b60d86a966e01dcf5320d1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/errors/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cb63297d81ea2be01198e19bc7ba0bb9223daad122d10b17b91b258a6cab3f8a",
+        "entry_digest": "2519a490ae2536d8e4245927b0d483425814381006d1669a05dc40e9d0fe63ea",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "24973b59929cb34159a224caa46ba89f933e9efe482dbb822eeb09623820b5ba",
+        "entry_digest": "ba7b49f113799fd2bf6ddbd75442e792b8eef787371aa9bd831625eb24472568",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/models/Conversation.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f90ee3deddd73ec5f8b96cce36cbd53db74eacb69632f169e506fa6493cc83fc",
+        "entry_digest": "66fd1d99edbbedc39a2e4e02914060101cd0f78991cc923ca3b5e7ef1f2242cb",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/models/Conversation.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "af6697748d8d0257a6ad3cdfe3a8a0a9a45b9e3bf4a815337e845527f5c12b65",
+        "entry_digest": "1b552ccc641a1cd93050a03cc5d9d1d25f3ade070a0cf1a35dcbf49a2413a10d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/models/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0e05ada03099f4e94f933aabb791a24b9d88a4b98fe443a536da2caad99a826f",
+        "entry_digest": "30a32d395e00b862807676dbd9ef4e05368aa520fdc2fe04418640d260c7a442",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/models/pending-message.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "874c072f090de46d42eefabe92e51ca644dc72b2ef111a4ece9948e3a57e2e9a",
+        "entry_digest": "8036ac376eb9d9a8fbbbd4e186be7e0bd29fa05dc209de00000e0a7e970c5659",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/models/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cb24a98220302b1c7a377c82edda90f01eced4fb0d20564bea5768b62eefe436",
+        "entry_digest": "55a39b7daaa5493524b381aeaa29e911025983a78660bc7877ff753ed0ad6781",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/announce.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "39dbd06962347dcbfb834613d3ea99296b97dd0458120f9bbca4896d8da228a6",
+        "entry_digest": "3e03eb8c13c12252421b5072bd066fe502c75b3dd15cc31ef7be628ed78fd707",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/bytes.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d2db2a7079a52454be87f3241a1de6a8da134ebd08b6b0a50e37690ab1d6bf26",
+        "entry_digest": "ff1145a2315bf9bfd612431a4ceb454aeb8b5a9daad0e1dc0ac0a4996628d154",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/group.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "dd71c6ef833a6d821157ca36107a43ebfb38fcadbf5e43cc2bcf284e37bc9148",
+        "entry_digest": "4972fa2d6e52b0846043642180569fb8f02f461f200df3902a5bfc7ef49b1511",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/group.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4d5f10c41db573aecd1357caca8aeaeb5ee9163a0ae8aee5f6b63ea690055154",
+        "entry_digest": "40ab28771465296758155cd2dea5bc6d64bcabc9e3ed10efb255dd8a8eee04a4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fb673d95c68ef2d3895bd0c5897ed40a17c57be03440b97387dc24138171be4d",
+        "entry_digest": "1ff55c5541ef709214f24f0ef40e5b5c2c252d446c3817bd6004f7e9a4bd9d0c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/kdf.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "78e2de1d02ff00b06362df954e862b84044026f449e9eb5f38327f7f1e38ba6d",
+        "entry_digest": "7a6c87a754a72d08f37471c272a7e080e0b8b8826e3764f8e01edf99188f2fe2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/kem.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1c930d118a83abd958c0de0a04552e668a32a1662b1ac91a6ff06806aba6e19f",
+        "entry_digest": "56b99b96feee7191bb60f361546341a90f1c5b96004475634f2660552a06b6f4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/pq.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5c19ba7d80796562f00385b905e0e2ad0615d0d6fe0f6a129840128296e7efe8",
+        "entry_digest": "1d417291f5c8532dc3f261bac37a1a915c73f880ae101bfaafd4dc4ffc9c7c9a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/session.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "19d374fa66b43f94c3047348691c6bdeab676b9c8326b952fe3cd24d766910a5",
+        "entry_digest": "85cbf1ce57f9573715f7ca2975f226c5aea4d03f6147976f033d24bce9abdefc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "423203fa92f7a9d44519c3ffb8d008aa0d9085f68cfceb2e6fa0581d308ac3c4",
+        "entry_digest": "cf343918d9675d563e3e2e8fc507917576f3319e75659c47b0ba80a807e53392",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/encryption.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1d2b6df4015ae2b56877c5f9ef6fab61924f6d14ccfb8d901aa67c22b356ff06",
+        "entry_digest": "371b71cfcfa7adabc90029985953616df8f744f974767fcdc62ddaf95e647c8a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/envelope.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "75aa52125f57dcbfc4f4f31f43f7da9a0bccab6c1f31b7b5658bcf4bb1cc7c7f",
+        "entry_digest": "80c16e9f8542d00dcd526941389704d82e439bec3a7ef01cfc823e4ee8fa1e84",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/exchange.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3071a02fe447bfb2d7a21dddd7d24304af1efe3e7daf1c2d3b27b7ff724fc303",
+        "entry_digest": "7d7ce7a65529e9503d7e12f782a08afec61d99365f88973772803c6e3b2df441",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "988bf6c40817996987cb3181be6e1dedb4e35e284c26d762b33fe37900999f99",
+        "entry_digest": "90e30a73314958ee9564bddb43120d5325bcba33de0456eaf4f24ec10f73b1f5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/psk.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "af75b784aa62c7b53b807cec8c520e1cd41df778d31dd545df21c768579eec54",
+        "entry_digest": "708beab760cfa177ade48bf8e3cf20701c7bfba3f97f96706d8b5b8b58f9cc8f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/ratchet.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bbbca5d638de3c329d2c6717142eb942949f126336349e99a4364a012b6dc72b",
+        "entry_digest": "126a7cd8339f6d5438a71674353473a01f903f6054099ee929e27f498623e27c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/state.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b6a9aa95bff98bc2c0662067e4619260c41f62a400eebfe50fa5e43dfe9bd805",
+        "entry_digest": "6daa17304c988b23af31d2f1ecf6a966711521a2862f56e125cf7dce901d78f0",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/psk/types.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0396c5894d19149828b813cd4f4b36640117c289a6a1b9d25eafed445d4a8f96",
+        "entry_digest": "cd3fcffde8026dce2a7243849b910c246514529b4d376280ee5e33f49fb9660c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/queue/SendQueue.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b8de55913773d9b4b9281bb181705697f7a86345f1babd8f15da35f0eabfce04",
+        "entry_digest": "e8770f22a09a7355e37b9af36677dfa75b512ba43018a0be884f130cc8e567bc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/queue/SendQueue.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "35c3519517b5ed807b2d09f0225e56ccab9296f1e33f9324bff6570c50f34b6b",
+        "entry_digest": "1e82511d219a22193b0ba58843b144b899405769d5b8a5a6f8f7484bdadfd9ef",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/queue/SyncManager.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d7191a055b039925b5a55e508a0f8ff45eb527e1f1cb5729263834e7aa53e976",
+        "entry_digest": "a348933e16cc51cc6d27570765ea7f4f3eccbe96b84613c89df351c8ab9b9afc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/queue/file-send-queue-storage.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "db2a2da9cd4b889f6d532953793d05853fe7c4690b4f87ac92aa79323febed7a",
+        "entry_digest": "58ffadac6e1950a7d23f9a2700c5ae5f56645bcd3cd5b25c2f2b9a3fa0b427cf",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/queue/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d6c4473e51450eab6a58946f0e429c3689d802de6dc0f1cd41971c5f5eb698b1",
+        "entry_digest": "0b2dfc54fbb63c83454b629fc3a47cc6844ad1bac6a245f20c3786caaa91f306",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/services/MessageIndexer.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "92a49d0076dc7cbfb1eb2fbef4bb68d7c32225dd7b76aaae0da6f252dd463320",
+        "entry_digest": "83e3ae0667157f5771d19694448cf27d7077ea4af59cd9e55794c9f836e8289d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/services/algorand.service.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ebedb219a2b778250891a8c36acfe3271e1ca4d26a352776994b5383ea134db5",
+        "entry_digest": "df2e90688c3433987e9aeb86e6d7b4ceb051a65367f5e54030c608fe694ce294",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/services/algorand.service.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ca0cfbc03f449ac9f0cac903a896b7cb5c08eaeb6d5b73d2490df3e2a4a045ac",
+        "entry_digest": "8781b755c5087b206d9df8ab9c3853638bf9d0d68c14a64674c63e7232f6c36d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/services/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ca312b7c2250b02b9b4ca22bad3987f56721def27db2032689708721332fadaf",
+        "entry_digest": "7f0de90a1c5b53690775fe4940c79753ae104a023836748c21ea326a2f0704b3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/services/mnemonic.service.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "406844997742ac5248d34464f3273012b5d01d6ede1a2226b0f43d1555325c87",
+        "entry_digest": "5c106ea8641eb11d91b45943a39ebebd37ca0d0a8a132be496cfea50cee845bc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/services/mnemonic.service.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "c0e364becc88a7073165774567468b1b54e9408b2269d289f0759c6894ef06d7",
+        "entry_digest": "476eb436e2920ba8a484cec7d213bd28330e9887b76f5da5717315dae87960a8",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/storage/encryption-key-storage.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "573b3eac95502a2d87f856ba4ba530f0d597e1cfc42f3fda916db369167c5aff",
+        "entry_digest": "2dbd849fa99af4dc228a67987a5fa3ac95093b8dfebe2362a8c017a3b9181735",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/storage/file-key-storage.errors.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1ecbe90e639fd06019440ce428dcce378f305dcfb7fe16db0d1176a86ab52288",
+        "entry_digest": "08e0a2f0fb3ba771a10c4f2f09da182e5170c45f2b7ff6839bdf078dd158d34f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/storage/file-key-storage.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2fd53f0d334f5531c6524d2887bf800c5e7bf1fdab8e96cf638bfa45cceb927d",
+        "entry_digest": "09f801d93cf1a9d63a6e37ee131758a091b67b1e3c952613d79285fb1bbf06ac",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/storage/index.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6ff36a8cb8048a95ac43be0cc176056b94e41f7794d2c2e66a01cf318ef28d2e",
+        "entry_digest": "f7215a6a1cc4fbcb4162b199c86f70602ffd4a626e4de4373408fe0b22741668",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/storage/message-cache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "100554274b68a597c6137542b8563b4cf5e85c7aa7485ce5d53b9b6c83f6b93c",
+        "entry_digest": "21a66fb3fc2562c89cd15b1377d0bf95566f373dcb05ebe2ca52456a6fc108be",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/storage/public-key-cache.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1b16d77b591d88209c1a7cb8aab32bea31b05c7233ca754c57f7d07378a71b42",
+        "entry_digest": "7c38c9d301a0d379fa60d86288a87d488c3b65d032667e92a8a8cf080c7ecbf2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/tsconfig.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1a089e121bf2926e761ace0245f14d0c573cdf8acfdd29631b55aef8e39c8fbe",
+        "entry_digest": "f36d43188f864dc4c0362d7f24776a991f3e85e4f4293798e3a450eb885949df",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/typedoc.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a019af5773d7f745f2cabc1a4f6e3b9106ae00323370e587fbbe3655b4e735dc",
+        "entry_digest": "a2fe84cd76c9f19f393a1c09db34da4d2c7e13dae9d3fe3f9446eb84a6428ee2",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}

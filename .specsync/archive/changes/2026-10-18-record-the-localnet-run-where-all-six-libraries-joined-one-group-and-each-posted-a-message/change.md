@@ -1,6 +1,6 @@
 ---
 id: record-the-localnet-run-where-all-six-libraries-joined-one-group-and-each-posted-a-message
-state: implementing
+state: archived
 type: documentation
 base_commit: 13f1255ea268ca3fe9318e08a000900d7c554d5a
 ---
