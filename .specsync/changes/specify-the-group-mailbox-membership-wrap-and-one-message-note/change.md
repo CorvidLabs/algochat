@@ -1,6 +1,6 @@
 ---
 id: specify-the-group-mailbox-membership-wrap-and-one-message-note
-state: approved
+state: implementing
 type: feature
 base_commit: 237a97488ac663fdf326e07badc383b4452db4ad
 ---
