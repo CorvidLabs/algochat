@@ -129,10 +129,10 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 | `0x02` | Ratcheting PSK | Stable (v1.1) | Hybrid X25519 + ratcheting pre-shared key. Provides defense-in-depth against quantum key exchange attacks. |
 | `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
 | `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
-| `0x06` | Group membership | Specified | One hybrid-session note that delivers a group key to one member. |
-| `0x07` | Group message | Specified | One note on the group mailbox under the current group key. |
+| `0x06` | Group membership | Implemented | One hybrid-session note that delivers a group key to one member. Not in tag v1.3.0. |
+| `0x07` | Group message | Implemented | One note on the group mailbox under the current group key. Not in tag v1.3.0. |
 
-Identifier `0x03` is not assigned. `0x06` and `0x07` are specified in section 5.8 and are not in the 1.3.0 parity matrix until every library passes section 5.8.4.
+Identifier `0x03` is not assigned. `0x06` and `0x07` are specified in section 5.8. Section 5.8.4 records the LocalNet run. Tag v1.3.0 does not include these ids.
 
 ### 5.4.1 Envelope version
 
@@ -275,7 +275,9 @@ info = UTF-8 "AlgoChat-group-v1" || group id || sender address (32)
 
 #### 5.8.4 Parity
 
-`0x06` and `0x07` are in the parity matrix only after every library can create a group of three, add a fourth, remove one, and post one message to the same LocalNet mailbox, and every remaining library opens that message. The removed member's open MUST fail. Until that run is recorded, these protocol ids are specified and not claimed as shipped parity.
+On 2026-10-18 the driver `ts/scripts/group-matrix-localnet.ts` ran on LocalNet. The creator funded the mailbox with 100000 microAlgos in round 46313. Create notes for a group of three confirmed in rounds 46315 and 46316. Add notes for a fourth member confirmed in rounds 46317, 46318, and 46319. Remove notes, which were not sent to the removed member, confirmed in rounds 46320 and 46321. One `0x07` payment to the mailbox confirmed in round 46322. TypeScript, Go, Rust, Python, Kotlin, and Swift each produced the same note bytes, and each opened the mailbox note. Opening that note with the previous group key failed in every library. A repeated counter failed in every library. Identifier `0x03` was not used.
+
+`vectors/group-v1.json` is the frozen membership note, message key, and message note. The session key in that file is an input, not a handshake output. Tag v1.3.0 does not include this run.
 
 ## 6. Encryption
 
@@ -740,7 +742,7 @@ message history of that account and derives the keys needed to recover hybrid hi
 
 ### 11.2 Replay Protection
 
-Transaction uniqueness prevents the identical signed transaction from being accepted twice. It does not prevent copying a note into a new transaction. PSK mode requires counter-based replay protection within the ratchet window (section 8.5). Standard and hybrid applications must track transaction/session context as appropriate; there is no universal envelope-level replay cache. See [docs/ACCURACY.md](docs/ACCURACY.md) for port limitations.
+Transaction uniqueness prevents the identical signed transaction from being accepted twice. It does not prevent copying a note into a new transaction. PSK mode requires counter-based replay protection within the ratchet window (section 8.5). A group message rejects a repeated sender, epoch, and counter (section 5.8). Standard and hybrid applications must track transaction/session context as appropriate; there is no universal envelope-level replay cache. See [docs/ACCURACY.md](docs/ACCURACY.md) for port limitations.
 
 ### 11.3 Metadata Leakage
 
@@ -749,7 +751,7 @@ The following metadata is visible on-chain:
 - Recipient Algorand address
 - Timestamp (block time)
 - Message size (approximate)
-- Protocol mode (`0x01`, `0x02`, `0x04`, or `0x05`) reveals standard, PSK, handshake, or session-message use
+- Protocol mode (`0x01`, `0x02`, `0x04`, `0x05`, `0x06`, or `0x07`) reveals standard, PSK, handshake, session-message, group-membership, or group-message use
 - Hybrid handshakes expose both X25519 keys; session messages expose their handshake hash
 
 ### 11.4 Key Compromise
@@ -768,6 +770,8 @@ For standard and PSK modes, if a recipient's X25519 private key is compromised:
   history
 
 For hybrid mode, the recipient path requires both the recipient's X25519 and ML-KEM keys, and the sender-copy path requires both of the sender's keys. The mnemonic derives both kinds of keys. A leaked session key exposes that session.
+
+For a group, a leaked message key opens that one `0x07` note. A leaked group key opens every `0x07` note in that epoch. A later theft of a member's long-term X25519 key and ML-KEM key can open that member's `0x06` wraps.
 
 Because compromise is retroactive and irreversible, key rotation limits future
 exposure only. There is no mechanism to protect already-published ciphertext.
@@ -795,6 +799,14 @@ PROTOCOL_PQ_MESSAGE    = 0x05
 PQ_HANDSHAKE_SIZE      = 2366
 PQ_DATA_HEADER_SIZE    = 78
 PQ_MAX_PAYLOAD_SIZE    = 4002
+
+// Group mailbox (envelope version 0x02, not in tag v1.3.0)
+PROTOCOL_GROUP_MEMBERSHIP = 0x06
+PROTOCOL_GROUP_MESSAGE    = 0x07
+GROUP_MEMBERSHIP_NOTE_SIZE = 195
+GROUP_MESSAGE_HEADER_SIZE  = 54
+GROUP_MAX_PAYLOAD_SIZE     = 4026
+GROUP_INFO_LABEL           = "AlgoChat-group-v1"
 
 // Shared
 MAX_NOTE_SIZE          = 4096
@@ -827,3 +839,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.2 | Account agility: payments MAY be Falcon-1024 `pqsig` as well as Ed25519 `sig`. Encryption seed is mnemonic entropy, not a signing-key prefix. Falcon min fee is 3×. Envelope bytes and 1.1 test vectors are unchanged. |
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
 | 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |
+| unreleased | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Tag v1.3.0 does not include these ids. |

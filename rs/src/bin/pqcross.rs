@@ -4,8 +4,10 @@ use std::io::{self, BufRead, Write};
 
 use algochat::{
     accept_pq_handshake, decrypt_message, decrypt_pq_message, decrypt_psk_message,
-    derive_keys_from_seed, derive_mlkem768, encode_psk_envelope, encrypt_message,
-    encrypt_pq_message, encrypt_psk_message, initiate_pq_handshake, open_pq_handshake_as_sender,
+    derive_group_message_key, derive_keys_from_seed, derive_mlkem768, encode_psk_envelope,
+    encrypt_message, encrypt_pq_message, encrypt_psk_message, initiate_pq_handshake,
+    open_group_membership, open_group_message, open_pq_handshake_as_sender, seal_group_membership,
+    seal_group_message, GroupMembership, PqSession,
 };
 use serde_json::{json, Value};
 
@@ -62,6 +64,10 @@ fn dispatch(req: &Value) -> Result<Value, String> {
         "write02" => write_classical(req, true),
         "read02" => read_classical(req, true),
         "write05s" => write_many(req),
+        "groupSeal" => group_seal(req),
+        "groupOpen" => group_open(req),
+        "groupWrite" => group_write(req),
+        "groupRead" => group_read(req),
         _ => Err(format!("unknown op {op}")),
     }
 }
@@ -206,6 +212,133 @@ fn write_many(req: &Value) -> Result<Value, String> {
         "messages": messages,
         "sessionKey": hex::encode(session.session_key),
     }))
+}
+
+fn group_session(req: &Value) -> Result<PqSession, String> {
+    Ok(PqSession {
+        session_key: bytes32(req, "sessionKey")?,
+        sender_public: bytes32(req, "senderPublicKey")?,
+        recipient_public: [0u8; 32],
+        handshake_id: bytes32(req, "handshakeId")?,
+    })
+}
+
+fn group_seal(req: &Value) -> Result<Value, String> {
+    let membership = GroupMembership {
+        action: u8_field(req, "action")?,
+        epoch: u32_field(req, "epoch")?,
+        group_id: bytes32(req, "groupId")?,
+        mailbox: bytes32(req, "mailbox")?,
+        group_key: bytes32(req, "groupKey")?,
+    };
+    let note = seal_group_membership(&group_session(req)?, &membership, &bytes12(req, "nonce")?)
+        .map_err(|error| error.to_string())?;
+    Ok(json!({ "note": hex::encode(note) }))
+}
+
+fn group_open(req: &Value) -> Result<Value, String> {
+    let note = hex_bytes(&field(req, "note")?)?;
+    let opened =
+        open_group_membership(&note, &group_session(req)?).map_err(|error| error.to_string())?;
+    Ok(json!({
+        "action": opened.action,
+        "epoch": opened.epoch,
+        "groupId": hex::encode(opened.group_id),
+        "mailbox": hex::encode(opened.mailbox),
+        "groupKey": hex::encode(opened.group_key),
+    }))
+}
+
+fn group_write(req: &Value) -> Result<Value, String> {
+    let group_key = bytes32(req, "groupKey")?;
+    let group_id = bytes32(req, "groupId")?;
+    let epoch = u32_field(req, "epoch")?;
+    let counter = u32_field(req, "counter")?;
+    let sender = bytes32(req, "senderAddress")?;
+    let text = field(req, "text")?;
+    let nonce = bytes12(req, "nonce")?;
+    let note = seal_group_message(
+        text.as_bytes(),
+        &group_key,
+        &group_id,
+        epoch,
+        counter,
+        &sender,
+        &nonce,
+    )
+    .map_err(|error| error.to_string())?;
+    let message_key = derive_group_message_key(&group_key, epoch, counter, &group_id, &sender)
+        .map_err(|error| error.to_string())?;
+    Ok(json!({
+        "note": hex::encode(note),
+        "messageKey": hex::encode(message_key),
+    }))
+}
+
+fn group_read(req: &Value) -> Result<Value, String> {
+    let note = hex_bytes(&field(req, "note")?)?;
+    let group_key = bytes32(req, "groupKey")?;
+    let sender = bytes32(req, "senderAddress")?;
+    let opened = open_group_message(&note, &group_key, &sender, &seen_pairs(req)?)
+        .map_err(|error| error.to_string())?;
+    let text = String::from_utf8(opened.plaintext).map_err(|error| error.to_string())?;
+    let expected = field(req, "text")?;
+    if text != expected {
+        return Err(format!("plaintext {text}"));
+    }
+    Ok(json!({
+        "text": text,
+        "epoch": opened.epoch,
+        "counter": opened.counter,
+        "groupId": hex::encode(opened.group_id),
+    }))
+}
+
+fn seen_pairs(req: &Value) -> Result<Vec<(u32, u32)>, String> {
+    let Some(value) = req.get("seen") else {
+        return Ok(Vec::new());
+    };
+    if value.is_null() {
+        return Ok(Vec::new());
+    }
+    let items = value.as_array().ok_or("bad seen")?;
+    let mut pairs = Vec::with_capacity(items.len());
+    for item in items {
+        let epoch = item
+            .get("epoch")
+            .and_then(|entry| entry.as_u64())
+            .ok_or("bad seen")?;
+        let counter = item
+            .get("counter")
+            .and_then(|entry| entry.as_u64())
+            .ok_or("bad seen")?;
+        pairs.push((
+            u32::try_from(epoch).map_err(|_| "bad seen".to_string())?,
+            u32::try_from(counter).map_err(|_| "bad seen".to_string())?,
+        ));
+    }
+    Ok(pairs)
+}
+
+fn u32_field(req: &Value, name: &str) -> Result<u32, String> {
+    let value = req.get(name).ok_or_else(|| format!("missing {name}"))?;
+    let number = value.as_u64().ok_or_else(|| format!("bad {name}"))?;
+    u32::try_from(number).map_err(|_| format!("bad {name}"))
+}
+
+fn u8_field(req: &Value, name: &str) -> Result<u8, String> {
+    let number = u32_field(req, name)?;
+    u8::try_from(number).map_err(|_| format!("bad {name}"))
+}
+
+fn bytes32(req: &Value, name: &str) -> Result<[u8; 32], String> {
+    let raw = hex_bytes(&field(req, name)?)?;
+    raw.as_slice().try_into().map_err(|_| format!("bad {name}"))
+}
+
+fn bytes12(req: &Value, name: &str) -> Result<[u8; 12], String> {
+    let raw = hex_bytes(&field(req, name)?)?;
+    raw.as_slice().try_into().map_err(|_| format!("bad {name}"))
 }
 
 fn field(req: &Value, name: &str) -> Result<String, String> {

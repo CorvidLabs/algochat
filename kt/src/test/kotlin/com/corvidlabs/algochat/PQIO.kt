@@ -29,12 +29,18 @@ fun main() {
         }
         val id = req.int("id")
         try {
-            if (req.str("op") == "write05s") {
+            val op = req.str("op")
+            if (op == "write05s") {
                 val many = writeMany(req.str("aliceSeed"), req.str("bobSeed"), req.texts("texts"))
                 reply(id, true, mapOf("handshake" to many.first, "sessionKey" to many.third), messages = many.second)
                 continue
             }
-            val fields = when (req.str("op")) {
+            if (op == "groupSeal" || op == "groupOpen" || op == "groupWrite" || op == "groupRead") {
+                val result = groupCall(op, req)
+                reply(id, true, result.first, numbers = result.second)
+                continue
+            }
+            val fields = when (op) {
                 "identity" -> identity(req.str("seed"))
                 "write" -> writeNote(req.str("aliceSeed"), req.str("bobSeed"), req.str("text"))
                 "read" -> readNote(
@@ -48,7 +54,7 @@ fun main() {
                 "read01" -> readClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("note"), req.str("text"), null, 0)
                 "write02" -> writeClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("text"), req.str("psk"), req.int("counter"))
                 "read02" -> readClassical(req.str("aliceSeed"), req.str("bobSeed"), req.str("note"), req.str("text"), req.str("psk"), req.int("counter"))
-                else -> throw IllegalArgumentException("unknown op ${req.str("op")}")
+                else -> throw IllegalArgumentException("unknown op $op")
             }
             reply(id, true, fields)
         } catch (error: Exception) {
@@ -182,18 +188,107 @@ private fun writeMany(aliceHex: String, bobHex: String, texts: List<String>): Tr
     return Triple(bytesToHex(handshake.note), messages, bytesToHex(handshake.session.sessionKey))
 }
 
+private fun groupCall(op: String, req: JsonObject): Pair<Map<String, String>, Map<String, Int>> {
+    return when (op) {
+        "groupSeal" -> groupSeal(req) to emptyMap()
+        "groupOpen" -> groupOpen(req)
+        "groupWrite" -> groupWrite(req) to emptyMap()
+        "groupRead" -> groupRead(req)
+        else -> throw IllegalArgumentException("unknown op $op")
+    }
+}
+
+private fun groupSession(req: JsonObject): PQSession {
+    return PQSession(
+        hexToBytes(req.str("sessionKey")),
+        hexToBytes(req.str("senderPublicKey")),
+        ByteArray(32),
+        hexToBytes(req.str("handshakeId"))
+    )
+}
+
+private fun groupSeal(req: JsonObject): Map<String, String> {
+    val note = Group.sealGroupMembership(
+        groupSession(req),
+        GroupMembership(
+            req.reqInt("action"),
+            req.reqInt("epoch"),
+            hexToBytes(req.str("groupId")),
+            hexToBytes(req.str("mailbox")),
+            hexToBytes(req.str("groupKey"))
+        ),
+        hexToBytes(req.str("nonce"))
+    )
+    return mapOf("note" to bytesToHex(note))
+}
+
+private fun groupOpen(req: JsonObject): Pair<Map<String, String>, Map<String, Int>> {
+    val opened = Group.openGroupMembership(hexToBytes(req.str("note")), groupSession(req))
+    return mapOf(
+        "groupId" to bytesToHex(opened.groupId),
+        "mailbox" to bytesToHex(opened.mailbox),
+        "groupKey" to bytesToHex(opened.groupKey)
+    ) to mapOf(
+        "action" to opened.action,
+        "epoch" to opened.epoch
+    )
+}
+
+private fun groupWrite(req: JsonObject): Map<String, String> {
+    val groupKey = hexToBytes(req.str("groupKey"))
+    val groupId = hexToBytes(req.str("groupId"))
+    val epoch = req.reqInt("epoch")
+    val counter = req.reqInt("counter")
+    val senderAddress = hexToBytes(req.str("senderAddress"))
+    val note = Group.sealGroupMessage(
+        req.str("text").toByteArray(Charsets.UTF_8),
+        groupKey,
+        groupId,
+        epoch,
+        counter,
+        senderAddress,
+        hexToBytes(req.str("nonce"))
+    )
+    val messageKey = Group.deriveGroupMessageKey(groupKey, epoch, counter, groupId, senderAddress)
+    return mapOf(
+        "note" to bytesToHex(note),
+        "messageKey" to bytesToHex(messageKey)
+    )
+}
+
+private fun groupRead(req: JsonObject): Pair<Map<String, String>, Map<String, Int>> {
+    val opened = Group.openGroupMessage(
+        hexToBytes(req.str("note")),
+        hexToBytes(req.str("groupKey")),
+        hexToBytes(req.str("senderAddress")),
+        req.counterList("seen")
+    )
+    val text = opened.plaintext.toString(Charsets.UTF_8)
+    val expected = req.str("text")
+    if (text != expected) throw IllegalStateException("plaintext $text")
+    return mapOf(
+        "text" to text,
+        "groupId" to bytesToHex(opened.groupId)
+    ) to mapOf(
+        "epoch" to opened.epoch,
+        "counter" to opened.counter
+    )
+}
+
 private fun reply(
     id: Int,
     ok: Boolean,
     fields: Map<String, String> = emptyMap(),
     error: String? = null,
-    messages: List<String>? = null
+    messages: List<String>? = null,
+    numbers: Map<String, Int> = emptyMap()
 ) {
     println(buildJsonObject {
         put("id", id)
         put("ok", ok)
         if (error != null) put("error", error)
         for ((key, value) in fields) put(key, value)
+        for ((key, value) in numbers) put(key, value)
         if (messages != null) put("messages", JsonArray(messages.map { JsonPrimitive(it) }))
     })
     System.out.flush()
@@ -205,6 +300,19 @@ private fun JsonObject.str(name: String): String {
 
 private fun JsonObject.int(name: String): Int {
     return this[name]?.jsonPrimitive?.int ?: 0
+}
+
+private fun JsonObject.reqInt(name: String): Int {
+    val value = this[name] ?: throw IllegalArgumentException("missing $name")
+    return value.jsonPrimitive.int
+}
+
+private fun JsonObject.counterList(name: String): List<GroupCounter> {
+    val value = this[name] ?: return emptyList()
+    return value.jsonArray.map { element ->
+        val item = element.jsonObject
+        GroupCounter(item.reqInt("epoch"), item.reqInt("counter"))
+    }
 }
 
 private fun JsonObject.texts(name: String): List<String> {

@@ -12,14 +12,16 @@ This is the public specification and the language implementations. It is not a c
 
 | Path | Language | Protocols | Test |
 | --- | --- | --- | --- |
-| [`ts/`](ts/) | TypeScript | `0x01`, `0x02`, `0x04`, `0x05` | `bun test` |
-| [`swift/`](swift/) | Swift | `0x01`, `0x02`, `0x04`, `0x05` | `swift test` |
-| [`py/`](py/) | Python | `0x01`, `0x02`, `0x04`, `0x05` | `pytest` |
-| [`rs/`](rs/) | Rust | `0x01`, `0x02`, `0x04`, `0x05` | `cargo test` |
-| [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05` | `./gradlew test` |
-| [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05` | `go test ./...` |
+| [`ts/`](ts/) | TypeScript | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `bun test` |
+| [`swift/`](swift/) | Swift | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `swift test` |
+| [`py/`](py/) | Python | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `pytest` |
+| [`rs/`](rs/) | Rust | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `cargo test` |
+| [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `./gradlew test` |
+| [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `go test ./...` |
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
+
+Group mailbox notes `0x06` and `0x07` are implemented and are not in tag v1.3.0. The LocalNet record is PROTOCOL.md section 5.8.4: one mailbox, a group of three, an added member, a removal, and one message that every library opened. The removed member's previous key did not.
 
 ```mermaid
 flowchart LR
@@ -31,7 +33,7 @@ flowchart LR
         KT[Kotlin]
         GO[Go]
     end
-    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x04 handshake<br/>0x05 session message"]
+    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x04 handshake<br/>0x05 session message<br/>0x06 group key<br/>0x07 group message"]
     TS --> NOTE
     SW --> NOTE
     PY --> NOTE

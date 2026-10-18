@@ -75,6 +75,14 @@ private enum PQCross {
             return try readClassical(object, extra: true)
         case "write05s":
             return try writeMany(object)
+        case "groupSeal":
+            return try groupSeal(object)
+        case "groupOpen":
+            return try groupOpen(object)
+        case "groupWrite":
+            return try groupWrite(object)
+        case "groupRead":
+            return try groupRead(object)
         default:
             throw ChatError.invalidEnvelope("unknown op \(op)")
         }
@@ -235,6 +243,171 @@ private enum PQCross {
             "recipient": opened,
             "sender": senderPlain
         ]
+    }
+
+    static func groupSeal(_ object: [String: Any]) throws -> [String: Any] {
+        let note = try GroupMailbox.sealGroupMembership(
+            sessionKey: try hexDecode(try string(object, "sessionKey")),
+            senderPublicKey: try hexDecode(try string(object, "senderPublicKey")),
+            handshakeID: try hexDecode(try string(object, "handshakeId")),
+            action: try actionValue(object["action"]),
+            epoch: try uint32Value(object["epoch"], name: "epoch"),
+            groupID: try hexDecode(try string(object, "groupId")),
+            mailbox: try hexDecode(try string(object, "mailbox")),
+            groupKey: try hexDecode(try string(object, "groupKey")),
+            nonce: try hexDecode(try string(object, "nonce"))
+        )
+        return ["note": hexEncode(note)]
+    }
+
+    static func groupOpen(_ object: [String: Any]) throws -> [String: Any] {
+        let opened = try GroupMailbox.openGroupMembership(
+            note: try hexDecode(try string(object, "note")),
+            sessionKey: try hexDecode(try string(object, "sessionKey")),
+            senderPublicKey: try hexDecode(try string(object, "senderPublicKey")),
+            handshakeID: try hexDecode(try string(object, "handshakeId"))
+        )
+        guard let action = Int(exactly: opened.action), let epoch = Int(exactly: opened.epoch) else {
+            throw ChatError.invalidEnvelope("membership field does not fit a JSON number")
+        }
+        return [
+            "action": action,
+            "epoch": epoch,
+            "groupId": hexEncode(opened.groupID),
+            "mailbox": hexEncode(opened.mailbox),
+            "groupKey": hexEncode(opened.groupKey),
+        ]
+    }
+
+    static func groupWrite(_ object: [String: Any]) throws -> [String: Any] {
+        let groupKey = try hexDecode(try string(object, "groupKey"))
+        let groupID = try hexDecode(try string(object, "groupId"))
+        let epoch = try uint32Value(object["epoch"], name: "epoch")
+        let counter = try uint32Value(object["counter"], name: "counter")
+        let senderAddress = try hexDecode(try string(object, "senderAddress"))
+        let text = try string(object, "text")
+        guard let plaintext = text.data(using: .utf8) else {
+            throw ChatError.encodingFailed("Failed to encode message as UTF-8")
+        }
+        let note = try GroupMailbox.sealGroupMessage(
+            plaintext: plaintext,
+            groupKey: groupKey,
+            groupID: groupID,
+            epoch: epoch,
+            counter: counter,
+            senderAddress: senderAddress,
+            nonce: try hexDecode(try string(object, "nonce"))
+        )
+        let messageKey = try GroupMailbox.deriveGroupMessageKey(
+            groupKey: groupKey,
+            epoch: epoch,
+            counter: counter,
+            groupID: groupID,
+            senderAddress: senderAddress
+        )
+        return [
+            "note": hexEncode(note),
+            "messageKey": hexEncode(messageKey),
+        ]
+    }
+
+    static func groupRead(_ object: [String: Any]) throws -> [String: Any] {
+        let expected = try string(object, "text")
+        let opened = try GroupMailbox.openGroupMessage(
+            note: try hexDecode(try string(object, "note")),
+            groupKey: try hexDecode(try string(object, "groupKey")),
+            senderAddress: try hexDecode(try string(object, "senderAddress")),
+            accepted: try seenCounters(object["seen"])
+        )
+        guard let text = String(data: opened.plaintext, encoding: .utf8) else {
+            throw ChatError.decryptionFailed("Decrypted data is not valid UTF-8")
+        }
+        guard text == expected else {
+            throw ChatError.decryptionFailed("plaintext mismatch")
+        }
+        guard let epoch = Int(exactly: opened.epoch), let counter = Int(exactly: opened.counter) else {
+            throw ChatError.invalidEnvelope("counter does not fit a JSON number")
+        }
+        return [
+            "text": text,
+            "epoch": epoch,
+            "counter": counter,
+            "groupId": hexEncode(opened.groupID),
+        ]
+    }
+
+    static func seenCounters(_ value: Any?) throws -> [GroupMailbox.Counter] {
+        guard let value else {
+            return []
+        }
+        if value is NSNull {
+            return []
+        }
+        guard let items = value as? [Any] else {
+            throw ChatError.invalidEnvelope("seen must be a list")
+        }
+        var accepted: [GroupMailbox.Counter] = []
+        accepted.reserveCapacity(items.count)
+        for item in items {
+            guard let fields = objectFields(item) else {
+                throw ChatError.invalidEnvelope("seen entry must be an object")
+            }
+            accepted.append(
+                GroupMailbox.Counter(
+                    epoch: try uint32Value(fields["epoch"], name: "epoch"),
+                    counter: try uint32Value(fields["counter"], name: "counter")
+                )
+            )
+        }
+        return accepted
+    }
+
+    static func objectFields(_ item: Any) -> [String: Any]? {
+        if let fields = item as? [String: Any] {
+            return fields
+        }
+        guard let fields = item as? NSDictionary else {
+            return nil
+        }
+        var mapped: [String: Any] = [:]
+        for (key, value) in fields {
+            guard let name = key as? String else {
+                return nil
+            }
+            mapped[name] = value
+        }
+        return mapped
+    }
+
+    static func actionValue(_ value: Any?) throws -> UInt8 {
+        let number = try uint32Value(value, name: "action")
+        guard number <= UInt32(UInt8.max) else {
+            throw ChatError.invalidEnvelope("bad action")
+        }
+        return UInt8(number)
+    }
+
+    static func uint32Value(_ value: Any?, name: String) throws -> UInt32 {
+        guard let value, !(value is NSNull) else {
+            throw ChatError.invalidEnvelope("missing \(name)")
+        }
+        if let number = value as? UInt32 {
+            return number
+        }
+        if let number = value as? Int {
+            guard number >= 0, let converted = UInt32(exactly: number) else {
+                throw ChatError.invalidEnvelope("bad \(name)")
+            }
+            return converted
+        }
+        if let number = value as? NSNumber {
+            let wide = number.int64Value
+            guard wide >= 0, wide <= Int64(UInt32.max) else {
+                throw ChatError.invalidEnvelope("bad \(name)")
+            }
+            return UInt32(wide)
+        }
+        throw ChatError.invalidEnvelope("bad \(name)")
     }
 
     static func string(_ object: [String: Any], _ name: String) throws -> String {

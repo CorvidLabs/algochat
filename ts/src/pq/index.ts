@@ -28,3 +28,21 @@ export {
     isPQMessage,
     type InitiatePQSessionInput,
 } from './session.js';
+export {
+    GROUP_ACTION,
+    GROUP_INFO_LABEL,
+    GROUP_MAX_PAYLOAD_SIZE,
+    GROUP_MEMBERSHIP_NOTE_SIZE,
+    GROUP_MEMBERSHIP_PLAINTEXT_SIZE,
+    GROUP_MESSAGE_HEADER_SIZE,
+    deriveGroupMessageKey,
+    isGroupMembership,
+    isGroupMessage,
+    openGroupMembership,
+    openGroupMessage,
+    sealGroupMembership,
+    sealGroupMessage,
+    type GroupCounter,
+    type GroupMembership,
+    type OpenedGroupMessage,
+} from './group.js';
