@@ -4,8 +4,9 @@
 //! - **Session PSK**: Derived from the initial PSK + session index
 //! - **Position PSK**: Derived from the session PSK + position within session
 //!
-//! This provides forward secrecy: compromising one position key does not
-//! reveal past or future keys.
+//! This separates position keys under HKDF: one position key does not derive
+//! other positions. It does not provide forward secrecy because the initial
+//! PSK deterministically derives every past and future position key.
 
 use hkdf::Hkdf;
 use sha2::Sha256;

@@ -9,6 +9,7 @@ interface Implementation {
     name: string;
     language: string;
     repo: string;
+    path?: string;
     status: "production" | "active-dev" | "early-stage";
     description: string;
     testCommand: string | null;
@@ -81,6 +82,7 @@ function getStatusLabel(status: Implementation["status"]): string {
 function generateTableRow(impl: Implementation, result: TestResult | null): string {
     const statusClass = getStatusClass(impl.status);
     const statusLabel = getStatusLabel(impl.status);
+    const sourceUrl = `https://github.com/${impl.repo}${impl.path ? `/tree/main/${impl.path}` : ""}`;
 
     let testsCell: string;
     if (impl.testCommand === null) {
@@ -98,7 +100,7 @@ function generateTableRow(impl: Implementation, result: TestResult | null): stri
     return `
                 <tr>
                     <td>
-                        <a href="https://github.com/${impl.repo}">${escapeHtml(impl.name)}</a>
+                        <a href="${escapeHtml(sourceUrl)}">${escapeHtml(impl.name)}</a>
                     </td>
                     <td>${escapeHtml(impl.language)}</td>
                     <td>${escapeHtml(impl.description)}</td>
@@ -278,7 +280,8 @@ function generateHtml(implementations: Implementation[], results: Map<string, Te
         <div class="header">
             <i class="nes-icon trophy"></i>
             <h1>Implementation Status</h1>
-            <p>Test results for AlgoChat protocol implementations</p>
+            <p>Reported test snapshots for AlgoChat libraries</p>
+            <p>Results on this page are not bound to a candidate SHA or artifact hashes. Missing results remain pending. The legacy daily workflow omits Go and has known result-upload limitations; project labels do not establish release readiness. Use the <a href="docs/RELEASE.html">release qualification receipts</a> and <a href="docs/ACCURACY.html">accuracy report</a> for evidence and limits.</p>
         </div>
 
         <section class="nes-container with-title is-dark">
@@ -307,7 +310,7 @@ function generateHtml(implementations: Implementation[], results: Map<string, Te
                         <th>Name</th>
                         <th>Language</th>
                         <th>Platforms</th>
-                        <th>Status</th>
+                        <th>Project label</th>
                         <th class="tests-col">Tests</th>
                     </tr>
                 </thead>
@@ -319,12 +322,12 @@ ${rows}
 
         <div class="links">
             <a href="index.html" class="nes-btn is-primary">Protocol</a>
-            <a href="https://github.com/CorvidLabs/protocol-algochat" class="nes-btn">GitHub</a>
+            <a href="https://github.com/CorvidLabs/algochat" class="nes-btn">GitHub</a>
         </div>
 
         <footer>
             <p>Made with <i class="nes-icon is-small heart"></i> by <span class="corvid">Corvid Labs</span></p>
-            <p style="margin-top: 8px;">Updated: ${new Date().toISOString().split("T")[0]}</p>
+            <p style="margin-top: 8px;">Page generated: ${new Date().toISOString().split("T")[0]} UTC. This is not the time each test ran.</p>
         </footer>
     </div>
 </body>

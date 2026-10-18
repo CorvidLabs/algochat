@@ -1,16 +1,18 @@
 //! Type definitions and constants for the PSK (Pre-Shared Key) protocol v1.1.
 //!
-//! The PSK protocol extends AlgoChat with a shared secret ratchet,
-//! providing forward secrecy and additional authentication beyond ECDH.
+//! The PSK protocol adds a pre-shared secret to ECDH key derivation through a
+//! deterministic session/position schedule. It does not provide forward secrecy:
+//! the initial PSK derives every position key, and long-term keys plus the PSK
+//! recover stored message history.
 
 /// PSK protocol version byte.
 pub const PSK_VERSION: u8 = 0x01;
 
 /// PSK protocol version byte for v2 (AEAD header binding).
 ///
-/// Wire-identical to PSK v1 except the leading version byte is `0x02` and both
-/// AEAD operations bind the PSK header metadata prefix as Associated Data.
-/// See proposal 0001.
+/// Uses the PSK v1 field layout with leading version byte `0x02`. The payload
+/// authenticates the full 130-byte fixed header, including the wrapped sender
+/// key. The sender-key wrap uses empty Associated Data in both versions.
 pub const PSK_VERSION_V2: u8 = 0x02;
 
 /// PSK protocol ID byte (0x02 distinguishes from standard 0x01).
@@ -60,12 +62,12 @@ pub struct PSKEnvelope {
 }
 
 impl PSKEnvelope {
-    /// Build the v2 AEAD Associated Data (the PSK header metadata prefix).
+    /// Build the v2 payload AEAD Associated Data: the full 130-byte fixed header.
     ///
-    /// This is `bytes[0..82)` of the encoded header:
+    /// This is `bytes[0..130)` of the encoded envelope:
     /// `version ‖ protocol_id ‖ ratchet_counter(be) ‖ sender_public_key`
-    /// `‖ ephemeral_public_key ‖ nonce`. Both AEAD operations of a v2 PSK
-    /// envelope authenticate this same AAD.
+    /// `‖ ephemeral_public_key ‖ nonce ‖ encrypted_sender_key`.
+    /// The sender-key wrap uses empty AAD.
     pub fn v2_aad(&self) -> Vec<u8> {
         let mut aad = Vec::with_capacity(crate::types::PSK_V2_AAD_LEN);
         aad.push(self.version);

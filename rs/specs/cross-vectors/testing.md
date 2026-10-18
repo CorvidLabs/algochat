@@ -25,3 +25,7 @@ Review output to distinguish explicit optional-fixture skips from mandatory embe
 | Unicode or byte content drifts | Exact comparison fails. |
 | Known-answer bytes change | Deterministic vector fails. |
 | Tampered header succeeds | Security vector fails. |
+
+## Mesh process boundary
+
+`src/bin/pqcross.rs` exposes `identity`, `write`/`read`, `write01`/`read01`, `write02`/`read02`, and `write05s` operations for the external mesh driver. Native compilation establishes only that the wrapper builds; live chain claims require the harness's actual transaction evidence. `src/pq.rs::tests::live_localnet_note` reads optional `/tmp/pq-live.json`; it does not submit a transaction itself.

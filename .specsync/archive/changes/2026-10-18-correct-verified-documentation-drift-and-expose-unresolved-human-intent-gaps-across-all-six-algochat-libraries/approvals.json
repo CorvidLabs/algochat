@@ -1,0 +1,89 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "human:leif",
+      "timestamp": 1792332596,
+      "digest": "57b1fe49c8a1e0009b47f59424ca625a0ec90e9110ae614fd544f131c16eca10",
+      "note": "User explicitly approved the prepared documentation correction scope, its acceptance, and PR creation: approved.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "correct-verified-documentation-drift-and-expose-unresolved-human-intent-gaps-across-all-six-algochat-libraries",
+        "title": "Correct verified documentation drift and expose unresolved Human Intent gaps across all six AlgoChat libraries",
+        "description": "Correct verified documentation drift and expose unresolved Human Intent gaps across all six AlgoChat libraries",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol",
+          "release"
+        ],
+        "affected_paths": [
+          "IMPLEMENTATION.md",
+          "INTENT.md",
+          "PARITY.md",
+          "PROTOCOL.md",
+          "README.md",
+          "SECURITY.md",
+          "TEST-VECTORS.md",
+          "badges",
+          "docs",
+          "go/README.md",
+          "go/crypto.go",
+          "go/doc.go",
+          "go/specs",
+          "implementations.json",
+          "index.html",
+          "kt/README.md",
+          "kt/specs",
+          "kt/src/main/kotlin/com/corvidlabs/algochat/PQ.kt",
+          "kt/src/main/kotlin/com/corvidlabs/algochat/PSKRatchet.kt",
+          "kt/src/main/kotlin/com/corvidlabs/algochat/PSKState.kt",
+          "py/README.md",
+          "py/specs",
+          "py/src/algochat/client.py",
+          "rs/README.md",
+          "rs/specs",
+          "rs/src/crypto.rs",
+          "rs/src/psk_crypto.rs",
+          "rs/src/psk_ratchet.rs",
+          "rs/src/psk_state.rs",
+          "rs/src/psk_types.rs",
+          "rs/src/types.rs",
+          "scripts/generate-status.ts",
+          "status.html",
+          "swift/README.md",
+          "swift/SECURITY.md",
+          "swift/Sources",
+          "swift/Sources/AlgoChat/Storage/KeychainKeyStorage.swift",
+          "swift/docs/HLD.md",
+          "swift/specs",
+          "ts/README.md",
+          "ts/conformance/README.md",
+          "ts/docs",
+          "ts/specs",
+          "ts/src/crypto/encryption.ts",
+          "ts/src/psk/encryption.ts"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "No protocol, API, accepted intent, or implementation behavior changes. Correct factual prose, examples, legacy references and existing source/export inventories in nested language specs; preserve normative requirements that exceed implementation and record their gaps. Root protocol/release contracts remain unchanged. Inline source edits are documentation comments only.",
+        "acceptance_criteria": [
+          "All six library READMEs/spec descriptions and the root protocol/security/implementation/HLD docs reflect current source APIs, formats, platform boundaries, and workflows; current versus historical package/registry/parity evidence is labeled; existing PQ/PSK source/export inventories are documented; all84 accepted hi criteria and their IDs/text remain unchanged with explicit evidence/gap status; strict structural/source/export checks, link/manifest checks and Trust pass without changing library runtime behavior or claiming absolute security/parity. Generated documentation fixes are limited to source links, scope notices, and truthful pending snapshots."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792332841,
+      "digest": "e239626c589827f8128832563fe6c4639b97893ca78a7685a6f9e32d8b31f90a",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

@@ -21,3 +21,5 @@ spec: cross-vectors.spec.md
 ## Notes
 
 - CI checks out this repository standalone, so portable verification cannot require siblings.
+
+The source inventory also covers the existing `src/bin/pqcross.rs` JSON-line process used by the cross-language mesh. It wraps production crypto, accepts deterministic test seed inputs, and emits notes/results; blockchain submission belongs to the external harness.

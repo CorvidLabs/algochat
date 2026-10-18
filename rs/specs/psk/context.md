@@ -22,3 +22,7 @@ spec: psk.spec.md
 ## Notes
 
 - Proposal 0001 governs v2 AEAD header binding.
+
+## Implementation and contract gaps
+
+Version 2 payload AAD is the full 130-byte header, including the wrapped sender key; wrapping itself uses empty AAD. Current send counters use wrapping arithmetic and receive validation accepts arbitrarily advanced counters. Counter exhaustion and stronger bounded-window intent remain open implementation work rather than being silently relaxed. See the [accuracy ledger](../../../docs/ACCURACY.md).

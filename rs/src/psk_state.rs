@@ -1,7 +1,7 @@
 //! PSK state management for counter tracking and replay protection.
 //!
-//! Tracks send and receive counters to ensure messages are processed
-//! in order and replayed messages are rejected.
+//! Tracks send and receive counters, permits out-of-order delivery within
+//! the implemented window, and rejects counters already recorded in state.
 
 use std::collections::HashSet;
 

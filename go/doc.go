@@ -6,7 +6,9 @@
 //
 // # Protocol Features
 //
-//   - Forward secrecy via ephemeral key pairs per message
+//   - Per-message key separation via fresh ephemeral keys for standard and PSK notes
+//   - Long-term history recovery; no forward secrecy
+//   - Optional hybrid X25519 + ML-KEM-768 session helpers
 //   - Bidirectional decryption (sender can decrypt their own messages)
 //   - Key-publish payload filtering
 //   - Reply threading with context
@@ -31,7 +33,7 @@
 //	content, _ := algochat.DecryptMessage(decoded, recipient.EncryptionPrivateKey, recipient.EncryptionPublicKey)
 //	// content.Text == "Hello!"
 //
-// # Wire Format (protocol 1.2.1)
+// # Standard and PSK Wire Formats (protocol 1.3.0)
 //
 // Standard envelope: 126-byte header + variable ciphertext. The on-chain note
 // limit is 4096 bytes, including the 16-byte Poly1305 tag, so the largest
@@ -39,13 +41,24 @@
 // 1024 bytes. The header stays 126 bytes. Protocol ID 0x02 is Extra lock.
 // Version 0x02 binds the full header as payload associated data.
 //
-//	Byte 0:       Version (0x01)
-//	Byte 1:       Protocol ID (0x01 = standard, 0x02 = PSK reserved)
+// The following offsets describe the standard envelope only. Extra lock uses
+// protocol ID 0x02 and inserts a 4-byte counter after the protocol byte, making
+// its header 130 bytes and its plaintext limit 3950 bytes. Both modes accept
+// version 0x01 or 0x02; this implementation emits version 0x01. Sender-key wraps
+// use empty associated data in either version.
+//
+//	Byte 0:       Version (0x01 or 0x02)
+//	Byte 1:       Protocol ID (0x01 = standard)
 //	Bytes 2-33:   Sender's X25519 public key (32 bytes)
 //	Bytes 34-65:  Ephemeral X25519 public key (32 bytes)
 //	Bytes 66-77:  Nonce (12 bytes)
 //	Bytes 78-125: Encrypted sender key (48 bytes = 32 key + 16 auth tag)
 //	Bytes 126+:   Ciphertext (plaintext plus a 16-byte tag; max 3954-byte plaintext)
+//
+// Hybrid sessions use separate layouts: one 2366-byte protocol 0x04 handshake,
+// then protocol 0x05 messages with a 78-byte authenticated header and up to
+// 4002 plaintext bytes. They reuse the established session key and do not
+// provide forward secrecy.
 //
 // # Payment Fee
 //

@@ -1,6 +1,6 @@
-# Prompt: review AlgoChat protocol 1.3.0
+# Historical prompt: review AlgoChat protocol 1.3.0
 
-Paste the block below into a new review session. Point the reviewer at the branch `feat/pq-1.3.0` of `https://github.com/CorvidLabs/algochat` (pull request 5), not at `main`.
+This is the review packet used for the 2026-10-17 protocol 1.3 work on `feat/pq-1.3.0` (PR #5). Its branch, tag and status assertions are historical inputs, not instructions for reviewing the current repository. For a new review, pin the candidate commit, inspect current manifests and workflows, and consult [ACCURACY.md](ACCURACY.md) for known gaps. The text below is preserved as the original packet; its reported LocalNet runs do not establish fresh verification or an independent security audit.
 
 ```
 You are reviewing a protocol change. Do not rewrite it. Do not add a feature. Report defects, overclaims, and missing tests. Quote file paths and the bytes or sentences that are wrong.

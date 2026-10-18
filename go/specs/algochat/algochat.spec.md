@@ -9,6 +9,9 @@ files:
   - envelope.go
   - models.go
   - queue.go
+  - psk.go
+  - pq.go
+  - cmd/pqcross/main.go
   - signature.go
   - storage.go
 
@@ -30,7 +33,7 @@ The package exposes the following existing symbols. It does not implement high-l
 |--------|----------|
 | `ProtocolVersion` | Version-one envelope byte |
 | `ProtocolIDStandard` | Standard envelope protocol byte |
-| `ProtocolIDPSK` | Reserved pre-shared-key protocol byte |
+| `ProtocolIDPSK` | Implemented pre-shared-key protocol byte `0x02` |
 | `HeaderSize` | Fixed encoded envelope header size, 126 bytes |
 | `TagSize` | ChaCha20-Poly1305 authentication-tag size, 16 bytes |
 | `EncryptedKeySize` | Wrapped symmetric-key size |
@@ -155,15 +158,34 @@ The package exposes the following existing symbols. It does not implement high-l
 | `Invalidate` | Remove one cached public key |
 | `PruneExpired` | Remove all expired public keys |
 
+### Existing PSK and hybrid exports
+
+| Export | Contract |
+|--------|----------|
+| `EncryptPSKMessage` | Counter-derived PSK + ephemeral X25519 encryption, version `0x01`, maximum plaintext 3950 bytes. |
+| `DecryptPSKMessage` | Open version `0x01` or header-authenticated `0x02` PSK notes; caller owns replay state. |
+| `PQSession` | Hybrid session key, participant keys and SHA-256 handshake identity. |
+| `DeriveMLKEM768` | Deterministic ML-KEM-768 derivation from the account seed. |
+| `DeriveHybridPQKey` | Transcript-bound X25519 + ML-KEM shared-secret combiner. |
+| `InitiatePQHandshake` | Build a 2366-byte protocol `0x04` handshake and sender session. |
+| `AcceptPQHandshake` | Open the hybrid handshake as recipient. |
+| `OpenPQHandshakeAsSender` | Recover the hybrid session via its sender wrap. |
+| `EncryptPQMessage` | Seal protocol `0x05` data under the session key and 78-byte header AAD; plaintext maximum 4002 bytes. |
+| `DecryptPQMessage` | Authenticate data for the session's sender and handshake. |
+| `IsPQAnnouncement` | Recognize the ACPQ key-announcement magic. |
+| `ParsePQAnnouncement` | Read unsigned or Ed25519-signed encapsulation-key announcements. |
+
+`PQSession` carries `SessionKey`, `SenderPublicKey`, `RecipientPublicKey` and `HandshakeID` fields. `cmd/pqcross/main.go` is a fixture adapter. These APIs do not supply key-announcement publication, live transport, session persistence or replay-state management. Standard and PSK writers emit envelope version `0x01`; their readers accept `0x01` and header-authenticated `0x02`.
+
 ## Invariants
 
 1. Message encryption accepts plaintext up to `MaxPayloadSize`, uses a fresh ephemeral X25519 key pair and nonce, authenticates ciphertext with ChaCha20-Poly1305, and permits the intended recipient or original sender to decrypt with the corresponding private key.
-2. Envelope decoding accepts only the standard version-one protocol header and at least the fixed header plus authentication tag; it copies the remaining bytes as ciphertext and does not independently enforce the encryption-time plaintext limit.
+2. Standard envelope decoding accepts version `0x01` or `0x02` and standard protocol `0x01` and at least the fixed header plus authentication tag; it copies the remaining bytes as ciphertext and does not independently enforce the encryption-time plaintext limit.
 3. Encryption-key signatures use Ed25519 with explicit public-key and signature length validation; both fingerprint helpers deterministically format the first eight SHA-256 bytes as four uppercase groups.
 4. Account constructors derive the same X25519 key pair from the same 32-byte seed and split a 64-byte Algorand secret key into its seed and Ed25519 public-key halves.
 5. Conversation, queue, and in-memory storage operations synchronize shared state and preserve their documented ordering, deduplication, capacity, retry, participant-isolation, missing-key, and expiry behavior.
-6. The Go compatibility matrix and unified Trust gate remain independent blocking workflows, and this migration does not claim the unfinished high-level client is implemented.
-7. An 882-byte standard plaintext encrypts and encodes to 1024 bytes. A plaintext of `MaxPayloadSize` (3954 bytes) encodes to exactly `MaxNoteSize` (4096 bytes). One additional byte fails in `EncryptMessage` with `ErrMessageTooLarge` before an envelope is returned. `PaymentFee` at minFee 1000 returns 1000, 1098, and 1308 microAlgos for notes of 1024, 2000, and 4096 bytes. A 4097-byte note returns `ErrNoteTooLarge`. The fee scheme is one minimum fee because this package has no Falcon signer. Protocol ID `0x02` stays reserved and does not add a PSK payload limit.
+6. Active root qualification uses Go 1.25 for ordinary tests/build, fixture checks, and a consumer check. Vet and race-enabled tests are separate commands in the module Fledge lane. The nested standalone Go workflow matrix is historical configuration. The high-level client remains unimplemented; accepted historical governance requirements are preserved and their current gap is recorded below.
+7. An 882-byte standard plaintext encrypts and encodes to 1024 bytes. A plaintext of `MaxPayloadSize` (3954 bytes) encodes to exactly `MaxNoteSize` (4096 bytes). One additional byte fails in `EncryptMessage` with `ErrMessageTooLarge` before an envelope is returned. `PaymentFee` at minFee 1000 returns 1000, 1098, and 1308 microAlgos for notes of 1024, 2000, and 4096 bytes. A 4097-byte note returns `ErrNoteTooLarge`. The fee scheme is one minimum fee because this package has no Falcon signer. Protocol ID `0x02` is implemented separately in `psk.go`, with a 3950-byte plaintext maximum and caller-owned replay handling.
 
 ## Behavioral Examples
 
@@ -191,9 +213,14 @@ Then the note is 4096 bytes and the fee is 1308 microAlgos
 | Full queue | Enqueue would exceed the configured queue capacity | `Enqueue` returns `ErrQueueFull` |
 | Missing stored key | A requested address has no private key | `Retrieve` returns `ErrKeyNotFound` |
 
+## Accepted governance and implementation gaps
+
+REQ-algochat-004 retains the accepted historical Go 1.22–1.24 matrix expectation. The current module requires Go 1.25 and active root qualification uses 1.25; nested standalone workflows do not execute from this repository layout. That mismatch is not resolved by weakening the requirement. REQ-algochat-005's historical version-one-only recognition expectation also differs from the current reader's acceptance of both `0x01` and `0x02`. See [implementation gaps](../../../docs/ACCURACY.md) for reconciliation boundaries.
+
 ## Dependencies
 
 - Go 1.25 or newer
+- Go standard-library `crypto/mlkem` for ML-KEM-768.
 - `golang.org/x/crypto` for Curve25519, ChaCha20-Poly1305, and HKDF primitives
 - Go standard-library Ed25519, synchronization, and time facilities
 

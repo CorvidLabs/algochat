@@ -81,7 +81,7 @@ Total Size: 126 bytes header + 16 bytes ciphertext = 142 bytes minimum
 
 ### Test Case 2.2: Invalid Envelopes (Standard Mode)
 
-These should all fail validation:
+These should all fail validation. These are normative requirements; a port accepting a header without the required authentication tag has a validation gap, even though AEAD decryption will subsequently fail. See [docs/ACCURACY.md](docs/ACCURACY.md).
 
 ```
 // Too short (< 142 bytes minimum for standard, < 146 for PSK)
@@ -150,7 +150,7 @@ Full Envelope (169 bytes):
 4. Decrypt as recipient - must return exact plaintext
 5. Decrypt as sender (via encrypted_sender_key) - must return exact plaintext
 
-### Test Case 3.2: Unicode Handling
+### Test Case 3.2: UTF-8 Text Handling
 
 ```
 Plaintext: "Hello! Bonjour! Hallo! Ciao! Hola!"
@@ -158,7 +158,7 @@ Plaintext: "Hello! Bonjour! Hallo! Ciao! Hola!"
 Verification:
 - Encrypt with any valid key pair
 - Decrypt must return exact UTF-8 string
-- Byte length verification: plaintext should be 51 bytes UTF-8
+- Byte length verification: plaintext is 34 bytes UTF-8 (all characters in this example are ASCII)
 ```
 
 ## 4. PSK Ratchet Derivation
@@ -353,7 +353,15 @@ Must be parsed as:
 {"type":"key-publish"}
 ```
 
-Must be detected as key-publish and filtered from message lists.
+Must be detected as key-publish and filtered from message lists. An optional `publicKey` field is redundant with the envelope's sender key.
+
+### Test Case 6.4: Legacy Plain Text
+
+```text
+Hello, AlgoChat!
+```
+
+This raw UTF-8 plaintext remains readable as message text. JSON parsing is not a precondition for decrypting legacy text.
 
 ## 7. Cross-Implementation Verification
 

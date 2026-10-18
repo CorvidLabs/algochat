@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "correct-verified-documentation-drift-and-expose-unresolved-human-intent-gaps-across-all-six-algochat-libraries",
+  "implementation_commit": "94c77b5b3226bddfa97530e968b99c14a2be56b1",
+  "implementation_tree": "545ab26720c7b9e206013a152c78e6e8b17886fb",
+  "contract_digest": "57b1fe49c8a1e0009b47f59424ca625a0ec90e9110ae614fd544f131c16eca10",
+  "workspace_digest": "7b57547154532067964db2a67ac84e904dcb4b596e9f12ec663dc8cbba959dcb",
+  "closing_digest": "e239626c589827f8128832563fe6c4639b97893ca78a7685a6f9e32d8b31f90a",
+  "review_digest": "2dee7023efe55822f4679aae15476b1f610424c8de1be2ce478738a88ada80ad",
+  "finalization_digest": "499d05106df4f8b730afe24a03bc6595b6eaf8af9a07d8b25be8093a4cbfd60c",
+  "timestamp": 1792332843
+}

@@ -462,7 +462,8 @@ public actor AlgoChat {
      Discovers a user's encryption public key with verification status
 
      Unlike `fetchPublicKey`, this method returns whether the key was
-     cryptographically verified via a V3 signed envelope.
+     cryptographically verified via an appended Ed25519 signature over the
+     X25519 key in a signed key announcement.
 
      By default the search is exhaustive — all indexer pages are fetched
      until the key is found. Pass `maxPages` to limit indexer round-trips.
@@ -489,8 +490,10 @@ public actor AlgoChat {
      encryption public key, allowing other users to discover it and send
      encrypted messages without needing to receive a message first.
 
-     The key is signed with the account's Ed25519 key (V3 envelope) to prove
-     ownership and prevent key substitution attacks.
+     The key is signed with the account's Ed25519 key. The 64-byte signature
+     is appended to the standard envelope in the self-payment note, allowing
+     discovery to verify the encryption-key binding. This is not a new
+     envelope version or protocol identifier.
 
      The key-publish transaction is automatically filtered from the
      conversation list.

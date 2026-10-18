@@ -55,8 +55,9 @@ pub fn encrypt_psk_message(
 /// Encrypts a message using the PSK protocol v2 (AEAD header binding).
 ///
 /// Identical to [`encrypt_psk_message`] except the emitted envelope has
-/// `version = 0x02` and both AEAD operations bind the PSK header metadata prefix
-/// as Associated Data (version, protocol id, ratchet counter, public keys, nonce).
+/// `version = 0x02`. Payload encryption authenticates the full 130-byte PSK
+/// header, including the counter and 48-byte wrapped sender key. Sender-key
+/// wrapping itself uses empty associated data, as it does for v1.
 #[allow(clippy::too_many_arguments)]
 pub fn encrypt_psk_message_v2(
     plaintext: &str,
@@ -119,7 +120,7 @@ fn encrypt_psk_message_versioned(
     let nonce_bytes: [u8; NONCE_SIZE] = rand::random();
     let nonce = Nonce::from_slice(&nonce_bytes);
 
-    // Pre-build the envelope so the v2 AAD can be derived from its header prefix.
+    // Pre-build the envelope; after wrapping, v2 payload AAD is the full header.
     // On v1 the AAD is empty (unchanged behavior).
     let mut envelope = PSKEnvelope {
         version,

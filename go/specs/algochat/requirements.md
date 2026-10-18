@@ -87,3 +87,7 @@ Acceptance Criteria
 - `PaymentFee` at minFee 1000 returns 1000 for 1024 bytes, 1098 for 2000 bytes, and 1308 for 4096 bytes.
 - A negative length or 4097 bytes returns `ErrNoteTooLarge`.
 - The scheme component is one minimum fee. This package does not provide a Falcon signer.
+
+## Current implementation status
+
+The accepted SHALL requirements above retain their intended behavior. Current standard/PSK readers accept version `0x02` as well as legacy `0x01`; writers emit `0x01`. Low-level PSK and hybrid APIs exist independently of the standard codec and high-level network client. Active root qualification uses Go 1.25; the previously accepted 1.22–1.24 nested matrix is not an active monorepo workflow. These scope differences and remaining requirements are tracked in the [accuracy ledger](../../../docs/ACCURACY.md).

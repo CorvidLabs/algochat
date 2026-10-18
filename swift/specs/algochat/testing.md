@@ -2,6 +2,10 @@
 spec: algochat.spec.md
 ---
 
+## Historical module verification lane
+
+The fixed counts below were recorded for the governance migration. They describe its accepted lane rather than a current run. The active root release qualification runs full `swift test`, `swift build`, exported-source PQ tests and a separate SwiftPM consumer.
+
 ## Automated Testing
 
 | Verification | Type | Contract Evidence |
@@ -28,3 +32,11 @@ LocalNet integration exercises real Algorand submission, confirmation, and index
 | Indexer lags after submission | Indexed send waits up to its timeout; fire-and-forget and confirmed modes retain their distinct semantics |
 | Queue restarts after a transient failure | Durable pending and retry state reloads and can resume |
 | Apple security frameworks are unavailable | Cross-platform implementation reports unsupported capability and file-backed alternatives remain usable |
+
+## Observed gaps against the expected cases
+
+- The expected oversize-decode rejection above is not implemented by the standard or PSK decoder; they enforce the minimum header/tag size only.
+- The expected unsupported-Keychain error above is not implemented on tvOS/watchOS/Linux; the type uses process memory. File-backed PSK and queue data also remains plaintext.
+- Existing `swift/Tests/AlgoChatTests/PQTests.swift`, root `vectors/` and the `pqcross` adapter exercise hybrid helpers separately from high-level network behavior.
+
+These are implementation-status notes, not changes to accepted expectations. See the [accuracy ledger](../../../docs/ACCURACY.md).

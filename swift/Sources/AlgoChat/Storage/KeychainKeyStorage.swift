@@ -25,10 +25,10 @@ import Security
 
  ## Security
 
- - Keys are stored in the Secure Enclave when available
+ - Private-key bytes are stored as generic-password Keychain items and loaded into memory on retrieval
  - Keys are NOT synced to iCloud
  - Keys are tied to this device only
- - Biometric check happens in hardware
+ - Optional user-presence access control allows biometrics or device passcode
  */
 public actor KeychainKeyStorage: EncryptionKeyStorage {
     /// Service identifier for Keychain items

@@ -9,7 +9,7 @@ import Security
  Encrypts and decrypts chat messages using ChaCha20-Poly1305
 
  Uses ephemeral key ECDH with bidirectional decryption:
- - Generates fresh key pair per message for forward secrecy
+ - Generates a fresh key pair per message for key separation, without forward secrecy
  - Encrypts symmetric key for sender, allowing sender to decrypt sent messages
  - Both sender and recipient can decrypt the message
  */
@@ -25,8 +25,10 @@ public enum MessageEncryptor {
      Encrypts a message for a recipient using ephemeral key agreement
 
      Uses ephemeral key agreement: a fresh key pair is generated for each message,
-     providing sender-side forward secrecy. The envelope also includes an encrypted
-     copy of the symmetric key for the sender, enabling bidirectional decryption.
+     separating message keys. This does not provide forward secrecy: the
+     recipient's long-term key and the published ephemeral public key recover
+     the message key. The sender's long-term key can reopen the encrypted copy
+     of that key, enabling bidirectional decryption.
 
      - Parameters:
        - message: The plaintext message
@@ -50,7 +52,7 @@ public enum MessageEncryptor {
     }
 
     /**
-     Encrypts a reply message for a recipient with forward secrecy
+     Encrypts a reply message using a fresh ephemeral key for per-message key separation
 
      Includes reply metadata in the encrypted payload. The content will
      be formatted with a quoted preview of the original message.
@@ -86,7 +88,7 @@ public enum MessageEncryptor {
     }
 
     /**
-     Encrypts raw data for a recipient with forward secrecy
+     Encrypts raw data using a fresh ephemeral key for per-message key separation
 
      Used internally and for special payloads like key-publish.
 

@@ -6,8 +6,8 @@ released, the trust model, and the known limits. It describes `main` as of Septe
 traceable to a file in this repository, or to the public protocol specification where that is named. Where the code
 did not answer a question, the text says **Unknown**.
 
-The normative protocol lives in [CorvidLabs/protocol-algochat](https://github.com/CorvidLabs/protocol-algochat)
-([`PROTOCOL.md`](https://github.com/CorvidLabs/protocol-algochat/blob/main/PROTOCOL.md)). This document describes
+The normative protocol lives in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat)
+([`PROTOCOL.md`](https://github.com/CorvidLabs/algochat/blob/main/PROTOCOL.md)). This document describes
 what the Swift code does; if the two disagree, that is a bug in one of them.
 
 ## Contents
@@ -33,7 +33,7 @@ terminal client, `algochat`. There is no AlgoChat server. The Algorand ledger is
 record, an Algorand indexer is the read and discovery path, and the encryption key is derived from the Algorand
 account itself, so an account with a small ALGO balance is all a user needs. Swift developers use it to add
 encrypted, on-chain messaging to an app. The wire format is shared with the other AlgoChat implementations
-(ts-, rs-, py- and kt-algochat, per the [README](../README.md)). The package is pre-1.0 and has not been
+(ts-, rs-, py- and kt-algochat, per the [README](../README.md)). The current source release is 1.3.0 and has not been
 independently audited ([README](../README.md), [SECURITY.md](../SECURITY.md)).
 
 ## 2. Context
@@ -88,17 +88,18 @@ flowchart LR
 
 ### 3.1 Package targets
 
-Defined in [`Package.swift`](../Package.swift) (swift-tools-version 6.0). Every target enables
-`StrictConcurrency`. Platforms: iOS 15, macOS 12, tvOS 15, watchOS 8, visionOS 1, plus Linux (built in CI with the
-`swift:6.0` container).
+Defined in the root [`Package.swift`](../../Package.swift) (swift-tools-version 6.0). Every target enables
+`StrictConcurrency`. Declared minima are iOS 15, macOS 12, tvOS 15, watchOS 8 and visionOS 1. Active qualification
+uses macOS 26 or newer and a separate Linux lane; older declared minima are not qualified. ML-KEM methods require Apple OS 26 and are omitted on Linux.
 
 | Target | Product | Depends on | Owns |
 |---|---|---|---|
 | `AlgoChat` | library `AlgoChat` | `AlgoKit` (swift-algokit), `Algorand` (swift-algorand), `Crypto` (swift-crypto) | The whole protocol: key derivation, envelopes, encryption, transactions, indexer reads, PSK state, queue, storage |
 | `AlgoChatCLI` | executable `algochat` | `AlgoChat`, `CLI` (swift-cli) | Interactive terminal client: network choice, account create or load, key storage prompts, conversations, localnet funding |
+| `PQCross` | executable `pqcross` | `AlgoChat` | Cross-language hybrid/PSK fixture adapter; reports unavailable ML-KEM on Linux |
 | `AlgoChatTests` | test target | `AlgoChat` | swift-testing suites for crypto, envelopes, models, queue, storage, indexer and localnet integration |
 
-`swift-docc-plugin` is a package dependency used only by the documentation workflow. swift-algorand is held below
+`swift-docc-plugin` is a package dependency retained for documentation generation; the nested standalone docs workflow is historical. swift-algorand is held below
 0.4.0 because 0.4.0 made `AlgorandConfiguration` factories throwing, which swift-algokit 0.0.2 does not compile
 against (comment in `Package.swift`).
 
@@ -139,7 +140,7 @@ flowchart TB
 | Directory | Main types | Responsibility |
 |---|---|---|
 | [`AlgoChat.swift`](../Sources/AlgoChat/AlgoChat.swift) | `AlgoChat` (actor) | Public entry point: conversations, `send`, `sendPSK`, `refresh`, `loadOlder`, `loadCached`, key publish and discovery, balance, cache control, PSK contacts |
-| [`Crypto/`](../Sources/AlgoChat/Crypto) | `KeyDerivation`, `EphemeralKeyManager`, `MessageEncryptor`, `PSKRatchet`, `SignatureVerifier` | Account-to-X25519 derivation, per-message key agreement, ChaCha20-Poly1305 seal and open, PSK ratchet and hybrid keys, Ed25519 key-announcement signatures, fingerprints |
+| [`Crypto/`](../Sources/AlgoChat/Crypto) | `KeyDerivation`, `EphemeralKeyManager`, `MessageEncryptor`, `PSKRatchet`, `SignatureVerifier`, `PQProtocol`, `PQAnnouncement`, `PQSession` | Account-to-X25519 derivation, standard/PSK encryption, hybrid X25519 + ML-KEM-768 session primitives, announcements, signatures and fingerprints |
 | [`Models/`](../Sources/AlgoChat/Models) | `ChatAccount`, `ChatEnvelope`, `PSKEnvelope`, `EnvelopeDecoder`, `Message`, `ReplyContext`, `Conversation`, `DecryptedContent`, `DiscoveredKey`, `SendOptions`, `SendResult`, `PSKContact`, `PSKState`, `PSKExchangeURI` | Wire formats, decoded message model, conversation merge rules, send options, PSK counters and exchange URI. `MessagePayload` and `KeyPublishPayload` are internal |
 | [`Blockchain/`](../Sources/AlgoChat/Blockchain) | `MessageTransaction`, `MessageIndexer` (actor), `TransactionSearching` | Build and sign payment transactions with the envelope as note; read, filter, decrypt and discover keys through the indexer; poll for indexer visibility |
 | [`PSK/`](../Sources/AlgoChat/PSK) | `PSKManager` (actor) | PSK contacts and ratchet state, cached in memory in front of a `PSKStorage` |
@@ -223,8 +224,7 @@ then still hands the plain `Account` to `AlgoChat`.
 ## 4. Protocol
 
 The Swift package `algochat` implements protocols `0x01`, `0x02`, `0x04`, and `0x05`: standard mode (protocol byte `0x01`), ratcheting PSK mode (`0x02`), the hybrid handshake (`0x04`), and session messages (`0x05`). Identifier `0x03` is unassigned. Protocol revision 1.2.1 raises the note ceiling to 4,096 bytes and prices each byte past 1,024.
-It does not add a version byte. Protocol 1.2's optional Falcon-1024 account authorization has no code in this
-repository. That note-ceiling revision is not itself the `0x04` and `0x05` session.
+It does not add a version byte. This Swift package has no Falcon-1024 transaction signer; that account capability is available in the TypeScript implementation. That note-ceiling revision is not itself the `0x04` and `0x05` session.
 
 ### 4.1 Identity and key derivation
 
@@ -246,7 +246,7 @@ Standard envelope, [`ChatEnvelope.swift`](../Sources/AlgoChat/Models/ChatEnvelop
 
 | Offset | Bytes | Field |
 |---|---|---|
-| 0 | 1 | version `0x01` |
+| 0 | 1 | envelope version `0x01` (written) or `0x02` (also accepted when reading) |
 | 1 | 1 | protocol `0x01` |
 | 2 | 32 | sender static X25519 public key |
 | 34 | 32 | ephemeral X25519 public key, fresh per message |
@@ -258,7 +258,7 @@ PSK envelope, [`PSKEnvelope.swift`](../Sources/AlgoChat/Models/PSKEnvelope.swift
 
 | Offset | Bytes | Field |
 |---|---|---|
-| 0 | 1 | version `0x01` |
+| 0 | 1 | envelope version `0x01` (written) or `0x02` (also accepted when reading) |
 | 1 | 1 | protocol `0x02` |
 | 2 | 4 | ratchet counter, big-endian `UInt32` |
 | 6 | 32 | sender static X25519 public key |
@@ -273,10 +273,12 @@ bytes (PSK) still encodes, and that note is 1,024 bytes. `MessageTransaction` re
 bytes before a transaction is submitted.
 
 Decoding ([`EnvelopeDecoder.swift`](../Sources/AlgoChat/Models/EnvelopeDecoder.swift)): a note counts as AlgoChat
-when byte 0 is `0x01` and byte 1 is `0x01` or `0x02`. The protocol byte picks the envelope type; the decoder then
+when byte 0 is `0x01` or `0x02` and byte 1 is `0x01` or `0x02`. The protocol byte picks the envelope type; the decoder then
 checks version and minimum length (header plus tag). Anything after the fixed header is taken as ciphertext, which
 is why the key-publish signature is found by reading the last 64 bytes of the note. Envelope initializers re-base
-every field to zero-indexed `Data` so indexing untrusted input cannot trap, and use `precondition` on field sizes.
+every field to zero-indexed `Data` and use `precondition` on field sizes. The standard and PSK decoders enforce minimum length but do not reject notes over 4096 bytes; the accepted inbound size requirement remains an [implementation gap](../../docs/ACCURACY.md).
+
+`MessageEncryptor` writes version `0x01` for standard and PSK payloads, with empty associated data. When reading version `0x02`, it authenticates the full fixed header as payload AAD. This differs from the TypeScript writer, which emits `0x02`.
 
 Plaintext payloads ([`MessagePayload.swift`](../Sources/AlgoChat/Models/MessagePayload.swift)):
 
@@ -356,6 +358,12 @@ flowchart TB
 - **Exchange URI** ([`PSKExchangeURI.swift`](../Sources/AlgoChat/Models/PSKExchangeURI.swift)):
   `algochat-psk://v1?addr=<address>&psk=<base64url of 32 bytes>&label=<optional>`. Parsing checks the scheme, the
   `v1` host, a non-empty `addr` and a PSK that decodes to exactly 32 bytes.
+
+### 4.5 Low-level hybrid sessions
+
+[`PQSession.swift`](../Sources/AlgoChat/Crypto/PQSession.swift) defines `PQProtocol`, `PQAnnouncement` and `PQSession`. The `0x04` handshake is 2366 bytes and combines ephemeral X25519 with ML-KEM-768, including a separate ML-KEM ciphertext for sender recovery. Session data (`0x05`) uses version `0x02`, a 78-byte authenticated header and a maximum plaintext of 4002 bytes. `PQAnnouncement` supports unsigned and Ed25519-signed `ACPQ` encapsulation-key notes.
+
+The ML-KEM key derivation, initiation, acceptance and sender-recovery methods require Apple OS 26 and are excluded on Linux. The KDF, announcement and session-data helpers compile without those ML-KEM methods. The `AlgoChat` client and `MessageIndexer` do not route `0x04` / `0x05` notes: applications must handle transport, session storage, key trust and replay policy. `Sources/PQCross/main.swift` supplies a fixture adapter rather than a high-level messaging client.
 
 ## 5. Key flows
 
@@ -672,40 +680,21 @@ mnemonic.
 
 ## 7. Runtime and deployment
 
-The Swift package name is `algochat` in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). Consumers depend on a git tag of that repository. The archived swift-algochat tag `0.4.0` remains only for apps that have not switched. Nothing is deployed and no binaries are
-published. The `algochat` CLI is built and run from source (`swift run algochat`).
+The Swift package name is `algochat` in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). Consumers depend on a git tag of that repository. The archived swift-algochat tag `0.4.0` remains only for apps that have not switched. The distribution is the root Swift package source. The `algochat` CLI is built and run from source (`swift run algochat`); release artifacts and remote-tag availability are documented separately in the [release record](../../docs/RELEASE.md).
 
 Local verification is defined in [`fledge.toml`](../fledge.toml): tasks `build`, `test-crypto`, `test-unit` and
 `cli`, chained by the `verify` lane (`fledge lanes run verify`). `fledge trust verify` runs that lane plus the
 SpecSync contract check, the Augur risk gate and Attest provenance ([`.trust.toml`](../.trust.toml)).
 
-| Workflow | Trigger | What it does |
-|---|---|---|
-| [`trust.yml`](../.github/workflows/trust.yml) | every pull request, push to `main` | CorvidLabs Trust gate, pinned by commit SHA, in the `swift:6.0` container. `trust` is the required status check on `main` |
-| [`macOS.yml`](../.github/workflows/macOS.yml) | pull request or push touching `Sources/`, `Tests/`, `Package.swift`, `Package.resolved` | Build and two filtered test batches on `macos-latest` |
-| [`linux.yml`](../.github/workflows/linux.yml) | same paths | Build and two test batches in `swift:6.0`, plus a CLI product build |
-| [`docs.yml`](../.github/workflows/docs.yml) | push to `main` touching `Sources/`, `Package.swift` or the workflow | DocC static site, deployed to GitHub Pages |
-| [`release.yml`](../.github/workflows/release.yml) | tag `X.Y.Z` or `vX.Y.Z` | Build, full `swift test`, `gh release create` with generated notes |
+The active workflows live at the [monorepo root](../../.github/workflows/). The files under `swift/.github/workflows/` are historical standalone workflows and are not scheduled from that nested location.
 
-```mermaid
-flowchart LR
-    pr["Pull request to main"] --> trust["trust.yml<br/>Trust gate, required check"]
-    pr --> mac["macOS.yml<br/>build and test batches"]
-    pr --> linux["linux.yml<br/>swift 6.0 container"]
-    push["Push to main"] --> trust
-    push --> mac
-    push --> linux
-    push --> docs["docs.yml<br/>DocC build"]
-    docs --> pages["GitHub Pages<br/>corvidlabs.github.io/swift-algochat"]
-    tag["Version tag"] --> release["release.yml<br/>build, test, GitHub release"]
-    release --> spm["Consumers resolve the tag with SwiftPM"]
-```
+| Active workflow | Behavior |
+|---|---|
+| [`release-qualification.yml`](../../.github/workflows/release-qualification.yml) → [`swift.yml`](../../.github/workflows/swift.yml) | Runs the root package's full `swift test` and `swift build` on macOS 26 or newer, exports a source archive, runs its PQ tests and builds a separate SwiftPM consumer. |
+| [`release-qualification.yml`](../../.github/workflows/release-qualification.yml), `swift-linux` job | Runs the root package tests/build on Linux, asserts `pqcross` reports unavailable ML-KEM, and checks exported-source tests and a consumer import. |
+| [`trust.yml`](../../.github/workflows/trust.yml) | Runs the root trust gate. The module's local Fledge lane remains the two filtered test batches plus library/CLI builds. |
 
-- CI runs tests in two filtered batches because many concurrent crypto suites crash CryptoKit or BoringSSL on the
-  runners, and it leaves out the heaviest crypto, end-to-end and localnet suites. The workflow files list the
-  exclusions.
-- Localnet integration tests need `algokit localnet start` and are run by hand ([README](../README.md)).
-- The API reference is published at <https://corvidlabs.github.io/swift-algochat/documentation/algochat/>.
+[`qualify.py`](../../scripts/release/qualify.py) records exact compiler/runtime versions and candidate artifacts. The old split-test counts and standalone release/DocC workflows do not describe this active qualification lane. SwiftPM consumers select root repository tags; source archives, live remote-tag availability and documentation deployment have distinct evidence requirements (see [release documentation](../../docs/RELEASE.md)). LocalNet tests require a running `algokit localnet` environment; a package test run alone does not prove live-network delivery.
 
 ## 8. Security and trust boundaries
 
@@ -750,7 +739,7 @@ What is not protected, or rests on something else:
 - **No forward secrecy.** The ephemeral key separates per-message keys, but either party's static private key, or
   the mnemonic it comes from, decrypts every standard message that account ever sent or received, because the
   ciphertext stays on-chain. PSK mode raises the bar to the static key plus the PSK. This matches protocol
-  [section 11.1](https://github.com/CorvidLabs/protocol-algochat/blob/main/PROTOCOL.md#111-forward-secrecy--not-provided).
+  [section 11.1](https://github.com/CorvidLabs/algochat/blob/main/PROTOCOL.md#111-forward-secrecy--not-provided).
 - **Sender identity comes from the Algorand transaction as the indexer reports it.** The client does not
   re-verify transaction signatures; it trusts the indexer's `sender` field, and the chain accepted the
   transaction only with a valid signature. Standard envelopes carry no signature over the content; only
@@ -758,7 +747,7 @@ What is not protected, or rests on something else:
 - **Unverified keys are accepted for sending.** When no signed key-publish exists, discovery returns the first
   `sender_pubkey` it finds in a transaction sent by that address, marked unverified. `send` uses it without
   exposing the flag; callers who care should use `discoverKey` or compare fingerprints.
-- **Replay** is checked only in PSK mode. Standard mode relies on transaction uniqueness on the ledger.
+- **Replay** counters are checked by the PSK manager. Standard and hybrid encryption maintain no replay state; ledger transaction uniqueness does not prevent copied note bytes in a different transaction.
 
 Secrets handling:
 
@@ -823,22 +812,9 @@ The big ones, summarized:
 7. **Real PBKDF2-HMAC-SHA256** for file key storage, interoperable with the reference implementations (CHANGELOG,
    Unreleased).
 
-## 11. Where the docs and the code disagree
+## 11. Accepted requirements and implementation gaps
 
-Found while writing this document. The code is described above as it is; these are for the maintainers to resolve.
-
-- [README](../README.md) shows `FilePSKStorage(directory: ".algochat")` and
-  `FileKeyStorage(directory: ".algochat", password: "secret")`. The initializers are
-  `FilePSKStorage(directoryName:)` and `FileKeyStorage(password:)`.
-- README and [SECURITY.md](../SECURITY.md) describe forward secrecy for past messages. The code, and protocol section
-  11.1, give per-message key separation without forward secrecy (section 8).
-- SECURITY.md says the key-derivation salt is derived from the account address and uses the `"AlgoChatV1"` label.
-  The code uses the fixed salt `"AlgoChat-v1-encryption"` and info `"x25519-key"`; `"AlgoChatV1"` labels the
-  per-message key.
-- SECURITY.md says keys never leave the Secure Enclave. The code stores the X25519 key as a Keychain generic-password
-  item; no Secure Enclave key is involved.
-- SECURITY.md lists the unique nonce as replay protection. Standard mode has no client-side replay check; only PSK
-  mode has one.
+The [accuracy ledger](../../docs/ACCURACY.md) tracks source-backed mismatches without weakening the accepted requirements. In particular, tvOS/watchOS/Linux `KeychainKeyStorage` falls back to ephemeral process memory rather than reporting unsupported durable storage, standard/PSK decode does not enforce the inbound 4096-byte ceiling, and PSK contacts and queue entries remain plaintext JSON. The canonical requirements remain the intended contract; these limitations describe current behavior.
 
 ## 12. Glossary
 

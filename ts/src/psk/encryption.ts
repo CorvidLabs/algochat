@@ -2,8 +2,9 @@
  * AlgoChat Web - PSK Message Encryption/Decryption
  *
  * Implements hybrid ECDH + PSK encryption with ChaCha20-Poly1305.
- * Provides forward secrecy via ephemeral keys and additional authentication
- * via pre-shared keys.
+ * Combines per-message ephemeral ECDH with a deterministic pre-shared-key
+ * schedule. This provides key separation, not forward secrecy: the initial PSK
+ * derives every position key, and long-term keys reopen the corresponding history.
  */
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha';

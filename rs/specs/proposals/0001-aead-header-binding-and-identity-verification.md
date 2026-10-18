@@ -9,6 +9,10 @@ supersedes: none
 
 # Proposal 0001 — AEAD header binding (v2) + enforced identity verification
 
+## Shipped implementation clarification (2026-10-18)
+
+The metadata-prefix-only AAD description below is historical proposal text. The active standard and PSK implementations authenticate the **full 126-byte and 130-byte header**, respectively, as payload AAD, including the 48-byte encrypted sender key. Sender-key wrapping uses empty AAD. The [active protocol](../protocol/protocol.spec.md) and [PSK contract](../psk/psk.spec.md) describe shipped behavior. This is a documentation correction; the live Rust v2 behavior already agrees with the other ports. See the [accuracy ledger](../../../docs/ACCURACY.md).
+
 ## Summary
 
 Two protocol-level hardening changes, both surfaced by a cross-implementation

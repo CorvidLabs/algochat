@@ -1,6 +1,6 @@
 # AlgoChat Implementation Guide
 
-Language-agnostic pseudocode for implementing the AlgoChat protocol. PSK sections (added in v1.1) use Swift-style pseudocode.
+Language-agnostic pseudocode for implementing the AlgoChat protocol. PSK sections (added in v1.1) use Swift-style pseudocode. These examples describe the protocol contract; they are not a claim that every port or high-level client enforces every requirement. See [docs/ACCURACY.md](docs/ACCURACY.md) for implementation gaps.
 
 ## Dependencies
 
@@ -12,6 +12,7 @@ Your implementation needs:
 4. **Algorand SDK** - Transaction creation and submission. Sending from a
    Falcon-1024 account requires an SDK that can attach a `pqsig` (for example
    js-algorand-sdk ≥ 3.7.0). Envelope encode/decode does not.
+5. **ML-KEM-768** (optional hybrid mode) - FIPS 203 key encapsulation, combined with X25519 as specified in [PROTOCOL.md section 5.7](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05). A standardized algorithm does not establish implementation audit or FIPS validation.
 
 The 32-byte value passed to `deriveEncryptionKeys` is **mnemonic entropy**,
 not "whatever signing key the wallet currently holds." For Ed25519 accounts
@@ -54,11 +55,13 @@ function generateEphemeralKeyPair() -> KeyPair:
 ```pseudocode
 function encryptMessage(
     plaintext: string,
-    senderPrivateKey: bytes[32],
     senderPublicKey: bytes[32],
-    recipientPublicKey: bytes[32]
+    recipientPublicKey: bytes[32],
+    version: uint8 = 0x02
 ) -> Envelope:
 
+    if version != 0x01 and version != 0x02:
+        throw Error("Unknown protocol version")
     messageBytes = encode(plaintext)
 
     if length(messageBytes) > 3954:
@@ -79,9 +82,8 @@ function encryptMessage(
         length: 32
     )
 
-    // Encrypt message
+    // Select one nonce; wrap first so the complete fixed header is available
     nonce = secureRandomBytes(12)
-    ciphertext = ChaCha20Poly1305_Encrypt(symmetricKey, nonce, messageBytes)
 
     // Encrypt symmetric key for sender (bidirectional decryption)
     senderSharedSecret = X25519_ECDH(ephemeral.privateKey, senderPublicKey)
@@ -92,10 +94,13 @@ function encryptMessage(
         info: senderInfo,
         length: 32
     )
-    encryptedSenderKey = ChaCha20Poly1305_Encrypt(senderEncryptionKey, nonce, symmetricKey)
+    encryptedSenderKey = ChaCha20Poly1305_Encrypt(senderEncryptionKey, nonce, symmetricKey, aad: emptyBytes)
+    header = concat([version, 0x01], senderPublicKey, ephemeral.publicKey, nonce, encryptedSenderKey)
+    payloadAAD = emptyBytes if version == 0x01 else header
+    ciphertext = ChaCha20Poly1305_Encrypt(symmetricKey, nonce, messageBytes, aad: payloadAAD)
 
     return Envelope(
-        version: 0x01,
+        version: version,
         protocolId: 0x01,
         senderPublicKey: senderPublicKey,
         ephemeralPublicKey: ephemeral.publicKey,
@@ -121,12 +126,14 @@ function decryptMessage(
     else:
         plaintext = decryptAsRecipient(envelope, myPrivateKey, myPublicKey)
 
-    // Check for special payload types
-    payload = parseJSON(plaintext)
-    if payload.type == "key-publish":
+    // Structured payloads coexist with legacy raw UTF-8 text
+    text = decodeUTF8(plaintext)
+    payload = tryParseJSON(text)
+    if payload?.type == "key-publish":
         return null  // Not a user message
-
-    return payload.text
+    if typeof(payload?.text) == string:
+        return payload.text
+    return text
 
 
 function decryptAsRecipient(
@@ -147,8 +154,8 @@ function decryptAsRecipient(
         length: 32
     )
 
-    // Decrypt message
-    return ChaCha20Poly1305_Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext)
+    // Version 0x02 binds the full fixed header, including the sender-key wrap
+    return ChaCha20Poly1305_Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext, aad: payloadAAD(envelope))
 
 
 function decryptAsSender(
@@ -173,12 +180,15 @@ function decryptAsSender(
     symmetricKey = ChaCha20Poly1305_Decrypt(
         senderDecryptionKey,
         envelope.nonce,
-        envelope.encryptedSenderKey
+        envelope.encryptedSenderKey,
+        aad: emptyBytes
     )
 
-    // Decrypt message
-    return ChaCha20Poly1305_Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext)
+    // Version 0x02 binds the full fixed header, including the sender-key wrap
+    return ChaCha20Poly1305_Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext, aad: payloadAAD(envelope))
 ```
+
+The sender/recipient branch selects a decryption path; it does not authenticate the Algorand sender. The displayed sender comes from the transaction's `sender` field and a validated binding to that address. Public-key-only encryption can construct an envelope naming someone else's X25519 key.
 
 ### Envelope Serialization
 
@@ -187,6 +197,7 @@ function serializeEnvelope(envelope: Envelope) -> bytes:
     return concat(
         [envelope.version],           // 1 byte
         [envelope.protocolId],        // 1 byte
+        bigEndianUInt32(envelope.ratchetCounter) if envelope.protocolId == 0x02 else emptyBytes,
         envelope.senderPublicKey,     // 32 bytes
         envelope.ephemeralPublicKey,  // 32 bytes
         envelope.nonce,               // 12 bytes
@@ -202,13 +213,13 @@ function deserializeEnvelope(data: bytes) -> Envelope:
     version = data[0]
     protocolId = data[1]
 
-    if version != 0x01:
+    if version != 0x01 and version != 0x02:
         throw Error("Unknown protocol version")
 
     if protocolId == 0x01:
         // Standard mode
-        if length(data) < 126:
-            throw Error("Envelope too short for standard mode")
+        if length(data) < 142 or length(data) > 4096:
+            throw Error("Invalid envelope length for standard mode")
         return Envelope(
             version: version,
             protocolId: protocolId,
@@ -222,8 +233,8 @@ function deserializeEnvelope(data: bytes) -> Envelope:
 
     else if protocolId == 0x02:
         // PSK ratcheting mode
-        if length(data) < 130:
-            throw Error("Envelope too short for PSK mode")
+        if length(data) < 146 or length(data) > 4096:
+            throw Error("Invalid envelope length for PSK mode")
         ratchetCounter = bigEndianUInt32(data[2:6])
         return Envelope(
             version: version,
@@ -237,8 +248,17 @@ function deserializeEnvelope(data: bytes) -> Envelope:
         )
 
     else:
-        throw Error("Unknown protocol identifier")
+        throw Error("Unknown protocol identifier; dispatch 0x04/0x05 to hybrid parser")
+
+
+function payloadAAD(envelope: Envelope) -> bytes:
+    if envelope.version == 0x01:
+        return emptyBytes
+    headerSize = 130 if envelope.protocolId == 0x02 else 126
+    return serializeEnvelope(envelope)[0:headerSize]
 ```
+
+The minimum includes the 16-byte payload authentication tag. Keep this validation even if a port currently accepts a header-only note; see [docs/ACCURACY.md](docs/ACCURACY.md). Hybrid notes use separate parsers and layouts, described below.
 
 ### Transaction Creation
 
@@ -248,7 +268,7 @@ function createMessageTransaction(
     recipient: AlgorandAddress,
     envelope: Envelope,
     algodClient: AlgodClient
-) -> SignedTransaction:
+) -> PaymentTransaction:
 
     params = algodClient.getTransactionParams()
 
@@ -271,36 +291,23 @@ function discoverPublicKey(
     indexerClient: IndexerClient
 ) -> bytes[32] | null:
 
-    // Search sent transactions for standard mode
-    standardTxns = indexerClient.searchTransactions(
-        sender: address,
-        notePrefix: [0x01, 0x01],  // version + standard protocol
-        limit: 100
-    )
-
-    for txn in standardTxns:
-        try:
-            envelope = deserializeEnvelope(txn.note)
-            return envelope.senderPublicKey
-        catch:
-            continue
-
-    // Also search PSK mode transactions
-    pskTxns = indexerClient.searchTransactions(
-        sender: address,
-        notePrefix: [0x01, 0x02],  // version + PSK protocol
-        limit: 100
-    )
-
-    for txn in pskTxns:
-        try:
-            envelope = deserializeEnvelope(txn.note)
-            return envelope.senderPublicKey
-        catch:
-            continue
+    // Search both accepted versions of standard and PSK envelopes.
+    prefixes = [[0x01, 0x01], [0x02, 0x01], [0x01, 0x02], [0x02, 0x02]]
+    for prefix in prefixes:
+        // Paginate until found or an explicit application search limit is reached.
+        for txn in indexerClient.paginateTransactions(sender: address, notePrefix: prefix):
+            if txn.sender != address:
+                continue
+            try:
+                envelope = deserializeEnvelope(txn.note)
+                return envelope.senderPublicKey
+            catch:
+                continue
 
     return null
 ```
+
+Current TypeScript discovery also scans self-payment X25519 announcements, prefers a valid signed announcement over unsigned candidates, and rejects `ACPQ` notes in the X25519 announcement parser. Its paginated API defaults to pages of 100 with no depth cap; the non-paginated fallback defaults to a 1000-transaction batch. Other adapters can impose limits. Hybrid announcements (`ACPQ`), handshakes (`0x0204`), and messages (`0x0205`) need their own discovery and dispatch rather than this classical envelope deserializer.
 
 ## Data Structures
 
@@ -342,7 +349,7 @@ struct ReplyReference:
 
 struct KeyPublishPayload:
     type: "key-publish"
-    publicKey: string  // Base64 encoded
+    publicKey?: string  // Optional, base64 encoded; redundant with envelope sender key
 ```
 
 ## Error Handling
@@ -370,8 +377,8 @@ Input seed (hex): 0x0000...0000 (32 zero bytes)
 Salt: "AlgoChat-v1-encryption"
 Info: "x25519-key"
 
-Expected private key (hex): <implementation-specific>
-Expected public key (hex): <implementation-specific>
+Expected private key (hex): 1bd5f8356b720b8fc639fdd240409d4f76fa0ec52ebcd5351e80235d1ceed32f
+Expected public key (hex): 7e8d332a8d69b9a69fd394b5dfb9716b1ec442482c7374c257dbb1f7a61e1014
 ```
 
 ### Encryption Test
@@ -411,7 +418,7 @@ struct PSKState: Sendable {
 }
 
 struct PSKEnvelope: Sendable {
-    let version: UInt8            // 0x01
+    let version: UInt8            // 0x01 (empty payload AAD) or 0x02 (full fixed header AAD)
     let protocolId: UInt8         // 0x02
     let ratchetCounter: UInt32
     let senderPublicKey: Data     // 32 bytes
@@ -518,8 +525,12 @@ func encryptMessagePSK(
     plaintext: String,
     senderKeyPair: KeyPair,
     recipientPublicKey: Data,
-    pskState: inout PSKState
+    pskState: inout PSKState,
+    version: UInt8 = 0x02
 ) throws -> PSKEnvelope {
+    guard version == 0x01 || version == 0x02 else {
+        throw AlgoChatError.unknownVersion
+    }
     let messageBytes = Data(plaintext.utf8)
 
     guard messageBytes.count <= 3950 else {
@@ -546,9 +557,8 @@ func encryptMessagePSK(
         recipientPublicKey: recipientPublicKey
     )
 
-    // Encrypt message
+    // Wrap first so version 0x02 can authenticate the full fixed header
     let nonce = secureRandomBytes(12)
-    let ciphertext = chacha20Poly1305Encrypt(symmetricKey, nonce, messageBytes)
 
     // Encrypt symmetric key for sender (bidirectional decryption)
     let senderSharedSecret = x25519ECDH(ephemeral.privateKey, senderKeyPair.publicKey)
@@ -558,13 +568,17 @@ func encryptMessagePSK(
         ephemeralPublicKey: ephemeral.publicKey,
         senderPublicKey: senderKeyPair.publicKey
     )
-    let encryptedSenderKey = chacha20Poly1305Encrypt(senderKey, nonce, symmetricKey)
+    let encryptedSenderKey = chacha20Poly1305Encrypt(senderKey, nonce, symmetricKey, aad: Data())
+    let header = Data([version, 0x02]) + counter.bigEndianData
+        + senderKeyPair.publicKey + ephemeral.publicKey + nonce + encryptedSenderKey
+    let aad = version == 0x01 ? Data() : header
+    let ciphertext = chacha20Poly1305Encrypt(symmetricKey, nonce, messageBytes, aad: aad)
 
     // Increment counter for next message
     pskState.sendCounter = counter + 1
 
     return PSKEnvelope(
-        version: 0x01,
+        version: version,
         protocolId: 0x02,
         ratchetCounter: counter,
         senderPublicKey: senderKeyPair.publicKey,
@@ -610,6 +624,7 @@ func decryptMessagePSK(
     )
 
     let plaintext: Data
+    let aad = envelope.version == 0x01 ? Data() : serializePSKEnvelope(envelope).prefix(130)
 
     if weAreSender {
         // Decrypt as sender (via encrypted_sender_key)
@@ -624,12 +639,14 @@ func decryptMessagePSK(
         let symmetricKey = try chacha20Poly1305Decrypt(
             senderKey,
             envelope.nonce,
-            envelope.encryptedSenderKey
+            envelope.encryptedSenderKey,
+            aad: Data()
         )
         plaintext = try chacha20Poly1305Decrypt(
             symmetricKey,
             envelope.nonce,
-            envelope.ciphertext
+            envelope.ciphertext,
+            aad: aad
         )
     } else {
         // Decrypt as recipient
@@ -645,7 +662,8 @@ func decryptMessagePSK(
         plaintext = try chacha20Poly1305Decrypt(
             symmetricKey,
             envelope.nonce,
-            envelope.ciphertext
+            envelope.ciphertext,
+            aad: aad
         )
 
         // Update counter tracking
@@ -738,5 +756,20 @@ Implementations SHOULD provide the following user experience for PSK mode:
 
 **Error UX:**
 - `PSK_NOT_FOUND`: Prompt user to set up PSK with this contact
-- `PSK_COUNTER_OUT_OF_RANGE`: Warn about possible desynchronization; offer to reset counter state
+- `PSK_COUNTER_OUT_OF_RANGE`: Warn about possible desynchronization; recover counter state from authenticated history or exchange a new PSK. Avoid blindly resetting counters while keeping the same replay state.
 - `PSK_COUNTER_REPLAY`: Silently discard (do not display to user, but log for debugging)
+
+
+## Hybrid Sessions (v1.3, `0x04` and `0x05`)
+
+These are a separate mode from Extra lock (`0x02`); hybrid mode does not automatically add a PSK. The byte layouts and KDF transcript in [PROTOCOL.md section 5.7](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) are normative.
+
+1. Derive the account's ML-KEM-768 key from mnemonic entropy using the documented HKDF salts and info values. Obtain the recipient's X25519 and ML-KEM encapsulation keys through a trusted binding to the recipient address. `ACPQ` announcements are separate from X25519 announcements; a present invalid signature must fail verification.
+2. Create a 2366-byte version `0x02`, protocol `0x04` handshake. Its recipient key combines X25519 and ML-KEM shared secrets. Its sender-copy wrap also combines both secrets, and authenticates the 2318-byte prefix before the wrapped session key.
+3. The recipient reopens the session with its long-term X25519 and ML-KEM keys. The sender reopens the wrapped session with the sender's long-term X25519 and ML-KEM keys. The session identifier is SHA-256 of the complete handshake note.
+4. Send version `0x02`, protocol `0x05` messages with the session key. Each message gets a fresh 12-byte nonce and authenticates its full 78-byte header. Maximum plaintext is 4002 bytes; the minimum note is 94 bytes, and a 3-byte plaintext produces 97 bytes.
+5. Resolve a message's handshake hash to the original handshake note before decrypting it. Retain the associated transaction sender/recipient context and apply the application's replay and identity policy.
+
+TypeScript exposes these low-level operations through `initiatePQSession`, `acceptPQSession`, `openPQSessionAsSender`, `encryptPQMessage`, and `decryptPQMessage` in `ts/src/pq/session.ts`. The six libraries contain hybrid helpers, but their ordinary high-level conversation send paths do not automatically discover ML-KEM keys, select hybrid mode, submit the handshake, or restore sessions. Applications must integrate those steps explicitly; see [docs/ACCURACY.md](docs/ACCURACY.md). A lack of automatic integration is not a change to the accepted protocol contract.
+
+A saved session key is sensitive: it opens every message under that session. Both parties can instead recover it from the handshake and their long-term keys, so this mode does not provide forward secrecy. Protect the mnemonic and ML-KEM private material alongside the X25519 key. Rotation cannot make already published ciphertext disappear.

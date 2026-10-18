@@ -28,3 +28,7 @@ No manual cryptographic acceptance substitutes for deterministic native and cros
 | Mutated v2 header | Fail AEAD authentication. |
 | Wrong recipient key | Fail without plaintext. |
 | Invalid signature length | Return typed signature error. |
+
+## Shipped PQ evidence
+
+`src/pq.rs::tests::parity_fixture` uses the committed `vectors/pq-mlkem768.json` to check ML-KEM/key-combiner parity, handshake recovery, sender reopening, data round trips, and tamper rejection. `live_localnet_note` is conditional and must not be counted as a live transaction check without its environment/input. The documentation audit does not claim a fresh native run.

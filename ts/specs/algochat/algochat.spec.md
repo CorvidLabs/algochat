@@ -16,6 +16,7 @@ files:
   - src/cache/PublicKeyCache.test.ts
   - src/cache/PublicKeyCache.ts
   - src/cache/index.ts
+  - src/crypto/aad.ts
   - src/crypto/encryption.test.ts
   - src/crypto/encryption.ts
   - src/crypto/envelope.ts
@@ -30,6 +31,14 @@ files:
   - src/models/index.ts
   - src/models/pending-message.ts
   - src/models/types.ts
+  - src/pq/announce.ts
+  - src/pq/bytes.ts
+  - src/pq/index.ts
+  - src/pq/kdf.ts
+  - src/pq/kem.ts
+  - src/pq/session.ts
+  - src/pq/types.ts
+  - src/pq/pq.test.ts
   - src/psk/encryption.ts
   - src/psk/envelope.ts
   - src/psk/exchange.ts
@@ -207,6 +216,51 @@ Provides the TypeScript implementation of the AlgoChat encrypted-messaging proto
 | `FileSendQueueStorage` | Queue, cache, or key-storage abstraction with the persistence behavior defined below. |
 | `FileKeyStorage` | Queue, cache, or key-storage abstraction with the persistence behavior defined below. |
 
+| Hybrid API | Current behavior |
+| --- | --- |
+| `PQ_PROTOCOL` | Hybrid handshake/data version, identifiers and sizes. |
+| `PQ_HANDSHAKE_SIZE` | The 2366-byte handshake size. |
+| `PQ_DATA_HEADER_SIZE` | The 78-byte authenticated session-data header. |
+| `PQ_MAX_PAYLOAD_SIZE` | Maximum session-data plaintext, 4002 bytes. |
+| `PQError` | Hybrid protocol validation/authentication failure. |
+| `MLKEMKeyPair` | Encapsulation/decapsulation key bytes. |
+| `PQSession` | Hybrid session key, participant keys and handshake ID. |
+| `deriveHybridPQKey` | Transcript-bound X25519 + ML-KEM shared-secret combiner. |
+| `deriveMLKEMKeyPair` | Deterministic ML-KEM-768 derivation from the 32-byte account seed. |
+| `initiatePQSession` | Create a handshake and sender session. |
+| `acceptPQSession` | Open the handshake as recipient. |
+| `openPQSessionAsSender` | Recover the session through its sender wrap. |
+| `encryptPQMessage` | Seal session data using its fixed header as AAD. |
+| `decryptPQMessage` | Validate the session identity/header and authenticate data. |
+| `isPQHandshake` | Classify a fixed-size hybrid handshake. |
+| `isPQMessage` | Classify session data by version, protocol and minimum length. |
+| `encodePQKeyAnnouncement` | Encode unsigned or Ed25519-signed ACPQ key notes. |
+| `parsePQKeyAnnouncement` | Parse ACPQ keys and verify supplied signatures. |
+| `isPQKeyAnnouncement` | Recognize the ACPQ announcement magic. |
+| `PQ_ANNOUNCE_MAGIC` | Source PQ module's ACPQ prefix. |
+| `PQ_ANNOUNCE_VERSION` | Source PQ module's announcement version. |
+| `HybridTranscript` | Source KDF transcript input fields. |
+| `InitiatePQSessionInput` | Source session initiation input, including optional test randomness. |
+| `PQAnnouncement` | Source announcement result and verification flag. |
+| `pqAnnouncementSigningInput` | Source announcement digest/signing input. |
+| `encapsulate` | Source ML-KEM encapsulation helper. |
+| `decapsulate` | Source ML-KEM decapsulation helper. |
+| `concatBytes` | Source byte concatenation helper. |
+| `sha256Bytes` | Source SHA-256 helper. |
+| `requireLength` | Source fixed-width validation helper. |
+| `standardHeaderAAD` | Source standard-envelope header encoding for AAD. |
+| `pskHeaderAAD` | Source PSK-envelope header encoding for AAD. |
+| `STANDARD_PREFIX_AAD_SIZE` | Source standard fixed-header prefix size before the sender wrap. |
+| `PSK_PREFIX_AAD_SIZE` | Source PSK fixed-header prefix size before the sender wrap. |
+| `StandardHeaderFields` | Source standard AAD header inputs. |
+| `PskHeaderFields` | Source PSK AAD header inputs including ratchet counter. |
+
+The package root re-exports the hybrid APIs listed in `src/index.ts`. Header helpers and other source-only symbols are not package subpath exports; `package.json` declares only `.`. This inventory describes existing capabilities without claiming high-level hybrid orchestration.
+
+## Current implementation scope
+
+The TypeScript standard and PSK writers emit version `0x02` with fixed-header AAD; their readers also accept legacy `0x01`. `AlgorandService` and the indexers route standard protocol `0x01`; counter-bearing PSK (`0x02`) and hybrid (`0x04` / `0x05`) APIs require caller-owned transport, state and replay handling. Source inventory is not evidence that every accepted requirement is met. Known gaps remain in the [accuracy ledger](../../../docs/ACCURACY.md).
+
 ## Invariants
 
 1. Standard messages use a fresh ephemeral X25519 key and ChaCha20-Poly1305 authenticated encryption; decryption supports both recipient and sender key paths.
@@ -259,6 +313,7 @@ Then SendQueue processes eligible entries in order, records failures for retry, 
 - `algosdk` ≥ 3.7.0 for Algorand accounts, `pqsig`, encoding, and clients.
 - `falcon-1024` for deterministic Falcon-1024 keygen and compressed signatures.
 - `@noble/curves`, `@noble/ciphers`, and `@noble/hashes` for X25519, Ed25519, ChaCha20-Poly1305, HKDF, and hashes.
+- `@noble/post-quantum` for ML-KEM-768.
 - Bun for the deterministic TypeScript test suite and TypeScript for declaration/build validation.
 
 ## Change Log

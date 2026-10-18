@@ -13,11 +13,12 @@ public struct DiscoveredKey: Sendable {
     /**
      Whether this key was cryptographically verified
 
-     A verified key was signed by the account's Ed25519 key (V3 envelope),
-     proving the key was published by the account owner.
+     A verified key has a valid appended Ed25519 signature over the X25519
+     key, checked against the account address. The signed announcement uses
+     an ordinary envelope, not a separate V3 format.
 
-     An unverified key came from a V1/V2 envelope without signature,
-     which should be verified out-of-band for sensitive communications.
+     An unverified key has no valid appended signature established by this
+     discovery path and should be verified out of band for sensitive use.
      */
     public let isVerified: Bool
 

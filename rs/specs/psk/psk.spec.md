@@ -30,7 +30,7 @@ the counter and remaining header metadata into AEAD authentication.
 | Symbol | Description |
 |--------|-------------|
 | `encrypt_psk_message` | Encrypts a PSK v1 payload with hybrid ECDH and ratcheted PSK material. |
-| `encrypt_psk_message_v2` | Encrypts a PSK v2 payload and authenticates the 82-byte header prefix. |
+| `encrypt_psk_message_v2` | Encrypts a PSK v2 payload and authenticates the 130-byte full header. |
 | `decrypt_psk_message` | Decrypts a supported PSK envelope for sender or recipient. |
 | `encode_psk_envelope` | Serializes fixed PSK header fields and ciphertext. |
 | `decode_psk_envelope` | Parses and validates a PSK v1/v2 envelope. |
@@ -43,7 +43,7 @@ the counter and remaining header metadata into AEAD authentication.
 | `new` | Constructs an exchange URI value or replay state at its initial counter. |
 | `encode` | Percent- and base64url-encodes a PSK exchange URI. |
 | `parse` | Validates and decodes an `algochat-psk://v1` URI. |
-| `v2_aad` | Reconstructs the canonical PSK v2 authenticated header prefix. |
+| `v2_aad` | Reconstructs the canonical full 130-byte PSK v2 authenticated header. |
 | `validate_counter` | Rejects replayed and out-of-window receive counters. |
 | `record_receive` | Records a valid counter and prunes obsolete replay entries. |
 | `advance_send_counter` | Returns the current send counter and advances with wrapping semantics. |
@@ -68,7 +68,7 @@ the counter and remaining header metadata into AEAD authentication.
 ## Invariants
 
 1. PSK envelopes use protocol ID `0x02`; only versions `0x01` and `0x02` are accepted.
-2. V2 authentication covers version, protocol ID, ratchet counter, both public keys, and nonce.
+2. V2 payload authentication covers the full 130-byte header: version, protocol ID, ratchet counter, both public keys, nonce, and encrypted sender key. Sender-key wrapping uses empty AAD.
 3. Each counter deterministically selects one session PSK and one position PSK.
 4. The replay set rejects duplicates and counters more than 200 behind the highest accepted counter.
 5. PSK plaintext may not exceed 3950 bytes, so the encoded note is at most 4096 bytes. The header stays 130 bytes and the tag stays 16 bytes. An 878-byte plaintext still encrypts, and that note is at most 1024 bytes.

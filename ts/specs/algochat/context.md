@@ -18,3 +18,7 @@ AlgoChat applications need one interoperable TypeScript package for account mate
 - Derive X25519 keys from mnemonic entropy, never from a Falcon secret-key prefix.
 - Default new accounts to Falcon-1024; keep mnemonic import Ed25519 unless the caller passes a scheme.
 - Deliver envelopes only as encrypted payment notes. Do not include a raven mailbox router or other dead-drop transport.
+
+## Current implementation inventory
+
+The module also owns header-AAD helpers and low-level hybrid X25519 + ML-KEM-768 key announcements, handshakes and session-data helpers in `src/pq/`. Standard/PSK writers use version `0x02`; readers preserve version `0x01` compatibility. The service/indexers do not route the counter-bearing PSK or hybrid protocols. Module coverage and the root qualification evidence do not establish complete accepted-contract behavior; see the [accuracy ledger](../../../docs/ACCURACY.md).

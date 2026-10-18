@@ -17,10 +17,6 @@ use crate::types::{
     STANDARD_V2_AAD_LEN,
 };
 
-/// Builds the v2 AEAD Associated Data (header metadata prefix) from raw fields.
-///
-/// Mirrors [`ChatEnvelope::v2_aad`] but is usable before the envelope struct is
-/// assembled (i.e. during encryption).
 /// Wraps a message and AAD into the `chacha20poly1305::Payload` form.
 fn payload<'a>(msg: &'a [u8], aad: &'a [u8]) -> Payload<'a, 'a> {
     Payload { msg, aad }
@@ -54,9 +50,9 @@ pub fn encrypt_message(
 /// Encrypt a message for a recipient using protocol v2 (AEAD header binding).
 ///
 /// Identical to [`encrypt_message`] except the emitted envelope has
-/// `version = 0x02` and both AEAD operations bind the header metadata prefix as
-/// Associated Data, authenticating the version, protocol id, public keys, and
-/// nonce against in-transit tampering.
+/// `version = 0x02`. Payload encryption authenticates the full 126-byte header,
+/// including the 48-byte wrapped sender key. Sender-key wrapping itself uses
+/// empty associated data, as it does for v1.
 pub fn encrypt_message_v2(
     plaintext: &str,
     sender_private_key: &StaticSecret,

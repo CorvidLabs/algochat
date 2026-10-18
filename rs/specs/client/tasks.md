@@ -18,3 +18,5 @@ No migration-specific behavior gap is accepted; future product changes require a
 - **Verification**: native SpecSync evidence
 - **Design**: n/a
 - **Implementation review**: governance/spec-only diff
+
+- [ ] Close the concurrent PSK receive race and add a deterministic concurrent replay test; preserve `REQ-client-005` and the [accuracy ledger](../../../docs/ACCURACY.md).

@@ -16,7 +16,11 @@ Kotlin implementation of the AlgoChat protocol for encrypted messaging on Algora
 
 ## Installation
 
-The release destination is GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages), with coordinate `com.corvidlabs:kt-algochat:0.2.0`. The source version does not by itself confirm publication. The archived kt-algochat repository is not the source.
+The intended release destination is GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages), with coordinate `com.corvidlabs:kt-algochat:0.2.0`. As checked on 2026-10-18, the existing GitHub package entry is still associated with archived `CorvidLabs/kt-algochat`; availability at the monorepo Maven endpoint and equivalence to current source were not verified. See [the dated distribution evidence](../docs/RELEASE.md#package-versions-and-distribution).
+
+To use the current source, clone this monorepo and run `./gradlew publishToMavenLocal` from `kt/`, then use `mavenLocal()` in the consuming project's repositories. This is a local development installation, not a remote publication.
+
+The remote examples below target the intended monorepo registry once the matching artifact is available there.
 GitHub Packages requires authentication even for public packages, so you must
 configure a GitHub username and a personal access token (with the `read:packages`
 scope) and reference the CorvidLabs Maven repository.
@@ -69,271 +73,122 @@ dependencies {
 
 ## Quick Start
 
-### Client Initialization
+### Low-level encryption and replies
 
-kotlin
+This complete JVM example uses fresh demo seeds. In an application, load the 32-byte account seeds from secure storage.
+
+```kotlin
+import com.corvidlabs.algochat.*
+import java.security.SecureRandom
+
+fun main() {
+    val random = SecureRandom()
+    val sender = Keys.deriveKeysFromSeed(ByteArray(32).also(random::nextBytes))
+    val recipient = Keys.deriveKeysFromSeed(ByteArray(32).also(random::nextBytes))
+    val envelope = Crypto.encryptMessage(
+        "Hello, World!", sender.privateKey, sender.publicKey, recipient.publicKey
+    )
+    val encoded = envelope.encode()
+    val decoded = ChatEnvelope.decode(encoded)
+    val content = requireNotNull(Crypto.decryptMessage(decoded, recipient.privateKey, recipient.publicKey))
+    check(content.text == "Hello, World!")
+
+    val reply = Crypto.encryptReply(
+        text = "Yes, I agree!",
+        replyToTxid = "ORIGINAL_TX_ID",
+        replyToPreview = "Original message preview...",
+        senderPrivateKey = sender.privateKey,
+        senderPublicKey = sender.publicKey,
+        recipientPublicKey = recipient.publicKey
+    )
+    val replyContent = requireNotNull(Crypto.decryptMessage(reply, recipient.privateKey, recipient.publicKey))
+    println(replyContent.replyToId)
+}
+```
+
+### Client with application-provided network adapters
+
+`AlgodClient` and `IndexerClient` are interfaces. Supply implementations that connect to your network; they cannot be constructed from a URL. Client initialization, discovery, conversations, and sync are suspend functions, so call them from a coroutine.
+
+```kotlin
 import com.corvidlabs.algochat.*
 
-// Configure for LocalNet (development)
-val config = AlgoChatConfig.localnet()
-
-// Create client from account seed
-val seed = "YOUR_32_BYTE_SEED_HERE".encodeToByteArray()
-val address = "YOUR_ALGORAND_ADDRESS"
-
-val algod = AlgodClient("http://localhost:4001", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-val indexer = IndexerClient("http://localhost:8980")
-val keyStorage = InMemoryKeyStorage()
-val messageCache = InMemoryMessageCache()
-
-val client = AlgoChatClient.fromSeed(
-    seed = seed,
-    address = address,
-    config = config,
+suspend fun createClient(
+    seed: ByteArray,
+    accountAddress: String,
+    algod: AlgodClient,
+    indexer: IndexerClient
+): AlgoChatClient = AlgoChatClient.fromSeed(
+    seed = seed, // exactly 32 bytes, from the account
+    address = accountAddress, // matching address supplied by the caller
+    config = AlgoChatConfig.localnet(),
     algod = algod,
     indexer = indexer,
-    keyStorage = keyStorage,
-    messageCache = messageCache
+    keyStorage = InMemoryKeyStorage(), // ephemeral demo storage
+    messageCache = InMemoryMessageCache()
 )
 
-// Access your encryption public key (for sharing with contacts)
-val myPublicKey = client.encryptionPublicKey
-
-
-### Network Configuration
-
-kotlin
-// LocalNet (development)
-val config = AlgoChatConfig.localnet()
-
-// TestNet (testing with real testnet ALGO)
-val config = AlgoChatConfig.testnet()
-
-// MainNet (production)
-val config = AlgoChatConfig.mainnet()
-
-
-## Usage
-
-### Sending Messages
-
-kotlin
-import com.corvidlabs.algochat.*
-
-// Derive keys from a 32-byte seed (e.g., from Algorand account)
-val senderKeys = Keys.deriveKeysFromSeed(seed)
-val recipientKeys = Keys.deriveKeysFromSeed(recipientSeed)
-
-// Encrypt a message
-val envelope = Crypto.encryptMessage(
-    "Hello, World!",
-    senderKeys.privateKey,
-    senderKeys.publicKey,
-    recipientKeys.publicKey
-)
-
-// Encode for transmission
-val encoded = envelope.encode()
-
-
-### Receiving Messages
-
-kotlin
-// Decode received message
-val decoded = ChatEnvelope.decode(encoded)
-
-// Decrypt as recipient
-val result = Crypto.decryptMessage(decoded, recipientKeys.privateKey, recipientKeys.publicKey)
-result?.let { println(it.text) }
-
-
-### Key Discovery
-
-Discover a recipient's encryption public key from the blockchain:
-
-kotlin
-// Discover key for an address (checks cache first, then indexer)
-val discoveredKey = client.discoverKey("RECIPIENT_ADDRESS")
-
-if (discoveredKey != null) {
-    println("Found public key: ${discoveredKey.publicKey.toHexString()}")
-    println("Verified: ${discoveredKey.isVerified}")
-    
-    // Now you can encrypt messages to this address
-    val encrypted = client.encrypt("Hello!", discoveredKey.publicKey)
-} else {
-    println("No encryption key found for this address")
+suspend fun encryptFor(client: AlgoChatClient, recipientAddress: String): ByteArray {
+    val key = client.discoverKey(recipientAddress)
+        ?: error("No encryption key announced")
+    check(key.isVerified) { "Recipient key must be verified for this example" }
+    return client.encrypt("Hello!", key.publicKey)
 }
 
-
-### Reply Messages with Context
-
-Reply to a specific message with thread context:
-
-kotlin
-import com.corvidlabs.algochat.*
-
-val senderKeys = Keys.deriveKeysFromSeed(seed)
-val recipientKeys = Keys.deriveKeysFromSeed(recipientSeed)
-
-// Encrypt a reply to a specific transaction
-val replyEnvelope = Crypto.encryptReply(
-    text = "Yes, I agree with that point!",
-    replyToTxid = "ORIGINAL_TX_ID_HERE",
-    replyToPreview = "Original message preview...",
-    senderPrivateKey = senderKeys.privateKey,
-    senderPublicKey = senderKeys.publicKey,
-    recipientPublicKey = recipientKeys.publicKey
-)
-
-val encoded = replyEnvelope.encode()
-
-
-### Full Client Workflow
-
-kotlin
-import com.corvidlabs.algochat.*
-
-suspend fun chatExample() {
-    // Initialize client
-    val config = AlgoChatConfig.localnet()
-    val client = AlgoChatClient.fromSeed(seed, address, config, algod, indexer)
-    
-    // Discover recipient's key
-    val recipientAddress = "RECIPIENT_ALGORAND_ADDRESS"
-    val discoveredKey = client.discoverKey(recipientAddress)
-        ?: throw IllegalStateException("Key not found")
-    
-    // Encrypt and send a message
-    val encryptedMessage = client.encrypt("Hello!", discoveredKey.publicKey)
-    // Send encryptedMessage via Algorand transaction...
-    
-    // Decrypt a received message
-    val receivedEnvelope: ByteArray = // ... received from network
-    val decryptedText = client.decrypt(receivedEnvelope, discoveredKey.publicKey)
-    println("Decrypted: $decryptedText")
-    
-    // Decrypt with full reply context
-    val fullContent = client.decryptFull(receivedEnvelope)
-    println("Text: ${fullContent.text}")
-    fullContent.replyToId?.let { txid ->
-        println("This is a reply to transaction: $txid")
-    }
-    
-    // Sync messages from blockchain
-    val newMessages = client.sync()
-    for (message in newMessages) {
-        println("${message.direction}: ${message.content} at ${message.timestamp}")
-    }
-    
-    // Access conversation history
-    val conversation = client.conversation(recipientAddress)
-    val messages = conversation.messages()
+suspend fun syncHistory(client: AlgoChatClient, participant: String): List<Message> {
+    client.sync()
+    return client.conversation(participant).messages // property, not messages()
 }
+```
 
+`AlgoChatConfig.testnet()` and `.mainnet()` select the other network settings. The host must configure its adapters consistently. `client.encryptionPublicKey` exposes the X25519 public key. `client.encrypt` returns note bytes for your transaction integration; the client has no public `send` method. `client.decryptFull(bytes)` returns text/reply context. The `senderPublicKeyBytes` argument of `client.decrypt(bytes, key)` is currently unused; it does not verify the sender. `processTransaction` separately requires verified discovery for received transactions.
 
-## Protocol
+The client accepts the supplied address without deriving or checking it against the seed and asks the key storage to store the encryption key with `requireBiometric=false`. The canonical requirements retain the stronger identity and persistence boundaries; see the [implementation gaps](../docs/ACCURACY.md).
 
-AlgoChat uses:
-- **X25519** for key agreement
-- **ChaCha20-Poly1305** for authenticated encryption
-- **HKDF-SHA256** for key derivation
+## PSK messages
 
-The protocol supports bidirectional decryption, allowing senders to decrypt their own messages.
+PSK adds an out-of-band 32-byte secret to the X25519 construction. Session and position derivation form a deterministic key schedule; it does not provide forward secrecy. Python and Kotlin take the **current ratcheted PSK** in low-level encryption, while Rust takes the initial PSK.
 
-### PSK v1.1
-
-The PSK (Pre-Shared Key) protocol extends AlgoChat with an additional symmetric key layer:
-
-- **Two-level ratchet** - Session and position keys derived from an initial PSK via HKDF
-- **Hybrid encryption** - Combines X25519 ECDH with PSK for dual-layer security
-- **Unique counter keys** - Each message uses a key derived from the ratchet counter. This is not forward secrecy.
-- **Replay protection** - Sliding counter window prevents message replay attacks
-
-kotlin
+```kotlin
 import com.corvidlabs.algochat.*
+import java.security.SecureRandom
 
-// Create a shared PSK (exchanged out-of-band)
-val psk = ByteArray(32) // 32 random bytes shared between peers
+suspend fun pskExample(): String {
+    val random = SecureRandom()
+    val sender = Keys.deriveKeysFromSeed(ByteArray(32).also(random::nextBytes))
+    val recipient = Keys.deriveKeysFromSeed(ByteArray(32).also(random::nextBytes))
+    val initialPSK = ByteArray(32).also(random::nextBytes)
+    val sending = PSKState(initialPSK, "recipient")
+    val receiving = PSKState(initialPSK, "sender")
+    val counter = sending.nextSendCounter()
+    val envelope = PSKCrypto.encryptMessage(
+        "Hello with PSK!", sender.privateKey, sender.publicKey, recipient.publicKey,
+        sending.pskAtCounter(counter), counter
+    )
+    val decoded = PSKEnvelopeCodec.decode(PSKEnvelopeCodec.encode(envelope))
+    // One atomic receive operation: validate, decrypt, and record on success.
+    return receiving.receive(decoded.ratchetCounter) {
+        requireNotNull(PSKCrypto.decryptMessage(
+            decoded, recipient.privateKey, recipient.publicKey,
+            receiving.pskAtCounter(decoded.ratchetCounter)
+        )).text
+    }
+}
+```
 
-// Derive the ratcheted PSK for a specific counter
-val counter = 0u
-val currentPSK = PSKRatchet.derivePSKAtCounter(psk, counter)
+`PSKExchangeURI(address, psk, label).encode()` and `PSKExchangeURI.decode(uri)` exchange the secret out of band. The PSK envelope header is 130 bytes, followed by ciphertext and a 16-byte tag; the standard header is 126 bytes. Standard and PSK plaintext maxima are 3954 and 3950 UTF-8 bytes under the 4096-byte note ceiling.
 
-// Encrypt with PSK
-val envelope = PSKCrypto.encryptMessage(
-    "Hello with PSK!",
-    senderKeys.privateKey,
-    senderKeys.publicKey,
-    recipientKeys.publicKey,
-    currentPSK,
-    counter
-)
+`PSKState.receive` holds its mutex through validation, decryption, and recording. `acceptReceiveCounter` records immediately and must not precede unauthenticated decryption. Current counters wrap as unsigned 32-bit values, and the receive policy accepts any future counter while rejecting repeats and counters behind its trailing window. Persist state and replace the PSK before send-counter exhaustion. The [gap ledger](../docs/ACCURACY.md) distinguishes this behavior from stronger canonical requirements.
 
-// Encode for transmission
-val encoded = PSKEnvelopeCodec.encode(envelope)
+## Hybrid ML-KEM sessions
 
-// Decode and decrypt
-val decoded = PSKEnvelopeCodec.decode(encoded)
-val result = PSKCrypto.decryptMessage(decoded, recipientKeys.privateKey, recipientKeys.publicKey, currentPSK)
-result?.let { println(it.text) }
+`PQ` and `PQProtocol` provide low-level X25519 + ML-KEM-768 sessions: a 2366-byte handshake (id `0x04`), data messages with a 78-byte header (id `0x05`), and ACPQ announcements. These notes use version byte `0x02`. They require application orchestration; the high-level client processes standard envelopes. The sender history copy requires the sender's ML-KEM secret as well as X25519. See the [complete protocol API](specs/protocol/protocol.spec.md#hybrid-ml-kem-export-index).
 
-// Exchange PSKs via URI
-val uri = PSKExchangeURI(address = "ALGO_ADDRESS", psk = psk, label = "My Chat")
-val uriString = uri.encode() // algochat-psk://v1?addr=...&psk=...&label=...
-val parsed = PSKExchangeURI.decode(uriString)
+## API and verification
 
+The canonical contracts describe [protocol primitives](specs/protocol/protocol.spec.md), [PSK state](specs/psk/psk.spec.md), [client, models, and storage](specs/client/client.spec.md), and [fixture evidence](specs/cross-vectors/cross-vectors.spec.md). Production dependencies are Bouncy Castle, Kotlin coroutines, and Kotlin serialization, as pinned in [the build](build.gradle.kts); no Algorand Java SDK is bundled.
 
-PSK envelope wire format (130-byte header):
-
-[0]       version (0x01)
-[1]       protocolId (0x02)
-[2..5]    ratchetCounter (4 bytes, big-endian)
-[6..37]   senderPublicKey (32 bytes)
-[38..69]  ephemeralPublicKey (32 bytes)
-[70..81]  nonce (12 bytes)
-[82..129] encryptedSenderKey (48 bytes)
-[130..]   ciphertext + 16-byte tag
-
-
-## API Reference
-
-### Core Classes
-
-| Class | Description |
-|-------|-------------|
-| `AlgoChatClient` | High-level client for encrypted messaging |
-| `AlgoChatConfig` | Configuration (network, caching, key discovery) |
-| `Keys` | Key derivation and X25519 operations |
-| `Crypto` | Message encryption/decryption |
-| `PSKCrypto` | PSK-encrypted messaging |
-| `ChatEnvelope` | Message envelope structure |
-| `DecryptedContent` | Decryption result with optional reply context |
-
-### Key Types
-
-| Type | Description |
-|------|-------------|
-| `KeyPair` | X25519 key pair (private + public) |
-| `DiscoveredKey` | Discovered public key with verification status |
-| `Message` | Chat message with metadata |
-| `Conversation` | Conversation thread with a participant |
-| `ReplyContext` | Reply-to message reference |
-
-### Exceptions
-
-| Exception | When thrown |
-|-----------|-------------|
-| `AlgoChatException.EncryptionFailed` | Message too large or encryption error |
-| `AlgoChatException.DecryptionFailed` | Invalid envelope or decryption error |
-| `AlgoChatException.KeyDerivationFailed` | Invalid seed length |
-| `AlgoChatException.PublicKeyNotFound` | Recipient key not found on chain |
-| `AlgoChatException.InvalidEnvelope` | Bytes are not a valid AlgoChat message |
-
-## Cross-Implementation Compatibility
-
-This implementation is fully compatible with:
-- [AlgoChat](https://github.com/CorvidLabs/algochat) (TypeScript, Swift, Python, Rust, and Go)
+Shared vector tests provide scoped compatibility evidence across the six ports. Kotlin's legacy `CrossImplTest` reads optional `.hex` files and can return without exercising a producer; PQ parity uses the committed `vectors/pq-mlkem768.json`. See the [accuracy and implementation gap ledger](../docs/ACCURACY.md) for current limits.
 
 ## License
 

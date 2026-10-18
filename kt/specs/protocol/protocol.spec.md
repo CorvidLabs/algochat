@@ -66,7 +66,7 @@ Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envel
 | `signEncryptionKey` | Existing protocol symbol; its behavior and invariants are defined by the owning API group below. |
 | `verifyEncryptionKey` | Existing protocol symbol; its behavior and invariants are defined by the owning API group below. |
 | `verifyEncryptionKeyBytes` | Existing protocol symbol; its behavior and invariants are defined by the owning API group below. |
-| `fingerprint` | Existing protocol symbol; its behavior and invariants are defined by the owning API group below. |
+| `fingerprint` | Formats the first eight SHA-256 bytes as uppercase hexadecimal in four space-separated groups. |
 | `VERSION` | Existing protocol symbol; its behavior and invariants are defined by the owning API group below. |
 | `PROTOCOL_ID` | Existing protocol symbol; its behavior and invariants are defined by the owning API group below. |
 | `HEADER_SIZE` | Fixed v1 header size, 126 bytes. |
@@ -105,13 +105,76 @@ The complete member-level contract also includes these callable operations, fiel
 
 `encryptMessage`, `encryptReply`, `decryptMessage`, `version`, `protocolId`, `senderPublicKey`, `ephemeralPublicKey`, `nonce`, `encryptedSenderKey`, `ciphertext`, `KeyPair`, `privateKey`, `publicKey`, `Keys`, `deriveKeysFromSeed`, `generateEphemeralKeyPair`, `x25519Ecdh`, `publicKeyToBytes`, `publicKeyFromBytes`, `text`, `replyTo`, `txid`, `preview`, `SIGNATURE_SIZE`, `signEncryptionKey`, `verifyEncryptionKey`, `verifyEncryptionKeyBytes`, `fingerprint`, `VERSION`, `PROTOCOL_ID`, `HEADER_SIZE`, `TAG_SIZE`, `ENCRYPTED_SENDER_KEY_SIZE`, `MAX_NOTE_SIZE`, `MAX_PAYLOAD_SIZE`, `paymentFee`, `NONCE_SIZE`, `PUBLIC_KEY_SIZE`, `KEY_DERIVATION_SALT`, `KEY_DERIVATION_INFO`, `ENCRYPTION_INFO_PREFIX`, `SENDER_KEY_INFO_PREFIX`, `MINIMUM_PAYMENT`, `DecryptedContent`, `replyToId`, `replyToPreview`, `InvalidPublicKey`, `KeyDerivationFailed`, `InvalidSignature`, `EncryptionFailed`, `DecryptionFailed`, `InvalidEnvelope`, `IndexerNotConfigured`, `PublicKeyNotFound`, `UnverifiedKey`, `InvalidRecipient`, `TransactionFailed`, `InsufficientBalance`, `KeyNotFound`, `StorageFailed`, and `MessageNotFound`.
 
+### Hybrid ML-KEM export index
+
+`PQ.kt` is a shipped low-level API. The high-level client does not dispatch the handshake/data notes automatically.
+
+| Export | Contract |
+|---|---|
+| `PQProtocol` | Wire/constants namespace: `VERSION` 0x02, `HANDSHAKE_ID` 0x04, `DATA_ID` 0x05, `MLKEM_EK_SIZE` 1184, `MLKEM_CT_SIZE` 1088, `EK_HASH_SIZE` 32, `ENCRYPTED_SESSION_KEY_SIZE` 48, `HANDSHAKE_SIZE` 2366, `DATA_HEADER_SIZE` 78, and `MAX_PAYLOAD_SIZE` 4002. |
+| `PQProtocol.ANNOUNCE_MAGIC`, `ANNOUNCE_VERSION`, `ANNOUNCE_UNSIGNED_SIZE`, `ANNOUNCE_SIGNED_SIZE` | ACPQ prefix, version 0x01, unsigned size 1189, signed size 1253. |
+| `MLKEMKeyPair` | `encapsKey` bytes and `decapsulationKey` Bouncy Castle object seeded from HKDF-derived d || z; value equality/hashing compare the encapsulation key and retained seed. |
+| `MLKEMEncapsulation` | `ciphertext` and `sharedSecret` byte arrays with content equality/hash. |
+| `PQSession` | `sessionKey`, `senderPublicKey`, `recipientPublicKey`, and `handshakeId` arrays with content equality/hash; id is SHA-256 of the handshake note. |
+| `PQAnnouncement` | Parsed `encapsKey` and `isVerified` fields with content equality/hash. |
+| `PQHandshake` | Handshake `note` bytes and sender `session`. |
+| `PQ` | Namespace for the hybrid session and announcement operations below. |
+| `deriveMLKEMKeyPair` | Derives ML-KEM-768 from an exact 32-byte account seed through fixed HKDF d/z domains. |
+| `encapsulate` | Returns `MLKEMEncapsulation`; optional explicit randomness supports deterministic vectors, otherwise uses a CSPRNG. |
+| `decapsulate` | Recovers a shared secret using the recipient ML-KEM key pair. |
+| `deriveHybridPQKey` | HKDF-combines X25519 then ML-KEM secrets and binds identities, ephemeral key, KEM ciphertext, and encapsulation-key hash. |
+| `initiatePQSession` | Returns the one-note handshake and sender session; optional explicit randomness supports vectors. |
+| `acceptPQSession` | Checks recipient identity and key hash and reconstructs a recipient session. |
+| `openPQSessionAsSender` | Reopens sent history with sender X25519 and ML-KEM secrets. |
+| `encryptPQMessage` | Encrypts at most 4002 UTF-8 bytes with fresh nonce and full 78-byte data-header AAD. |
+| `decryptPQMessage` | Checks session identity, authenticates the header/data, and returns plaintext. |
+| `isPQHandshake`, `isPQMessage` | Recognize handshake/data version, id, and structural length. |
+| `pqAnnouncementSigningInput` | SHA-256 digest of announcement signing label, version, and encapsulation key. |
+| `encodePQKeyAnnouncement` | Emits unsigned or Ed25519-signed ACPQ key announcements. |
+| `parsePQKeyAnnouncement` | Returns an unverified unsigned or verified signed announcement; malformed/invalid signed input returns null. |
+| `isPQKeyAnnouncement` | Recognizes the ACPQ prefix before standard key parsing. |
+
+Each parsed member below has the following owning-type meaning (some unqualified names also occur in the standard API):
+
+| Export | Contract |
+|---|---|
+| `HANDSHAKE_ID` | PQ handshake protocol discriminator, 0x04. |
+| `DATA_ID` | PQ data protocol discriminator, 0x05. |
+| `MLKEM_EK_SIZE` | Encapsulation key width, 1184 bytes. |
+| `MLKEM_CT_SIZE` | KEM ciphertext width, 1088 bytes. |
+| `EK_HASH_SIZE` | Encapsulation-key SHA-256 hash width, 32 bytes. |
+| `ENCRYPTED_SESSION_KEY_SIZE` | Wrapped session-key width, 48 bytes. |
+| `HANDSHAKE_SIZE` | PQ one-note handshake width, 2366 bytes. |
+| `DATA_HEADER_SIZE` | PQ data authenticated header width, 78 bytes. |
+| `ANNOUNCE_MAGIC` | ACPQ prefix bytes. |
+| `ANNOUNCE_VERSION` | ACPQ format version, 0x01. |
+| `ANNOUNCE_UNSIGNED_SIZE` | Unsigned ACPQ note width, 1189 bytes. |
+| `ANNOUNCE_SIGNED_SIZE` | Signed ACPQ note width, 1253 bytes. |
+| `encapsKey` | ML-KEM encapsulation key bytes in key-pair/announcement values. |
+| `decapsulationKey` | Bouncy Castle private-key material in `MLKEMKeyPair`. |
+| `sharedSecret` | ML-KEM shared secret in `MLKEMEncapsulation`. |
+| `sessionKey` | Hybrid symmetric key in `PQSession`. |
+| `recipientPublicKey` | Recipient X25519 identity in the session and parsed handshake. |
+| `handshakeId` | SHA-256 identifier binding a data note to its handshake. |
+| `isVerified` | Whether ACPQ Ed25519 signature verification succeeded. |
+| `note` | Encoded handshake bytes in `PQHandshake`. |
+| `session` | Sender-side established session in `PQHandshake`. |
+| `kemCiphertext` | Recipient ML-KEM ciphertext in the private parsed-handshake record; surfaced by the member parser, not a public library operation. |
+| `encapsKeyHash` | Recipient encapsulation-key hash in the private parsed-handshake record. |
+| `senderKemCiphertext` | Sender ML-KEM ciphertext in the private parsed-handshake record. |
+| `wrappedSessionKey` | Sender's encrypted session-key copy in the private parsed-handshake record. |
+| `isPQHandshake` | Recognizes the exact handshake length and version/id bytes. |
+| `isPQMessage` | Recognizes minimum PQ data length and version/id bytes. |
+
+`PQTest` uses the committed `vectors/pq-mlkem768.json` for native deterministic parity. The legacy sibling-fixture suite is separate and conditional. See the [accuracy ledger](../../../docs/ACCURACY.md).
+
 ## Invariants
 
 1. A v1 envelope is version byte, protocol byte, 32-byte sender key, 32-byte ephemeral key, 12-byte nonce, 48-byte encrypted sender key, then authenticated ciphertext.
 2. Encryption uses a fresh ephemeral X25519 pair and nonce; HKDF context binds the expected sender and recipient keys.
 3. Both sender and recipient can decrypt the same envelope, but unrelated private keys cannot authenticate it.
 4. Reply metadata is optional; decoding valid legacy UTF-8 plaintext remains backward compatible.
-5. Key announcements sign exactly the encryption public-key bytes with Ed25519 and fingerprints are lowercase hexadecimal SHA-256.
+5. Key announcements sign exactly the encryption public-key bytes with Ed25519 and fingerprints are the first eight SHA-256 bytes, uppercase hexadecimal grouped as four groups of four characters.
 6. A standard note is at most 4096 bytes. The header stays 126 bytes and the tag stays 16 bytes, so plaintext is at most 3954 bytes. A plaintext of 882 bytes still fits in 1024 bytes. One byte past 3954 is rejected before a transaction is built.
 7. The payment fee is one minimum fee plus the note surcharge. Bytes through 1024 add nothing. Each later byte adds one ten-thousandth of the minimum fee, rounded up once. This library has no Falcon signer, so the scheme contribution stays one minimum fee. Protocol document revision for this ceiling is 1.2.1.
 
@@ -144,10 +207,10 @@ Then EncryptionFailed is thrown and no envelope is returned
 | Error | When | Behavior |
 |---|---|---|
 | `InvalidEnvelope` | Input is shorter than the fixed header or has malformed fields. | Decoding stops without reading beyond the supplied bytes. |
-| `UnsupportedVersion` | The version or protocol byte is not AlgoChat v1. | Reject instead of attempting incompatible decryption. |
+| `InvalidEnvelope` | The version is neither `0x01` nor `0x02`, or the protocol marker is unsupported by this codec. | Reject instead of attempting incompatible decryption. |
 | `DecryptionFailed` | AEAD authentication fails or the envelope is not for the supplied identity. | Return no unauthenticated plaintext. |
-| `InvalidKey` | Public-key or address bytes have an invalid representation. | Reject before ECDH or signature verification. |
-| `InvalidPayload` | Structured payload bytes are neither supported JSON nor valid legacy content. | Surface a typed payload failure. |
+| `InvalidPublicKey` / `IllegalArgumentException` | A key or fixed-size input is malformed. | Reject according to the owning key/codec API. |
+| Legacy payload fallback | Structured payload parsing does not yield a supported payload. | Return the text fallback; there is no `InvalidPayload` exception in this API. |
 | `EncryptionFailed` | Plaintext exceeds 3954 bytes. | Reject before an envelope or transaction is built. |
 
 ## Dependencies
@@ -167,4 +230,3 @@ Then EncryptionFailed is thrown and no envelope is returned
 ## SDD Adoption
 
 The base protocol contract was established from the existing production sources and envelope, payload, signature, cryptography, and cross-implementation tests. Adoption changes governance only; it does not change wire bytes or cryptographic behavior.
-

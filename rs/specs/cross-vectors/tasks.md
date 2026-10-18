@@ -18,3 +18,6 @@ No migration-specific behavior gap is accepted.
 - **Verification**: native SpecSync evidence
 - **Design**: n/a
 - **Implementation review**: governance/spec-only diff
+
+- [x] Add the existing `src/bin/pqcross.rs` test/mesh process to canonical source coverage and describe its JSON-line operations.
+- [x] Distinguish the mesh wrapper and optional `/tmp/pq-live.json` consumer from actual live transaction evidence.

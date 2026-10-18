@@ -13,8 +13,9 @@ import java.nio.ByteOrder
  * 1. Session PSK: derived from the initial PSK and a session index
  * 2. Position PSK: derived from the session PSK and a position within the session
  *
- * This allows efficient forward secrecy while limiting the amount of
- * key material that needs to be derived for each message.
+ * This separates position keys while limiting the derivation work per message.
+ * It does not provide forward secrecy: the initial PSK deterministically
+ * derives every past and future position key.
  */
 object PSKRatchet {
 

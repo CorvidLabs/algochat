@@ -23,8 +23,10 @@ import java.security.SecureRandom
  * Hybrid X25519 + ML-KEM-768 session.
  *
  * The handshake is one note. The steady-state message is a separate note under
- * the hybrid session key. The long-term ML-KEM key opens every handshake sent
- * to that account, so this is not forward secrecy.
+ * the hybrid session key. The recipient's long-term ML-KEM key decapsulates
+ * each addressed handshake; recovering the session also needs the recipient's
+ * X25519 key. The sender copy likewise needs both sender long-term keys.
+ * This does not provide forward secrecy.
  */
 object PQProtocol {
     /** Header version byte for hybrid sessions. Not the v1 envelope version. */

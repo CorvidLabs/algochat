@@ -2,7 +2,7 @@
 
 This document explains how AlgoChat works end to end: the keys, the envelope on the wire, how a message is encrypted and read, how peers find each other's keys, and how the envelope rides on an Algorand payment. It also covers the machinery in this repository (validation, the status dashboard, the trust gate, GitHub Pages).
 
-The narrative below describes protocol 1.2.1 (`0x01` and `0x02`). Protocol 1.3.0 adds an optional hybrid session in [PROTOCOL.md](../PROTOCOL.md) section 5.7. All six libraries implement it, including Extra lock. On LocalNet, rounds 41641 through 41736, each library's empty, small, large, and maximum notes for the 2366-byte handshake opened in the other five. Rounds 41059 through 41154 used the withdrawn 1278-byte handshake. The parity record is [PARITY.md](../PARITY.md). The normative text is PROTOCOL.md. If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
+This narrative covers protocol 1.3.0: standard (`0x01`), Extra lock (`0x02`), and the separate optional hybrid session (`0x04`/`0x05`). All six libraries contain low-level helpers for these modes. Their normal high-level conversation send paths do not automatically negotiate hybrid sessions; applications must integrate key discovery, mode selection, handshake transport, and session recovery explicitly. The reported LocalNet matrix from 2026-10-17 is historical interoperability evidence in [PARITY.md](../PARITY.md), which distinguishes the current 2366-byte handshake from the withdrawn 1278-byte layout. Current implementation and qualification gaps are tracked in [ACCURACY.md](ACCURACY.md). The normative text is PROTOCOL.md. If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
 
 Notation: `‖` means byte concatenation (PROTOCOL.md writes it `||`). `HKDF(ikm, salt, info)` is HKDF-SHA256 with a 32-byte output. `seal` and `open` are ChaCha20-Poly1305 encrypt and decrypt.
 
@@ -23,14 +23,14 @@ Notation: `‖` means byte concatenation (PROTOCOL.md writes it `||`). `HKDF(ikm
 
 ## 1. Purpose
 
-AlgoChat lets two people attach an end-to-end encrypted note to an ordinary Algorand payment, so that only the sender and the recipient can read it, with no mailbox contract, relay server or router app in between ([INTENT.md](../INTENT.md), [hi/send.md](../hi/send.md) `SEND-1`). This repository is the protocol itself, not an app: it holds the specification, the implementation guide, the test vectors, the threat model, and a registry of the implementations that follow it. Its readers are the people who build AlgoChat libraries (Swift, TypeScript, Python, Rust, Kotlin, Go) and the clients built on them. The protocol is honest about its limits: addresses, timing and message size stay public on-chain, and it does not provide forward secrecy ([hi/honest.md](../hi/honest.md) `HONEST-1`, `HONEST-2`).
+AlgoChat lets two people attach an end-to-end encrypted note to an ordinary Algorand payment, so that only the sender and the recipient can read it, with no mailbox contract, relay server or router app in between ([INTENT.md](../INTENT.md), [hi/send.md](../hi/send.md) `SEND-1`). This monorepo holds the protocol specification, implementation guide, test vectors, threat model, six language libraries, and a registry of six libraries. It does not itself provide a standalone messaging app. Its readers are the people who build AlgoChat libraries (Swift, TypeScript, Python, Rust, Kotlin, Go) and the clients built on them. The protocol is honest about its limits: addresses, timing and message size stay public on-chain, and it does not provide forward secrecy ([hi/honest.md](../hi/honest.md) `HONEST-1`, `HONEST-2`).
 
 
 ## 2. Context
 
 ### 2.1 The protocol at run time
 
-Two clients talk only through the public Algorand chain. A sender builds an envelope, puts it in the `note` of a payment, and submits it to an algod node. Readers find AlgoChat payments through an indexer by note prefix. The only things ever exchanged outside the chain are the optional pre-shared key (PSK) for mode `0x02` and, when a peer has never sent an AlgoChat payment, their public key.
+Two clients talk only through the public Algorand chain. A sender builds an envelope, puts it in the `note` of a payment, and submits it to an algod node. Readers find AlgoChat payments through an indexer by note prefix. The optional pre-shared key (PSK) for mode `0x02` is exchanged outside the chain. Public encryption keys can also be exchanged out of band; X25519 and ML-KEM announcements are separate formats.
 
 ```mermaid
 flowchart LR
@@ -80,18 +80,18 @@ flowchart TB
     HARNESS -- "cross-checks" --> LIBS
     LIBS --> CLIENTS
     REG --> STATUS
-    STATUS -- "runs each library's own tests" --> LIBS
+    STATUS -- "runs configured subset of tests" --> LIBS
     STATUS --> PAGES
 ```
 
-The implementation and client lists come from [README.md](../README.md) and [implementations.json](../implementations.json). Both list Go in this monorepo, `CorvidLabs/algochat`.
+The [README](../README.md) links the app separately; [implementations.json](../implementations.json) lists the six monorepo libraries, including Go, for the status renderer. The archived web client in this diagram is retained only by the legacy status workflow/history, not the library registry.
 
 
 ## 3. Components
 
 ### 3.1 Protocol layers
 
-The protocol is four thin, loosely coupled layers: protocol 1.2 added Falcon-1024 at the account layer without changing a single envelope byte. Protocol 1.2.1 keeps those envelopes and raises the note ceiling to 4096 bytes ([PROTOCOL.md §14](../PROTOCOL.md#14-version-history)).
+The protocol has four layers. Protocol 1.2 added Falcon-1024 at the account layer without changing envelope bytes. Protocol 1.2.1 raises the note ceiling to 4096 bytes; 1.3 adds optional hybrid session envelopes ([PROTOCOL.md §14](../PROTOCOL.md#14-version-history)).
 
 ```mermaid
 flowchart TB
@@ -101,6 +101,7 @@ flowchart TB
         ED["Ed25519 account<br/>signs with sig"]
         FA["Falcon-1024 account<br/>signs with pqsig"]
         PSK["initial PSK, 32 bytes<br/>out of band, optional"]
+        MK["ML-KEM-768 key pair<br/>HKDF from entropy, optional"]
     end
     subgraph L2["Payload: inside the ciphertext"]
         PL["UTF-8 JSON<br/>text, replyTo, or key-publish"]
@@ -108,14 +109,17 @@ flowchart TB
     subgraph L3["Envelope: the note bytes"]
         E1["0x01 standard<br/>126-byte header"]
         E2["0x02 PSK<br/>130-byte header"]
+        E4["0x04 hybrid handshake<br/>2366 bytes"]
+        E5["0x05 hybrid message<br/>78-byte header"]
     end
     subgraph L4["Transport and discovery: public chain"]
         TX["Payment transaction<br/>note up to 4096 bytes"]
-        DISC["Indexer search<br/>0x0101, 0x0201, 0x0102, 0x0202"]
+        DISC["Indexer dispatch<br/>0x0101, 0x0201, 0x0102, 0x0202,<br/>0x0204, 0x0205; ACPQ announcements"]
     end
     MN --> XK
     MN --> ED
     MN --> FA
+    MN --> MK
     PL --> E1
     PL --> E2
     XK --> E1
@@ -123,6 +127,12 @@ flowchart TB
     PSK --> E2
     E1 --> TX
     E2 --> TX
+    XK --> E4
+    MK --> E4
+    E4 -- "establishes session key" --> E5
+    PL --> E5
+    E4 --> TX
+    E5 --> TX
     ED -- "authorizes" --> TX
     FA -- "authorizes" --> TX
     TX --> DISC
@@ -130,9 +140,9 @@ flowchart TB
 
 | Layer | What it owns | Spec |
 | --- | --- | --- |
-| Identity and keys | Mnemonic entropy, the long-term X25519 key pair, the Algorand account (Ed25519 or Falcon-1024), the optional PSK and its counter state | [§4](../PROTOCOL.md#4-key-derivation), [§8.6](../PROTOCOL.md#86-psk-exchange) |
-| Payload | JSON message shapes: text, reply, key-publish | [§9](../PROTOCOL.md#9-message-payload) |
-| Envelope | Byte layout, protocol id, per-message ephemeral key, nonce, sender key wrap, ciphertext | [§5](../PROTOCOL.md#5-envelope-format) to [§8](../PROTOCOL.md#8-psk-ratcheting-mode-protocol-0x02) |
+| Identity and keys | Mnemonic entropy, the long-term X25519 key pair, the Algorand account (Ed25519 or Falcon-1024), the optional PSK and its counter state, optional ML-KEM keys and hybrid session keys | [§4](../PROTOCOL.md#4-key-derivation), [§8.6](../PROTOCOL.md#86-psk-exchange) |
+| Payload | JSON message shapes: text, reply, key-publish; legacy raw UTF-8 text | [§9](../PROTOCOL.md#9-message-payload) |
+| Envelope | Byte layout, version AAD rules, protocol id, ephemeral handshake/message key material, sender wrap, session reference, ciphertext | [§5](../PROTOCOL.md#5-envelope-format) to [§8](../PROTOCOL.md#8-psk-ratcheting-mode-protocol-0x02) |
 | Transport and discovery | Payment fields, fees, note-prefix filtering, finding a peer's X25519 key | [§10](../PROTOCOL.md#10-transport-layer) |
 
 ### 3.2 Key derivation
@@ -166,21 +176,21 @@ Rules that matter (all from [PROTOCOL.md §4](../PROTOCOL.md#4-key-derivation)):
 | [TEST-VECTORS.md](../TEST-VECTORS.md) | Byte-exact vectors for key derivation, envelopes, round trips, PSK schedule, size limits |
 | [SECURITY.md](../SECURITY.md) | Threat model, PSK threat matrix, key handling guidance, vulnerability reporting |
 | [README.md](../README.md) | Overview, limits, economics, implementation list |
-| [INTENT.md](../INTENT.md), [hi/](https://github.com/CorvidLabs/protocol-algochat/tree/main/hi) | Human intent: what the protocol should be, with permanent criterion ids |
-| [implementations.json](../implementations.json) | Registry of implementations the status dashboard tests |
-| [scripts/validate.ts](https://github.com/CorvidLabs/protocol-algochat/blob/main/scripts/validate.ts) | The `validate` task: the five protocol documents exist and are non-empty, registry ids are present and unique |
-| [scripts/generate-status.ts](https://github.com/CorvidLabs/protocol-algochat/blob/main/scripts/generate-status.ts) | Builds `status.html` and `badges/*.svg` from per-implementation test results |
-| [index.html](../index.html), [status.html](../status.html), [_config.yml](https://github.com/CorvidLabs/protocol-algochat/blob/main/_config.yml), [_includes/head-custom.html](https://github.com/CorvidLabs/protocol-algochat/blob/main/_includes/head-custom.html) | The GitHub Pages site: hand-written landing page, generated dashboard, Jekyll config, Mermaid rendering |
-| [.github/workflows/status.yml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.github/workflows/status.yml) | Daily implementation tests, dashboard generation, Pages deploy |
-| [.github/workflows/trust.yml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.github/workflows/trust.yml) | The CorvidLabs trust gate on every pull request and push to `main` |
-| [fledge.toml](../fledge.toml), [.trust.toml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.trust.toml), [.augur.toml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.augur.toml), [.attest.json](https://github.com/CorvidLabs/protocol-algochat/blob/main/.attest.json), [.specsync/](https://github.com/CorvidLabs/protocol-algochat/tree/main/.specsync) | Task, lane and trust-gate configuration, and SpecSync change records |
+| [INTENT.md](../INTENT.md), [hi/](https://github.com/CorvidLabs/algochat/tree/main/hi) | Human intent: what the protocol should be, with permanent criterion ids |
+| [implementations.json](../implementations.json) | Six-library registry consumed by the status renderer; the legacy workflow tests a subset and omits Go |
+| [scripts/validate.ts](https://github.com/CorvidLabs/algochat/blob/main/scripts/validate.ts) | The `validate` task: the five protocol documents exist and are non-empty, registry ids are present and unique |
+| [scripts/generate-status.ts](https://github.com/CorvidLabs/algochat/blob/main/scripts/generate-status.ts) | Builds `status.html` and `badges/*.svg` from per-implementation test results |
+| [index.html](../index.html), [status.html](../status.html), [_config.yml](https://github.com/CorvidLabs/algochat/blob/main/_config.yml), [_includes/head-custom.html](https://github.com/CorvidLabs/algochat/blob/main/_includes/head-custom.html) | The GitHub Pages site: hand-written landing page, generated dashboard, Jekyll config, Mermaid rendering |
+| [.github/workflows/status.yml](https://github.com/CorvidLabs/algochat/blob/main/.github/workflows/status.yml) | Daily implementation tests, dashboard generation, Pages deploy |
+| [.github/workflows/trust.yml](https://github.com/CorvidLabs/algochat/blob/main/.github/workflows/trust.yml) | The CorvidLabs trust gate on pull requests and pushes to `main` matching its path filters |
+| [fledge.toml](../fledge.toml), [.trust.toml](https://github.com/CorvidLabs/algochat/blob/main/.trust.toml), [.augur.toml](https://github.com/CorvidLabs/algochat/blob/main/.augur.toml), [.attest.json](https://github.com/CorvidLabs/algochat/blob/main/.attest.json), [.specsync/](https://github.com/CorvidLabs/algochat/tree/main/.specsync) | Task, lane and trust-gate configuration, and SpecSync change records |
 
 
 ## 4. Key flows
 
 ### 4.1 Find a peer's encryption key
 
-To write to someone you need their X25519 public key. Every AlgoChat envelope carries its sender's key in clear, in the header, so any AlgoChat payment someone has sent reveals it, with no decryption needed. The pseudocode in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (Key Discovery) searches the peer's sent payments for standard-mode notes first, then PSK-mode notes, and returns the first envelope that parses.
+To write to someone you need their X25519 public key. Every AlgoChat envelope carries its sender's key in clear, in the header, so any AlgoChat payment someone has sent reveals it, with no decryption needed. The pseudocode in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (Key Discovery) scans both accepted envelope versions of standard and PSK notes. The current TypeScript discovery also searches self-payment key announcements with pagination and prefers verified signed announcements. Hybrid ML-KEM announcements require separate parsing and application integration.
 
 ```mermaid
 sequenceDiagram
@@ -188,12 +198,12 @@ sequenceDiagram
     participant A as Alice's client
     participant I as Indexer
     actor B as Bob
-    A->>I: search payments sent by Bob, note prefix 0x0101 or 0x0201, limit 100
+    A->>I: search payments sent by Bob, note prefix 0x0101 or 0x0201, pages of 100
     I-->>A: Bob's standard-mode AlgoChat payments
     alt an envelope parses
         Note over A: Bob's key = envelope.sender_pubkey, read from the header
     else none found
-        A->>I: search payments sent by Bob, note prefix 0x0102 or 0x0202, limit 100
+        A->>I: search payments sent by Bob, note prefix 0x0102 or 0x0202, pages of 100
         I-->>A: Bob's PSK-mode AlgoChat payments
         alt an envelope parses
             Note over A: Bob's key = envelope.sender_pubkey, read from the header
@@ -209,7 +219,7 @@ Three discovery methods are defined ([PROTOCOL.md §10.2](../PROTOCOL.md#102-key
 
 ### 4.2 Send a standard message (`0x01`)
 
-Every message gets a fresh ephemeral X25519 key pair. The message key comes from ephemeral-to-recipient ECDH. The same message key is then wrapped for the sender under a second key from ephemeral-to-sender ECDH, which is what lets the sender re-read their own history from the chain on any device, without keeping plaintext ([PROTOCOL.md §2](../PROTOCOL.md#2-design-goals) goal 3, [§6](../PROTOCOL.md#6-encryption)).
+Every standard message gets a fresh ephemeral X25519 key pair. The message key comes from ephemeral-to-recipient ECDH. The same message key is then wrapped for the sender under a second key from ephemeral-to-sender ECDH, which is what lets the sender re-read their own history from the chain on any device, without keeping plaintext ([PROTOCOL.md §2](../PROTOCOL.md#2-design-goals) goal 3, [§6](../PROTOCOL.md#6-encryption)).
 
 ```mermaid
 sequenceDiagram
@@ -222,8 +232,8 @@ sequenceDiagram
     U->>C: text for a recipient address
     Note over C: payload = JSON with "text", at most 3954 bytes<br/>recipient X25519 key from flow 4.1
     C->>K: encrypt payload for recipient_pub
-    Note over K: eph = fresh X25519 key pair from RANDOM(32)<br/>shared = X25519(eph_priv, recipient_pub)<br/>key = HKDF(shared, eph_pub, "AlgoChatV1" ‖ sender_pub ‖ recipient_pub)<br/>nonce = RANDOM(12)<br/>ciphertext = seal(key, nonce, payload)
-    Note over K: sender_shared = X25519(eph_priv, sender_pub)<br/>sender_key = HKDF(sender_shared, eph_pub, "AlgoChatV1-SenderKey" ‖ sender_pub)<br/>encrypted_sender_key = seal(sender_key, nonce, key)<br/>eph_priv is discarded, never stored
+    Note over K: eph = fresh X25519 key pair from RANDOM(32)<br/>shared = X25519(eph_priv, recipient_pub)<br/>key = HKDF(shared, eph_pub, "AlgoChatV1" ‖ sender_pub ‖ recipient_pub)<br/>nonce = RANDOM(12)
+    Note over K: sender_shared = X25519(eph_priv, sender_pub)<br/>sender_key = HKDF(sender_shared, eph_pub, "AlgoChatV1-SenderKey" ‖ sender_pub)<br/>encrypted_sender_key = seal(sender_key, nonce, key, empty AAD)<br/>payload AAD = empty for v1, full 126-byte header for v2<br/>ciphertext = seal(key, nonce, payload, payload AAD)<br/>eph_priv is discarded, never stored
     K-->>C: envelope version 0x01 or 0x02, protocol 0x01, then sender_pub, eph_pub, nonce, encrypted_sender_key, ciphertext
     C->>N: get suggested params
     N-->>C: suggested params
@@ -236,13 +246,13 @@ sequenceDiagram
 Points that trip implementers:
 
 - One nonce is used twice, under two different keys: once for the message and once for the sender key wrap. That is how the spec defines it ([§6.2](../PROTOCOL.md#62-sender-key-encryption-self-decryption)), and the test vectors depend on it.
-- The spec's `seal` calls pass no associated data. Header fields are bound indirectly: both public keys are in the HKDF `info`, the ephemeral key is the HKDF `salt`, and in PSK mode the counter selects the PSK. Changing any of them yields a different key and the tag check fails.
+- Envelope version `0x01` uses empty associated data. Version `0x02` authenticates the entire 126-byte standard or 130-byte PSK header as payload AAD, including the wrapped sender key. The sender-key wrap itself uses empty AAD in both versions. Compute it before sealing a version `0x02` payload. TypeScript writes version `0x02`; the other five libraries currently write version `0x01`, and all six accept both.
 - The payment `amount` is independent of the protocol. The spec shows 0; the README notes any amount works, and §10.3 mentions 1,000 µAlgo as common.
 - Test Case 3.1 in [TEST-VECTORS.md](../TEST-VECTORS.md#test-case-31-static-key-encryption) walks this whole flow with fixed keys and nonce, down to the 169-byte envelope.
 
 ### 4.3 Read a message, as recipient or as sender
 
-A client reads its conversations back from the indexer, filtering by note prefix ([§10.3](../PROTOCOL.md#103-fees)). For each note it decides whether it is the sender or the recipient by comparing its own X25519 public key with `sender_pubkey` ([IMPLEMENTATION.md](../IMPLEMENTATION.md), Message Decryption).
+A client reads its conversations back from the indexer, filtering by note prefix ([§10.3](../PROTOCOL.md#103-fees)). For each classical note its crypto helper selects the sender or recipient decryption path by comparing its own X25519 public key with `sender_pubkey` ([IMPLEMENTATION.md](../IMPLEMENTATION.md), Message Decryption).
 
 ```mermaid
 sequenceDiagram
@@ -257,10 +267,10 @@ sequenceDiagram
         alt not version 0x01 or 0x02, unknown protocol byte, or too short
             K-->>C: INVALID_ENVELOPE, UNKNOWN_VERSION or UNKNOWN_PROTOCOL, skip it
         else parsed
-            alt my key equals sender_pubkey, so I sent it
-                Note over K: sender_shared = X25519(my_priv, eph_pub)<br/>sender_key = HKDF(sender_shared, eph_pub, "AlgoChatV1-SenderKey" ‖ my_pub)<br/>key = open(sender_key, nonce, encrypted_sender_key)<br/>payload = open(key, nonce, ciphertext)
+            alt my key equals sender_pubkey, use sender decryption path
+                Note over K: sender_shared = X25519(my_priv, eph_pub)<br/>sender_key = HKDF(sender_shared, eph_pub, "AlgoChatV1-SenderKey" ‖ my_pub)<br/>key = open(sender_key, nonce, encrypted_sender_key, empty AAD)<br/>payload = open(key, nonce, ciphertext, version payload AAD)
             else I am the recipient
-                Note over K: shared = X25519(my_priv, eph_pub)<br/>key = HKDF(shared, eph_pub, "AlgoChatV1" ‖ sender_pub ‖ my_pub)<br/>payload = open(key, nonce, ciphertext)
+                Note over K: shared = X25519(my_priv, eph_pub)<br/>key = HKDF(shared, eph_pub, "AlgoChatV1" ‖ sender_pub ‖ my_pub)<br/>payload = open(key, nonce, ciphertext, version payload AAD)
             end
             alt a tag check fails
                 K-->>C: DECRYPTION_FAILED, fail closed, no plaintext
@@ -273,7 +283,7 @@ sequenceDiagram
     end
 ```
 
-A flipped bit anywhere in the authenticated fields makes `open` fail, and the client must return nothing rather than partial plaintext ([hi/encrypt.md](../hi/encrypt.md) `ENCRYPT-1.a`). [SECURITY.md](../SECURITY.md#recommendations) asks for the same error for every authentication failure.
+For version `0x02`, modifying any fixed-header or ciphertext byte makes payload authentication fail. Version `0x01` has empty AAD and does not authenticate every header field directly. In either version, an authentication failure makes `open` fail, and the client must return nothing rather than partial plaintext ([hi/encrypt.md](../hi/encrypt.md) `ENCRYPT-1.a`). [SECURITY.md](../SECURITY.md#recommendations) asks for the same error for every authentication failure.
 
 ### 4.4 Set up a PSK and send in mode `0x02`
 
@@ -296,10 +306,10 @@ sequenceDiagram
     Note over AC,BC: each side persists sendCounter, peerLastCounter, seenCounters
     Note over AC,BC: Send, Alice to Bob
     Note over AC: c = sendCounter<br/>position_psk = schedule(initial_psk, c), see 5.3<br/>key = HKDF(shared ‖ position_psk, eph_pub, "AlgoChatV1-PSK" ‖ sender_pub ‖ recipient_pub)<br/>sender_key = HKDF(sender_shared ‖ position_psk, eph_pub, "AlgoChatV1-PSK-SenderKey" ‖ sender_pub)
-    AC->>CH: payment, note = 01 02 ‖ c as 4 bytes big-endian ‖ rest as in 0x01
+    AC->>CH: payment, note = version 01 or 02, protocol 02 ‖ c as 4 bytes big-endian ‖ remaining fields
     Note over AC: sendCounter = c + 1, persisted
     Note over CH,BC: Receive
-    CH-->>BC: note with prefix 0x0102
+    CH-->>BC: note with prefix 0x0102 or 0x0202
     Note over BC: replay and window checks on c, see 4.5<br/>position_psk from c, same hybrid key, open<br/>only on success: record c as seen, raise peerLastCounter
 ```
 
@@ -327,20 +337,20 @@ Test Case 4.4 in [TEST-VECTORS.md](../TEST-VECTORS.md#test-case-44-psk-counter-w
 
 ### 4.6 Publish the status dashboard
 
-This is the repository's own run-time flow. It keeps the public dashboard honest about which implementations pass their own tests.
+This is the configured dashboard flow, separate from release qualification. It reports result artifacts from its configured jobs; it does not establish complete cross-language conformance or current-head security.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant GA as status.yml test jobs
-    participant R as Implementation repos
+    participant R as Monorepo and archived web repo
     participant G as generate-status job
     participant D as deploy job
     participant P as GitHub Pages
-    Note over GA: daily at 06:00 UTC, manual dispatch, or a push to main or PR that touches implementations.json, scripts, or status.yml
-    par one job per implementation
-        GA->>R: check out swift, ts, py, rs, kt -algochat and algochat-web
-        R-->>GA: run that repo's own tests, upload ID.json with passing or failing
+    Note over GA: daily at 06:00 UTC or manual dispatch
+    par one job per configured implementation
+        GA->>R: check out this monorepo for Swift, TypeScript, Python, Rust, Kotlin; separately check out algochat-web
+        R-->>GA: run configured tests, upload ID.json with passing or failing
     end
     GA->>G: download every result into test-results
     Note over G: bun scripts/generate-status.ts writes status.html and badges
@@ -352,11 +362,11 @@ sequenceDiagram
     end
 ```
 
-Each test job records a failure as data instead of failing, and the generate and deploy jobs run with `if: always()`, so a failing library shows up as failing on the dashboard rather than blocking the deploy. The `status.html` and `badges/` committed in the repo are snapshots; the deployed copies are regenerated on every run.
+The workflow is intended to record test failures as data, and generation/deploy can continue after test failures. It currently omits Go, includes the archived web client, and contains result-artifact path mismatches for several subdirectory jobs. Its Swift pass detection can accept a passing marker despite a later failing exit. Treat missing or passing dashboard data as a limited signal, not proof that every library passed. The committed `status.html` and `badges/` are snapshots; see [ACCURACY.md](ACCURACY.md) for workflow gaps.
 
 ### 4.7 Open a hybrid session (`0x04`, then `0x05`)
 
-Everyday `0x01` and Extra lock `0x02` stay as above. A hybrid session is optional. The sender publishes one handshake note. Later messages on that session are shorter data notes. Byte `0x03` is not a public protocol id. The byte layout is [PROTOCOL.md](../PROTOCOL.md) section 5.7.
+Everyday `0x01` and Extra lock `0x02` stay as above. A hybrid session is optional. The sender obtains a trusted recipient X25519 key and ML-KEM encapsulation key, then publishes one handshake note. Later messages reuse that session key in shorter data notes. Byte `0x03` is not a public protocol id. The byte layout is [PROTOCOL.md](../PROTOCOL.md) section 5.7.
 
 ```mermaid
 sequenceDiagram
@@ -369,8 +379,10 @@ sequenceDiagram
     R->>R: decapsulate ML-KEM-768 and finish X25519
     S->>L: payment whose note is protocol 0x05
     L->>R: session message
-    R->>R: open with the session key
+    R->>R: resolve handshake hash, open with the session key
 ```
+
+The sender can restore the session from the handshake using both sender long-term keys; the recipient restores it using both recipient long-term keys. Neither path needs the discarded ephemeral private key. This recoverability means there is no forward secrecy. High-level conversation clients do not automatically wire up this flow; low-level parity and application negotiation are separate concerns.
 
 
 ## 5. Data
@@ -402,15 +414,16 @@ Hybrid session notes are separate from this table. A handshake is version `0x02`
 
 ### 5.2 Payload
 
-The plaintext inside `ciphertext` is UTF-8 JSON ([PROTOCOL.md §9](../PROTOCOL.md#9-message-payload), [TEST-VECTORS.md §6](../TEST-VECTORS.md#6-message-payload-formats)):
+Structured plaintext inside `ciphertext` is UTF-8 JSON; legacy raw UTF-8 text also remains readable ([PROTOCOL.md §9](../PROTOCOL.md#9-message-payload), [TEST-VECTORS.md §6](../TEST-VECTORS.md#6-message-payload-formats)):
 
 | Shape | Fields | Client behaviour |
 | --- | --- | --- |
 | Text | `text` | Show it |
 | Reply | `text`, `replyTo.txid`, `replyTo.preview` | Show it, linked to the earlier transaction |
-| Key publish | `type: "key-publish"`, `publicKey` (base64) | Not a user message; filter it out |
+| Key publish | `type: "key-publish"`; optional `publicKey` (base64) | Not a user message; filter it out |
+| Legacy text | Raw UTF-8 | Preserve as message text |
 
-The 3954 and 3950-byte limits apply to the encrypted plaintext, which is this JSON, so the usable text is somewhat shorter. A plaintext of 882 bytes (standard) or 878 bytes (PSK) still fills a 1024-byte note. Those sizes remain valid and are no longer the maximum.
+The 3954 and 3950-byte limits apply to the encrypted plaintext, including any JSON overhead, so usable text in a structured payload is somewhat shorter. A plaintext of 882 bytes (standard) or 878 bytes (PSK) still fills a 1024-byte note. Those sizes remain valid and are no longer the maximum.
 
 ### 5.3 PSK key schedule
 
@@ -458,7 +471,7 @@ classDiagram
     }
     class KeyPublishPayload {
         +string type
-        +string publicKey
+        +Optional~string~ publicKey
     }
     class KeyPair {
         +bytes32 privateKey
@@ -494,6 +507,7 @@ What must be kept, and where ([SECURITY.md](../SECURITY.md#key-management)):
 - **Mnemonic and X25519 private key**: secure storage (secure enclave where available). The X25519 key can always be re-derived from the mnemonic.
 - **`initial_psk`**: secure storage. It is the root of the whole PSK schedule.
 - **PSK counter state** (`sendCounter`, `peerLastCounter`, `seenCounters`): **MUST** be persisted. Losing it weakens replay protection and can push counters outside the peer's window.
+- **Hybrid ML-KEM private keys and cached session keys**: secure storage. Both long-term keys can reconstruct sessions from the original handshake; a leaked session key exposes that session.
 - **Plaintext**: need not be stored. Both sides can re-decrypt from the chain.
 - **Ephemeral private keys**: never stored.
 
@@ -503,23 +517,23 @@ What must be kept, and where ([SECURITY.md](../SECURITY.md#key-management)):
 This repository contains the protocol documents and six language libraries. Protocol **1.3.0** and the library package versions are separate: Swift **1.3.0**, TypeScript **0.9.0**, Python **0.2.0**, Rust **0.3.0**, Kotlin **0.2.0**, and Go **0.2.0** (nested tag `go/v0.2.0`). See [the README version table](../README.md#versions-and-requirements) for package identities and [the release toolchain matrix](RELEASE.md#language-and-runtime-versions) for each language's requirements, configured CI versions, and unqualified minima. A package version in the source tree does not establish registry availability.
 
 - **Versioning.** The specification version is stated at the top of [PROTOCOL.md](../PROTOCOL.md) and [TEST-VECTORS.md](../TEST-VECTORS.md). Protocol `1.1.0` added Extra lock (`0x02`), and `1.2.0` added Falcon-1024 accounts without an envelope change. `1.2.1` raised the note ceiling to 4096 bytes and added a fee surcharge for note bytes past 1024. `1.3.0` adds the hybrid handshake (`0x04`) and session message (`0x05`). These protocol ids, the accepted envelope versions `0x01`/`0x02`, and library package versions are distinct; `0x03` remains unassigned.
-- **Local checks.** `fledge lanes run verify` runs the `validate` task (`bun scripts/validate.ts`). `fledge run intent` runs `hi check`. `fledge trust verify` runs the whole trust gate.
-- **Trust gate in CI.** [trust.yml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.github/workflows/trust.yml) runs on every pull request and every push to `main`, and `trust` is the required status check on `main`.
-- **Status dashboard.** [status.yml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.github/workflows/status.yml) runs as in [§4.6](#46-publish-the-status-dashboard).
-- **GitHub Pages.** Pages is built by workflow. The deploy job in `status.yml` runs `actions/jekyll-build-pages` with [_config.yml](https://github.com/CorvidLabs/protocol-algochat/blob/main/_config.yml) (theme `jekyll-theme-midnight`, kramdown with GFM input). [index.html](../index.html) is a hand-written landing page; the Markdown documents, including this one, are rendered by Jekyll; `status.html` and the badges are regenerated each run. [_includes/head-custom.html](https://github.com/CorvidLabs/protocol-algochat/blob/main/_includes/head-custom.html) loads Mermaid on pages that contain diagrams. The public site is <https://corvidlabs.github.io/protocol-algochat/>. Because `status.yml` does not trigger on documentation-only pushes, a docs change goes live on the next daily run or a manual dispatch.
-- **Atlas.** `trust.yml` has an Atlas publication path to Pages, switched off in [.trust.toml](https://github.com/CorvidLabs/protocol-algochat/blob/main/.trust.toml).
+- **Local checks.** `fledge lanes run verify` runs `validate` (`bun scripts/validate.ts`) and `release_checks` (`python3 -m unittest discover -s scripts/release -v`). `fledge run intent` runs `hi check`. `fledge trust verify` runs the whole trust gate.
+- **Trust gate in CI.** [trust.yml](https://github.com/CorvidLabs/algochat/blob/main/.github/workflows/trust.yml) runs on pull requests and pushes to `main` that match its configured path filters. A workflow file does not establish the current branch-protection requirements.
+- **Status dashboard.** [status.yml](https://github.com/CorvidLabs/algochat/blob/main/.github/workflows/status.yml) runs as in [§4.6](#46-publish-the-status-dashboard).
+- **GitHub Pages.** Pages is built by workflow. The deploy job in `status.yml` runs `actions/jekyll-build-pages` with [_config.yml](https://github.com/CorvidLabs/algochat/blob/main/_config.yml) (theme `jekyll-theme-midnight`, kramdown with GFM input). [index.html](../index.html) is a hand-written landing page; the Markdown documents, including this one, are rendered by Jekyll; `status.html` and the badges are regenerated each run. [_includes/head-custom.html](https://github.com/CorvidLabs/algochat/blob/main/_includes/head-custom.html) loads Mermaid on pages that contain diagrams. The workflow publishes to the repository's configured GitHub Pages environment; the active public URL must be checked from a successful deployment. `status.yml` runs on its schedule or manual dispatch, so documentation pushes alone do not trigger publication.
+- **Atlas.** `trust.yml` has an Atlas publication path to Pages, switched off in [.trust.toml](https://github.com/CorvidLabs/algochat/blob/main/.trust.toml).
 
 ```mermaid
 flowchart LR
-    PR["pull request or push to main"] --> T["trust.yml<br/>CorvidLabs/trust action"]
+    PR["pull request or push to main<br/>matching trust path filters"] --> T["trust.yml<br/>CorvidLabs/trust action"]
     T --> LC["lifecycle<br/>fledge lanes run verify"]
-    T --> CT["contract<br/>SpecSync, no module specs here"]
+    T --> CT["contract<br/>SpecSync, root and nested module specs"]
     T --> RK["risk<br/>Augur, review 35, block 65"]
     T --> PV["provenance<br/>Attest, soft mode"]
-    LC --> V["scripts/validate.ts<br/>5 docs + registry ids"]
+    LC --> V["scripts/validate.ts<br/>5 docs + registry ids<br/>plus release tooling unit tests"]
     LC & CT & RK & PV --> G{"all pass?"}
     G -- "yes" --> OK["trust check green"]
-    G -- "no" --> NO["trust check red, merge blocked"]
+    G -- "no" --> NO["trust check red<br/>inspect branch protection separately"]
 ```
 
 
@@ -553,19 +567,19 @@ What is protected, and how:
 
 | Property | Mechanism | Status |
 | --- | --- | --- |
-| Content confidentiality | X25519 ECDH per message, HKDF-SHA256, ChaCha20-Poly1305 | Protected ([hi/encrypt.md](../hi/encrypt.md) `ENCRYPT-1`) |
+| Content confidentiality | Standard/PSK per-message X25519, optional hybrid X25519 + ML-KEM session, HKDF-SHA256, ChaCha20-Poly1305 | Protocol property; key and client assumptions apply ([hi/encrypt.md](../hi/encrypt.md) `ENCRYPT-1`) |
 | Integrity | 16-byte Poly1305 tag on both ciphertexts; chain immutability | Protected, fails closed (`ENCRYPT-1.a`) |
-| Replay | Transaction uniqueness on chain; PSK counter window and seen set | Protected |
+| Replay | Identical signed transactions are unique; PSK protocol requires a counter window and seen set | New transactions can copy notes; per-port replay-state gaps remain |
 | Who authorized the payment | Ed25519 `sig` or Falcon-1024 `pqsig` on the transaction | Protected; Falcon also resists quantum key recovery of the account |
-| Quantum attack on the key exchange | PSK mixed into HKDF (`0x02`) | Defense in depth only; Falcon identity does **not** fix this ([hi/account.md](../hi/account.md) `ACCOUNT-2`) |
+| Quantum attack on the key exchange | PSK mixed into HKDF (`0x02`), or separate X25519 + ML-KEM-768 hybrid session | Requires secret PSK or secure hybrid assumptions; Falcon identity does **not** fix X25519 exchange ([hi/account.md](../hi/account.md) `ACCOUNT-2`) |
 | Forward secrecy | None | **Not provided** ([§11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), `HONEST-2`) |
 | Metadata privacy, traffic analysis | None | **Not provided**: addresses, timing, size and mode are public (`HONEST-1`) |
 | Deniability | None | **Not provided**: sender attribution is visible |
 
 Things worth understanding before building on it:
 
-- **No forward secrecy, retroactively and permanently.** The ephemeral key is the sender's, and its public half is in the envelope forever. Whoever later obtains either party's long-term X25519 key, or the mnemonic behind it, can decrypt every base-mode message that account ever sent or received. PSK-mode history additionally needs the PSK. Rotation cannot protect ciphertext that is already public ([PROTOCOL.md §11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), [§11.4](../PROTOCOL.md#114-key-compromise)).
-- **The sender's copy is separate.** Compromise of the recipient's key does not expose the sender's wrapped copy, and the other way round; each exposes that party's own history.
+- **No forward secrecy, retroactively and permanently.** The ephemeral key is the sender's, and its public half is in the envelope forever. Whoever later obtains either party's long-term X25519 key, or the mnemonic behind it, can decrypt every base-mode message that account ever sent or received. PSK-mode history additionally needs the PSK. Hybrid history needs both long-term encryption keys, which the mnemonic derives, or a leaked session key. Rotation cannot protect ciphertext that is already public ([PROTOCOL.md §11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), [§11.4](../PROTOCOL.md#114-key-compromise)).
+- **The sender's copy is separate.** Standard/PSK recipient decryption and sender-key recovery use separate derivations, but both reveal the same plaintext. Hybrid recipient and sender-copy recovery each require both long-term encryption keys for their path.
 - **Sender authenticity comes from the payment, not the envelope.** The message key (§6.1) needs only the ephemeral private key and the recipient's public key, not the sender's long-term private key. What proves who sent a note is the transaction's authorizing signature, as [§10.2](../PROTOCOL.md#102-key-discovery) says, so the trustworthy "from" of a message is the transaction's sender address.
 - **The PSK channel is the weak link in mode `0x02`.** If the PSK leaks during exchange, every PSK-derived key is exposed. Exchange in person or over an authenticated, confidential channel, and compare a fingerprint afterwards ([SECURITY.md](../SECURITY.md#for-users)).
 - **Key handling.** Use audited libraries, a CSPRNG for ephemeral keys, nonces and PSKs, constant-time tag comparison, the same error for every authentication failure, and clear key material from memory after use ([SECURITY.md](../SECURITY.md#recommendations)).
@@ -576,25 +590,25 @@ Things worth understanding before building on it:
 
 | What goes wrong | Where it shows up | What happens |
 | --- | --- | --- |
-| Payload over 3954 bytes (3950 in PSK mode) | Encrypt | `MESSAGE_TOO_LARGE` before a transaction is built; the protocol has no fragmentation, so the application must split |
+| Payload over 3954 bytes (3950 PSK, 4002 hybrid message) | Encrypt | `MESSAGE_TOO_LARGE` before a transaction is built; the protocol has no fragmentation, so the application must split |
 | Note of 4097 bytes | Transport | Not a legal note; consensus rejects it |
 | Envelope too short, wrong version, unknown protocol byte | Parse | `INVALID_ENVELOPE`, `UNKNOWN_VERSION`, `UNKNOWN_PROTOCOL`; the note is skipped |
 | Tampered bytes, wrong key, wrong PSK or counter | Decrypt | `DECRYPTION_FAILED`; no plaintext is returned |
 | Peer has never sent an AlgoChat payment and published no key | Discovery | `KEY_NOT_FOUND`; fall back to out of band |
 | Fee below the scheme minimum plus the note surcharge (Falcon scheme minimum is 3 x min-fee), or any submit error | Transport | Rejected by consensus; `TRANSACTION_FAILED` |
 | No PSK stored for this contact | PSK send or receive | `PSK_NOT_FOUND`; prompt the user to set one up |
-| Counter older or further ahead than the window | PSK receive | `PSK_COUNTER_OUT_OF_RANGE`; warn about desync, offer a counter reset |
+| Counter older or further ahead than the window | PSK receive | `PSK_COUNTER_OUT_OF_RANGE`; warn about desync, recover state or exchange a new PSK |
 | Counter already decrypted | PSK receive | `PSK_COUNTER_REPLAY`; discard silently, log for debugging |
-| Lost counter state (reinstall, new device) | PSK send | Counters may land outside the peer's window; recover by manual reset or a new PSK |
+| Lost counter state (reinstall, new device) | PSK send | Counters may land outside the peer's window; recover state from authenticated history or exchange a new PSK |
 
 Error names are from [IMPLEMENTATION.md](../IMPLEMENTATION.md) (Error Handling, UI/UX Guidance). Other limits, from [README.md](../README.md) and [SECURITY.md](../SECURITY.md#known-limitations):
 
-- **Latency** is Algorand block finality, stated in the README as about 4.5 seconds.
+- **Latency** depends on network block inclusion and finality, plus indexer visibility. The protocol does not guarantee a fixed delivery time.
 - **Cost** is the Algorand scheme minimum plus a surcharge for note bytes past 1024. At a 1,000 µAlgo min-fee, a note of 1024 bytes or fewer is 1,000 µAlgo (Ed25519) or 3,000 µAlgo (Falcon-1024). A 4096-byte note is 1,308 µAlgo (Ed25519) or 3,308 µAlgo (Falcon-1024). A 2000-byte Ed25519 note is 1,098 µAlgo. AlgoChat sets no fee of its own. See [PROTOCOL.md §10.3](../PROTOCOL.md#103-fees).
 - **No deletion.** Messages are permanent.
 - **One to one only.** Groups need one encryption per member or a protocol extension.
-- **Discovery depth.** The reference discovery searches at most 100 transactions per prefix and takes the first envelope that parses.
-- **Dashboard.** An implementation whose tests fail is shown as failing; it does not stop the Pages deploy.
+- **Discovery depth.** Current TypeScript discovery uses pages of 100 without a default depth cap when pagination is available; its non-paginated fallback uses a 1000-transaction batch. Adapters and explicit `maxDepth` can limit the search.
+- **Dashboard.** Only collected result artifacts can be displayed; missing coverage and artifact paths limit its evidence. Failed tests do not necessarily stop the Pages deploy.
 
 
 ## 9. Decisions
@@ -605,24 +619,25 @@ The big choices, and where they are recorded:
 | --- | --- | --- |
 | The message is the note of a normal payment; no mailbox, contract or router | Delivery is the payment itself | [hi/send.md](../hi/send.md) `SEND-1`, [PROTOCOL.md §10.1](../PROTOCOL.md#101-algorand-transaction) |
 | X25519 + HKDF-SHA256 + ChaCha20-Poly1305 | Widely audited primitives, the same family as Signal, WireGuard and TLS 1.3 | [PROTOCOL.md §3](../PROTOCOL.md#3-cryptographic-primitives), [README.md](../README.md#cryptographic-primitives) |
-| A fresh ephemeral key per message plus a sender key wrap | Per-message key separation, and senders can re-read history from the chain on any device | [PROTOCOL.md §2](../PROTOCOL.md#2-design-goals), [§6.2](../PROTOCOL.md#62-sender-key-encryption-self-decryption) |
-| Encryption keys derived from mnemonic entropy | Recoverable from the 25 words alone, and independent of the signing scheme | [PROTOCOL.md §4.1](../PROTOCOL.md#41-encryption-key-pair), [CHG-0002 design](https://github.com/CorvidLabs/protocol-algochat/blob/main/.specsync/archive/changes/2026-08-27-CHG-0002-falcon-account-identity/design.md) |
+| A fresh ephemeral key for each standard/PSK message, plus a sender key wrap | Per-message key separation, and senders can re-read history from the chain on any device; hybrid messages reuse their handshake session key | [PROTOCOL.md §2](../PROTOCOL.md#2-design-goals), [§6.2](../PROTOCOL.md#62-sender-key-encryption-self-decryption) |
+| Encryption keys derived from mnemonic entropy | Recoverable from the 25 words alone, and independent of the signing scheme | [PROTOCOL.md §4.1](../PROTOCOL.md#41-encryption-key-pair) |
 | PSK as a new protocol byte `0x02`, purely additive | Old envelopes and vectors stay valid | [PROTOCOL.md §5.4](../PROTOCOL.md#54-protocol-identifiers), [§8](../PROTOCOL.md#8-psk-ratcheting-mode-protocol-0x02), [hi/psk.md](../hi/psk.md) |
 | Deterministic PSK key schedule with a 200-counter window | Works with out-of-order delivery; the price is no forward secrecy and a 100-message session blast radius | [PROTOCOL.md §8.1](../PROTOCOL.md#81-psk-ratchet-mechanism), [SECURITY.md](../SECURITY.md#psk-known-limitations) |
-| Falcon-1024 lives only at the account layer; import defaults to Ed25519 | Quantum-resistant payment authorization without moving existing wallets or changing envelopes | [PROTOCOL.md §4.3](../PROTOCOL.md#43-algorand-account-identity), [hi/account.md](../hi/account.md), [CHG-0002](https://github.com/CorvidLabs/protocol-algochat/blob/main/.specsync/archive/changes/2026-08-27-CHG-0002-falcon-account-identity/change.md) |
-| 1.2 kept notes within 1,024 bytes. 1.2.1 raises the ceiling to 4,096 bytes without a new envelope. Hybrid PQ-KEM and PQ multisig stay out of scope | Same envelopes as 1.2; a PQ-KEM envelope would be a later protocol id | [PROTOCOL.md §14](../PROTOCOL.md#14-version-history), [CHG-0002 design](https://github.com/CorvidLabs/protocol-algochat/blob/main/.specsync/archive/changes/2026-08-27-CHG-0002-falcon-account-identity/design.md) (Out of scope) |
-| Say plainly that there is no forward secrecy | Honesty about what the chain keeps forever | [hi/honest.md](../hi/honest.md) `HONEST-2`, [PROTOCOL.md §11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), [.specsync/changes/](https://github.com/CorvidLabs/protocol-algochat/tree/main/.specsync/changes) |
+| Falcon-1024 lives only at the account layer; import defaults to Ed25519 | Quantum-resistant payment authorization without moving existing wallets or changing envelopes | [PROTOCOL.md §4.3](../PROTOCOL.md#43-algorand-account-identity), [hi/account.md](../hi/account.md) |
+| 1.2.1 raises the ceiling to 4,096 bytes without changing classical envelopes; 1.3 adds hybrid ids `0x04` and `0x05` | The earlier 1.2 account-agility change deferred PQ-KEM; the later hybrid contract is now in section 5.7. PQ multisig remains outside these envelopes | [PROTOCOL.md §14](../PROTOCOL.md#14-version-history), [§5.7](../PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) |
+| Say plainly that there is no forward secrecy | Honesty about what the chain keeps forever | [hi/honest.md](../hi/honest.md) `HONEST-2`, [PROTOCOL.md §11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), [.specsync/changes/](https://github.com/CorvidLabs/algochat/tree/main/.specsync/changes) |
 
 
 ## 10. Open questions found while writing this
 
-These are places where the documents disagree or are silent. None changes the wire format. They are listed so a reviewer can settle them in the spec.
+The protocol contract and observed implementation behavior must be reviewed separately. [ACCURACY.md](ACCURACY.md) tracks the remaining gaps rather than treating passing structural checks as complete conformance.
 
-- **Unknown: is `publicKey` required in a key-publish payload?** [PROTOCOL.md §9.3](../PROTOCOL.md#93-key-publish) includes it; [TEST-VECTORS.md Test Case 6.3](../TEST-VECTORS.md#test-case-63-key-publish-payload) uses `{"type":"key-publish"}` alone.
-- **Unknown: minimum length check.** The reference deserializer accepts anything at least as long as the header (126 or 130 bytes); [TEST-VECTORS.md Test Case 2.2](../TEST-VECTORS.md#test-case-22-invalid-envelopes-standard-mode) says anything under 142 or 146 bytes (header plus tag) is invalid. Either way decryption of a tagless note fails; the question is which error is reported.
-- **Unknown: order of PSK checks.** [PROTOCOL.md §8.4](../PROTOCOL.md#84-psk-decryption) checks replay before the window; the IMPLEMENTATION.md pseudocode checks the window first. Both reject; only the reported error differs.
-- **Unknown: must a client check `sender_pubkey` against the transaction's sender address?** §10.2 names the payment signature as the binding, but no step in the decryption pseudocode compares the envelope's key with the key already known for `txn.sender`.
-- **Registry and README agree on Go.** `implementations.json` lists `go-algochat` in this monorepo (`CorvidLabs/algochat`, path `go`). The README names this repository as the source for all six libraries. `algochat-web` is a separate client entry in `implementations.json`, not one of those libraries.
+- **Payload compatibility.** `publicKey` is optional in a key-publish marker; the X25519 key is also in the envelope header. Legacy raw UTF-8 remains readable alongside structured JSON.
+- **Envelope validation.** Valid standard and PSK notes require at least 142 or 146 bytes, including the tag. Some ports perform only a header-size check; retain the stricter protocol requirement and fix the implementation gap.
+- **PSK replay state.** The protocol requires counter-window and replay handling. Low-level crypto helpers and in-memory state do not prove persistence across restarts or full client integration.
+- **Sender identity.** The decryption branch compares X25519 keys, while trustworthy sender identity comes from the transaction and the application's validated key binding. These are different checks; envelope fields alone cannot authenticate an Algorand address.
+- **Hybrid integration.** All six libraries contain low-level hybrid helpers. Ordinary conversation APIs still need explicit hybrid selection, ML-KEM discovery, handshake submission and session restoration.
+- **Qualification evidence.** The reported 2026-10-17 LocalNet runs and dashboard snapshots do not establish fresh candidate qualification, complete workflow coverage, package availability, or an independent security audit.
 
 
 ## 11. Glossary
@@ -631,10 +646,11 @@ These are places where the documents disagree or are silent. None changes the wi
 | --- | --- |
 | algod | An Algorand node's API: suggested transaction parameters, transaction submission |
 | Envelope | The AlgoChat bytes placed in a payment's `note` |
-| Ephemeral key | A one-message X25519 key pair made by the sender; only its public half is kept, in the envelope |
+| Ephemeral key | A fresh X25519 key pair for a standard/PSK message or hybrid handshake; its public half is stored in the note |
 | Encrypted sender key | The message key sealed for the sender, so the sender can re-read their own message |
 | Indexer | Algorand's query service; AlgoChat uses it to search by note prefix |
-| Key publish | A self-addressed AlgoChat payment whose payload is `type: "key-publish"`, so others can find the sender's X25519 key |
+| Key publish | A self-addressed AlgoChat payment marked `type: "key-publish"`; separate raw X25519 and `ACPQ` announcements also exist |
+| Hybrid session | A `0x04` X25519 + ML-KEM handshake and the `0x05` messages reusing its session key |
 | Mnemonic entropy | The 32-byte secret behind a 25-word Algorand mnemonic; the IKM for AlgoChat keys |
 | min-fee | Algorand's minimum transaction fee. PROTOCOL.md §10.3 prices examples at 1,000 µAlgo. The scheme minimum covers the first 1024 note bytes; later bytes add a surcharge |
 | Note | The free-form bytes field of an Algorand transaction, 4,096 bytes at most. 4,097 bytes is not legal |

@@ -10,4 +10,5 @@ spec: algochat.spec.md
 - `PaymentFee` at minFee 1000 returns 1000, 1098, and 1308 for notes of 1024, 2000, and 4096 bytes, and rejects 4097.
 
 - Build, vet, and race-test all packages on Go 1.25 in the Trust lane.
-- Preserve the repository's existing Go-version compatibility matrix independently.
+- The nested standalone Go-version matrix is historical; the active root workflow selects Go 1.25. The earlier accepted matrix requirement remains unreconciled; see the [accuracy ledger](../../../docs/ACCURACY.md).
+- `pq_test.go`, root `vectors/` and `cmd/pqcross` cover hybrid key derivation, handshake/session data and compatibility fixtures; they do not establish high-level transport or replay persistence.

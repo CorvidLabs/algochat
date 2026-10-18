@@ -32,23 +32,23 @@ TypeScript implementation of the AlgoChat protocol for encrypted messaging on Al
 |----------|--------|
 | Message content confidentiality | Protected (E2EE) |
 | Message integrity | Protected (authenticated encryption) |
-| Forward secrecy | **Not provided** — a compromised long-term key or recovery phrase retroactively decrypts that account's entire message history |
-| Replay attacks | Protected (blockchain uniqueness + PSK counter) |
-| Quantum resistance (key exchange) | Optional (PSK mode provides defense-in-depth) |
+| Forward secrecy | **Not provided** — standard history is exposed by the relevant X25519 key; PSK also needs the shared secret; hybrid sessions need both hybrid private keys or the session key |
+| Replay attacks | PSK counter helpers reject repeats when the application preserves and checks state; standard mode has no cryptographic replay check |
+| Quantum resistance (key exchange) | Optional PSK defense-in-depth or low-level X25519 + ML-KEM-768 sessions |
 | Quantum resistance (account identity) | Optional (Falcon-1024 `pqsig` on new accounts) |
 | PSK session forward secrecy | **Not provided** — the position-key schedule is deterministic from a static initial PSK, so holding it yields all past and future keys |
 | Metadata privacy | **Not protected** (addresses, timing visible) |
 | Traffic analysis | **Not protected** |
 
-> **On forward secrecy.** Message keys derive as
+> **On forward secrecy.** Standard-mode message keys derive as
 > `X25519(recipient_private_key, envelope.ephemeral_public_key)`, and the ephemeral
 > public key is carried in the envelope, which lives permanently and publicly on the
-> Algorand blockchain. Compromise of either party's long-term key — or the recovery
-> phrase behind it — therefore exposes all of that account's past messages, and no
-> rotation can undo it. PSK mode requires the attacker to hold the PSK as well, which
-> is a real additional barrier, but the PSK is static and every position key derives
-> deterministically from it. See
-> [PROTOCOL.md §11.1](https://github.com/CorvidLabs/protocol-algochat/blob/main/PROTOCOL.md#111-forward-secrecy--not-provided).
+> Algorand blockchain. Compromise of the relevant long-term X25519 key exposes that
+> account's standard-mode history. PSK mode additionally requires the initial PSK.
+> Hybrid sender/recipient recovery requires both the relevant X25519 and ML-KEM
+> private keys, or an exposed session key. An account recovery phrase can derive
+> both account-based hybrid keys. None of these modes provides forward secrecy. See
+> [PROTOCOL.md §11.1](https://github.com/CorvidLabs/algochat/blob/main/PROTOCOL.md#111-forward-secrecy--not-provided).
 
 ## Installation
 
@@ -141,7 +141,7 @@ await service.sendMessage(account, recipient, recipientKey, 'Hello!');
 
 // Reply to a message
 await service.sendReply(account, recipient, recipientKey, 'Reply text', {
-    txid: 'original-tx-id',
+    messageId: 'original-tx-id',
     preview: 'Original message preview...',
 });
 ```
@@ -236,11 +236,11 @@ flowchart LR
     sdk -.->|"optional"| queue["SendQueue +<br/>SyncManager"]
 ```
 
-The [high-level design](docs/HLD.md) covers the modules, the wire formats, the send, receive, key-discovery, sync and PSK flows as sequence diagrams, the trust boundaries and the limits. The [documentation site](https://corvidlabs.github.io/ts-algochat/) shows it next to the API reference.
+The [high-level design](docs/HLD.md) covers the modules, wire formats, send, receive, key-discovery, sync and PSK flows, trust boundaries and limits. The former standalone repository's documentation site is historical; current build and release configuration lives in this monorepo.
 
 ## Protocol
 
-This library implements the [AlgoChat Protocol v1.2.1](https://github.com/CorvidLabs/protocol-algochat) (account agility and a 4096-byte note) and the PSK v1.1 extension. Envelope bytes for `0x01` / `0x02` are unchanged. Falcon identity does not make X25519 key exchange quantum-safe.
+This package includes [AlgoChat protocol 1.3.0](../PROTOCOL.md) standard (`0x01`), PSK (`0x02`), hybrid handshake (`0x04`) and session-data (`0x05`) primitives. New standard and PSK encryptions write envelope version `0x02`, authenticating the fixed header as associated data; reads also accept legacy version `0x01`. Falcon account signatures and hybrid message encryption are separate capabilities.
 
 ### Wire Format (v1.0 Standard)
 
@@ -270,7 +270,7 @@ The PSK (Pre-Shared Key) v1.1 protocol adds an additional layer of authenticatio
 
 - **Two-level key schedule** - Session keys derived per 100 messages, position keys per message (deterministic from the initial PSK, not a forward-secret ratchet)
 - **Hybrid encryption** - Combines the ECDH shared secret with the PSK, so an attacker must obtain both
-- **Replay protection** - Counter-based sliding window prevents message replay
+- **Replay controls** - Applications call `validateCounter` before decryption and `recordReceive` after authentication, and persist the resulting state
 - **Out-of-band key exchange** - URI scheme for sharing PSK keys (QR code compatible)
 
 ### Quantum Defense-in-Depth
@@ -281,7 +281,7 @@ PSK mode provides defense against future quantum attacks through **hybrid key de
 symmetricKey = HKDF(
   ikm = ephemeralECDH || currentPSK,
   salt = ephemeralPublicKey,
-  info = "algochat-psk-v1" || senderPubKey || recipientPubKey
+  info = "AlgoChatV1-PSK" || senderPubKey || recipientPubKey
 )
 ```
 
@@ -361,6 +361,12 @@ const uri = createPSKExchangeURI('ALGO_ADDRESS', pskBytes, 'My Chat');
 const parsed = parsePSKExchangeURI(uri);
 ```
 
+## Low-level hybrid sessions
+
+The package exports `deriveMLKEMKeyPair`, `initiatePQSession`, `acceptPQSession`, `openPQSessionAsSender`, `encryptPQMessage` and `decryptPQMessage`, plus `encodePQKeyAnnouncement` / `parsePQKeyAnnouncement` for `ACPQ` encapsulation-key notes. A hybrid handshake combines X25519 and ML-KEM-768, occupies 2366 bytes (protocol `0x04`), and establishes the key used by protocol `0x05` messages. Session data has a 78-byte header and a 4002-byte plaintext maximum.
+
+`AlgorandService` and the message indexers handle standard envelopes. Ratcheting PSK and hybrid sessions are low-level APIs: callers arrange key announcements and note transport, retain session material, and enforce their replay policy. The standard envelope's optional constructor PSK is distinct from the counter-bearing PSK protocol. See [implementation gaps](../docs/ACCURACY.md).
+
 ## Testing
 
 ```bash
@@ -369,9 +375,8 @@ bun test
 
 ## Cross-Implementation Compatibility
 
-This implementation is fully compatible with:
-- [AlgoChat](https://github.com/CorvidLabs/algochat) (Swift, Rust, Python, Kotlin, and Go)
+The monorepo includes Swift, Rust, Python, Kotlin and Go implementations. [Conformance vectors](conformance/README.md) cover specific standard/PSK behavior, and the root [qualification lane](../docs/RELEASE.md) records package-consumer and interoperability evidence; API and platform capabilities vary by language.
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](../LICENSE) for details.
