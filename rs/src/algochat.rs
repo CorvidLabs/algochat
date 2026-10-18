@@ -17,6 +17,7 @@ use crate::models::{Conversation, DiscoveredKey, Message, MessageDirection};
 use crate::psk_crypto::{decrypt_psk_message, encrypt_psk_message};
 use crate::psk_envelope::{decode_psk_envelope, encode_psk_envelope, is_psk_message};
 use crate::psk_state::PSKState;
+use crate::psk_types::PSK_MAX_PAYLOAD_SIZE;
 use crate::queue::SendQueue;
 use crate::storage::{EncryptionKeyStorage, MessageCache, PublicKeyCache};
 use crate::types::{AlgoChatError, Result};
@@ -397,6 +398,12 @@ where
     /// # Returns
     /// Tuple of (encrypted_bytes, counter_used)
     pub async fn send_psk(&self, address: &str, message: &str) -> Result<(Vec<u8>, u32)> {
+        // Size is known before any peer state changes. Do not advance and roll
+        // back: another send may already have taken the next counter.
+        if message.len() > PSK_MAX_PAYLOAD_SIZE {
+            return Err(AlgoChatError::MessageTooLarge(message.len()));
+        }
+
         // Get PSK and advance counter
         let (psk, counter) = {
             let mut contacts = self.psk_contacts.write().await;
@@ -499,7 +506,10 @@ where
                 // and replay protection in the correct order (validate-before-decrypt)
                 match self.receive_psk(&tx.note, &other_address).await {
                     Ok(text) => text,
-                    Err(AlgoChatError::DecryptionError(_)) => return Ok(None), // No PSK configured
+                    // Missing PSK, a bad tag, or a recognized frame too short to decode.
+                    // Other errors still stop the batch.
+                    Err(AlgoChatError::DecryptionError(_))
+                    | Err(AlgoChatError::InvalidEnvelope(_)) => return Ok(None),
                     Err(e) => return Err(e),
                 }
             } else {
@@ -1053,6 +1063,70 @@ mod tests {
         assert!(messages.is_empty());
     }
 
+    #[tokio::test]
+    async fn test_sync_skips_malformed_psk_note_then_returns_valid() {
+        use crate::psk_envelope::{decode_psk_envelope, is_psk_message};
+        use crate::psk_types::{PSK_HEADER_SIZE, PSK_PROTOCOL_ID, PSK_VERSION};
+
+        let bob_key = {
+            let (_, pub_key) = derive_keys_from_seed(&BOB_SEED).unwrap();
+            *pub_key.as_bytes()
+        };
+        let bob = make_bob_client(MockIndexer::new()).await;
+        let alice_key = {
+            let (_, pub_key) = derive_keys_from_seed(&ALICE_SEED).unwrap();
+            *pub_key.as_bytes()
+        };
+        let valid = bob.encrypt_psk("kept", &alice_key, &TEST_PSK, 0).unwrap();
+
+        let mut malformed = vec![PSK_VERSION, PSK_PROTOCOL_ID];
+        malformed.resize(PSK_HEADER_SIZE, 0);
+        assert!(is_psk_message(&malformed));
+        assert!(malformed.len() < PSK_HEADER_SIZE + 16);
+        assert!(matches!(
+            decode_psk_envelope(&malformed),
+            Err(AlgoChatError::InvalidEnvelope(_))
+        ));
+
+        let indexer = MockIndexer::with_transactions(vec![
+            NoteTransaction {
+                txid: "KEY_ANNOUNCE".to_string(),
+                sender: BOB_ADDR.to_string(),
+                receiver: BOB_ADDR.to_string(),
+                note: bob_key.to_vec(),
+                confirmed_round: 50,
+                round_time: 1700000000,
+            },
+            NoteTransaction {
+                txid: "BAD".to_string(),
+                sender: BOB_ADDR.to_string(),
+                receiver: ALICE_ADDR.to_string(),
+                note: malformed,
+                confirmed_round: 100,
+                round_time: 1700000001,
+            },
+            NoteTransaction {
+                txid: "GOOD".to_string(),
+                sender: BOB_ADDR.to_string(),
+                receiver: ALICE_ADDR.to_string(),
+                note: valid,
+                confirmed_round: 101,
+                round_time: 1700000002,
+            },
+        ]);
+
+        let alice = make_alice_client(indexer).await;
+        alice
+            .add_psk_contact(BOB_ADDR, &TEST_PSK, None)
+            .await
+            .unwrap();
+
+        let messages = alice.sync().await.unwrap();
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].id, "GOOD");
+        assert_eq!(messages[0].content, "kept");
+    }
+
     // ========================================================================
     // Key discovery / caching tests
     // ========================================================================
@@ -1399,6 +1473,48 @@ mod tests {
 
         let contact = alice.get_psk_contact(BOB_ADDR).await.unwrap();
         assert_eq!(contact.state.send_counter, 3);
+    }
+
+    #[tokio::test]
+    async fn test_rejected_oversized_sends_do_not_desync_fresh_peer() {
+        let bob_key = {
+            let (_, pub_key) = derive_keys_from_seed(&BOB_SEED).unwrap();
+            *pub_key.as_bytes()
+        };
+        let indexer = MockIndexer::with_transactions(vec![NoteTransaction {
+            txid: "KEY_ANNOUNCE".to_string(),
+            sender: BOB_ADDR.to_string(),
+            receiver: BOB_ADDR.to_string(),
+            note: bob_key.to_vec(),
+            confirmed_round: 50,
+            round_time: 1700000000,
+        }]);
+        let alice = make_alice_client(indexer).await;
+        alice
+            .add_psk_contact(BOB_ADDR, &TEST_PSK, None)
+            .await
+            .unwrap();
+
+        let too_big = "A".repeat(PSK_MAX_PAYLOAD_SIZE + 1);
+        assert_eq!(too_big.len(), 3951);
+        for _ in 0..201 {
+            let err = alice.send_psk(BOB_ADDR, &too_big).await.unwrap_err();
+            assert!(matches!(err, AlgoChatError::MessageTooLarge(3951)));
+        }
+        let contact = alice.get_psk_contact(BOB_ADDR).await.unwrap();
+        assert_eq!(contact.state.send_counter, 0);
+
+        let (encrypted, counter) = alice.send_psk(BOB_ADDR, "still in window").await.unwrap();
+        assert_eq!(counter, 0);
+
+        let bob = make_bob_client(MockIndexer::new()).await;
+        bob.add_psk_contact(ALICE_ADDR, &TEST_PSK, None)
+            .await
+            .unwrap();
+        assert_eq!(
+            bob.receive_psk(&encrypted, ALICE_ADDR).await.unwrap(),
+            "still in window"
+        );
     }
 
     #[tokio::test]

@@ -491,21 +491,8 @@ mod tests {
         let mut body = msg.clone();
         body[DATA_HEADER] ^= 1;
         assert!(decrypt_pq_message(&body, &session).is_err());
-        let plain = vec![b'a'; MAX_PQ_PLAINTEXT + 1];
-        let nonce = [9u8; 12];
-        let header = data_header(&session.sender_public, &session.handshake_id, &nonce);
-        let over_cipher = ChaCha20Poly1305::new_from_slice(&session.session_key).unwrap();
-        let over_ct = over_cipher
-            .encrypt(
-                Nonce::from_slice(&nonce),
-                Payload {
-                    msg: &plain,
-                    aad: &header,
-                },
-            )
-            .unwrap();
-        let mut oversize = header;
-        oversize.extend_from_slice(&over_ct);
+        // Length is rejected before the nonce is read.
+        let oversize = vec![0u8; MAX_NOTE_SIZE + 1];
         assert_eq!(oversize.len(), MAX_NOTE_SIZE + 1);
         assert!(matches!(
             decrypt_pq_message(&oversize, &session),
