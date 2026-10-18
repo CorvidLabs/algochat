@@ -85,22 +85,37 @@ describe('exported MessageIndexer chain order', () => {
         return btoa(binary);
     }
 
-    const rows = [
+    /** Decode indexer JSON the same way `Indexer.searchForTransactions().do()` does. */
+    function sdkTransactions(items: NoteTransaction[]): algosdk.indexerModels.Transaction[] {
+        const payload = {
+            'current-round': 1,
+            transactions: items.map((item) => ({
+                id: item.txid,
+                sender: item.sender,
+                'tx-type': 'pay',
+                fee: 1000,
+                'first-valid': 1,
+                'last-valid': 1000,
+                note: toBase64(item.note),
+                'round-time': item.roundTime,
+                'confirmed-round': item.confirmedRound,
+                'intra-round-offset': item.intraRoundOffset,
+                'payment-transaction': { receiver: item.receiver, amount: 1000 },
+            })),
+        };
+        return algosdk.decodeJSON(
+            JSON.stringify(payload),
+            algosdk.indexerModels.TransactionsResponse,
+        ).transactions;
+    }
+
+    const rows = sdkTransactions([
         tx('next', 'bob', 11, 0),
         tx('later-sent', 'alice', 10, 1),
         tx('earlier-received', 'bob', 10, 0),
-    ].map((item) => ({
-        id: item.txid,
-        sender: item.sender,
-        txType: 'pay',
-        note: toBase64(item.note),
-        roundTime: item.roundTime,
-        confirmedRound: item.confirmedRound,
-        'intra-round-offset': item.intraRoundOffset,
-        paymentTransaction: { receiver: item.receiver, amount: 1000 },
-    }));
+    ]);
 
-    function fakeIndexer(): algosdk.Indexer {
+    function fakeIndexer(source: algosdk.indexerModels.Transaction[] = rows): algosdk.Indexer {
         return {
             searchForTransactions() {
                 const query = {
@@ -112,7 +127,7 @@ describe('exported MessageIndexer chain order', () => {
                     minRound(n: number) { query.min = n; return query; },
                     maxRound(n: number) { query.max = n; return query; },
                     async do() {
-                        const selected = rows
+                        const selected = source
                             .filter((row) => {
                                 const round = Number(row.confirmedRound);
                                 if (query.min !== undefined && round < query.min) return false;
@@ -120,9 +135,9 @@ describe('exported MessageIndexer chain order', () => {
                                 return true;
                             })
                             .sort((a, b) => {
-                                const roundDiff = Number(b.confirmedRound) - Number(a.confirmedRound);
+                                const roundDiff = Number(b.confirmedRound ?? 0) - Number(a.confirmedRound ?? 0);
                                 if (roundDiff !== 0) return roundDiff;
-                                return Number(b['intra-round-offset'] ?? 0) - Number(a['intra-round-offset'] ?? 0);
+                                return Number(b.intraRoundOffset ?? 0) - Number(a.intraRoundOffset ?? 0);
                             });
                         return { transactions: selected.slice(0, query.lim) };
                     },
@@ -139,6 +154,10 @@ describe('exported MessageIndexer chain order', () => {
     };
 
     test('equal timestamps do not keep newest-first insertion', async () => {
+        expect(rows[1]).toBeInstanceOf(algosdk.indexerModels.Transaction);
+        expect(rows[1].intraRoundOffset).toBe(1);
+        expect(Object.prototype.hasOwnProperty.call(rows[1], 'intra-round-offset')).toBe(false);
+
         const indexer = new MessageIndexer(config, undefined, fakeIndexer());
         const messages = await indexer.fetchMessages(account, 'BOB', { limit: 50 });
         expect(messages.map((message) => message.id)).toEqual([
@@ -146,6 +165,7 @@ describe('exported MessageIndexer chain order', () => {
             'later-sent',
             'next',
         ]);
+        expect(messages.map((message) => message.intraRoundOffset)).toEqual([0, 1, 0]);
     });
 
     test('a full newest-first page does not skip or duplicate the boundary round', async () => {
@@ -157,5 +177,20 @@ describe('exported MessageIndexer chain order', () => {
         const ids = [...newer, ...older].map((message) => message.id);
         expect(new Set(ids).size).toBe(ids.length);
         expect(ids).toEqual(['next', 'earlier-received', 'later-sent']);
+    });
+
+    test('forward sync keeps both rounds of a full two-row page', async () => {
+        const forwardRows = sdkTransactions([
+            tx('round-12', 'bob', 12, 0),
+            tx('round-11', 'alice', 11, 0),
+        ]);
+        const indexer = new MessageIndexer(config, undefined, fakeIndexer(forwardRows));
+        const page = await indexer.fetchNewerMessages(account, 'BOB', 10, 2);
+        expect(page.map((message) => message.id)).toEqual(['round-11', 'round-12']);
+        expect(page.map((message) => message.confirmedRound)).toEqual([11, 12]);
+        const cursor = page[page.length - 1].confirmedRound;
+        expect(cursor).toBe(12);
+        const next = await indexer.fetchNewerMessages(account, 'BOB', cursor, 2);
+        expect(next).toEqual([]);
     });
 });

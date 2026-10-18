@@ -43,26 +43,6 @@ export interface WaitForTransactionOptions {
     backoffMultiplier?: number;
 }
 
-/** Indexer transaction response shape */
-interface IndexerTransaction {
-    id: string;
-    sender: string;
-    txType: string;
-    note?: string;
-    roundTime?: number;
-    confirmedRound?: number;
-    'intra-round-offset'?: number;
-    paymentTransaction?: {
-        receiver?: string;
-        amount?: number;
-    };
-}
-
-interface IndexerSearchResponse {
-    transactions?: IndexerTransaction[];
-    nextToken?: string;
-}
-
 /**
  * Message Indexer Service
  *
@@ -120,7 +100,7 @@ export class MessageIndexer {
             query = query.maxRound(beforeRound - 1);
         }
 
-        const response = await query.do() as IndexerSearchResponse;
+        const response = await query.do();
         const raw = response.transactions ?? [];
 
         for (const tx of raw) {
@@ -131,6 +111,11 @@ export class MessageIndexer {
         }
 
         messages.sort(compareChainOrder);
+        // Forward pages keep every returned row. Dropping the oldest round would
+        // skip it once the caller advances the exclusive afterRound cursor.
+        if (afterRound !== undefined && beforeRound === undefined) {
+            return messages;
+        }
         return dropPartialOldestRound(messages, raw, limit);
     }
 
@@ -244,7 +229,7 @@ export class MessageIndexer {
             .searchForTransactions()
             .address(address)
             .limit(searchDepth)
-            .do() as IndexerSearchResponse;
+            .do();
 
         for (const tx of response.transactions ?? []) {
             // Only look at transactions SENT by this address
@@ -307,12 +292,12 @@ export class MessageIndexer {
     // MARK: - Private Methods
 
     private processTransaction(
-        tx: IndexerTransaction,
+        tx: algosdk.indexerModels.Transaction,
         chatAccount: ChatAccount,
         participantAddress: string
     ): Message | null {
         // Filter: payment transactions with notes
-        if (tx.txType !== 'pay' || !tx.note) {
+        if (tx.txType !== 'pay' || !tx.note || !tx.id) {
             return null;
         }
 
@@ -370,7 +355,7 @@ export class MessageIndexer {
                 timestamp: new Date(Number(tx.roundTime ?? 0) * 1000),
                 confirmedRound: Number(tx.confirmedRound ?? 0),
                 direction,
-                intraRoundOffset: tx['intra-round-offset'] != null ? Number(tx['intra-round-offset']) : undefined,
+                intraRoundOffset: tx.intraRoundOffset != null ? Number(tx.intraRoundOffset) : undefined,
                 replyContext: decrypted.replyToId
                     ? {
                           messageId: decrypted.replyToId,
@@ -397,7 +382,7 @@ function sleep(ms: number): Promise<void> {
  */
 function dropPartialOldestRound(
     messages: Message[],
-    raw: IndexerTransaction[],
+    raw: readonly algosdk.indexerModels.Transaction[],
     limit: number,
 ): Message[] {
     if (raw.length < limit || messages.length === 0) {
