@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "state-the-pq-level-of-every-assigned-protocol-in-one-table",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "789e7acd8144d4c60402aa1ca06e8afdd9ebc412",
+      "contract_digest": "f41738b25ff4976c901f5b2c3def87887c41cfec89fd4c6226f7cef7fd44ff5e",
+      "execution_digest": "a864fba23ecfe8d1f8d11a51ffdee5171f95ccd4ab540340eb03efee50902d1f",
+      "workspace_digest": "4ff4f3a3578491cbb487a7b0e641c363aa67852374cf8bf5e2cf09a142ec3b7b",
+      "timestamp": 1792335370
+    }
+  ]
+}

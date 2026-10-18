@@ -7,11 +7,11 @@
   "title": "State the PQ level of every assigned protocol in one table",
   "description": "State the PQ level of every assigned protocol in one table",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "237a97488ac663fdf326e07badc383b4452db4ad",
   "created_at": 1792335319,
-  "updated_at": 1792335363,
+  "updated_at": 1792335384,
   "affected_specs": [
     "protocol"
   ],
