@@ -1,4 +1,4 @@
-# Lesson bundle — bump-golang-org-x-crypto-to-v0-52-0
+# Lesson bundle: bump-golang-org-x-crypto-to-v0-52-0
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
