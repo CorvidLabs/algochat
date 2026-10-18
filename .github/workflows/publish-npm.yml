@@ -29,4 +29,6 @@ jobs:
         working-directory: ts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish --access public
+        run: |
+          bun install --frozen-lockfile
+          npm publish --access public
