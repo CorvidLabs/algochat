@@ -1,9 +1,31 @@
 name: Swift
 
-# Called by release-qualification so every candidate runs all six libraries.
+# Own-tree changes run this lane by itself. Shared protocol, vector, and
+# release-script changes run the full matrix from release-qualification.yml.
 on:
   workflow_call:
+    inputs:
+      skip_linux:
+        description: Skip Swift Linux when the caller already runs that lane.
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "swift/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".github/workflows/swift.yml"
+      - "!**/*.md"
+  push:
+    branches: [main]
+    paths:
+      - "swift/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - ".github/workflows/swift.yml"
+      - "!**/*.md"
 
 permissions:
   contents: read
@@ -27,4 +49,26 @@ jobs:
         with:
           name: qualification-swift
           path: ${{ runner.temp }}/qualification-swift/
+          if-no-files-found: error
+  linux:
+    # A called workflow keeps the caller event name, so event_name cannot
+    # tell a direct run from the matrix. skip_linux is that signal.
+    if: ${{ inputs.skip_linux != true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Test and qualify the Linux package consumer
+        run: python3 scripts/release/qualify.py swift-linux "${{ runner.temp }}/qualification-swift-linux"
+      - name: Preserve commands and candidate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-swift-linux
+          path: ${{ runner.temp }}/qualification-swift-linux/
           if-no-files-found: error

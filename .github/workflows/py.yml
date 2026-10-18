@@ -1,9 +1,21 @@
 name: Python
 
-# Called by release-qualification so every candidate runs all six libraries.
+# Own-tree changes run this lane by itself. Shared protocol, vector, and
+# release-script changes run the full matrix from release-qualification.yml.
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "py/**"
+      - ".github/workflows/py.yml"
+      - "!**/*.md"
+  push:
+    branches: [main]
+    paths:
+      - "py/**"
+      - ".github/workflows/py.yml"
+      - "!**/*.md"
 
 permissions:
   contents: read

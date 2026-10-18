@@ -220,10 +220,379 @@ def check_workflow(text):
         raise ValueError('checkout credentials must not persist')
 
 
+def _workflows(root):
+    parsed = {}
+    for path in sorted((root / '.github/workflows').glob('*.yml')):
+        parsed[path.name] = _parse_workflow(path.read_text())
+    return parsed
+
+
+def _parse_workflow(text):
+    lines = [line for line in text.splitlines() if line.strip() and not line.lstrip().startswith('#')]
+    value, index = _parse_node(lines, 0, 0)
+    if index != len(lines):
+        raise ValueError('unparsed workflow line: ' + lines[index])
+    return value
+
+
+def _indent(line):
+    return len(line) - len(line.lstrip(' '))
+
+
+def _parse_node(lines, index, indent):
+    if index < len(lines) and _indent(lines[index]) == indent and lines[index].lstrip().startswith('-'):
+        return _parse_list(lines, index, indent)
+    return _parse_mapping(lines, index, indent)
+
+
+def _parse_mapping(lines, index, indent):
+    mapping = {}
+    while index < len(lines) and _indent(lines[index]) == indent and not lines[index].lstrip().startswith('-'):
+        key, value, index = _parse_pair(lines, index, indent)
+        mapping[key] = value
+    return mapping, index
+
+
+def _parse_list(lines, index, indent):
+    items = []
+    while index < len(lines) and _indent(lines[index]) == indent and lines[index].lstrip().startswith('-'):
+        raw = lines[index]
+        body = raw.lstrip()[1:]
+        content = body.lstrip()
+        if content.startswith(('"', "'", '!', '[', '{')) or ':' not in content:
+            items.append(_scalar(content))
+            index += 1
+            continue
+        content_indent = _indent(raw) + 1 + (len(body) - len(content))
+        lines[index] = ' ' * content_indent + content
+        item, index = _parse_mapping(lines, index, content_indent)
+        items.append(item)
+    return items, index
+
+
+def _parse_pair(lines, index, indent):
+    key, _, rest = lines[index].strip().partition(':')
+    key = key.strip().strip('"').strip("'")
+    rest = rest.strip()
+    index += 1
+    if rest in {'|', '|-', '|+', '>', '>-', '>+'}:
+        block = []
+        while index < len(lines) and _indent(lines[index]) > indent:
+            block.append(lines[index].strip())
+            index += 1
+        return key, '\n'.join(block), index
+    if rest == '':
+        if index < len(lines) and _indent(lines[index]) > indent:
+            value, index = _parse_node(lines, index, _indent(lines[index]))
+            return key, value, index
+        return key, None, index
+    return key, _scalar(rest), index
+
+
+def _scalar(text):
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in {'"', "'"}:
+        return text[1:-1]
+    if text == 'true':
+        return True
+    if text == 'false':
+        return False
+    if text in {'null', '~'}:
+        return None
+    if text.startswith('[') and text.endswith(']') and '{' not in text:
+        inner = text[1:-1].strip()
+        return [] if not inner else [_scalar(part.strip()) for part in inner.split(',')]
+    return text
+
+
+def _event_block(document, event):
+    trigger = document.get('on')
+    if not isinstance(trigger, dict) or event not in trigger:
+        return None
+    block = trigger.get(event)
+    return {} if block is None else block
+
+
+def _glob_match(path, pattern):
+    pattern = pattern[1:] if pattern.startswith('!') else pattern
+    regex = ['^']
+    index = 0
+    while index < len(pattern):
+        if pattern.startswith('**/', index):
+            regex.append('(?:.*/)?')
+            index += 3
+        elif pattern.startswith('**', index):
+            regex.append('.*')
+            index += 2
+        elif pattern[index] == '*':
+            regex.append('[^/]*')
+            index += 1
+        elif pattern[index] == '?':
+            regex.append('[^/]')
+            index += 1
+        else:
+            regex.append(re.escape(pattern[index]))
+            index += 1
+    regex.append('$')
+    return re.match(''.join(regex), path) is not None
+
+
+def _paths_match(path, patterns):
+    matched = False
+    for pattern in patterns:
+        body = pattern[1:] if str(pattern).startswith('!') else pattern
+        if _glob_match(path, body):
+            matched = not str(pattern).startswith('!')
+    return matched
+
+
+def _triggered(document, event, changed):
+    block = _event_block(document, event)
+    if block is None:
+        return False
+    if not isinstance(block, dict):
+        return True
+    if 'paths' in block and 'paths-ignore' in block:
+        raise ValueError('paths and paths-ignore cannot be combined')
+    if 'paths' in block:
+        return _paths_match(changed, block['paths'] or [])
+    if 'paths-ignore' in block:
+        return not any(_glob_match(changed, pattern) for pattern in block['paths-ignore'] or [])
+    return True
+
+
+def _truthy(value):
+    if value is None or value is False:
+        return False
+    if isinstance(value, str):
+        return value != ''
+    if isinstance(value, (int, float)):
+        return value != 0
+    return True
+
+
+def _as_number(value):
+    if value is None or value is False:
+        return 0
+    if value is True:
+        return 1
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        if value == '':
+            return 0
+        return float(value) if re.fullmatch(r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?', value) else float('nan')
+    return float('nan')
+
+
+def _loose_equal(left, right):
+    if isinstance(left, str) and isinstance(right, str):
+        return left.lower() == right.lower()
+    if type(left) is type(right):
+        return left == right
+    left_number, right_number = _as_number(left), _as_number(right)
+    if left_number != left_number or right_number != right_number:
+        return False
+    return left_number == right_number
+
+
+_EXPR = re.compile(r"\s+|&&|\|\||==|!=|!|\(|\)|,|\.|true|false|null|'(?:[^']|'')*'|[A-Za-z_][\w-]*|\d+(?:\.\d+)?")
+
+
+def _github_if(expression, event_name, inputs):
+    """Evaluate the job condition a called workflow actually sees.
+
+    github.event_name stays the caller event. It is never workflow_call.
+    A missing input is an empty string, not the workflow_call default.
+    """
+    text = expression.strip()
+    if text.startswith('${{') and text.endswith('}}'):
+        text = text[3:-2].strip()
+    tokens, cursor = [], 0
+    while cursor < len(text):
+        match = _EXPR.match(text, cursor)
+        if not match:
+            raise ValueError('unsupported workflow expression: ' + text[cursor:])
+        cursor = match.end()
+        if not match.group(0).isspace():
+            tokens.append(match.group(0))
+
+    def lookup(path):
+        if path == ['github', 'event_name']:
+            return event_name
+        if len(path) == 2 and path[0] == 'inputs':
+            return inputs.get(path[1], '')
+        return ''
+
+    def call(path):
+        name = '.'.join(path)
+        if name == 'always' or name == 'success':
+            return True
+        if name in {'failure', 'cancelled'}:
+            return False
+        raise ValueError('unsupported workflow call: ' + name)
+
+    position = 0
+
+    def peek():
+        return tokens[position] if position < len(tokens) else None
+
+    def pop():
+        nonlocal position
+        token = peek()
+        if token is None:
+            raise ValueError('truncated workflow expression: ' + text)
+        position += 1
+        return token
+
+    def parse_or():
+        value = parse_and()
+        while peek() == '||':
+            pop()
+            right = parse_and()
+            value = value if _truthy(value) else right
+        return value
+
+    def parse_and():
+        value = parse_not()
+        while peek() == '&&':
+            pop()
+            right = parse_not()
+            value = right if _truthy(value) else value
+        return value
+
+    def parse_not():
+        if peek() == '!':
+            pop()
+            return not _truthy(parse_not())
+        return parse_cmp()
+
+    def parse_cmp():
+        value = parse_atom()
+        if peek() in {'==', '!='}:
+            operator = pop()
+            right = parse_atom()
+            same = _loose_equal(value, right)
+            return same if operator == '==' else not same
+        return value
+
+    def parse_atom():
+        token = pop()
+        if token == '(':
+            value = parse_or()
+            if pop() != ')':
+                raise ValueError('expected ) in ' + text)
+            return value
+        if token == 'true':
+            return True
+        if token == 'false':
+            return False
+        if token == 'null':
+            return None
+        if token.startswith("'"):
+            return token[1:-1].replace("''", "'")
+        if token[0].isdigit():
+            return float(token) if '.' in token else int(token)
+        path = [token]
+        while peek() == '.':
+            pop()
+            path.append(pop())
+        if peek() == '(':
+            pop()
+            if pop() != ')':
+                raise ValueError('unsupported call arguments in ' + text)
+            return call(path)
+        return lookup(path)
+
+    value = parse_or()
+    if peek() is not None:
+        raise ValueError('trailing workflow expression: ' + peek())
+    return value
+
+
+def _job_enabled(job, event_name, inputs):
+    condition = job.get('if') if isinstance(job, dict) else None
+    if condition is None:
+        return True
+    if not isinstance(condition, str):
+        return _truthy(condition)
+    return _truthy(_github_if(condition, event_name, inputs))
+
+
+def _resolved_inputs(document, passed, called):
+    if not called:
+        return {}
+    defined = (((document.get('on') or {}).get('workflow_call') or {}).get('inputs') or {})
+    resolved = {}
+    for name, spec in defined.items():
+        if name in passed:
+            resolved[name] = passed[name]
+        elif isinstance(spec, dict) and 'default' in spec:
+            resolved[name] = spec['default']
+        else:
+            resolved[name] = ''
+    return resolved
+
+
+def _emits_swift_linux(job):
+    for step in job.get('steps') or []:
+        if not isinstance(step, dict):
+            continue
+        run = step.get('run') if isinstance(step.get('run'), str) else ''
+        if re.search(r'qualify\.py\s+swift-linux\b', run):
+            return True
+        uses = step.get('uses') if isinstance(step.get('uses'), str) else ''
+        artifact = (step.get('with') or {}).get('name') if isinstance(step.get('with'), dict) else None
+        if 'upload-artifact' in uses and artifact == 'qualification-swift-linux':
+            return True
+    return False
+
+
+def _runs_publication_checks(job):
+    for step in job.get('steps') or []:
+        run = step.get('run') if isinstance(step, dict) and isinstance(step.get('run'), str) else ''
+        if 'unittest' in run and ('scripts/release' in run or 'WorkflowTests' in run or 'test_release' in run):
+            return True
+    return False
+
+
+def _walk_jobs(workflows, name, event_name, passed, called, stack, visit):
+    if name in stack:
+        raise ValueError('workflow cycle: ' + name)
+    document = workflows[name]
+    inputs = _resolved_inputs(document, passed, called)
+    for job_name, job in (document.get('jobs') or {}).items():
+        if not isinstance(job, dict) or not _job_enabled(job, event_name, inputs):
+            continue
+        visit(name, job_name, job)
+        uses = job.get('uses')
+        if isinstance(uses, str) and uses.startswith('./.github/workflows/') and uses.endswith('.yml'):
+            _walk_jobs(workflows, uses.rsplit('/', 1)[-1], event_name, job.get('with') or {}, True, stack + (name,), visit)
+
+
+def _swift_linux_jobs(workflows, entry, event_name):
+    found = []
+    def visit(name, job_name, job):
+        if _emits_swift_linux(job):
+            found.append(name + ':' + job_name)
+    _walk_jobs(workflows, entry, event_name, {}, False, (), visit)
+    return found
+
+
+def _safety_checks_run(workflows, changed, event_name):
+    triggered = [name for name, document in workflows.items() if _triggered(document, event_name, changed)]
+    found = []
+    for name in triggered:
+        def visit(workflow_name, job_name, job, source=name):
+            if _runs_publication_checks(job):
+                found.append(source + '→' + workflow_name + ':' + job_name)
+        _walk_jobs(workflows, name, event_name, {}, False, (), visit)
+    return triggered, found
+
+
 class WorkflowTests(unittest.TestCase):
     def test_no_publication_workflows(self):
         root=Path(__file__).resolve().parents[2]
-        for name in ['ts','py','rs','kt','go','swift','release-qualification']:
+        for name in ['ts','py','rs','kt','go','swift','release-qualification','workflow-safety']:
             text=(root/'.github/workflows'/f'{name}.yml').read_text()
             check_workflow(text)
             for extra in ['\n  packages: write', '\n  id-token: write', '\n  run: npm publish', '\n  env: ${{ secrets.TOKEN }}']:
@@ -233,6 +602,56 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotRegex(script, r"['\"](?:npm|cargo)['\"]\s*,\s*['\"]publish['\"]")
         self.assertNotRegex(script, r"['\"](?:publish|publishAllPublicationsToGitHubPackagesRepository|publishMavenPublicationToGitHubPackagesRepository)['\"]")
         self.assertIn("'publishToMavenLocal'",script)
+
+    def test_readme_does_not_run_the_language_matrix(self):
+        root = Path(__file__).resolve().parents[2]
+        orchestrator = (root / '.github/workflows/release-qualification.yml').read_text()
+        self.assertIn('paths:', orchestrator)
+        self.assertNotIn('"README.md"', orchestrator)
+        self.assertNotIn('"docs/**"', orchestrator)
+        self.assertNotIn('"hi/**"', orchestrator)
+        lanes = {
+            'ts': 'ts/**',
+            'py': 'py/**',
+            'rs': 'rs/**',
+            'kt': 'kt/**',
+            'go': 'go/**',
+            'swift': 'swift/**',
+        }
+        for name, own in lanes.items():
+            text = (root / '.github/workflows' / f'{name}.yml').read_text()
+            self.assertIn(f'"{own}"', text)
+            self.assertIn('"!**/*.md"', text)
+            self.assertNotIn('"README.md"', text)
+
+    def test_matrix_emits_one_swift_linux_receipt(self):
+        workflows = _workflows(Path(__file__).resolve().parents[2])
+        # The called workflow does not observe workflow_call. An event_name
+        # guard therefore stays true and would qualify Linux twice.
+        self.assertTrue(_truthy(_github_if("github.event_name != 'workflow_call'", 'pull_request', {})))
+        self.assertFalse(_truthy(_github_if("inputs.skip_linux != true", 'pull_request', {'skip_linux': True})))
+        self.assertTrue(_truthy(_github_if("inputs.skip_linux != true", 'pull_request', {})))
+        for event in ('pull_request', 'push', 'workflow_dispatch'):
+            matrix = _swift_linux_jobs(workflows, 'release-qualification.yml', event)
+            direct = _swift_linux_jobs(workflows, 'swift.yml', event)
+            self.assertEqual(matrix, ['release-qualification.yml:swift-linux'], event)
+            self.assertEqual(direct, ['swift.yml:linux'], event)
+
+    def test_lane_workflow_edit_runs_safety_checks(self):
+        root = Path(__file__).resolve().parents[2]
+        workflows = _workflows(root)
+        lanes = ['ts', 'py', 'rs', 'kt', 'go', 'swift', 'workflow-safety']
+        for event in ('pull_request', 'push'):
+            for name in lanes:
+                changed = f'.github/workflows/{name}.yml'
+                triggered, checks = _safety_checks_run(workflows, changed, event)
+                self.assertNotIn('release-qualification.yml', triggered, changed)
+                self.assertTrue(checks, changed)
+                text = (root / '.github/workflows' / f'{name}.yml').read_text()
+                with self.assertRaises(ValueError):
+                    check_workflow(text + '\n  packages: write')
+                with self.assertRaises(ValueError):
+                    check_workflow(text + '\n  run: npm publish')
 
 
 if __name__ == '__main__': unittest.main()

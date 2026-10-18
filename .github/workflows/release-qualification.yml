@@ -1,9 +1,24 @@
 name: Release qualification
 
+# Language trees trigger their own workflows. This matrix runs only when a
+# change can affect every library: the protocol, vectors, or release scripts.
+# A README, docs, or intent-only change does not start it.
 on:
   pull_request:
+    paths:
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "vectors/**"
+      - "scripts/release/**"
+      - ".github/workflows/release-qualification.yml"
   push:
     branches: [main]
+    paths:
+      - "PROTOCOL.md"
+      - "TEST-VECTORS.md"
+      - "vectors/**"
+      - "scripts/release/**"
+      - ".github/workflows/release-qualification.yml"
   workflow_dispatch:
 
 permissions:
@@ -29,7 +44,10 @@ jobs:
   rs:
     uses: ./.github/workflows/rs.yml
   swift:
+    # One Linux receipt: swift.yml also has this lane for direct Swift runs.
     uses: ./.github/workflows/swift.yml
+    with:
+      skip_linux: true
   swift-linux:
     runs-on: ubuntu-latest
     timeout-minutes: 40
