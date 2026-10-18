@@ -29,3 +29,11 @@ Additional negative cases: stale SHA, missing language, absent artifact, failed 
 | REQ-release-8 | qualify.py creates temporary consumers outside checkout for every lane; docs/RELEASE.md labels Go local replacement and unqualified runtime minima. Hosted real consumer results remain pending. |
 
 Follow-up review repairs: shared packages.py rejects malformed archives, missing required members and wrong identities; receipt integrity remains explicitly separate. ArchiveTests reject links, FIFOs and devices. WorkflowTests guard read-only/no-publication qualification. Go/Swift exports include vectors and execute extracted parity tests. Rust packaged full-suite fixture reproducibility remains explicitly unqualified.
+
+## Final product evidence
+
+Candidate 074156ac8bb95793cfcacd5eeefc443078a43b9a passed all seven qualification lanes and the aggregate in https://github.com/CorvidLabs/algochat/actions/runs/39085460514. The downloaded artifact set also passed receipt/hash verification and every semantic package check locally. Hosted TypeScript: 270 tests. Rust: 234 unit tests and 14 doc tests. Apple Swift: 372 full tests and 6 extracted PQ tests. Linux Swift: 369 full tests and 3 extracted PQ tests, plus direct executable exit 1, empty stdout and exact unsupported-platform stderr. Python, Kotlin and Go full test/build/consumer lanes passed; Go extracted parity test passed. The hosted 18 release-check tests and local strict Spec-Sync also passed.
+
+The independent source review relayed by source thread 01a118b4-4fe7-70fc-9f2d-dbbe961ba009 on this exact product head confirmed the four audit repairs and reported no new blocking defect. The recording agent separately inspected code, real artifacts and test results. This is agent review evidence, not human implementation acceptance. The user's subsequent request to archive authorizes same-PR finalization, not a fabricated human acceptance attestation.
+
+Release-range provenance still fails for historical d53ecbb. The five new agent-authored commits pass the existing Attest policy based on truthful scoped evidence. Distribution/minimum-runtime/LocalNet and Rust packaged full-suite limitations remain in docs/RELEASE.md.

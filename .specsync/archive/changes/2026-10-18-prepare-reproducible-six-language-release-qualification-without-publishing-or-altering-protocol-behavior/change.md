@@ -1,6 +1,6 @@
 ---
 id: prepare-reproducible-six-language-release-qualification-without-publishing-or-altering-protocol-behavior
-state: implementing
+state: archived
 type: feature
 base_commit: d53ecbb3864e089b2ec4cdc6a18dcc209a212af2
 ---

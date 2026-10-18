@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "prepare-reproducible-six-language-release-qualification-without-publishing-or-altering-protocol-behavior",
+  "implementation_commit": "074156ac8bb95793cfcacd5eeefc443078a43b9a",
+  "implementation_tree": "ef026565fe23941197270a2145bfb336eb0b80a2",
+  "contract_digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+  "workspace_digest": "d1d09f746d62cdeb38e5e46b60ef55e17e3125893d1b4d6ec03f6f9b45548f3c",
+  "closing_digest": "349c251f266d4f7c2d26bbef93b5a26afcd5d2170f3827f7847c5ab031f3c007",
+  "review_digest": "2baee0477203a4952308dd5505e0beed5105f2cfcfec15582a33540600861b16",
+  "finalization_digest": "fdf3d0823fb9f98232eb8e63a0ff8a8c00e5fcbcad1d0d9f73992a678db0484a",
+  "timestamp": 1792286439
+}

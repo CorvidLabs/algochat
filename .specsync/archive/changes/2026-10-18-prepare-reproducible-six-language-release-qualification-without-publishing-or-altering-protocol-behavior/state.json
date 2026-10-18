@@ -7,11 +7,11 @@
   "title": "Prepare reproducible six-language release qualification without publishing or altering protocol behavior",
   "description": "Prepare reproducible six-language release qualification without publishing or altering protocol behavior",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "d53ecbb3864e089b2ec4cdc6a18dcc209a212af2",
   "created_at": 1792284363,
-  "updated_at": 1792285759,
+  "updated_at": 1792286441,
   "affected_specs": [
     "release"
   ],

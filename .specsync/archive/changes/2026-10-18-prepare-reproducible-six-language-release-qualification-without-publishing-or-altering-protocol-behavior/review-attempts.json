@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "prepare-reproducible-six-language-release-qualification-without-publishing-or-altering-protocol-behavior",
+      "reviewer": "agent:codex",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "074156ac8bb95793cfcacd5eeefc443078a43b9a",
+      "contract_digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+      "execution_digest": "657eb313a50259d64e03276e018348006ce1dfd0c18a933fcf1facbddf11f5f9",
+      "workspace_digest": "d1d09f746d62cdeb38e5e46b60ef55e17e3125893d1b4d6ec03f6f9b45548f3c",
+      "timestamp": 1792286437
+    }
+  ]
+}
