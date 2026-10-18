@@ -92,7 +92,7 @@ Tag `0.4.0` on the archived [swift-algochat](https://github.com/CorvidLabs/swift
 
 The low-level libraries expose hybrid session APIs; existing high-level clients do not automatically select PQ from a peer's available keys. An application must handle that integration. Standard-mode transaction uniqueness also does not reject an encrypted envelope copied into a different transaction; PSK replay handling requires its state machinery.
 
-[The documentation accuracy and intent report](docs/ACCURACY.md) records checked claims, known implementation gaps, and unverified evidence. The accepted sentences in `hi/`, `ts/hi/`, and `swift/hi/` remain desired outcomes, with permanent IDs. A structural `hi check` or 100% source/export inventory is not proof that every goal is implemented or independently audited.
+[The documentation accuracy and intent report](docs/ACCURACY.md) records checked claims, known implementation gaps, and unverified evidence. The accepted sentences in the root [`hi/`](hi/) remain desired outcomes, with permanent IDs. A structural `hi check` or 100% source/export inventory is not proof that every goal is implemented or independently audited.
 
 ## Protocol
 
