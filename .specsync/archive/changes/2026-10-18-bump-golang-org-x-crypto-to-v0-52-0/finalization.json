@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "bump-golang-org-x-crypto-to-v0-52-0",
+  "implementation_commit": "f752c908abaa45f517b880af088feadf22186810",
+  "implementation_tree": "c7003587691011767973b405a9761c4a58dd6470",
+  "contract_digest": "f405ad1218223a353e95000d687bce56935fb72c70501f06b9e6bec5aa41f963",
+  "workspace_digest": "08bf79d166a98e012220c974b6032fda01750c965af6276c7de6f177217c30f9",
+  "closing_digest": "d32095353f3b415318b7c038f0cf35284d537edb0c28c26466bc7e6dea1caa32",
+  "review_digest": "e769718d2142743875b58605d5293b35225da70ced10bc9b3165ec84b9e02f59",
+  "finalization_digest": "e24a7f5882252ad47b53cbb44a410c6e2610aeb0877b94d36a1f784e0388baf3",
+  "timestamp": 1792287849
+}

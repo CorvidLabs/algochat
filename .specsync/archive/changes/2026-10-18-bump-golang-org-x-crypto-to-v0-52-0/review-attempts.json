@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "bump-golang-org-x-crypto-to-v0-52-0",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "f752c908abaa45f517b880af088feadf22186810",
+      "contract_digest": "f405ad1218223a353e95000d687bce56935fb72c70501f06b9e6bec5aa41f963",
+      "execution_digest": "03d84d5637b97651c8965b503f138b673defc5d5e086a53527bd59a83c18d23d",
+      "workspace_digest": "08bf79d166a98e012220c974b6032fda01750c965af6276c7de6f177217c30f9",
+      "timestamp": 1792287837
+    }
+  ]
+}
