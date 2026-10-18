@@ -6,8 +6,8 @@
     "TEST-VECTORS.md": "33e788f1ed6f6e8790fc24e64c3e1166778165518f20efb14e39e15fbedf0e2f",
     "scripts/release/evidence.py": "3d86fe70858ea20c5a6a8866fc9451a0b597a43a14b9eb43d0f23c09e697d82c",
     "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
-    "scripts/release/qualify.py": "ea172e8142f3eaf4a1a72d5a8b61871bf253b381eec7b8c57119ea2ebd06ca4b",
-    "scripts/release/test_release.py": "715c252c951872830c83ce373ed742cdc70c2e40d6b9c2a7cc4f38d5a94b57e9",
+    "scripts/release/qualify.py": "bea060bc95ec6ed9e46a9bda6972420c7f114083d720f57ea94b883c32f1366c",
+    "scripts/release/test_release.py": "73c5d13b5cddccaebacda882ef71b1d87816b3aab55c82996137bb496b5ae631",
     "specs/protocol/protocol.spec.md": "8fcf9f636a9b741ba596f00435db8706879b05ff76026dacde6e33bb3816edda",
     "specs/protocol/requirements.md": "ee2d881caa36d0080d01e7d54e9157b2825f20044862c8e514a60434e9e052ef",
     "specs/release/context.md": "9df5b419b94532a784e2e7c7d741c0a2c4dc5ad9fe57a53efb07aa2a45d6470b",
@@ -31,8 +31,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "0159f455495935cab3c35a5e25842e0ec0d3da2cef7f4c98cba4ff7f09512260",
-      "snapshot_digest": "14d16f08a4948b8507ae98b46d3fac903ca9864332321b502720b254fc29c6d6"
+      "input_digest": "6a5f92caad3d0b80b8ea1cad2c8ca491aabbf1f4fb3866878c70f508ec50a9bf",
+      "snapshot_digest": "ddbbd98b9cd058e8f622b3ef4998c544e8bd1a6ec36f445b534567a16fc1b12c"
     }
   }
 }

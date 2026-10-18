@@ -100,6 +100,31 @@
         "REQ-release-7",
         "REQ-release-8"
       ]
+    },
+    {
+      "timestamp": 1792285261,
+      "commit": "b50f78c05a8104ee736ae84bd678f515fbf5d338",
+      "contract_digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+      "execution_digest": "0a6d615059767d6d3378038ad1fab486664098c3a8a52850b8bb40673d77830a",
+      "workspace_digest": "248ddaf4e79a8bfab9591d8d38939e74e9041483c69713a45cd2206aac07be47",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-release-1",
+        "REQ-release-2",
+        "REQ-release-3",
+        "REQ-release-4",
+        "REQ-release-5",
+        "REQ-release-6",
+        "REQ-release-7",
+        "REQ-release-8"
+      ]
     }
   ]
 }

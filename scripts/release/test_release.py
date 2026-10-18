@@ -116,6 +116,19 @@ class ProvenanceTests(unittest.TestCase):
             self.assertEqual(error.exception.code,1)
 
 class ArchiveTests(unittest.TestCase):
+    def test_real_swift_source_archive(self):
+        root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            archive = work / 'swift.tar'
+            subprocess.run(['git', 'archive', '-o', str(archive), 'HEAD', 'Package.swift', 'swift/Sources', 'swift/Tests', 'LICENSE'], cwd=root, check=True)
+            target = work / 'consumer'
+            target.mkdir()
+            extract(archive, target)
+            self.assertTrue((target / 'Package.swift').is_file())
+            self.assertTrue((target / 'swift/Sources/AlgoChat').is_dir())
+
+
     def test_reject_traversal(self):
         import tarfile
         with tempfile.TemporaryDirectory() as directory:

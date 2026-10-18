@@ -157,7 +157,7 @@ tasks.register("smoke") { doLast {
             # Expected failure is a successful assertion, not a successful ML-KEM call.
             code = "import subprocess; p=subprocess.run(['swift','run','--skip-build','pqcross'],capture_output=True); assert p.returncode==1 and p.stdout==b'' and p.stderr==b'ML-KEM-768 needs macOS 26\\n', (p.returncode,p.stdout,p.stderr)"
             run(['python3', '-c', code])
-        archive = source_archive(output, lane, ['Package.swift', 'swift', 'LICENSE'])
+        archive = source_archive(output, lane, ['Package.swift', 'swift/Sources', 'swift/Tests', 'LICENSE'])
         package = work / 'algochat'
         package.mkdir()
         extract(archive, package)
