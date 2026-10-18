@@ -18,6 +18,24 @@
       "requirement_ids": [
         "REQ-protocol-3"
       ]
+    },
+    {
+      "timestamp": 1792335599,
+      "commit": "d20f2fda67387db8a126c40f5ed170472cde9fc9",
+      "contract_digest": "15559297b2037f0aa61e136942f7f406a17ee0f8c623fad1b60d88b95815b3d3",
+      "execution_digest": "f719912b5c40d896e1257389fe02a727429f2b5b93ac32d3b60610cfa2a6aa63",
+      "workspace_digest": "3725f582ca673543f7060d5eb6cae2f7462f4577d434ae95e782b199404ea3d7",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-3"
+      ]
     }
   ]
 }
