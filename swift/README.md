@@ -17,7 +17,7 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 - **End-to-End Encryption** - X25519 key agreement + ChaCha20-Poly1305
 - **No forward secrecy** - A long-term key opens that account's past messages. A fresh ephemeral key only separates message keys.
 - **Quantum Defense-in-Depth** - Optional ratcheting PSK mode (protocol v1.1) provides hybrid X25519 + pre-shared key encryption
-- **PSK Replay Controls** - The configured PSK manager checks and records received counters; standard mode has no cryptographic replay check
+- **PSK Replay Controls** - The configured PSK manager checks and records received counters. Reading the same transaction again returns that message. A copied note under a new transaction id is refused, and a failed decryption records nothing. The send counter does not wrap. Standard mode has no cryptographic replay check
 - **Immutable Messages** - Permanently recorded on-chain
 - **Decentralized** - No central server controls delivery
 - **Bidirectional Decryption** - Both sender and recipient can decrypt messages

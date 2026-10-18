@@ -48,9 +48,15 @@ object PSKEnvelopeCodec {
      * @throws AlgoChatException if data is invalid
      */
     fun decode(data: ByteArray): PSKEnvelope {
-        if (data.size < PSKProtocol.HEADER_SIZE) {
+        val minimum = PSKProtocol.HEADER_SIZE + PSKProtocol.TAG_SIZE
+        if (data.size < minimum) {
             throw AlgoChatException.InvalidEnvelope(
-                "PSK data too short: " + data.size.toString() + " bytes (minimum " + PSKProtocol.HEADER_SIZE.toString() + ")"
+                "PSK data too short: " + data.size.toString() + " bytes (minimum " + minimum.toString() + ")"
+            )
+        }
+        if (data.size > Protocol.MAX_NOTE_SIZE) {
+            throw AlgoChatException.InvalidEnvelope(
+                "Note is " + data.size.toString() + " bytes (maximum " + Protocol.MAX_NOTE_SIZE.toString() + ")"
             )
         }
 

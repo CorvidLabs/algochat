@@ -1,7 +1,6 @@
 # Gradle
 .gradle/
 build/
-\!gradle/wrapper/gradle-wrapper.jar
 
 # IDE
 .idea/
@@ -15,6 +14,7 @@ build/
 *.jar
 *.war
 *.ear
+!gradle/wrapper/gradle-wrapper.jar
 
 # OS
 .DS_Store

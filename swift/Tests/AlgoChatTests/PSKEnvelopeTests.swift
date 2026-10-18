@@ -188,6 +188,17 @@ struct PSKEnvelopeTests {
         }
     }
 
+    @Test("Rejects a PSK note longer than 4096 bytes")
+    func testRejectsOversizedNote() {
+        var data = Data(repeating: 0x00, count: ChatEnvelope.maxNoteSize + 1)
+        data[0] = 0x01
+        data[1] = 0x02
+
+        #expect(throws: ChatError.self) {
+            _ = try PSKEnvelope.decode(from: data)
+        }
+    }
+
     @Test("Rejects data shorter than minimum (146 bytes)")
     func testRejectsShortData() {
         // 130 header + 16 tag = 146 minimum

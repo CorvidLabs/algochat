@@ -63,12 +63,70 @@ struct PSKStateTests {
     // MARK: - Send Counter
 
     @Test("advanceSendCounter increments correctly")
-    func testAdvanceSendCounter() {
+    func testAdvanceSendCounter() throws {
         var state = PSKState()
-        #expect(state.advanceSendCounter() == 0)
-        #expect(state.advanceSendCounter() == 1)
-        #expect(state.advanceSendCounter() == 2)
+        #expect(try state.advanceSendCounter() == 0)
+        #expect(try state.advanceSendCounter() == 1)
+        #expect(try state.advanceSendCounter() == 2)
         #expect(state.sendCounter == 3)
+    }
+
+    @Test("The last send counter does not wrap, and exhaustion survives decoding")
+    func testSendCounterExhaustionSurvivesDecoding() throws {
+        var state = PSKState(sendCounter: .max, peerLastCounter: 0, seenCounters: [])
+        #expect(try state.advanceSendCounter() == .max)
+        #expect(state.sendExhausted)
+        #expect(state.sendCounter == .max)
+
+        #expect(throws: ChatError.self) {
+            try state.advanceSendCounter()
+        }
+        #expect(state.sendCounter == .max)
+        #expect(state.sendExhausted)
+
+        let encoded = try JSONEncoder().encode(state)
+        var decoded = try JSONDecoder().decode(PSKState.self, from: encoded)
+        #expect(decoded.sendExhausted)
+        #expect(decoded.sendCounter == .max)
+        #expect(throws: ChatError.self) {
+            try decoded.advanceSendCounter()
+        }
+        #expect(decoded.sendCounter == .max)
+    }
+
+    @Test("Older state JSON without new fields still decodes")
+    func testOlderStateJSONDecodes() throws {
+        let json = """
+        {"peerLastCounter":4,"seenCounters":[4],"sendCounter":2}
+        """
+        let decoded = try JSONDecoder().decode(PSKState.self, from: Data(json.utf8))
+        #expect(decoded.sendCounter == 2)
+        #expect(decoded.peerLastCounter == 4)
+        #expect(decoded.seenCounters == [4])
+        #expect(decoded.acceptedTransactionIds.isEmpty)
+        #expect(decoded.sendExhausted == false)
+    }
+
+    @Test("A fresh state rejects counter 1000000")
+    func testFreshStateRejectsFarFuture() {
+        let state = PSKState()
+        #expect(throws: ChatError.self) {
+            try state.validateCounter(1_000_000)
+        }
+    }
+
+    @Test("Accepting the maximum counter does not make 0 acceptable")
+    func testMaximumCounterDoesNotAcceptZero() throws {
+        var state = PSKState(
+            sendCounter: 0,
+            peerLastCounter: UInt32.max - 50,
+            seenCounters: [UInt32.max - 50]
+        )
+        try state.validateAndRecordReceive(UInt32.max)
+        #expect(state.peerLastCounter == UInt32.max)
+        #expect(throws: ChatError.self) {
+            try state.validateCounter(0)
+        }
     }
 
     @Test("Initial send counter is 0")

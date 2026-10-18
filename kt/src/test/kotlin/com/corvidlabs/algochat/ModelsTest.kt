@@ -158,15 +158,18 @@ class ConversationTest {
     private fun makeMessage(
         id: String,
         direction: MessageDirection = MessageDirection.SENT,
-        timestamp: Instant = Instant.ofEpochSecond(1700000000)
+        timestamp: Instant = Instant.ofEpochSecond(1700000000),
+        confirmedRound: Long = 100,
+        intraRoundOffset: Int = 0
     ) = Message(
         id = id,
         sender = if (direction == MessageDirection.SENT) "ALICE" else "BOB",
         recipient = if (direction == MessageDirection.SENT) "BOB" else "ALICE",
         content = "msg-$id",
         timestamp = timestamp,
-        confirmedRound = 100,
-        direction = direction
+        confirmedRound = confirmedRound,
+        direction = direction,
+        intraRoundOffset = intraRoundOffset
     )
 
     @Test
@@ -207,17 +210,38 @@ class ConversationTest {
     }
 
     @Test
-    fun `append maintains chronological order`() {
+    fun `append orders by round then offset, not timestamp or insertion`() {
         val conv = Conversation("BOB")
 
-        val later = makeMessage("tx1", timestamp = Instant.ofEpochSecond(2000000000))
-        val earlier = makeMessage("tx2", timestamp = Instant.ofEpochSecond(1000000000))
+        conv.append(makeMessage(
+            "round20",
+            timestamp = Instant.ofEpochSecond(1),
+            confirmedRound = 20
+        ))
+        conv.append(makeMessage(
+            "offset2",
+            timestamp = Instant.ofEpochSecond(1),
+            confirmedRound = 10,
+            intraRoundOffset = 2
+        ))
+        conv.append(makeMessage(
+            "round10",
+            timestamp = Instant.ofEpochSecond(9_000_000_000),
+            confirmedRound = 10
+        ))
+        conv.append(makeMessage(
+            "offset1",
+            timestamp = Instant.ofEpochSecond(9_000_000_000),
+            confirmedRound = 10,
+            intraRoundOffset = 1
+        ))
 
-        conv.append(later)
-        conv.append(earlier)
+        assertEquals(listOf("round10", "offset1", "offset2", "round20"), conv.messages.map { it.id })
 
-        assertEquals("tx2", conv.messages[0].id)
-        assertEquals("tx1", conv.messages[1].id)
+        val boundary = conv.messages[1]
+        val nextPage = conv.messagesAfter(boundary.confirmedRound, boundary.intraRoundOffset)
+        assertEquals(listOf("offset2", "round20"), nextPage.map { it.id })
+        assertFalse(nextPage.any { it.id == boundary.id })
     }
 
     @Test

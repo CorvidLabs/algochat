@@ -134,6 +134,11 @@ public struct PSKEnvelope: Sendable {
         guard data.count >= headerSize + tagSize else {
             throw ChatError.invalidEnvelope("Data too short for PSK envelope: \(data.count) bytes")
         }
+        guard data.count <= ChatEnvelope.maxNoteSize else {
+            throw ChatError.invalidEnvelope(
+                "Note is \(data.count) bytes (maximum \(ChatEnvelope.maxNoteSize))"
+            )
+        }
 
         // Parse big-endian counter from bytes [2..<6]
         let ratchetCounter = UInt32(data[2]) << 24

@@ -145,7 +145,7 @@ suspend fun syncHistory(client: AlgoChatClient, participant: String): List<Messa
 
 `AlgoChatConfig.testnet()` and `.mainnet()` select the other network settings. The host must configure its adapters consistently. `client.encryptionPublicKey` exposes the X25519 public key. `client.encrypt` returns note bytes for your transaction integration; the client has no public `send` method. `client.decryptFull(bytes)` returns text/reply context. The `senderPublicKeyBytes` argument of `client.decrypt(bytes, key)` is currently unused; it does not verify the sender. `processTransaction` separately requires verified discovery for received transactions.
 
-The client accepts the supplied address without deriving or checking it against the seed and asks the key storage to store the encryption key with `requireBiometric=false`. The canonical requirements retain the stronger identity and persistence boundaries; see the [implementation gaps](../docs/ACCURACY.md).
+`fromSeed` rejects a supplied address that does not match the seed under the active signature scheme. Ed25519 is the default. Pass `scheme = SigningScheme.FALCON_1024` for the Falcon-1024 address of the same 32-byte mnemonic entropy; that address is not the Ed25519 address. The client still asks key storage to store the encryption key with `requireBiometric=false`. Private-key persistence remains a gap against the stronger canonical boundary; see the [implementation gaps](../docs/ACCURACY.md).
 
 ## PSK messages
 
@@ -180,7 +180,7 @@ suspend fun pskExample(): String {
 
 `PSKExchangeURI(address, psk, label).encode()` and `PSKExchangeURI.decode(uri)` exchange the secret out of band. The PSK envelope header is 130 bytes, followed by ciphertext and a 16-byte tag; the standard header is 126 bytes. Standard and PSK plaintext maxima are 3954 and 3950 UTF-8 bytes under the 4096-byte note ceiling.
 
-`PSKState.receive` holds its mutex through validation, decryption, and recording. `acceptReceiveCounter` records immediately and must not precede unauthenticated decryption. Current counters wrap as unsigned 32-bit values, and the receive policy accepts any future counter while rejecting repeats and counters behind its trailing window. Persist state and replace the PSK before send-counter exhaustion. The [gap ledger](../docs/ACCURACY.md) distinguishes this behavior from stronger canonical requirements.
+`PSKState.receive` holds its mutex through validation, decryption, and recording. `acceptReceiveCounter` records immediately and must not precede unauthenticated decryption. Before any receive, only counters `0` through `200` are accepted. After the highest accepted counter `N`, unseen counters from `max(0, N-200)` through `min(4294967295, N+200)` are accepted. Accepting `4294967295` does not make `0` acceptable. `nextSendCounter` returns `4294967295` once and then fails; it does not wrap to `0`. Standard and PSK decoders reject frames shorter than 142 and 146 bytes, and note-facing opens reject input longer than 4096 bytes before returning plaintext. Conversation and cache history sort by confirmed round, then intra-round offset.
 
 ## Hybrid ML-KEM sessions
 

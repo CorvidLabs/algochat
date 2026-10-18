@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **PSK messaging protocol v1.1** - Pre-shared key conversations with a
-  ratcheting counter for forward secrecy and replay protection.
+  per-message key schedule and replay protection. This is not forward secrecy.
 
 ## [0.2.0] - 2026-01-24
 

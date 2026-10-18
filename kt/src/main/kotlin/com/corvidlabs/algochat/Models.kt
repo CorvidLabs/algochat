@@ -35,6 +35,10 @@ enum class MessageDirection {
     RECEIVED
 }
 
+/** Confirmed round, then intra-round offset. A missing offset is 0. */
+internal val messageChainOrder: Comparator<Message> =
+    compareBy<Message>({ it.confirmedRound }, { it.intraRoundOffset })
+
 /**
  * A chat message between Algorand addresses.
  */
@@ -120,13 +124,25 @@ class Conversation(
     val isEmpty: Boolean get() = _messages.isEmpty()
 
     /**
-     * Adds a message to the conversation (maintains chronological order).
+     * Adds a message to the conversation in chain order.
      */
     fun append(message: Message) {
         if (_messages.any { it.id == message.id }) return
         _messages.add(message)
-        _messages.sortBy { it.timestamp }
+        _messages.sortWith(messageChainOrder)
     }
+
+    /**
+     * Messages strictly after the chain position `(round, intraRoundOffset)`.
+     *
+     * Same-round messages with a later offset stay on the next page. The
+     * boundary message itself is not repeated.
+     */
+    fun messagesAfter(round: Long, intraRoundOffset: Int): List<Message> =
+        _messages.filter { message ->
+            message.confirmedRound > round ||
+                (message.confirmedRound == round && message.intraRoundOffset > intraRoundOffset)
+        }
 
     /**
      * Merges new messages into the conversation.

@@ -143,6 +143,9 @@ public struct ChatEnvelope: Sendable {
         guard data.count >= headerSize + tagSize else {
             throw ChatError.invalidEnvelope("Data too short: \(data.count) bytes")
         }
+        guard data.count <= maxNoteSize else {
+            throw ChatError.invalidEnvelope("Note is \(data.count) bytes (maximum \(maxNoteSize))")
+        }
 
         let senderPublicKey = data[2..<34]
         let ephemeralPublicKey = data[34..<66]

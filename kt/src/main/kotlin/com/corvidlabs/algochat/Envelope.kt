@@ -86,8 +86,16 @@ data class ChatEnvelope(
          * @throws AlgoChatException if data is invalid
          */
         fun decode(data: ByteArray): ChatEnvelope {
-            if (data.size < Protocol.HEADER_SIZE) {
-                throw AlgoChatException.InvalidEnvelope("Data too short: ${data.size} bytes (minimum ${Protocol.HEADER_SIZE})")
+            val minimum = Protocol.HEADER_SIZE + Protocol.TAG_SIZE
+            if (data.size < minimum) {
+                throw AlgoChatException.InvalidEnvelope(
+                    "Data too short: ${data.size} bytes (minimum $minimum)"
+                )
+            }
+            if (data.size > Protocol.MAX_NOTE_SIZE) {
+                throw AlgoChatException.InvalidEnvelope(
+                    "Note is ${data.size} bytes (maximum ${Protocol.MAX_NOTE_SIZE})"
+                )
             }
 
             val version = data[0]

@@ -79,6 +79,9 @@ PSK state and management SHALL derive deterministic session and position keys, a
 
 - Send counters advance deterministically and receive counters are recorded only after authentication.
 - Replays and out-of-window counters fail, and obsolete replay entries are pruned.
+- A fresh receive state rejects counter `1000000`. Accepting `4294967295` does not make counter `0` acceptable.
+- Issuing send counter `4294967295` does not store `0`. A later advance fails, and the exhausted flag survives decoding.
+- The same transaction id returns its plaintext again, including after another manager loads the stored state. A different transaction id carrying that note returns no message. A failed authentication records nothing.
 
 ### REQ-algochat-009
 
@@ -109,7 +112,7 @@ Key and PSK storage SHALL preserve private key confidentiality and durable state
 
 ## Implementation status of accepted storage and envelope requirements
 
-REQ-algochat-002 describes the accepted size boundary. Current standard/PSK decoding additionally accepts version `0x02` (full-header payload AAD), but checks only minimum length and does not enforce the inbound 4096-byte ceiling. Writers still emit version `0x01`.
+REQ-algochat-002 describes the accepted size boundary. Current standard/PSK decoding accepts version `0x02` (full-header payload AAD) and rejects a note longer than 4096 bytes. Writers still emit version `0x01`.
 
 REQ-algochat-011's unsupported-platform error and durable/confidential-state criteria remain accepted. Actual `KeychainKeyStorage` on tvOS, watchOS and Linux uses an ephemeral in-memory dictionary rather than raising unsupported capability. `FilePSKStorage` persists PSKs/counters in plaintext JSON; the file queue also persists plaintext messages. The Keychain implementation on iOS/macOS/visionOS stores private-key bytes as generic-password items and loads them into memory, with optional user-presence control; it does not use a Secure Enclave private key. See the [accuracy ledger](../../../docs/ACCURACY.md).
 

@@ -71,9 +71,14 @@ class AlgoChatClient private constructor(
             algod: AlgodClient,
             indexer: IndexerClient,
             keyStorage: EncryptionKeyStorage = InMemoryKeyStorage(),
-            messageCache: MessageCache = InMemoryMessageCache()
+            messageCache: MessageCache = InMemoryMessageCache(),
+            scheme: SigningScheme = SigningScheme.ED25519
         ): AlgoChatClient {
             require(seed.size == 32) { "Seed must be 32 bytes" }
+            val derived = AlgorandIdentity.address(seed, scheme)
+            require(derived == address) {
+                "Address does not match the seed under $scheme"
+            }
 
             // Derive encryption keys from the seed
             val keyPair = Keys.deriveKeysFromSeed(seed)
@@ -181,6 +186,11 @@ class AlgoChatClient private constructor(
      * @return Decrypted content with text and optional reply metadata.
      */
     fun decryptFull(envelopeBytes: ByteArray): DecryptedContent {
+        if (envelopeBytes.size > Protocol.MAX_NOTE_SIZE) {
+            throw AlgoChatException.InvalidEnvelope(
+                "Note is ${envelopeBytes.size} bytes (maximum ${Protocol.MAX_NOTE_SIZE})"
+            )
+        }
         if (!isChatMessage(envelopeBytes)) {
             throw AlgoChatException.InvalidEnvelope("Not an AlgoChat message")
         }
@@ -248,7 +258,8 @@ class AlgoChatClient private constructor(
             timestamp = timestamp,
             confirmedRound = tx.confirmedRound,
             direction = direction,
-            replyContext = replyContext
+            replyContext = replyContext,
+            intraRoundOffset = tx.intraRoundOffset
         )
 
         // Update conversation

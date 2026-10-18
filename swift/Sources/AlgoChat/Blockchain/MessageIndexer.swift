@@ -446,12 +446,12 @@ public actor MessageIndexer {
                 return nil
             }
 
-            // Two-phase counter validation: validate and derive PSK first,
-            // then decrypt, then record the counter only on success.
-            // This prevents burning counters on failed decryptions.
-            let currentPSK = try await pskManager.validateAndDerivePSK(
+            // Known transaction ids are re-reads, not new counter uses.
+            // A new id is checked first, then recorded only after decryption.
+            let currentPSK = try await pskManager.pskForTransaction(
                 from: peerAddress,
-                counter: envelope.ratchetCounter
+                counter: envelope.ratchetCounter,
+                transactionId: tx.id
             )
 
             decrypted = try MessageEncryptor.decryptPSK(
@@ -460,9 +460,10 @@ public actor MessageIndexer {
                 currentPSK: currentPSK
             )
 
-            try await pskManager.recordReceive(
+            try await pskManager.commitTransaction(
                 from: peerAddress,
-                counter: envelope.ratchetCounter
+                counter: envelope.ratchetCounter,
+                transactionId: tx.id
             )
             protocolMode = .psk
         }

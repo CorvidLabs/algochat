@@ -28,6 +28,8 @@ LocalNet integration exercises real Algorand submission, confirmation, and index
 | Standard or PSK envelope is truncated, oversized, or has a wrong protocol byte | Decode fails before plaintext is exposed |
 | Signature, authentication tag, public key, or PSK is wrong | Authentication/decryption fails without recording receive success |
 | PSK counter repeats or exceeds the acceptance window | Replay/out-of-range error; persisted state remains valid |
+| The same PSK transaction is fetched again, or its note is copied under a new id | The original transaction still returns its plaintext. The copy returns no message. A failed tag records nothing |
+| Send counter is `4294967295` | That value is returned once. The stored counter stays there, and a decoded copy still refuses another send |
 | Reply preview exceeds 80 characters | It is deterministically truncated while retaining the original transaction identifier |
 | Indexer lags after submission | Indexed send waits up to its timeout; fire-and-forget and confirmed modes retain their distinct semantics |
 | Queue restarts after a transient failure | Durable pending and retry state reloads and can resume |

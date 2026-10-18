@@ -102,7 +102,7 @@ public actor PSKManager {
 
         // Work on a copy so cache is only updated after successful persistence
         var newState = state
-        let counter = newState.advanceSendCounter()
+        let counter = try newState.advanceSendCounter()
         let currentPSK = PSKRatchet.derivePSKAtCounter(
             initialPSK: contact.initialPSK,
             counter: counter
@@ -152,6 +152,55 @@ public actor PSKManager {
     public func recordReceive(from address: String, counter: UInt32) async throws {
         var state = try await getState(for: address)
         state.recordReceive(counter)
+        try await storage.storeState(state, for: address)
+        stateCache[address] = state
+    }
+
+    /**
+     Derives the PSK for a fetched transaction.
+
+     A transaction id that was already accepted returns the same position key
+     and does not require the counter to be unseen. A new transaction id is
+     checked against the replay window and is not recorded by this call.
+
+     - Parameters:
+       - address: The peer Algorand address
+       - counter: The ratchet counter from the envelope
+       - transactionId: The chain transaction id being read
+     - Returns: The derived PSK for this counter
+     */
+    public func pskForTransaction(
+        from address: String,
+        counter: UInt32,
+        transactionId: String
+    ) async throws -> Data {
+        let contact = try await getContact(for: address)
+        let state = try await getState(for: address)
+        if !state.hasAcceptedTransaction(transactionId) {
+            try state.validateCounter(counter)
+        }
+        return PSKRatchet.derivePSKAtCounter(
+            initialPSK: contact.initialPSK,
+            counter: counter
+        )
+    }
+
+    /**
+     Records a counter and transaction id after decryption succeeds.
+
+     A transaction that is already accepted is left unchanged. A failed
+     decryption must not call this method.
+     */
+    public func commitTransaction(
+        from address: String,
+        counter: UInt32,
+        transactionId: String
+    ) async throws {
+        var state = try await getState(for: address)
+        if state.hasAcceptedTransaction(transactionId) {
+            return
+        }
+        state.recordAccepted(counter: counter, transactionId: transactionId)
         try await storage.storeState(state, for: address)
         stateCache[address] = state
     }

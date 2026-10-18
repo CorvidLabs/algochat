@@ -71,7 +71,12 @@ data class NoteTransaction(
     /** Round in which the transaction was confirmed. */
     val confirmedRound: Long,
     /** Timestamp of the block (Unix time). */
-    val roundTime: Long
+    val roundTime: Long,
+    /**
+     * Position of this transaction within [confirmedRound].
+     * A missing offset sorts as 0.
+     */
+    val intraRoundOffset: Int = 0
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

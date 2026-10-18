@@ -14,4 +14,4 @@ spec: client.spec.md
 
 ## Evidence limits
 
-Seeded-construction tests pass caller-provided addresses and do not establish address derivation/seed matching. Model tests exercise current timestamp ordering, not a complete round/intra-round tie-break contract. Storage tests explicitly cover encryption-key persistence. These limits must not be described as proof that the stronger identity/order/persistence requirements are satisfied.
+`AlgoChatClientTest` rejects an address that does not match the seed, including the Ed25519 address of a Falcon client. It also checks that Falcon derivation leaves no global raw-entropy key after the caller clears the seed. Model and cache tests order by confirmed round then intra-round offset and page across a same-round boundary. Client sync covers that order with reversed same-round notes, not only hand-built messages. Storage tests still cover encryption-key persistence, which remains outside the no-private-key-persistence requirement.

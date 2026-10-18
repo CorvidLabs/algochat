@@ -50,9 +50,9 @@ class EnvelopeTest {
     @Test
     fun `round-trip with empty ciphertext`() {
         val original = makeEnvelope(ciphertext = ByteArray(0))
-        val decoded = ChatEnvelope.decode(original.encode())
-        assertEquals(original, decoded)
-        assertEquals(0, decoded.ciphertext.size)
+        assertThrows<AlgoChatException.InvalidEnvelope> {
+            ChatEnvelope.decode(original.encode())
+        }
     }
 
     @Test
@@ -91,11 +91,22 @@ class EnvelopeTest {
     }
 
     @Test
-    fun `decode header-only envelope has empty ciphertext`() {
-        val encoded = makeEnvelope(ciphertext = ByteArray(0)).encode()
-        assertEquals(Protocol.HEADER_SIZE, encoded.size)
-        val decoded = ChatEnvelope.decode(encoded)
-        assertEquals(0, decoded.ciphertext.size)
+    fun `decode rejects a frame shorter than header plus tag`() {
+        assertThrows<AlgoChatException.InvalidEnvelope> {
+            ChatEnvelope.decode(ByteArray(141))
+        }
+        val minimum = makeEnvelope(ciphertext = ByteArray(Protocol.TAG_SIZE)).encode()
+        assertEquals(142, minimum.size)
+        assertEquals(Protocol.TAG_SIZE, ChatEnvelope.decode(minimum).ciphertext.size)
+    }
+
+    @Test
+    fun `decode rejects a note longer than 4096 bytes`() {
+        val encoded = makeEnvelope().encode() + ByteArray(4097)
+        assertTrue(encoded.size > Protocol.MAX_NOTE_SIZE)
+        assertThrows<AlgoChatException.InvalidEnvelope> {
+            ChatEnvelope.decode(encoded.copyOf(4097))
+        }
     }
 
     @Test

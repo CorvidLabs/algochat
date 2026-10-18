@@ -16,8 +16,17 @@ interface MessageCache {
     /** Store messages for a conversation. */
     suspend fun store(messages: List<Message>, participant: String)
 
-    /** Retrieve cached messages for a conversation. */
-    suspend fun retrieve(participant: String, afterRound: Long? = null): List<Message>
+    /**
+     * Retrieve cached messages for a conversation.
+     *
+     * [afterRound] alone excludes that round. Pass [afterIntraRoundOffset] to
+     * keep later messages from the same round, so a page boundary is not skipped.
+     */
+    suspend fun retrieve(
+        participant: String,
+        afterRound: Long? = null,
+        afterIntraRoundOffset: Int? = null
+    ): List<Message>
 
     /** Get the last synced round for a conversation. */
     suspend fun getLastSyncRound(participant: String): Long?
@@ -54,18 +63,32 @@ class InMemoryMessageCache : MessageCache {
                 }
             }
 
-            existing.sortBy { it.timestamp }
+            existing.sortWith(messageChainOrder)
         }
     }
 
-    override suspend fun retrieve(participant: String, afterRound: Long?): List<Message> {
+    suspend fun retrieve(participant: String): List<Message> = retrieve(participant, null, null)
+
+    suspend fun retrieve(participant: String, afterRound: Long?): List<Message> =
+        retrieve(participant, afterRound, null)
+
+    override suspend fun retrieve(
+        participant: String,
+        afterRound: Long?,
+        afterIntraRoundOffset: Int?
+    ): List<Message> {
         mutex.withLock {
             val cached = messages[participant]?.toList() ?: emptyList()
 
-            return if (afterRound != null) {
+            return if (afterRound == null) {
+                cached
+            } else if (afterIntraRoundOffset == null) {
                 cached.filter { it.confirmedRound > afterRound }
             } else {
-                cached
+                cached.filter {
+                    it.confirmedRound > afterRound ||
+                        (it.confirmedRound == afterRound && it.intraRoundOffset > afterIntraRoundOffset)
+                }
             }
         }
     }

@@ -191,6 +191,7 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 | `pskNotFound` |
 | `pskCounterOutOfRange` |
 | `pskCounterReplay` |
+| `pskSendExhausted` |
 | `ChatAccount` |
 | `encryptionPublicKey` |
 | `saveEncryptionKey` |
@@ -273,8 +274,12 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 | `sendCounter` |
 | `peerLastCounter` |
 | `seenCounters` |
+| `acceptedTransactionIds` |
+| `sendExhausted` |
 | `validateCounter` |
 | `recordReceive` |
+| `recordAccepted` |
+| `hasAcceptedTransaction` |
 | `validateAndRecordReceive` |
 | `advanceSendCounter` |
 | `SendResult` |
@@ -297,6 +302,8 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 | `getContact` |
 | `nextSendCounter` |
 | `validateAndDerivePSK` |
+| `pskForTransaction` |
+| `commitTransaction` |
 | `listContacts` |
 | `FileSendQueueStorage` |
 | `save` |
@@ -421,13 +428,13 @@ The existing `encode`, `parse`, `encrypt` and `decrypt` names also apply to hybr
 
 ## Implementation status
 
-Standard/PSK writers emit version `0x01`; decoding/decryption also accepts version `0x02` with header AAD. Their inbound decoders check minimum length without rejecting notes over 4096 bytes. Unsupported-platform `KeychainKeyStorage` uses ephemeral process memory, and PSK contact/state files and the file send queue are plaintext JSON. These facts remain gaps against accepted size/storage requirements and do not relax them; see the [accuracy ledger](../../../docs/ACCURACY.md).
+Standard/PSK writers emit version `0x01`; decoding/decryption also accepts version `0x02` with header AAD. Inbound standard and PSK decoders reject a note longer than 4096 bytes before they return an envelope, and they still require a complete authentication tag. Unsupported-platform `KeychainKeyStorage` uses ephemeral process memory, and PSK contact/state files and the file send queue are plaintext JSON. Those storage facts remain gaps and do not relax the accepted requirements; see the [accuracy ledger](../../../docs/ACCURACY.md).
 
 ## Invariants
 
 1. Standard envelopes are written with version `0x01` and also read version `0x02` with header AAD; they use protocol `0x01`, a 126-byte header, and a 4,096-byte transaction-note ceiling; PSK envelopes use protocol `0x02` and a 130-byte header. A maximum plaintext encodes to exactly 4,096 bytes.
 2. Standard encryption combines a fresh X25519 ephemeral key, HKDF-SHA256 domain separation, and ChaCha20-Poly1305; sender-key wrapping permits both participants to decrypt the stored message.
-3. PSK mode combines the ratcheted 32-byte pre-shared key with ephemeral ECDH, rejects replayed or out-of-window counters, and records a receive counter only after successful decryption.
+3. PSK mode combines the ratcheted 32-byte pre-shared key with ephemeral ECDH, rejects replayed or out-of-window counters, and records a receive counter and transaction id only after successful decryption. Reading an already accepted transaction returns that message and does not require the counter to be unseen. A copied note under a new transaction id is a replay and contributes no message. The send counter may return `4294967295` once, then stays exhausted: the stored next counter is not `0`, and that exhaustion survives Codable decoding. Older state JSON without transaction ids or the exhaustion flag still decodes.
 4. On-chain message and key-publication transactions use the configured payment amount, never exceeding the 4,096-byte note limit; the default amount is 1,000 microAlgos. The fee is one minimum fee plus the rounded note surcharge for bytes past 1,024. Ed25519 does not add Falcon fees.
 5. Queue, cache, storage, and client state exposed across concurrency boundaries remain actor-isolated or `Sendable`.
 6. Key-publish payloads are discovery metadata and are not returned as chat messages.
@@ -446,7 +453,7 @@ Standard/PSK writers emit version `0x01`; decoding/decryption also accepts versi
 
 - **Given** both contacts share the same 32-byte PSK and persisted counter state
 - **When** the sender advances its counter and sends through `sendPSK`
-- **Then** the recipient derives the matching counter key, authenticates and decrypts the envelope, records the counter, and rejects any replay
+- **Then** the recipient derives the matching counter key, authenticates and decrypts the envelope, records the counter and transaction id, returns the same plaintext when that transaction is fetched again, and rejects a copy under a different transaction id
 
 ### Scenario: Continue after temporary send failure
 
@@ -460,7 +467,7 @@ Standard/PSK writers emit version `0x01`; decoding/decryption also accepts versi
 |-----------|----------|
 | Envelope version, protocol, length, key length, nonce, or authentication is invalid | Decoding or decryption fails with a typed `ChatError`; unauthenticated content is not emitted |
 | Recipient public key cannot be discovered | The send operation fails rather than encrypting to an unknown identity |
-| PSK contact is missing, malformed, replayed, or outside its counter window | PSK management throws and does not advance persisted receive state on failed decryption |
+| PSK contact is missing, malformed, replayed, or outside its counter window | PSK management throws and does not advance persisted receive state on failed decryption. An exhausted send counter throws and leaves the stored counter unchanged |
 | Blockchain submission, confirmation, or indexer visibility times out | The requested send/fetch operation throws or remains queued according to `SendOptions` |
 | Key, contact, state, or queue persistence is unavailable or corrupt | The storage implementation returns its documented error and does not silently replace durable state |
 | A platform lacks Apple Keychain or biometric APIs | The cross-platform storage implementation reports unsupported behavior; file storage remains available |
@@ -488,6 +495,7 @@ Standard/PSK writers emit version `0x01`; decoding/decryption also accepts versi
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-10-18 | parity | Persist accepted PSK transaction ids and stop the send counter from wrapping |
 | 2026-10-16 | 0xLeif | Raise the note ceiling to 4,096 bytes (protocol revision 1.2.1) and price the consensus note fee |
 | 2026-07-14 | 0xLeif | Establish complete canonical contract coverage for the implemented Swift package |
 | 2026-07-14 | SpecSync | Accepted CHG-0002 complete canonical Swift AlgoChat contract coverage |

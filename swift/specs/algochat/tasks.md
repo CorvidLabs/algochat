@@ -27,3 +27,4 @@ spec: algochat.spec.md
 - [x] Inventory the existing hybrid-session source and PQCross fixture adapter.
 - [x] Correct package/runtime, crypto labels, storage APIs and current workflow documentation.
 - [x] Preserve accepted requirements while recording the inbound-size and storage gaps in the [accuracy ledger](../../../docs/ACCURACY.md).
+- [x] Persist accepted PSK transaction ids and fail closed on send-counter exhaustion.

@@ -81,7 +81,7 @@ struct EphemeralKeyManagerTests {
 }
 
 @Suite("ChatEnvelope Tests")
-struct ChatEnvelopeForwardSecrecyTests {
+struct ChatEnvelopeFormatTests {
     @Test("Envelope has correct version")
     func testVersion() {
         let envelope = ChatEnvelope(
@@ -182,11 +182,22 @@ struct ChatEnvelopeForwardSecrecyTests {
             try ChatEnvelope.decode(from: data)
         }
     }
+
+    @Test("Decode rejects a note longer than 4096 bytes")
+    func testDecodeRejectsOversizedNote() {
+        var data = Data(repeating: 0x00, count: ChatEnvelope.maxNoteSize + 1)
+        data[0] = ChatEnvelope.version
+        data[1] = ChatEnvelope.protocolID
+
+        #expect(throws: ChatError.self) {
+            try ChatEnvelope.decode(from: data)
+        }
+    }
 }
 
 @Suite("Encryption Tests")
 struct EncryptionTests {
-    @Test("Encrypt produces envelope with forward secrecy")
+    @Test("Encrypt produces an envelope with its own ephemeral key")
     func testEncryptProducesEnvelope() throws {
         let senderKey = Curve25519.KeyAgreement.PrivateKey()
         let recipientKey = Curve25519.KeyAgreement.PrivateKey()
@@ -239,7 +250,7 @@ struct EncryptionTests {
     func testRecipientDecryption() throws {
         let senderKey = Curve25519.KeyAgreement.PrivateKey()
         let recipientKey = Curve25519.KeyAgreement.PrivateKey()
-        let message = "Hello, forward secrecy!"
+        let message = "Hello, separate message key!"
 
         let envelope = try MessageEncryptor.encrypt(
             message: message,

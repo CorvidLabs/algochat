@@ -174,7 +174,21 @@ class PSKTest {
     @Test
     fun `PSK envelope too short throws`() {
         assertThrows<AlgoChatException> {
-            PSKEnvelopeCodec.decode(ByteArray(10))
+            PSKEnvelopeCodec.decode(ByteArray(145))
+        }
+        val minimum = ByteArray(146)
+        minimum[0] = PSKProtocol.VERSION
+        minimum[1] = PSKProtocol.PROTOCOL_ID
+        assertEquals(146, PSKEnvelopeCodec.decode(minimum).let { PSKProtocol.HEADER_SIZE + it.ciphertext.size })
+    }
+
+    @Test
+    fun `PSK decode rejects a note longer than 4096 bytes`() {
+        val data = ByteArray(4097)
+        data[0] = PSKProtocol.VERSION
+        data[1] = PSKProtocol.PROTOCOL_ID
+        assertThrows<AlgoChatException.InvalidEnvelope> {
+            PSKEnvelopeCodec.decode(data)
         }
     }
 
@@ -593,13 +607,30 @@ class PSKTest {
     }
 
     @Test
-    fun `PSK state accepts counters far ahead`() = runTest {
+    fun `PSK state rejects a fresh counter of 1000000`() = runTest {
         val state = PSKState(TEST_PSK, "test-peer")
+        assertFalse(state.acceptReceiveCounter(1_000_000u))
+        assertEquals(0u, state.receiveCounter)
+    }
 
-        // No upper bound: a counter arbitrarily far ahead advances the window.
-        assertTrue(state.acceptReceiveCounter(0u))
-        assertTrue(state.acceptReceiveCounter(10_000u))
-        assertEquals(10_001u, state.receiveCounter)
+    @Test
+    fun `accepting the maximum counter does not accept 0 afterward`() = runTest {
+        val state = PSKState(TEST_PSK, "test-peer", receiveCounter = UInt.MAX_VALUE - 10u)
+        assertTrue(state.acceptReceiveCounter(UInt.MAX_VALUE))
+        assertEquals(UInt.MAX_VALUE, state.receiveCounter)
+        assertFalse(state.acceptReceiveCounter(0u))
+    }
+
+    @Test
+    fun `next send counter does not wrap`() = runTest {
+        val state = PSKState(TEST_PSK, "test-peer", sendCounter = UInt.MAX_VALUE)
+        assertEquals(UInt.MAX_VALUE, state.nextSendCounter())
+        assertEquals(UInt.MAX_VALUE, state.sendCounter)
+        assertTrue(state.sendExhausted)
+        assertThrows<IllegalStateException> {
+            state.nextSendCounter()
+        }
+        assertEquals(UInt.MAX_VALUE, state.sendCounter)
     }
 
     @Test

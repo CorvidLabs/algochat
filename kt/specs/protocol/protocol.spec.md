@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 1.0.2
+version: 1.0.3
 status: active
 files:
   - src/main/kotlin/com/corvidlabs/algochat/Crypto.kt
@@ -218,7 +218,7 @@ Each parsed member below has the following owning-type meaning (some unqualified
 3. Both sender and recipient can decrypt the same envelope, but unrelated private keys cannot authenticate it.
 4. Reply metadata is optional; decoding valid legacy UTF-8 plaintext remains backward compatible.
 5. Key announcements sign exactly the encryption public-key bytes with Ed25519 and fingerprints are the first eight SHA-256 bytes, uppercase hexadecimal grouped as four groups of four characters.
-6. A standard note is at most 4096 bytes. The header stays 126 bytes and the tag stays 16 bytes, so plaintext is at most 3954 bytes. A plaintext of 882 bytes still fits in 1024 bytes. One byte past 3954 is rejected before a transaction is built.
+6. A standard note is at most 4096 bytes. The header stays 126 bytes and the tag stays 16 bytes, so plaintext is at most 3954 bytes. Decode rejects fewer than 142 bytes and more than 4096 bytes. A plaintext of 882 bytes still fits in 1024 bytes. One byte past 3954 is rejected before a transaction is built. Note-facing PQ open, including an authenticated data message, rejects a note longer than 4096 bytes before it returns plaintext.
 7. The payment fee is one minimum fee plus the note surcharge. Bytes through 1024 add nothing. Each later byte adds one ten-thousandth of the minimum fee, rounded up once. This library has no Falcon signer, so the scheme contribution stays one minimum fee. Protocol document revision for this ceiling is 1.2.1.
 
 ## Behavioral Examples
@@ -267,6 +267,7 @@ Then EncryptionFailed is thrown and no envelope is returned
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-07-14 | Canonically document the existing Kotlin AlgoChat v1 wire and cryptographic behavior. |
+| 1.0.3 | 2026-10-18 | Reject standard frames shorter than 142 bytes and notes longer than 4096 bytes, including authenticated PQ opens. |
 | 1.0.2 | 2026-10-16 | Raise the note ceiling to 4096 bytes (protocol document revision 1.2.1). Plaintext max is 3954. Header stays 126 and the tag stays 16. Payment fee adds the note surcharge on one minFee. |
 | 2026-07-14 | CHG-0002-run-the-existing-jdk-17-and-21-ci-matrix-when-trust-and-specsync-governance-file: Complete Kotlin AlgoChat SDD adoption and run the native CI matrix |
 
