@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792358071,
+      "commit": "65208ae7865deaf589397c58e2396c6104731dd2",
+      "contract_digest": "b28d970adf7567e1ca8946df29f5c313c7405e02cc1b454d5f08f28288a45982",
+      "execution_digest": "8a3a020ce122f7836242204640b743f4b5fbc103b47cf017eaead75b1a1165b1",
+      "workspace_digest": "a54bf7c06ae90dad3315f7627759ed415a729e3759e8c7004840af1b6088d33b",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1792358118,
+      "commit": "ddedfbc3b197203e8d425c3742755beccc1a279f",
+      "contract_digest": "b28d970adf7567e1ca8946df29f5c313c7405e02cc1b454d5f08f28288a45982",
+      "execution_digest": "8a3a020ce122f7836242204640b743f4b5fbc103b47cf017eaead75b1a1165b1",
+      "workspace_digest": "a54bf7c06ae90dad3315f7627759ed415a729e3759e8c7004840af1b6088d33b",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec algochat",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}
