@@ -9,7 +9,7 @@ import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { hkdf } from '@noble/hashes/hkdf';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/ciphers/webcrypto';
-import { ChatEnvelope, DecryptedContent, PROTOCOL, type EncryptionOptions } from '../models/types.js';
+import { ChatEnvelope, DecryptedContent, MAX_NOTE_SIZE, PROTOCOL, type EncryptionOptions } from '../models/types.js';
 import { generateEphemeralKeyPair, x25519ECDH, uint8ArrayEquals } from './keys.js';
 import { standardHeaderAAD } from './aad.js';
 
@@ -142,6 +142,11 @@ export function decryptMessage(
     myPublicKey: Uint8Array,
     options?: EncryptionOptions
 ): DecryptedContent | null {
+    const noteLength = PROTOCOL.HEADER_SIZE + envelope.ciphertext.length;
+    if (noteLength > MAX_NOTE_SIZE) {
+        throw new EncryptionError(`Note is ${noteLength} bytes, max ${MAX_NOTE_SIZE}`);
+    }
+
     const weAreSender = uint8ArrayEquals(myPublicKey, envelope.senderPublicKey);
 
     let plaintext: Uint8Array;

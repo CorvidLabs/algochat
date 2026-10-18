@@ -3,8 +3,13 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { deriveEncryptionKeys, uint8ArrayEquals } from '../crypto/keys.js';
+import { chacha20poly1305 } from '@noble/ciphers/chacha';
+import { randomBytes } from '@noble/ciphers/webcrypto';
+import { pskHeaderAAD } from '../crypto/aad.js';
+import { deriveEncryptionKeys, generateEphemeralKeyPair, uint8ArrayEquals, x25519ECDH } from '../crypto/keys.js';
 import {
+    deriveHybridSymmetricKey,
+    deriveSenderKey,
     deriveSessionPSK,
     derivePositionPSK,
     derivePSKAtCounter,
@@ -19,6 +24,7 @@ import {
     decryptPSKMessage,
 } from './encryption.js';
 import {
+    MAX_PSK_COUNTER,
     createPSKState,
     validateCounter,
     recordReceive,
@@ -28,7 +34,7 @@ import {
     createPSKExchangeURI,
     parsePSKExchangeURI,
 } from './exchange.js';
-import { PSK_PROTOCOL } from './types.js';
+import { PSK_PROTOCOL, type PSKEnvelope, type PSKState } from './types.js';
 import { MAX_NOTE_SIZE } from '../models/types.js';
 
 /**
@@ -411,12 +417,14 @@ describe('PSK State Counter Management', () => {
 
     test('validateCounter rejects counters outside window', () => {
         let state = createPSKState();
-        state = recordReceive(state, 500);
+        state = recordReceive(state, 0);
+        state = recordReceive(state, 200);
+        state = recordReceive(state, 400);
 
-        // Counter 0 is now outside window (500 - 200 = 300)
         expect(validateCounter(state, 0)).toBe(false);
-        // Counter within window is still valid
-        expect(validateCounter(state, 400)).toBe(true);
+        expect(validateCounter(state, 250)).toBe(true);
+        expect(validateCounter(state, 600)).toBe(true);
+        expect(validateCounter(state, 601)).toBe(false);
     });
 
     test('recordReceive updates peerLastCounter', () => {
@@ -435,19 +443,121 @@ describe('PSK State Counter Management', () => {
     test('recordReceive prunes old counters', () => {
         let state = createPSKState();
 
-        // Add several counters
         state = recordReceive(state, 0);
-        state = recordReceive(state, 1);
-        state = recordReceive(state, 2);
+        state = recordReceive(state, 200);
+        state = recordReceive(state, 400);
 
-        // Jump far ahead
-        state = recordReceive(state, 500);
-
-        // Old counters (0, 1, 2) should be pruned (below 500 - 200 = 300)
         expect(state.seenCounters.has(0)).toBe(false);
-        expect(state.seenCounters.has(1)).toBe(false);
-        expect(state.seenCounters.has(2)).toBe(false);
-        expect(state.seenCounters.has(500)).toBe(true);
+        expect(state.seenCounters.has(200)).toBe(true);
+        expect(state.seenCounters.has(400)).toBe(true);
+    });
+
+    test('fresh state rejects counter 1000000 and other non-uint32 inputs', () => {
+        const state = createPSKState();
+        expect(validateCounter(state, 0)).toBe(true);
+        expect(validateCounter(state, 200)).toBe(true);
+        expect(validateCounter(state, 201)).toBe(false);
+        expect(validateCounter(state, 1_000_000)).toBe(false);
+        expect(validateCounter(state, -1)).toBe(false);
+        expect(validateCounter(state, 1.5)).toBe(false);
+        expect(validateCounter(state, 4294967296)).toBe(false);
+        expect(() => recordReceive(state, 1_000_000)).toThrow();
+        expect(state.peerLastCounter).toBe(0);
+        expect(state.seenCounters.size).toBe(0);
+    });
+
+    test('unseen counters inside the window are accepted in any order', () => {
+        let state = createPSKState();
+        state = recordReceive(state, 200);
+        state = recordReceive(state, 0);
+        state = recordReceive(state, 50);
+        expect(state.peerLastCounter).toBe(200);
+        expect(validateCounter(state, 199)).toBe(true);
+        expect(validateCounter(state, 0)).toBe(false);
+    });
+
+    test('accepting uint32 max does not make counter 0 acceptable', () => {
+        let state: PSKState = {
+            sendCounter: 0,
+            peerLastCounter: MAX_PSK_COUNTER - PSK_PROTOCOL.COUNTER_WINDOW,
+            seenCounters: new Set<number>([MAX_PSK_COUNTER - PSK_PROTOCOL.COUNTER_WINDOW]),
+            sendExhausted: false,
+        };
+        expect(validateCounter(state, MAX_PSK_COUNTER)).toBe(true);
+        expect(validateCounter(state, 0)).toBe(false);
+        state = recordReceive(state, MAX_PSK_COUNTER);
+        expect(state.peerLastCounter).toBe(MAX_PSK_COUNTER);
+        expect(validateCounter(state, 0)).toBe(false);
+        expect(validateCounter(state, MAX_PSK_COUNTER)).toBe(false);
+    });
+
+    test('uint32 max does not wrap the stored send counter to 0', () => {
+        const start = {
+            sendCounter: MAX_PSK_COUNTER,
+            peerLastCounter: 0,
+            seenCounters: new Set<number>(),
+            sendExhausted: false,
+        };
+        const issued = advanceSendCounter(start);
+        expect(issued.counter).toBe(MAX_PSK_COUNTER);
+        expect(issued.state.sendCounter).toBe(MAX_PSK_COUNTER);
+        expect(issued.state.sendExhausted).toBe(true);
+        expect(start.sendCounter).toBe(MAX_PSK_COUNTER);
+        expect(start.sendExhausted).toBe(false);
+        expect(() => advanceSendCounter(issued.state)).toThrow();
+        expect(issued.state.sendCounter).toBe(MAX_PSK_COUNTER);
+        expect(issued.state.sendExhausted).toBe(true);
+
+        const encoded = encodePSKEnvelope({
+            version: PSK_PROTOCOL.VERSION,
+            protocolId: PSK_PROTOCOL.PROTOCOL_ID,
+            ratchetCounter: issued.counter,
+            senderPublicKey: new Uint8Array(32),
+            ephemeralPublicKey: new Uint8Array(32),
+            nonce: new Uint8Array(12),
+            encryptedSenderKey: new Uint8Array(48),
+            ciphertext: new Uint8Array(16),
+        });
+        expect(Array.from(encoded.slice(2, 6))).toEqual([0xff, 0xff, 0xff, 0xff]);
+    });
+
+    test('encode rejects counters that would wrap to 0', () => {
+        const base = {
+            version: PSK_PROTOCOL.VERSION,
+            protocolId: PSK_PROTOCOL.PROTOCOL_ID,
+            senderPublicKey: new Uint8Array(32),
+            ephemeralPublicKey: new Uint8Array(32),
+            nonce: new Uint8Array(12),
+            encryptedSenderKey: new Uint8Array(48),
+            ciphertext: new Uint8Array(16),
+        };
+        for (const counter of [-1, 1.5, 4294967296, Number.NaN]) {
+            expect(() => encodePSKEnvelope({ ...base, ratchetCounter: counter })).toThrow();
+            expect(() => derivePSKAtCounter(INITIAL_PSK, counter)).toThrow();
+        }
+    });
+
+    test('failed authentication does not record a counter', () => {
+        const alice = deriveEncryptionKeys(new Uint8Array(32).fill(1));
+        const bob = deriveEncryptionKeys(new Uint8Array(32).fill(2));
+        const currentPSK = derivePSKAtCounter(INITIAL_PSK, 4);
+        const tampered = encryptPSKMessage('hello', alice.publicKey, bob.publicKey, currentPSK, 4);
+        tampered.ciphertext = new Uint8Array(tampered.ciphertext);
+        tampered.ciphertext[0] ^= 0x01;
+        const state = createPSKState();
+        expect(() => decryptPSKMessage(tampered, bob.privateKey, bob.publicKey, currentPSK)).toThrow();
+        expect(state.seenCounters.size).toBe(0);
+        expect(state.peerLastCounter).toBe(0);
+        const opened = decryptPSKMessage(
+            encryptPSKMessage('hello', alice.publicKey, bob.publicKey, currentPSK, 4),
+            bob.privateKey,
+            bob.publicKey,
+            currentPSK,
+        );
+        expect(opened?.text).toBe('hello');
+        const recorded = recordReceive(state, 4);
+        expect(recorded.seenCounters.has(4)).toBe(true);
+        expect(validateCounter(recorded, 4)).toBe(false);
     });
 });
 
@@ -569,5 +679,48 @@ describe('PSK envelope header fuzz (#232)', () => {
             }
         }
         expect(failures).toBe(PSK_PROTOCOL.HEADER_SIZE);
+    });
+});
+
+describe('PSK inbound note ceiling', () => {
+    test('rejects an authenticated note longer than 4096 before returning plaintext', () => {
+        const alice = deriveEncryptionKeys(new Uint8Array(32).fill(3));
+        const bob = deriveEncryptionKeys(new Uint8Array(32).fill(4));
+        const currentPSK = derivePSKAtCounter(INITIAL_PSK, 0);
+        const plaintext = new TextEncoder().encode('B'.repeat(PSK_PROTOCOL.MAX_PAYLOAD_SIZE + 1));
+        const ephemeral = generateEphemeralKeyPair();
+        const shared = x25519ECDH(ephemeral.privateKey, bob.publicKey);
+        const symmetric = deriveHybridSymmetricKey(
+            shared,
+            currentPSK,
+            ephemeral.publicKey,
+            alice.publicKey,
+            bob.publicKey,
+        );
+        const nonce = randomBytes(12);
+        const senderShared = x25519ECDH(ephemeral.privateKey, alice.publicKey);
+        const senderKey = deriveSenderKey(senderShared, currentPSK, ephemeral.publicKey, alice.publicKey);
+        const encryptedSenderKey = chacha20poly1305(senderKey, nonce).encrypt(symmetric);
+        const version = PSK_PROTOCOL.VERSION_AAD;
+        const envelope: PSKEnvelope = {
+            version,
+            protocolId: PSK_PROTOCOL.PROTOCOL_ID,
+            ratchetCounter: 0,
+            senderPublicKey: alice.publicKey,
+            ephemeralPublicKey: ephemeral.publicKey,
+            nonce,
+            encryptedSenderKey,
+            ciphertext: new Uint8Array(),
+        };
+        const aad = pskHeaderAAD(envelope);
+        envelope.ciphertext = chacha20poly1305(symmetric, nonce, aad).encrypt(plaintext);
+        const opened = chacha20poly1305(symmetric, nonce, aad).decrypt(envelope.ciphertext);
+        expect(opened.length).toBe(PSK_PROTOCOL.MAX_PAYLOAD_SIZE + 1);
+
+        const note = encodePSKEnvelope(envelope);
+        expect(note.length).toBe(MAX_NOTE_SIZE + 1);
+        expect(() => decodePSKEnvelope(note)).toThrow();
+        expect(() => decryptPSKMessage(envelope, bob.privateKey, bob.publicKey, currentPSK)).toThrow();
+        expect(() => encryptPSKMessage('B'.repeat(PSK_PROTOCOL.MAX_PAYLOAD_SIZE + 1), alice.publicKey, bob.publicKey, currentPSK, 0)).toThrow();
     });
 });

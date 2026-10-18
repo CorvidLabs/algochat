@@ -129,8 +129,8 @@
                 </div>
                 <div class="feature-item">
                     <i class="nes-icon is-small star"></i>
-                    <strong>Forward Secrecy</strong>
-                    <p>Per-message ephemeral keys</p>
+                    <strong>Per-message key separation</strong>
+                    <p>Not forward secrecy — ephemeral public keys stay on chain</p>
                 </div>
                 <div class="feature-item">
                     <i class="nes-icon is-small coin"></i>
@@ -152,16 +152,18 @@
                 <button class="nes-btn">bun</button>
                 <button class="nes-btn">pnpm</button>
             </div>
-            <pre><code>npm install ts-algochat</code></pre>
+            <pre><code>npm install @corvidlabs/ts-algochat@0.9.0</code></pre>
         </section>
 
         <section class="nes-container with-title is-dark" style="margin-top: 20px;">
             <p class="title">Quick Start</p>
-            <pre><code>import { AlgorandService, createChatAccountFromMnemonic } from 'ts-algochat';
+            <pre><code>import { AlgorandService, createChatAccountFromMnemonic } from '@corvidlabs/ts-algochat';
 
 // Initialize service
 const service = new AlgorandService({
+    algodToken: '',
     algodServer: 'https://testnet-api.algonode.cloud',
+    indexerToken: '',
     indexerServer: 'https://testnet-idx.algonode.cloud',
 });
 

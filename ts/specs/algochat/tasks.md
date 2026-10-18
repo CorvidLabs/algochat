@@ -14,3 +14,7 @@ spec: algochat.spec.md
 
 - [x] Reconcile the source/export inventory with existing header-AAD and hybrid-session modules.
 - [x] Document low-level/high-level API boundaries and link accepted implementation gaps.
+- [x] Keep managed PSK counters inside uint32, exhaust without wrapping to 0, and reject illegal inputs before encoding.
+- [x] Order indexer and Conversation history by round then intra-round offset, including a pagination boundary.
+- [x] Reject note-facing opens longer than 4096 bytes before returning plaintext.
+- [x] Correct the sendReply example and do not claim a `/node` file-storage export.

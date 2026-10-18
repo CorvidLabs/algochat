@@ -12,6 +12,8 @@
  *   [130..]:  ciphertext + 16-byte tag
  */
 
+import { MAX_NOTE_SIZE } from '../models/types.js';
+import { assertLegalCounter } from './state.js';
 import { PSK_PROTOCOL, type PSKEnvelope } from './types.js';
 
 export class PSKEnvelopeError extends Error {
@@ -25,6 +27,8 @@ export class PSKEnvelopeError extends Error {
  * Encodes a PSKEnvelope to bytes for transaction note.
  */
 export function encodePSKEnvelope(envelope: PSKEnvelope): Uint8Array {
+    assertLegalCounter(envelope.ratchetCounter);
+
     const totalSize =
         2 +  // version + protocolId
         4 +  // ratchetCounter
@@ -75,6 +79,10 @@ export function encodePSKEnvelope(envelope: PSKEnvelope): Uint8Array {
  * Decodes bytes from transaction note to PSKEnvelope.
  */
 export function decodePSKEnvelope(data: Uint8Array): PSKEnvelope {
+    if (data.length > MAX_NOTE_SIZE) {
+        throw new PSKEnvelopeError(`Note is ${data.length} bytes, max ${MAX_NOTE_SIZE}`);
+    }
+
     if (data.length < 2) {
         throw new PSKEnvelopeError(`Data too short: ${data.length} bytes`);
     }

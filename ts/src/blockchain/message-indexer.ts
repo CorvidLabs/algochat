@@ -8,13 +8,14 @@
 
 import type { IndexerClient } from './interfaces.js';
 import type { NoteTransaction } from './types.js';
-import type {
-    Message,
-    MessageDirection,
-    Conversation,
-    DiscoveredKey,
-    ReplyContext,
-    X25519KeyPair,
+import {
+    compareChainOrder,
+    type Message,
+    type MessageDirection,
+    type Conversation,
+    type DiscoveredKey,
+    type ReplyContext,
+    type X25519KeyPair,
 } from '../models/types.js';
 import { decodeEnvelope, isChatMessage } from '../crypto/envelope.js';
 import { decryptMessage } from '../crypto/index.js';
@@ -127,8 +128,8 @@ export class MessageIndexer {
             }
         }
 
-        // Sort by timestamp
-        return messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        messages.sort(compareChainOrder);
+        return pageInChainOrder(messages, limit);
     }
 
     /**
@@ -189,7 +190,7 @@ export class MessageIndexer {
             .filter((c) => c.messages.length > 0)
             .map((c) => ({
                 ...c,
-                messages: c.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+                messages: c.messages.sort(compareChainOrder),
             }))
             .sort((a, b) => {
                 const aTime = a.messages[a.messages.length - 1]?.timestamp.getTime() ?? 0;
@@ -378,6 +379,7 @@ export class MessageIndexer {
             confirmedRound: tx.confirmedRound,
             direction,
             replyContext,
+            intraRoundOffset: tx.intraRoundOffset,
         };
     }
 
@@ -385,4 +387,20 @@ export class MessageIndexer {
     private sleep(ms: number): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
+}
+
+/**
+ * Keeps the oldest `limit` messages in chain order, including the rest of the
+ * boundary round so the next exclusive `afterRound` neither skips nor repeats it.
+ */
+function pageInChainOrder(messages: Message[], limit: number | undefined): Message[] {
+    if (limit === undefined || messages.length <= limit) {
+        return messages;
+    }
+    let end = limit;
+    const boundary = messages[end - 1].confirmedRound;
+    while (end < messages.length && messages[end].confirmedRound === boundary) {
+        end += 1;
+    }
+    return messages.slice(0, end);
 }

@@ -53,6 +53,18 @@ export interface Message {
     intraRoundOffset?: number;
 }
 
+/**
+ * Chain order: confirmed round ascending, then intra-round offset ascending.
+ * A missing offset sorts as 0. Timestamp and insertion order do not override
+ * this key.
+ */
+export function compareChainOrder(a: Message, b: Message): number {
+    if (a.confirmedRound !== b.confirmedRound) {
+        return a.confirmedRound - b.confirmedRound;
+    }
+    return (a.intraRoundOffset ?? 0) - (b.intraRoundOffset ?? 0);
+}
+
 /** A conversation with another user */
 export interface Conversation {
     participant: string;

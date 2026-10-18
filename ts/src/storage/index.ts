@@ -20,4 +20,4 @@ export {
     InvalidKeyDataError,
 } from './file-key-storage.errors.js';
 
-// FileKeyStorage is Node.js only - import from 'ts-algochat/node' if needed
+// FileKeyStorage is source-only. package.json does not export it or a /node subpath.

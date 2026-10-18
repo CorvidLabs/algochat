@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { chacha20poly1305 } from '@noble/ciphers/chacha';
 import { ed25519 } from '@noble/curves/ed25519';
 import { parseKeyAnnouncement } from '../blockchain/discovery.js';
 import { deriveEncryptionKeys } from '../crypto/keys.js';
@@ -17,6 +18,7 @@ import {
     openPQSessionAsSender,
 } from './session.js';
 import { PQ_DATA_HEADER_SIZE, PQ_HANDSHAKE_SIZE, PQ_MAX_PAYLOAD_SIZE, PQ_PROTOCOL } from './types.js';
+import { MAX_NOTE_SIZE } from '../models/types.js';
 
 const HYBRID_VECTOR = '9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734';
 
@@ -98,6 +100,23 @@ describe('hybrid PQ session', () => {
         expect(note.length).toBeLessThanOrEqual(4096);
         expect(decryptPQMessage(note, session)).toBe(full);
         expect(() => encryptPQMessage('x'.repeat(PQ_MAX_PAYLOAD_SIZE + 1), session)).toThrow(/too large/);
+
+        const extra = new TextEncoder().encode('x'.repeat(PQ_MAX_PAYLOAD_SIZE + 1));
+        const nonce = new Uint8Array(12).fill(9);
+        const header = new Uint8Array(PQ_DATA_HEADER_SIZE);
+        header[0] = PQ_PROTOCOL.VERSION;
+        header[1] = PQ_PROTOCOL.DATA_ID;
+        header.set(session.senderPublicKey, 2);
+        header.set(session.handshakeId, 34);
+        header.set(nonce, 66);
+        const ciphertext = chacha20poly1305(session.sessionKey, nonce, header).encrypt(extra);
+        const oversized = new Uint8Array(header.length + ciphertext.length);
+        oversized.set(header, 0);
+        oversized.set(ciphertext, header.length);
+        expect(oversized.length).toBe(MAX_NOTE_SIZE + 1);
+        const authenticated = chacha20poly1305(session.sessionKey, nonce, header).decrypt(ciphertext);
+        expect(authenticated.length).toBe(PQ_MAX_PAYLOAD_SIZE + 1);
+        expect(() => decryptPQMessage(oversized, session)).toThrow(/4096/);
     });
 
     test('a signed announcement verifies and is not an X25519 key', () => {

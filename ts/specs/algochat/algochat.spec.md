@@ -10,6 +10,7 @@ files:
   - src/blockchain/interfaces.ts
   - src/blockchain/message-indexer.test.ts
   - src/blockchain/message-indexer.ts
+  - src/blockchain/message-order.test.ts
   - src/blockchain/message-transaction.ts
   - src/blockchain/types.ts
   - src/cache/MessageCache.ts
@@ -186,6 +187,8 @@ Provides the TypeScript implementation of the AlgoChat encrypted-messaging proto
 | `decodePSKEnvelope` | Binary envelope encoding, decoding, or protocol classification operation. |
 | `isPSKMessage` | Binary envelope encoding, decoding, or protocol classification operation. |
 | `PSKEnvelopeError` | Typed failure or stable error classification for the named operation. |
+| `MAX_PSK_COUNTER` | Maximum uint32 PSK counter, 4294967295. |
+| `PSKCounterError` | Typed failure for an illegal or exhausted PSK counter. |
 | `createPSKState` | PSK exchange, replay-window, or counter-state operation. |
 | `validateCounter` | PSK exchange, replay-window, or counter-state operation. |
 | `recordReceive` | PSK exchange, replay-window, or counter-state operation. |
@@ -304,9 +307,9 @@ The TypeScript standard and PSK writers emit version `0x02` with fixed-header AA
 1. Standard messages use a fresh ephemeral X25519 key and ChaCha20-Poly1305 authenticated encryption; decryption supports both recipient and sender key paths.
 2. Binary decoders reject unsupported versions, protocols, truncated fields, malformed lengths, and unauthenticated ciphertext rather than returning partial content.
 3. Key announcements are accepted only when their address, signing key, encryption key, and signature agree.
-4. PSK mode combines ECDH material with a ratcheted PSK, derives a new position key per counter, and rejects replayed or unreasonably far-ahead counters.
-5. A message transaction is a minimum-payment transfer whose note fits the Algorand 4096-byte limit. Standard plaintext is at most 3954 bytes and PSK plaintext is at most 3950 bytes. One byte past those maxima fails before a transaction is built. The fee is `notePaymentFee`: `minFee * 3` for Falcon-1024 and `minFee` otherwise, plus `(max(0, noteBytes - 1024) * minFee + 9999) / 10000` using integer division.
-6. Indexed history is filtered to the participants, decoded defensively, de-duplicated, and returned in chronological order.
+4. PSK mode combines ECDH material with a ratcheted PSK, derives a new position key per counter, and rejects replayed or out-of-window counters. Legal counters are integers `0..=4294967295`. Negative, fractional, and larger inputs are rejected before 4-byte encoding and are never encoded as 0. Before any receive, unseen counters `0..=200` are accepted. After highest accepted `N`, unseen counters from `max(0, N-200)` through `min(4294967295, N+200)` are accepted in any order. Issuing `4294967295` marks send state exhausted without storing 0. A later advance fails and leaves that state unchanged. Accepting `4294967295` does not make counter 0 acceptable. Failed authentication does not record a counter. The package does not persist PSK state; callers must store `sendExhausted` with the counters. A repeated counter is a replay of that counter, not by itself proof of nonce reuse.
+5. A message transaction is a minimum-payment transfer whose note fits the Algorand 4096-byte limit. Standard plaintext is at most 3954 bytes and PSK plaintext is at most 3950 bytes. One byte past those maxima fails before a transaction is built. Note-facing standard, PSK, and PQ decode/open paths reject a note longer than 4096 bytes before returning plaintext, including an authenticated oversized PQ note. The fee is `notePaymentFee`: `minFee * 3` for Falcon-1024 and `minFee` otherwise, plus `(max(0, noteBytes - 1024) * minFee + 9999) / 10000` using integer division.
+6. Indexed history is filtered to the participants, decoded defensively, de-duplicated, and returned in chain order: confirmed round ascending, then intra-round offset ascending. A missing offset sorts as 0. Timestamp and insertion order do not override that key. Pagination uses the same order so a boundary item is not skipped or duplicated. `AlgorandService` keeps timestamp order, then intra-round offset when timestamps tie.
 7. Queue transitions are explicit and retry counts are bounded; successful removal occurs only after delivery succeeds.
 8. File-backed secrets and queue state use authenticated encryption or atomic replacement and never silently substitute corrupt persisted data.
 9. Network clients remain injectable so protocol behavior can be verified without live Algorand mutation.
@@ -339,7 +342,7 @@ Then SendQueue processes eligible entries in order, records failures for retry, 
 | Error | Condition | Behavior |
 |---|---|---|
 | `EncryptionError` / `EnvelopeError` | Invalid key material, ciphertext, version, protocol, or binary layout | Reject encryption/decryption or decoding with a typed error |
-| `PSKEncryptionError` / `PSKEnvelopeError` | Invalid PSK, counter, authentication tag, or PSK envelope | Reject without emitting plaintext or changing replay state |
+| `PSKEncryptionError` / `PSKEnvelopeError` / `PSKCounterError` | Invalid PSK, counter, authentication tag, exhausted send counter, or PSK envelope | Reject without emitting plaintext or changing replay state |
 | `SignatureError` | Wrong Ed25519/X25519 key size or invalid announcement signature | Reject key publication or discovery |
 | `MessageTooLargeError` | Encoded note exceeds 4096 bytes | Do not construct or submit the transaction |
 | `PublicKeyNotFoundError` | No valid announcement is found within the configured search | Return an explicit discovery failure |
@@ -368,10 +371,10 @@ Then SendQueue processes eligible entries in order, records failures for retry, 
 | 7 | 2026-09-20 | remove-the-raven-mailbox-router-transport-and-keep-algochat-as-encrypted-note-messaging-with-falcon-1024-post-quantum: Remove the Raven mailbox router transport and keep AlgoChat as encrypted note messaging with Falcon-1024 post-quantum account support |
 | 8 | 2026-10-16 | Raise the note ceiling to 4096 bytes (protocol 1.2.1). Standard plaintext max 3954, PSK plaintext max 3950. Fee is scheme fee plus the consensus surcharge past 1024 bytes. |
 | 9 | 2026-10-18 | room-administration-reducer-and-action-5-key-delivery: Room administration reducer and action-5 key delivery |
+| 10 | 2026-10-18 | Managed PSK counters stay in uint32 and exhaust without wrapping to 0. Note-facing opens reject notes longer than 4096 bytes before plaintext. History ties use round then intra-round offset. |
 
 ## Room administration
 
 `draftAdmin` builds a public 0x03 note. `reduceAdmin` accepts a record only when the parent state authorized that sender. `senderMayPost` allows a member at the current epoch. `deliveryAuthorized` checks one accepted record. `sealGroupKeyDelivery` and `openGroupKeyDelivery` use the 227-byte action-5 note.
 
 Exports: `GROUP_ADMIN_PROTOCOL`, `GROUP_DELIVER_ACTION`, `GROUP_NAME_MAX`, `GROUP_ADMIN_MAX`, `GROUP_MEMBER_MAX`, `GROUP_DELIVER_PLAINTEXT_SIZE`, `JOINING`, `ADMIN_OP`, `RoomState`, `AdminEvent`, `AcceptedAdmin`, `ReduceAdminResult`, `encodeAdminRecord`, `draftAdmin`, `reduceAdmin`, `senderMayPost`, `deliveryAuthorized`, `sealGroupKeyDelivery`, `openGroupKeyDelivery`, `GROUP_INFO_LABEL`, `GROUP_ACTION`, `GROUP_MEMBERSHIP_PLAINTEXT_SIZE`, `GROUP_MEMBERSHIP_NOTE_SIZE`, `GROUP_MESSAGE_HEADER_SIZE`, `GROUP_MAX_PAYLOAD_SIZE`, `GroupMembership`, `GroupCounter`, `OpenedGroupMessage`, `isGroupMembership`, `isGroupMessage`, `sealGroupMembership`, `openGroupMembership`, `deriveGroupMessageKey`, `sealGroupMessage`, `openGroupMessage`.
-

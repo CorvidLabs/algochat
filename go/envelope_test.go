@@ -139,6 +139,20 @@ func TestIsChatMessage(t *testing.T) {
 	}
 }
 
+func TestDecodeEnvelopeHasNoPlaintextCeiling(t *testing.T) {
+	data := make([]byte, MaxNoteSize+1)
+	data[0] = protocolVersionAAD
+	data[1] = ProtocolIDStandard
+
+	env, err := DecodeEnvelope(data)
+	if err != nil {
+		t.Fatalf("codec rejected a long note as a plaintext ceiling: %v", err)
+	}
+	if HeaderSize+len(env.Ciphertext) != MaxNoteSize+1 {
+		t.Fatalf("decoded note length %d", HeaderSize+len(env.Ciphertext))
+	}
+}
+
 func TestEncodedEnvelopeSize(t *testing.T) {
 	senderKP, _ := GenerateEphemeralKeyPair()
 	recipientKP, _ := GenerateEphemeralKeyPair()

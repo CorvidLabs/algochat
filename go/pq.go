@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/chacha20poly1305"
@@ -60,6 +61,9 @@ func DeriveHybridPQKey(ecSS, pqSS, ephPub, kemCT, senderX, recipX, encapsKey []b
 
 // AcceptPQHandshake opens a 0x04 note with the recipient's long-term keys.
 func AcceptPQHandshake(note []byte, recipient X25519KeyPair, decap *mlkem.DecapsulationKey768) (PQSession, error) {
+	if err := rejectOversizedNote(note); err != nil {
+		return PQSession{}, err
+	}
 	f, err := parseHandshake(note)
 	if err != nil {
 		return PQSession{}, err
@@ -88,6 +92,9 @@ func AcceptPQHandshake(note []byte, recipient X25519KeyPair, decap *mlkem.Decaps
 // The wrap key is X25519(sender, ephemeral) concatenated with the ML-KEM secret
 // from the ciphertext addressed to the sender.
 func OpenPQHandshakeAsSender(note []byte, sender X25519KeyPair, senderKey *mlkem.DecapsulationKey768) (PQSession, error) {
+	if err := rejectOversizedNote(note); err != nil {
+		return PQSession{}, err
+	}
 	f, err := parseHandshake(note)
 	if err != nil {
 		return PQSession{}, err
@@ -178,7 +185,12 @@ func EncryptPQMessage(plaintext string, session PQSession) ([]byte, error) {
 }
 
 // DecryptPQMessage opens a 0x05 note.
+// Notes longer than MaxNoteSize are rejected before plaintext is returned,
+// including when the authentication tag would succeed. This is not a plaintext ceiling.
 func DecryptPQMessage(note []byte, session PQSession) (string, error) {
+	if err := rejectOversizedNote(note); err != nil {
+		return "", err
+	}
 	if len(note) < pqDataHeaderSize+TagSize || note[0] != protocolVersionAAD || note[1] != protocolIDPQData {
 		return "", errPQMessage
 	}
@@ -282,6 +294,13 @@ func handshakePrefix(sender, recip, eph [KeySize]byte, ct, ek, senderCT, nonce [
 	off += len(senderCT)
 	copy(prefix[off:], nonce)
 	return prefix
+}
+
+func rejectOversizedNote(note []byte) error {
+	if len(note) > MaxNoteSize {
+		return fmt.Errorf("%w: note is %d bytes", ErrNoteTooLarge, len(note))
+	}
+	return nil
 }
 
 func dataHeader(sender [KeySize]byte, hid [KeySize]byte, nonce []byte) []byte {

@@ -6,7 +6,7 @@
  */
 
 import algosdk from 'algosdk';
-import type { Message, DiscoveredKey, MessageDirection, EncryptionOptions } from '../models/types.js';
+import { compareChainOrder, type Message, type DiscoveredKey, type MessageDirection, type EncryptionOptions } from '../models/types.js';
 import { decryptMessage, decodeEnvelope, isChatMessage } from '../crypto/index.js';
 import { ChatError } from '../errors/ChatError.js';
 import type { ChatAccount } from './algorand.service.js';
@@ -43,25 +43,6 @@ export interface WaitForTransactionOptions {
     backoffMultiplier?: number;
 }
 
-/** Indexer transaction response shape */
-interface IndexerTransaction {
-    id: string;
-    sender: string;
-    txType: string;
-    note?: string;
-    roundTime?: number;
-    confirmedRound?: number;
-    paymentTransaction?: {
-        receiver?: string;
-        amount?: number;
-    };
-}
-
-interface IndexerSearchResponse {
-    transactions?: IndexerTransaction[];
-    nextToken?: string;
-}
-
 /**
  * Message Indexer Service
  *
@@ -74,9 +55,13 @@ export class MessageIndexer {
     private indexerClient: algosdk.Indexer;
     private encryptionOptions?: EncryptionOptions;
 
-    constructor(config: MessageIndexerConfig, encryptionOptions?: EncryptionOptions) {
+    constructor(
+        config: MessageIndexerConfig,
+        encryptionOptions?: EncryptionOptions,
+        indexerClient?: algosdk.Indexer,
+    ) {
         // Pass empty string for port when not specified to avoid algosdk defaulting to 8080
-        this.indexerClient = new algosdk.Indexer(
+        this.indexerClient = indexerClient ?? new algosdk.Indexer(
             config.indexerToken,
             config.indexerServer,
             config.indexerPort ?? ''
@@ -105,23 +90,33 @@ export class MessageIndexer {
             .limit(limit);
 
         if (afterRound !== undefined) {
-            query = query.minRound(afterRound);
+            query = query.minRound(afterRound + 1);
         }
 
         if (beforeRound !== undefined) {
-            query = query.maxRound(beforeRound);
+            if (beforeRound <= 0) {
+                return [];
+            }
+            query = query.maxRound(beforeRound - 1);
         }
 
-        const response = await query.do() as IndexerSearchResponse;
+        const response = await query.do();
+        const raw = response.transactions ?? [];
 
-        for (const tx of response.transactions ?? []) {
+        for (const tx of raw) {
             const message = this.processTransaction(tx, chatAccount, participantAddress);
             if (message) {
                 messages.push(message);
             }
         }
 
-        return messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        messages.sort(compareChainOrder);
+        // Forward pages keep every returned row. Dropping the oldest round would
+        // skip it once the caller advances the exclusive afterRound cursor.
+        if (afterRound !== undefined && beforeRound === undefined) {
+            return messages;
+        }
+        return dropPartialOldestRound(messages, raw, limit);
     }
 
     /**
@@ -234,7 +229,7 @@ export class MessageIndexer {
             .searchForTransactions()
             .address(address)
             .limit(searchDepth)
-            .do() as IndexerSearchResponse;
+            .do();
 
         for (const tx of response.transactions ?? []) {
             // Only look at transactions SENT by this address
@@ -297,12 +292,12 @@ export class MessageIndexer {
     // MARK: - Private Methods
 
     private processTransaction(
-        tx: IndexerTransaction,
+        tx: algosdk.indexerModels.Transaction,
         chatAccount: ChatAccount,
         participantAddress: string
     ): Message | null {
         // Filter: payment transactions with notes
-        if (tx.txType !== 'pay' || !tx.note) {
+        if (tx.txType !== 'pay' || !tx.note || !tx.id) {
             return null;
         }
 
@@ -360,6 +355,7 @@ export class MessageIndexer {
                 timestamp: new Date(Number(tx.roundTime ?? 0) * 1000),
                 confirmedRound: Number(tx.confirmedRound ?? 0),
                 direction,
+                intraRoundOffset: tx.intraRoundOffset != null ? Number(tx.intraRoundOffset) : undefined,
                 replyContext: decrypted.replyToId
                     ? {
                           messageId: decrypted.replyToId,
@@ -377,6 +373,33 @@ export class MessageIndexer {
 
 function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * A newest-first indexer page that hits `limit` can split the oldest round.
+ * Drop that partial round when a newer round remains so the next exclusive
+ * `beforeRound` returns the boundary round intact, once.
+ */
+function dropPartialOldestRound(
+    messages: Message[],
+    raw: readonly algosdk.indexerModels.Transaction[],
+    limit: number,
+): Message[] {
+    if (raw.length < limit || messages.length === 0) {
+        return messages;
+    }
+    let oldest = Number(raw[0].confirmedRound ?? 0);
+    let newest = oldest;
+    for (const tx of raw) {
+        const round = Number(tx.confirmedRound ?? 0);
+        if (round < oldest) oldest = round;
+        if (round > newest) newest = round;
+    }
+    if (oldest === newest) {
+        return messages;
+    }
+    const kept = messages.filter((message) => message.confirmedRound !== oldest);
+    return kept.length > 0 ? kept : messages;
 }
 
 function base64ToBytes(input: string | Uint8Array): Uint8Array {

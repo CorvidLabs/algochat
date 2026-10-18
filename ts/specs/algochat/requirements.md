@@ -63,10 +63,15 @@ Acceptance Criteria
 
 ### REQ-algochat-008
 
-PSK receive state SHALL reject replays and counters outside its accepted forward window, while send counters advance exactly once per message.
+PSK receive state SHALL reject replays and counters outside its accepted forward window, while send counters advance exactly once per message. Legal counters are integers from 0 through 4294967295. The send counter at 4294967295 is issued once and then the state is exhausted; the stored next counter does not become 0.
 
 Acceptance Criteria
 - State tests cover first receive, out-of-order accepted counters, duplicates, excessive gaps, and immutable send advancement.
+- A fresh state accepts unseen counters 0 through 200 and rejects 1000000, negatives, and fractional values. Those inputs are rejected before 4-byte encoding and are not encoded as counter 0.
+- After highest accepted N, unseen counters from max(0, N-200) through min(4294967295, N+200) are accepted in any order. Accepting 4294967295 does not make counter 0 acceptable.
+- Advancing at 4294967295 returns that counter, sets exhaustion, and leaves the stored counter at 4294967295. A later advance throws and does not change that state.
+- Failed authentication does not record a counter. A later valid message with that counter still succeeds.
+- The package does not persist PSK state. Callers that restart must store `sendExhausted`; these rules are tested on the pure state functions.
 
 ### REQ-algochat-009
 
@@ -74,6 +79,7 @@ PSK envelopes and exchange URIs SHALL round-trip all required fields and SHALL r
 
 Acceptance Criteria
 - Binary envelope and `algochat-psk://v1` URI tests cover valid labels, encoding, malformed keys, versions, protocols, counters, and lengths.
+- Standard and PSK note-facing decode, and PQ open, reject input longer than 4096 bytes before returning plaintext, including an authenticated oversized PQ note. Outbound plaintext one byte past the maximum still fails before a note is built.
 
 ### REQ-algochat-010
 
@@ -112,17 +118,20 @@ Acceptance Criteria
 
 ### REQ-algochat-012
 
-Indexed message retrieval SHALL paginate, filter participants, decrypt supported notes, ignore unrelated or malformed notes, de-duplicate transactions, and sort chronologically.
+Indexed message retrieval SHALL paginate, filter participants, decrypt supported notes, ignore unrelated or malformed notes, de-duplicate transactions, and sort by confirmed round ascending, then intra-round offset ascending. A missing offset sorts as 0. Timestamp and insertion order do not override that key.
 
 Acceptance Criteria
 - Indexer tests cover multiple pages, participant directions, malformed notes, duplicates, pagination limits, and conversation assembly.
+- Equal timestamps inserted newest-first come out in intra-round offset order for the exported indexer, the abstract indexer, and `Conversation`.
+- A pagination boundary item is not skipped or duplicated. `AlgorandService` fetch order stays timestamp, then intra-round offset on a tie.
 
 ### REQ-algochat-013
 
-Conversation models SHALL retain participant identity and ordered messages and SHALL derive the latest message from the resulting order.
+Conversation models SHALL retain participant identity and ordered messages and SHALL derive the latest message from chain order.
 
 Acceptance Criteria
-- Conversation tests cover construction, insertion order, duplicate handling, and last-message updates.
+- Conversation tests cover construction, chain order, duplicate handling, and last-message updates.
+- Newest-first insertion of equal timestamps does not beat intra-round offset. A missing offset sorts as 0. A shared boundary round is not skipped or duplicated by `messagesAfterRound`.
 
 ### REQ-algochat-014
 
@@ -175,7 +184,7 @@ Acceptance Criteria
 
 ## Implementation status
 
-The standard/PSK writers use header-authenticated envelope version `0x02`, while legacy version `0x01` remains readable. The high-level service/indexers handle standard protocol `0x01`; ratcheting PSK and hybrid sessions are low-level operations. Replay helpers require callers to validate, record after authentication and preserve state. These facts qualify coverage claims rather than changing accepted SHALL requirements; see [implementation gaps](../../../docs/ACCURACY.md).
+The standard/PSK writers use header-authenticated envelope version `0x02`, while legacy version `0x01` remains readable. The high-level service/indexers handle standard protocol `0x01`; ratcheting PSK and hybrid sessions are low-level operations. Replay helpers require callers to validate, record after authentication and preserve state, including `sendExhausted`. This package does not persist PSK counters. `FileKeyStorage` and `FileSendQueueStorage` are source-only; `package.json` does not export them or a `/node` subpath. These facts qualify coverage claims rather than changing accepted SHALL requirements; see [implementation gaps](../../../docs/ACCURACY.md).
 
 ## Constraints
 

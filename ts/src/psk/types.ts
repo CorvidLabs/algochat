@@ -37,9 +37,15 @@ export interface PSKEnvelope {
     ciphertext: Uint8Array;
 }
 
-/** Counter state for replay protection */
+/**
+ * Counter state for replay protection.
+ *
+ * `sendExhausted` is set after counter 4294967295 has been issued. This
+ * package does not persist the object; callers must keep the flag themselves.
+ */
 export interface PSKState {
     sendCounter: number;
     peerLastCounter: number;
     seenCounters: Set<number>;
+    sendExhausted?: boolean;
 }

@@ -105,6 +105,7 @@ export function acceptPQSession(
     recipientEncapsKey: Uint8Array,
     recipientDecapsKey: Uint8Array
 ): PQSession {
+    rejectOversizedNote(note);
     const fields = parseHandshake(note);
     if (!uint8ArrayEquals(fields.recipientPublicKey, recipient.publicKey)) {
         throw new PQError('Handshake is for a different X25519 key');
@@ -130,6 +131,7 @@ export function openPQSessionAsSender(
     sender: X25519KeyPair,
     senderDecapsKey: Uint8Array
 ): PQSession {
+    rejectOversizedNote(note);
     const fields = parseHandshake(note);
     if (!uint8ArrayEquals(fields.senderPublicKey, sender.publicKey)) {
         throw new PQError('Handshake was not sent by this key');
@@ -168,6 +170,7 @@ export function encryptPQMessage(plaintext: string, session: PQSession): Uint8Ar
 }
 
 export function decryptPQMessage(note: Uint8Array, session: PQSession): string {
+    rejectOversizedNote(note);
     if (!isPQMessage(note)) {
         throw new PQError('Not a PQ message');
     }
@@ -189,6 +192,12 @@ export function decryptPQMessage(note: Uint8Array, session: PQSession): string {
         throw new PQError('PQ message authentication failed');
     }
     return new TextDecoder().decode(plaintext);
+}
+
+function rejectOversizedNote(note: Uint8Array): void {
+    if (note.length > MAX_NOTE_SIZE) {
+        throw new PQError(`Note is ${note.length} bytes, max ${MAX_NOTE_SIZE}`);
+    }
 }
 
 function sessionFrom(

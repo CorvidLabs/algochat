@@ -15,6 +15,9 @@ const (
 )
 
 // EncryptPSKMessage seals plaintext under Extra lock. The note version is 0x01.
+// counter is caller-owned. uint32 cannot be negative or exceed its range, and
+// math.MaxUint32 is encoded as four 0xff bytes rather than wrapped to 0.
+// This function does not record replay state.
 func EncryptPSKMessage(plaintext string, sender X25519KeyPair, recipientPublic [KeySize]byte, initialPSK []byte, counter uint32) ([]byte, error) {
 	message := []byte(plaintext)
 	if len(message) > pskMaxPlaintext {
@@ -74,7 +77,12 @@ func EncryptPSKMessage(plaintext string, sender X25519KeyPair, recipientPublic [
 }
 
 // DecryptPSKMessage opens an Extra lock note. Version 0x02 binds the 130-byte header.
+// Callers own replay state. A note longer than MaxNoteSize is rejected before
+// plaintext is returned; that check is the note length, not a plaintext ceiling.
 func DecryptPSKMessage(note []byte, mine X25519KeyPair, initialPSK []byte) (string, error) {
+	if len(note) > MaxNoteSize {
+		return "", fmt.Errorf("%w: note is %d bytes", ErrNoteTooLarge, len(note))
+	}
 	if len(note) < pskHeaderSize+TagSize || note[1] != ProtocolIDPSK {
 		return "", ErrDecryptionFailed
 	}

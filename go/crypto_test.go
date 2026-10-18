@@ -2,9 +2,12 @@ package algochat
 
 import (
 	"bytes"
+	"crypto/rand"
 	"errors"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 func TestDeriveEncryptionKeys(t *testing.T) {
@@ -384,4 +387,89 @@ func TestMultipleEncryptionsProduceDifferentCiphertexts(t *testing.T) {
 	if e1.EphemeralPublicKey == e2.EphemeralPublicKey {
 		t.Error("each encryption should use a different ephemeral key")
 	}
+}
+
+func TestDecryptRejectsAuthenticatedNoteOver4096(t *testing.T) {
+	sender, err := GenerateEphemeralKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	recipient, err := GenerateEphemeralKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	plaintext := strings.Repeat("x", MaxPayloadSize+1)
+	env, symmetric, aad := sealStandardUnchecked(t, plaintext, sender.PublicKey, recipient.PublicKey, protocolVersionAAD)
+	note := EncodeEnvelope(env)
+	if len(note) != MaxNoteSize+1 {
+		t.Fatalf("note length %d, want %d", len(note), MaxNoteSize+1)
+	}
+	aead, err := chacha20poly1305.New(symmetric)
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := aead.Open(nil, env.Nonce[:], env.Ciphertext, aad)
+	if err != nil || string(opened) != plaintext {
+		t.Fatalf("fixture is not authenticated: %v", err)
+	}
+
+	content, err := DecryptMessage(env, recipient.PrivateKey, recipient.PublicKey)
+	if err == nil || content != nil {
+		t.Fatalf("oversized note returned plaintext %#v", content)
+	}
+	if !errors.Is(err, ErrNoteTooLarge) {
+		t.Fatalf("expected ErrNoteTooLarge, got %v", err)
+	}
+	if _, err := EncryptMessage(plaintext, sender.PublicKey, recipient.PublicKey); !errors.Is(err, ErrMessageTooLarge) {
+		t.Fatalf("outbound max+1: %v", err)
+	}
+}
+
+func sealStandardUnchecked(t *testing.T, plaintext string, senderPub, recipientPub [KeySize]byte, version byte) (*ChatEnvelope, []byte, []byte) {
+	t.Helper()
+	ephemeral, err := GenerateEphemeralKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	shared, err := x25519ECDH(ephemeral.PrivateKey, recipientPub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info := concatBytes(encryptionPrefix, senderPub[:], recipientPub[:])
+	symmetric, err := deriveSymmetricKey(shared, ephemeral.PublicKey[:], info)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var nonce [NonceSize]byte
+	if _, err := rand.Read(nonce[:]); err != nil {
+		t.Fatal(err)
+	}
+	senderShared, err := x25519ECDH(ephemeral.PrivateKey, senderPub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	senderInfo := concatBytes(senderKeyPrefix, senderPub[:])
+	senderKey, err := deriveSymmetricKey(senderShared, ephemeral.PublicKey[:], senderInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	senderAEAD, err := chacha20poly1305.New(senderKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encryptedSenderKey := senderAEAD.Seal(nil, nonce[:], symmetric, nil)
+	env := &ChatEnvelope{
+		Version:            version,
+		ProtocolID:         ProtocolIDStandard,
+		SenderPublicKey:    senderPub,
+		EphemeralPublicKey: ephemeral.PublicKey,
+		Nonce:              nonce,
+	}
+	copy(env.EncryptedSenderKey[:], encryptedSenderKey)
+	payload, err := chacha20poly1305.New(symmetric)
+	if err != nil {
+		t.Fatal(err)
+	}
+	env.Ciphertext = payload.Seal(nil, nonce[:], []byte(plaintext), payloadAAD(env))
+	return env, symmetric, payloadAAD(env)
 }

@@ -4,7 +4,7 @@
  * Provides a rich interface for managing conversations with helper methods.
  */
 
-import type { Message, MessageDirection } from './types.js';
+import { compareChainOrder, type Message, type MessageDirection } from './types.js';
 
 /**
  * Represents a conversation with another user
@@ -30,9 +30,7 @@ export class Conversation {
         public lastFetchedRound?: number
     ) {
         if (messages.length > 0) {
-            this._messages = [...messages].sort(
-                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-            );
+            this._messages = [...messages].sort(compareChainOrder);
         }
     }
 
@@ -129,7 +127,7 @@ export class Conversation {
      * Appends a message to the conversation
      *
      * If the message already exists (by ID), it is ignored.
-     * Messages are kept sorted by timestamp.
+     * Messages are kept in chain order: confirmed round, then intra-round offset.
      *
      * @param message - Message to append
      * @returns true if message was added, false if it already existed
@@ -141,7 +139,7 @@ export class Conversation {
         }
 
         this._messages.push(message);
-        this._messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        this._messages.sort(compareChainOrder);
         return true;
     }
 
@@ -166,7 +164,7 @@ export class Conversation {
         }
 
         if (added > 0) {
-            this._messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+            this._messages.sort(compareChainOrder);
         }
 
         return added;

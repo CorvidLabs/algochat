@@ -5,8 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
+	"strings"
 	"testing"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 func TestPQParityFixture(t *testing.T) {
@@ -137,6 +141,55 @@ func TestPQParityFixture(t *testing.T) {
 	if !parsedOK || !isVerified || hex.EncodeToString(got) != hex.EncodeToString(unsigned[5:]) {
 		t.Fatal("valid signature rejected")
 	}
+}
+
+func TestDecryptPQRejectsAuthenticatedNoteOver4096(t *testing.T) {
+	var sessionKey [KeySize]byte
+	var sender [KeySize]byte
+	var handshake [KeySize]byte
+	for i := range sessionKey {
+		sessionKey[i] = 0x44
+		sender[i] = 0x55
+		handshake[i] = 0x66
+	}
+	session := PQSession{SessionKey: sessionKey[:], SenderPublicKey: sender, HandshakeID: handshake}
+	plaintext := bytesRepeat('x', pqMaxPayloadSize+1)
+	nonce := bytesRepeat(7, NonceSize)
+	header := dataHeader(session.SenderPublicKey, session.HandshakeID, nonce)
+	aead, err := chacha20poly1305.New(session.SessionKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	note := append(header, aead.Seal(nil, nonce, plaintext, header)...)
+	if len(note) != MaxNoteSize+1 {
+		t.Fatalf("note length %d", len(note))
+	}
+	opened, err := aead.Open(nil, nonce, note[pqDataHeaderSize:], header)
+	if err != nil || !bytesEqual(opened, plaintext) {
+		t.Fatalf("fixture is not authenticated: %v", err)
+	}
+	got, err := DecryptPQMessage(note, session)
+	if err == nil || got != "" {
+		t.Fatalf("oversized PQ note returned plaintext %q", got)
+	}
+	if !errors.Is(err, ErrNoteTooLarge) {
+		t.Fatalf("expected ErrNoteTooLarge, got %v", err)
+	}
+	if _, err := EncryptPQMessage(strings.Repeat("x", pqMaxPayloadSize+1), session); !errors.Is(err, ErrMessageTooLarge) {
+		t.Fatalf("outbound max+1: %v", err)
+	}
+}
+
+func bytesEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func TestLiveLocalnetNote(t *testing.T) {

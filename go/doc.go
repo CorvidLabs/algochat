@@ -58,7 +58,10 @@
 // Hybrid sessions use separate layouts: one 2366-byte protocol 0x04 handshake,
 // then protocol 0x05 messages with a 78-byte authenticated header and up to
 // 4002 plaintext bytes. They reuse the established session key and do not
-// provide forward secrecy.
+// provide forward secrecy. DecodeEnvelope does not impose a plaintext ceiling.
+// DecryptMessage, DecryptPSKMessage, and DecryptPQMessage reject a note longer
+// than 4096 bytes before returning plaintext. PSK counters are caller-owned;
+// math.MaxUint32 round-trips and is not wrapped to zero.
 //
 // # Payment Fee
 //
