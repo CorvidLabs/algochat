@@ -1,4 +1,4 @@
-# Lesson bundle — record-the-localnet-run-where-all-six-libraries-joined-one-group-and-each-posted-a-message
+# Lesson bundle: record-the-localnet-run-where-all-six-libraries-joined-one-group-and-each-posted-a-message
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
