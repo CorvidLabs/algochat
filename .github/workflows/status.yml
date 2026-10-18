@@ -21,49 +21,46 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Run Swift tests
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set +e
           START_TIME=$(date +%s)
-          swift test 2>&1 | tee swift_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+          swift test
+          EXIT_CODE=$?
           END_TIME=$(date +%s)
           DURATION=$(( (END_TIME - START_TIME) * 1000 ))
-
-          echo "=== Test output tail ==="
-          tail -20 swift_output.txt
-
-          # Simple pass/fail: check if Test Suite passed
-          if grep -q "Test Suite.*passed\|Test run.*passed\|✅" swift_output.txt; then
-            STATUS="passing"
-            ERROR="null"
-          elif [ $EXIT_CODE -eq 0 ]; then
+          if [ "$EXIT_CODE" -eq 0 ]; then
             STATUS="passing"
             ERROR="null"
           else
             STATUS="failing"
             ERROR="\"Tests failed\""
           fi
-
-          echo ">>> Status: $STATUS (exit code: $EXIT_CODE)"
-
-          cat > swift-algochat.json << EOF
+          cat > "$GITHUB_WORKSPACE/swift-algochat.json" << EOF
           {
             "implementationId": "swift-algochat",
             "status": "$STATUS",
             "duration": $DURATION,
             "error": $ERROR,
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$CANDIDATE_SHA"
           }
           EOF
-          cat swift-algochat.json
+          cat "$GITHUB_WORKSPACE/swift-algochat.json"
+          exit "$EXIT_CODE"
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: swift-algochat-result
           path: swift-algochat.json
+          if-no-files-found: error
 
   test-typescript:
     runs-on: ubuntu-latest
@@ -71,6 +68,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -81,42 +80,42 @@ jobs:
 
       - name: Run TypeScript tests
         working-directory: ts
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set +e
           START_TIME=$(date +%s)
-          bun test 2>&1 | tee test_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+          bun test
+          EXIT_CODE=$?
           END_TIME=$(date +%s)
           DURATION=$(( (END_TIME - START_TIME) * 1000 ))
-
-          cat test_output.txt
-
-          if [ $EXIT_CODE -eq 0 ]; then
+          if [ "$EXIT_CODE" -eq 0 ]; then
             STATUS="passing"
             ERROR="null"
           else
             STATUS="failing"
             ERROR="\"Tests failed\""
           fi
-
-          echo ">>> Status: $STATUS"
-
-          cat > ts-algochat.json << EOF
+          cat > "$GITHUB_WORKSPACE/ts-algochat.json" << EOF
           {
             "implementationId": "ts-algochat",
             "status": "$STATUS",
             "duration": $DURATION,
             "error": $ERROR,
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$CANDIDATE_SHA"
           }
           EOF
-          cat ts-algochat.json
+          cat "$GITHUB_WORKSPACE/ts-algochat.json"
+          exit "$EXIT_CODE"
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ts-algochat-result
           path: ts-algochat.json
+          if-no-files-found: error
 
   test-python:
     runs-on: ubuntu-latest
@@ -124,6 +123,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -138,40 +139,42 @@ jobs:
 
       - name: Run Python tests
         working-directory: py
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set +e
           START_TIME=$(date +%s)
-          pytest -v 2>&1 | tee test_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+          pytest -v
+          EXIT_CODE=$?
           END_TIME=$(date +%s)
           DURATION=$(( (END_TIME - START_TIME) * 1000 ))
-
-          if [ $EXIT_CODE -eq 0 ]; then
+          if [ "$EXIT_CODE" -eq 0 ]; then
             STATUS="passing"
             ERROR="null"
           else
             STATUS="failing"
             ERROR="\"Tests failed\""
           fi
-
-          echo ">>> Status: $STATUS"
-
-          cat > py-algochat.json << EOF
+          cat > "$GITHUB_WORKSPACE/py-algochat.json" << EOF
           {
             "implementationId": "py-algochat",
             "status": "$STATUS",
             "duration": $DURATION,
             "error": $ERROR,
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$CANDIDATE_SHA"
           }
           EOF
-          cat py-algochat.json
+          cat "$GITHUB_WORKSPACE/py-algochat.json"
+          exit "$EXIT_CODE"
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: py-algochat-result
           path: py-algochat.json
+          if-no-files-found: error
 
   test-rust:
     runs-on: ubuntu-latest
@@ -179,46 +182,50 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run Rust tests
         working-directory: rs
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set +e
           START_TIME=$(date +%s)
-          cargo test 2>&1 | tee test_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+          cargo test
+          EXIT_CODE=$?
           END_TIME=$(date +%s)
           DURATION=$(( (END_TIME - START_TIME) * 1000 ))
-
-          if [ $EXIT_CODE -eq 0 ]; then
+          if [ "$EXIT_CODE" -eq 0 ]; then
             STATUS="passing"
             ERROR="null"
           else
             STATUS="failing"
             ERROR="\"Tests failed\""
           fi
-
-          echo ">>> Status: $STATUS"
-
-          cat > rs-algochat.json << EOF
+          cat > "$GITHUB_WORKSPACE/rs-algochat.json" << EOF
           {
             "implementationId": "rs-algochat",
             "status": "$STATUS",
             "duration": $DURATION,
             "error": $ERROR,
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$CANDIDATE_SHA"
           }
           EOF
-          cat rs-algochat.json
+          cat "$GITHUB_WORKSPACE/rs-algochat.json"
+          exit "$EXIT_CODE"
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rs-algochat-result
           path: rs-algochat.json
+          if-no-files-found: error
 
   test-kotlin:
     runs-on: ubuntu-latest
@@ -226,6 +233,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -233,110 +242,113 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Gradle 8.11
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11"
+
       - name: Run Kotlin tests
         working-directory: kt
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set +e
           START_TIME=$(date +%s)
-          ./gradlew test --console=plain 2>&1 | tee test_output.txt || gradle test --console=plain 2>&1 | tee test_output.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+          ./gradlew test --console=plain
+          EXIT_CODE=$?
           END_TIME=$(date +%s)
           DURATION=$(( (END_TIME - START_TIME) * 1000 ))
-
-          if [ $EXIT_CODE -eq 0 ]; then
+          if [ "$EXIT_CODE" -eq 0 ]; then
             STATUS="passing"
             ERROR="null"
           else
             STATUS="failing"
             ERROR="\"Tests failed\""
           fi
-
-          echo ">>> Status: $STATUS"
-
-          cat > kt-algochat.json << EOF
+          cat > "$GITHUB_WORKSPACE/kt-algochat.json" << EOF
           {
             "implementationId": "kt-algochat",
             "status": "$STATUS",
             "duration": $DURATION,
             "error": $ERROR,
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$CANDIDATE_SHA"
           }
           EOF
-          cat kt-algochat.json
+          cat "$GITHUB_WORKSPACE/kt-algochat.json"
+          exit "$EXIT_CODE"
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kt-algochat-result
           path: kt-algochat.json
+          if-no-files-found: error
 
-  test-web:
+  test-go:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - name: Checkout algochat-web
+      - name: Checkout
         uses: actions/checkout@v5
         with:
-          repository: CorvidLabs/algochat-web
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
 
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run tests
+      - name: Run Go tests
+        working-directory: go
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set +e
           START_TIME=$(date +%s)
-
-          # Check if tests exist
-          if [ -d "tests" ] || [ -d "test" ] || ls *.test.ts >/dev/null 2>&1 || ls **/*.test.ts >/dev/null 2>&1; then
-            bun test 2>&1 | tee test_output.txt
-            EXIT_CODE=${PIPESTATUS[0]}
-          else
-            echo "No tests found"
-            EXIT_CODE=0
-          fi
-
+          go test ./...
+          EXIT_CODE=$?
           END_TIME=$(date +%s)
           DURATION=$(( (END_TIME - START_TIME) * 1000 ))
-
-          if [ $EXIT_CODE -eq 0 ]; then
+          if [ "$EXIT_CODE" -eq 0 ]; then
             STATUS="passing"
             ERROR="null"
           else
             STATUS="failing"
             ERROR="\"Tests failed\""
           fi
-
-          echo ">>> Status: $STATUS"
-
-          cat > algochat-web.json << EOF
+          cat > "$GITHUB_WORKSPACE/go-algochat.json" << EOF
           {
-            "implementationId": "algochat-web",
+            "implementationId": "go-algochat",
             "status": "$STATUS",
             "duration": $DURATION,
             "error": $ERROR,
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$CANDIDATE_SHA"
           }
           EOF
-          cat algochat-web.json
+          cat "$GITHUB_WORKSPACE/go-algochat.json"
+          exit "$EXIT_CODE"
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: algochat-web-result
-          path: algochat-web.json
+          name: go-algochat-result
+          path: go-algochat.json
+          if-no-files-found: error
 
   generate-status:
-    needs: [test-swift, test-typescript, test-python, test-rust, test-kotlin, test-web]
+    needs: [test-swift, test-typescript, test-python, test-rust, test-kotlin, test-go]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout protocol repo
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -345,24 +357,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: "*-result"
+          merge-multiple: true
 
       - name: Organize results
         run: |
           mkdir -p test-results badges
-          for dir in artifacts/*-result; do
-            if [ -d "$dir" ]; then
-              for f in "$dir"/*.json; do
-                cp "$f" test-results/
-              done
-            fi
-          done
+          find artifacts -name '*.json' -exec cp {} test-results/ \;
           echo "=== Test Results ==="
           cat test-results/*.json
 
       - name: Generate status page
-        run: bun scripts/generate-status.ts
+        run: bun scripts/generate-status.ts --candidate-sha "${{ github.event.pull_request.head.sha || github.sha }}"
 
       - name: Upload status artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: status-page

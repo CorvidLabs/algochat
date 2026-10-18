@@ -73,4 +73,5 @@ Consumer qualification SHALL exercise built artifacts from outside the source ch
 #### Acceptance Criteria
 
 - TypeScript tarball import/types; Python wheel and sdist import; Rust packaged crate; Kotlin POM and local Maven consumer; Go module `github.com/CorvidLabs/algochat/go` with any local replacement explicitly labeled; root Swift package consumer. Declared runtime minima are checked where feasible and gaps documented.
+- When `npm pack --json` reports a scoped filename that is not the archive on disk, qualification consumes the archive that was written.
 

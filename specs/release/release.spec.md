@@ -47,12 +47,14 @@ Internal Python helpers (not a library contract):
 | `source_archive` | Export candidate sources using git archive. |
 | `extract` | Reject traversal and links before archive extraction. |
 | `qualify` | Test/build/package and consume one lane. |
+| `resolve_npm_tarball` | Use the TypeScript archive npm wrote when `--json` names a different scoped filename. |
 | `SHA` | Test-only candidate SHA fixture. |
 | `EvidenceTests` | Positive and rejection cases for receipts. |
 | `ProvenanceTests` | Range and Attest failure cases. |
 | `ArchiveTests` | Unsafe archive rejection and real source-bundle extraction. |
 | `PackageTests` | Malformed formats, missing members and wrong identities fail semantic validation. |
 | `WorkflowTests` | Bounded read-only/no-publication workflow regression checks. |
+| `NpmPackTests` | Scoped npm pack JSON names resolve to the archive on disk. |
 | `make_package` | Generate minimal valid package fixtures for negative tests. |
 | `check_workflow` | Reject write permissions, credentials and remote publication in qualification workflow text. |
 | `safe_name` | Reject absolute or traversing archive paths. |
@@ -85,7 +87,7 @@ No qualification command publishes to a remote registry. Package identities and 
 
 ## Behavioral Examples
 
-A clean exact-head hosted run with seven successful receipts and matching artifact hashes passes qualification. Missing Apple evidence or changed artifact bytes fails. A local receipt cannot substitute for hosted evidence.
+A clean exact-head hosted run with seven successful receipts and matching artifact hashes passes qualification. Missing Apple evidence or changed artifact bytes fails. A local receipt cannot substitute for hosted evidence. TypeScript qualification installs the tarball that `npm pack` wrote. A scoped filename that exists only in npm 8's JSON does not hide that archive or invent a receipt.
 
 ## Error Cases
 
@@ -105,3 +107,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-18 | prepare-reproducible-six-language-release-qualification-without-publishing-or-altering-protocol-behavior: Prepare reproducible six-language release qualification without publishing or altering protocol behavior |
 | 2026-10-18 | record-this-repository-as-the-source-for-every-algochat-library: Record this repository as the source for every AlgoChat library |
 | 2026-10-18 | preserve-the-verified-six-language-parity-audit-with-portable-replay-scripts-and-explicit-rust-replay-and-swift-history: Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes |
+| 2026-10-18 | Resolve the TypeScript tarball from the file npm wrote when the JSON filename differs. |

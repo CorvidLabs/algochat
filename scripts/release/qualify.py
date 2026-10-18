@@ -52,6 +52,48 @@ def extract(archive, target):
         tar.extractall(target)
 
 
+def resolve_npm_tarball(packed_stdout, destination, package_dir):
+    """Return the tarball npm wrote, not a scoped name that only appears in JSON.
+
+    npm 8 can report ``@scope/name-version.tgz`` while the archive on disk is
+    ``scope-name-version.tgz``, and it can ignore ``--pack-destination``.
+    """
+    try:
+        packed = json.loads(packed_stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError('npm pack did not return JSON') from error
+    if not isinstance(packed, list) or not packed or not isinstance(packed[0], dict):
+        raise ValueError('npm pack JSON has no package entry')
+    reported = packed[0].get('filename')
+    names = []
+    if isinstance(reported, str) and reported.endswith('.tgz'):
+        names.append(Path(reported).name)
+        if reported.startswith('@'):
+            names.append(reported[1:].replace('/', '-'))
+    seen = []
+    for directory in (Path(destination), Path(package_dir)):
+        for name in names:
+            candidate = directory / name
+            seen.append(candidate)
+            if candidate.is_file():
+                return _publish_tarball(candidate, destination)
+        tarballs = sorted(path for path in directory.glob('*.tgz') if path.is_file())
+        if len(tarballs) == 1:
+            return _publish_tarball(tarballs[0], destination)
+    raise FileNotFoundError('npm pack did not produce a readable tarball: ' + ', '.join(map(str, seen)))
+
+
+def _publish_tarball(source, destination):
+    destination = Path(destination)
+    destination.mkdir(parents=True, exist_ok=True)
+    target = destination / source.name
+    if source.resolve() != target.resolve():
+        shutil.copy2(source, target)
+    if not target.is_file() or target.stat().st_size == 0:
+        raise FileNotFoundError(f'npm tarball is empty: {target}')
+    return target
+
+
 def qualify(lane, output, work):
     consumer = work / 'consumer'
     consumer.mkdir()
@@ -61,8 +103,8 @@ def qualify(lane, output, work):
         run(['bun', 'install', '--frozen-lockfile', '--ignore-scripts'], ROOT / 'ts')
         run(['bun', 'test'], ROOT / 'ts')
         run(['bun', 'run', 'build'], ROOT / 'ts')
-        packed = json.loads(run(['npm', 'pack', '--ignore-scripts', '--json', '--pack-destination', output], ROOT / 'ts'))
-        archive = output / packed[0]['filename']
+        packed_stdout = run(['npm', 'pack', '--ignore-scripts', '--json', '--pack-destination', output], ROOT / 'ts')
+        archive = resolve_npm_tarball(packed_stdout, output, ROOT / 'ts')
         validate_package(lane, archive)
         write(consumer / 'package.json', '{"private":true,"type":"module"}')
         run(['npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', archive], consumer)
