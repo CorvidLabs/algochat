@@ -1,4 +1,4 @@
-# Lesson bundle — state-the-pq-level-of-every-assigned-protocol-in-one-table
+# Lesson bundle: state-the-pq-level-of-every-assigned-protocol-in-one-table
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
