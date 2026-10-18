@@ -22,8 +22,6 @@ const friend = addr(2);
 const stranger = addr(3);
 const mailbox = addr(9);
 const groupId = addr(7);
-const zeros = new Uint8Array(32);
-
 function addr(byte: number): Uint8Array {
     return new Uint8Array(32).fill(byte);
 }
@@ -32,7 +30,7 @@ function event(note: Uint8Array, sender: Uint8Array, tx: number, round = 1, offs
     return { note, sender, txId: addr(tx), round, offset };
 }
 
-function create(policy = JOINING.INVITE, name = 'team'): { state: RoomState; txId: Uint8Array } {
+function create(policy: number = JOINING.INVITE, name = 'team'): { state: RoomState; txId: Uint8Array } {
     const note = draftAdmin(null, { op: ADMIN_OP.CREATE, sender: owner, name: bytes(name), policy, groupId, mailbox });
     const reduced = reduceAdmin([event(note, owner, 10)]);
     if (!reduced.state) throw new Error(reduced.rejected[0]?.reason ?? 'create failed');

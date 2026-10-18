@@ -33,6 +33,9 @@ files:
   - src/models/types.ts
   - src/pq/announce.ts
   - src/pq/bytes.ts
+  - src/pq/group.ts
+  - src/pq/group-admin.ts
+  - src/pq/group-admin.test.ts
   - src/pq/index.ts
   - src/pq/kdf.ts
   - src/pq/kem.ts
