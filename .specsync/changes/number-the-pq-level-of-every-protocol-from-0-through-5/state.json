@@ -7,10 +7,11 @@
   "title": "Number the PQ level of every protocol from 0 through 5",
   "description": "Number the PQ level of every protocol from 0 through 5",
   "kind": "documentation",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "629a29ce8c9a0c5cd64a60936399e80a2a4aaaee",
   "created_at": 1792335554,
-  "updated_at": 1792335585,
+  "updated_at": 1792335593,
   "affected_specs": [
     "protocol"
   ],

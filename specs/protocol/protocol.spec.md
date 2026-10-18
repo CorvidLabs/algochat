@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 7
+version: 8
 status: stable
 files:
   - PROTOCOL.md
@@ -43,3 +43,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-17 | record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key: Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key |
 | 2026-10-17 | say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test: Say that envelope version 0x02 is accepted, and stop treating the withdrawn handshake note as an acceptance test |
 | 2026-10-18 | state-the-pq-level-of-every-assigned-protocol-in-one-table: State the PQ level of every assigned protocol in one table |
+| 2026-10-18 | number-the-pq-level-of-every-protocol-from-0-through-5: Number the PQ level of every protocol from 0 through 5 |

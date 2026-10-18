@@ -1,6 +1,6 @@
 ---
 id: number-the-pq-level-of-every-protocol-from-0-through-5
-state: approved
+state: implementing
 type: documentation
 base_commit: 629a29ce8c9a0c5cd64a60936399e80a2a4aaaee
 ---
