@@ -23,17 +23,19 @@ def validate(directory, sha):
     receipts = list(directory.rglob('receipt.json'))
     for path in receipts:
         data = json.loads(path.read_text())
+        if not isinstance(data, dict):
+            raise ValueError('receipt must be an object')
         lane = data['lane']
         if lane not in REQUIRED or lane in seen:
             raise ValueError('unknown or duplicate lane')
         seen.add(lane)
         if data['schema'] != 1 or data['sha'] != sha or data['tree_state'] != 'clean':
             raise ValueError('stale or dirty source evidence')
-        if data['category'] != 'hosted' or not data['platform'] or not data['toolchain']:
+        if data['category'] != 'hosted' or not isinstance(data['platform'], str) or not data['platform'] or not isinstance(data['toolchain'], dict) or not data['toolchain']:
             raise ValueError('missing hosted platform/toolchain evidence')
         if lane == 'swift' and not data['platform'].startswith('Darwin'):
             raise ValueError('required Apple lane absent')
-        if not data['commands'] or any(c['exit_code'] != 0 or not c['argv'] for c in data['commands']):
+        if not data['commands'] or any(type(c['exit_code']) is not int or c['exit_code'] != 0 or not isinstance(c['argv'], list) or not c['argv'] or any(not isinstance(a, str) for a in c['argv']) for c in data['commands']):
             raise ValueError('missing or failed command')
         if not data['artifacts']:
             raise ValueError('missing artifact')
