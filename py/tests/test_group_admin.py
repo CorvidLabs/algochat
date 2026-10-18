@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
 from algochat import (
     PQError,
@@ -19,7 +20,16 @@ from algochat import (
     seal_group_key_delivery,
     sender_may_post,
 )
-from algochat.group_admin import AdminEvent, RoomState
+from algochat.group_admin import (
+    JOINING_ASK,
+    JOINING_INVITE,
+    OP_CREATE,
+    OP_REQUEST_JOIN,
+    OP_SET_POLICY,
+    AdminEvent,
+    RoomState,
+)
+from algochat.pq import PQ_DATA_HEADER_SIZE, PQ_VERSION
 
 _VECTOR_PATH = Path(__file__).resolve().parents[2] / "vectors" / "group-admin-v1.json"
 _PQ_IO_PATH = Path(__file__).resolve().parents[1] / "tools" / "pq_io.py"
@@ -326,3 +336,91 @@ class TestGroupAdmin:
         allowed = json.loads(capsys.readouterr().out)
         assert allowed["ok"] is True, allowed
         assert allowed["allowed"] is auth["allowed"]
+
+    def test_delivery_binds_version_session_and_positive_epoch(self):
+        session = PQSession(bytes([0x42]) * 32, bytes([0x11]) * 32, bytes(32), bytes([0x43]) * 32)
+        nonce = bytes([0x55]) * 12
+        group_id = bytes([7]) * 32
+        mailbox = bytes([9]) * 32
+        note = seal_group_key_delivery(session, 1, group_id, mailbox, bytes([4]) * 32, bytes([10]) * 32, nonce)
+        assert open_group_key_delivery(note, session).admin_tx_id == bytes([10]) * 32
+        with pytest.raises(PQError, match="sender"):
+            open_group_key_delivery(note, PQSession(session.session_key, bytes([0x22]) * 32, bytes(32), session.handshake_id))
+        with pytest.raises(PQError, match="handshake"):
+            open_group_key_delivery(note, PQSession(session.session_key, session.sender_public_key, bytes(32), bytes([0x44]) * 32))
+        flipped = bytearray(note)
+        flipped[-1] ^= 1
+        with pytest.raises(PQError, match="authentication"):
+            open_group_key_delivery(bytes(flipped), session)
+        plain = bytes([5]) + (0).to_bytes(4, "big") + group_id + mailbox + bytes([4]) * 32 + bytes([10]) * 32
+        for version in (0, 1, 3, 255):
+            with pytest.raises(PQError, match="Not a group key delivery"):
+                open_group_key_delivery(_seal_raw(session, plain, version, nonce), session)
+        with pytest.raises(PQError, match="epoch"):
+            open_group_key_delivery(_seal_raw(session, plain, PQ_VERSION, nonce), session)
+
+    def test_undefined_policy_is_rejected_without_changing_state(self):
+        owner = bytes([1]) * 32
+        group_id = bytes([7]) * 32
+        mailbox = bytes([9]) * 32
+        create = draft_admin(None, OP_CREATE, owner, name=b"team", policy=JOINING_INVITE, group_id=group_id, mailbox=mailbox)
+        for policy in (0, 3, 255):
+            reduced = reduce_admin([AdminEvent(_with_policy(create, policy), owner, bytes([10]) * 32, 1, 0)])
+            assert reduced.state is None
+            assert reduced.accepted == []
+            assert "invite-only or ask-to-join" in reduced.rejected[0].reason
+        created = reduce_admin([AdminEvent(create, owner, bytes([10]) * 32, 1, 0)])
+        assert created.state is not None
+        set_policy = draft_admin(created.state, OP_SET_POLICY, owner, policy=JOINING_ASK)
+        for policy in (0, 3, 255):
+            reduced = reduce_admin([
+                AdminEvent(create, owner, bytes([10]) * 32, 1, 0),
+                AdminEvent(_with_policy(set_policy, policy), owner, bytes([11]) * 32, 1, 1),
+            ])
+            assert reduced.state is not None
+            assert reduced.state.policy == JOINING_INVITE
+            assert reduced.state.head_tx_id == bytes([10]) * 32
+            assert len(reduced.rejected) == 1
+            assert "invite-only or ask-to-join" in reduced.rejected[0].reason
+
+    def test_join_request_parent_must_be_an_accepted_transaction(self):
+        owner = bytes([1]) * 32
+        friend = bytes([2]) * 32
+        group_id = bytes([7]) * 32
+        mailbox = bytes([9]) * 32
+        create = draft_admin(None, OP_CREATE, owner, name=b"general", policy=JOINING_ASK, group_id=group_id, mailbox=mailbox)
+        created = reduce_admin([AdminEvent(create, owner, bytes([10]) * 32, 1, 0)])
+        assert created.state is not None
+        real = draft_admin(created.state, OP_REQUEST_JOIN, friend, subject=friend)
+        zero = bytearray(real)
+        zero[2:34] = bytes(32)
+        unknown = bytearray(real)
+        unknown[2:34] = bytes([0x99]) * 32
+        base = AdminEvent(create, owner, bytes([10]) * 32, 1, 0)
+        zeroed = reduce_admin([base, AdminEvent(bytes(zero), friend, bytes([11]) * 32, 1, 1)])
+        assert zeroed.state is not None
+        assert zeroed.state.pending == []
+        assert zeroed.state.head_tx_id == bytes([10]) * 32
+        assert "cite" in zeroed.rejected[0].reason
+        missed = reduce_admin([base, AdminEvent(bytes(unknown), friend, bytes([11]) * 32, 1, 1)])
+        assert missed.state is not None
+        assert missed.state.pending == []
+        assert missed.state.policy == JOINING_ASK
+        assert "cite" in missed.rejected[0].reason
+        accepted = reduce_admin([base, AdminEvent(real, friend, bytes([11]) * 32, 1, 1)])
+        assert accepted.rejected == []
+        assert accepted.state is not None
+        assert accepted.state.pending == [friend]
+        assert accepted.state.head_tx_id == bytes([10]) * 32
+
+
+def _with_policy(note: bytes, policy: int) -> bytes:
+    out = bytearray(note)
+    out[104 + out[103]] = policy
+    return bytes(out)
+
+
+def _seal_raw(session: PQSession, plaintext: bytes, version: int, nonce: bytes) -> bytes:
+    header = bytes([version, 0x06]) + session.sender_public_key + session.handshake_id + nonce
+    assert len(header) == PQ_DATA_HEADER_SIZE
+    return header + ChaCha20Poly1305(session.session_key).encrypt(nonce, plaintext, header)

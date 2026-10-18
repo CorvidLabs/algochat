@@ -242,7 +242,7 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 // ReduceAdmin applies events in confirmed order: round, then offset, then transaction id.
 // A transaction id that was already accepted is rejected with reason "replay".
 // A join request does not advance the head. Its parent must be an already accepted
-// non-request transaction id. That set starts as 32 zero bytes.
+// administration transaction. The 32 zero bytes are create's parent and are not that set.
 func ReduceAdmin(events []AdminEvent) ReduceAdminResult {
 	ordered := make([]AdminEvent, len(events))
 	copy(ordered, events)
@@ -259,7 +259,7 @@ func ReduceAdmin(events []AdminEvent) ReduceAdminResult {
 	accepted := []AcceptedAdmin{}
 	rejected := []RejectedAdmin{}
 	seen := map[string]struct{}{}
-	known := map[string]struct{}{hex.EncodeToString(make([]byte, KeySize)): {}}
+	known := map[string]struct{}{}
 	for _, event := range ordered {
 		key := hex.EncodeToString(event.TxID)
 		if _, ok := seen[key]; ok {
@@ -354,11 +354,20 @@ func SealGroupKeyDelivery(session PQSession, epoch uint32, groupID, mailbox, gro
 // OpenGroupKeyDelivery opens a 227-byte action-5 note.
 // A legacy 195-byte membership note is not a group key delivery.
 func OpenGroupKeyDelivery(note []byte, session PQSession) (GroupKeyDelivery, error) {
-	if len(note) != groupDeliverNoteSize || note[1] != protocolIDGroupMembership {
+	if len(note) != groupDeliverNoteSize || note[0] != protocolVersionAAD || note[1] != protocolIDGroupMembership {
 		return GroupKeyDelivery{}, errors.New("Not a group key delivery")
 	}
 	if err := requireLen("session key", session.SessionKey, KeySize); err != nil {
 		return GroupKeyDelivery{}, err
+	}
+	var sender, hid [KeySize]byte
+	copy(sender[:], note[2:34])
+	copy(hid[:], note[34:66])
+	if sender != session.SenderPublicKey {
+		return GroupKeyDelivery{}, errors.New("Key delivery sender does not match the session")
+	}
+	if hid != session.HandshakeID {
+		return GroupKeyDelivery{}, errors.New("Key delivery is for a different handshake")
 	}
 	aead, err := chacha20poly1305.New(session.SessionKey)
 	if err != nil {
@@ -373,6 +382,9 @@ func OpenGroupKeyDelivery(note []byte, session PQSession) (GroupKeyDelivery, err
 	}
 	var out GroupKeyDelivery
 	out.Epoch = binary.BigEndian.Uint32(plain[1:5])
+	if out.Epoch < 1 {
+		return GroupKeyDelivery{}, errors.New("Group epoch must be from 1 through 4294967295")
+	}
 	copy(out.GroupID[:], plain[5:37])
 	copy(out.Mailbox[:], plain[37:69])
 	copy(out.GroupKey[:], plain[69:101])
@@ -400,7 +412,7 @@ func applyAdmin(state *RoomState, event AdminEvent, known map[string]struct{}) (
 	}
 	request := decoded.op == adminOpRequest
 	if request {
-		if state == nil {
+		if state == nil || isZero(decoded.parent) {
 			return nil, AcceptedAdmin{}, false, errors.New("Join request does not cite this room")
 		}
 		if _, ok := known[hex.EncodeToString(decoded.parent)]; !ok {
@@ -793,6 +805,10 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 	if !strictlyIncreasing(admins) || !strictlyIncreasing(members) {
 		return decodedAdmin{}, errors.New("Administration sets must be strictly sorted")
 	}
+	policy := int(policyBytes[0])
+	if policy != joiningInvite && policy != joiningAsk {
+		return decodedAdmin{}, errors.New("Joining rule must be invite-only or ask-to-join")
+	}
 	return decodedAdmin{
 		parent:  parent,
 		groupID: groupID,
@@ -800,7 +816,7 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 		epoch:   epoch,
 		op:      int(opBytes[0]),
 		name:    name,
-		policy:  int(policyBytes[0]),
+		policy:  policy,
 		owner:   owner,
 		admins:  admins,
 		members: members,

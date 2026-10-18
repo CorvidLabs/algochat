@@ -248,14 +248,15 @@ def reduce_admin(events: Iterable[AdminEvent]) -> ReduceAdminResult:
 
     Order is round, then intra-round offset, then transaction id bytes.
     A repeated accepted transaction id is ``replay``. A join request does
-    not become the chain head.
+    not become the chain head. Its parent must be an accepted administration
+    transaction. The 32 zero bytes are create's parent and are not that set.
     """
     ordered = sorted(events, key=lambda item: (item.round, item.offset, bytes(item.tx_id)))
     state: RoomState | None = None
     accepted: list[AcceptedAdmin] = []
     rejected: list[RejectedAdmin] = []
     seen: set[str] = set()
-    known = {_ZERO_ID.hex()}
+    known: set[str] = set()
     for event in ordered:
         tx_id = bytes(event.tx_id)
         key = tx_id.hex()
@@ -338,12 +339,19 @@ def open_group_key_delivery(note: bytes, session: PQSession) -> GroupKeyDelivery
     if isinstance(note, bytearray):
         note = bytes(note)
     expected = PQ_DATA_HEADER_SIZE + GROUP_DELIVER_PLAINTEXT_SIZE + TAG_SIZE
-    if not isinstance(note, bytes) or len(note) != expected or note[1] != 0x06:
+    if not isinstance(note, bytes) or len(note) != expected or note[0] != PQ_VERSION or note[1] != 0x06:
         raise PQError("Not a group key delivery")
+    session_key = _require_length("session key", session.session_key, 32)
+    sender = _require_length("sender public key", session.sender_public_key, 32)
+    handshake_id = _require_length("handshake id", session.handshake_id, 32)
+    if note[2:34] != sender:
+        raise PQError("Key delivery sender does not match the session")
+    if note[34:66] != handshake_id:
+        raise PQError("Key delivery is for a different handshake")
     nonce = note[66:78]
     header = note[:PQ_DATA_HEADER_SIZE]
     try:
-        plain = ChaCha20Poly1305(session.session_key).decrypt(
+        plain = ChaCha20Poly1305(session_key).decrypt(
             nonce,
             note[PQ_DATA_HEADER_SIZE:],
             header,
@@ -352,8 +360,11 @@ def open_group_key_delivery(note: bytes, session: PQSession) -> GroupKeyDelivery
         raise PQError("Group key delivery authentication failed") from exc
     if len(plain) != GROUP_DELIVER_PLAINTEXT_SIZE or plain[0] != GROUP_DELIVER_ACTION:
         raise PQError("Group key delivery plaintext is not action 5")
+    epoch = int.from_bytes(plain[1:5], "big")
+    if epoch < 1:
+        raise PQError("Group epoch must be from 1 through 4294967295")
     return GroupKeyDelivery(
-        epoch=int.from_bytes(plain[1:5], "big"),
+        epoch=epoch,
         group_id=plain[5:37],
         mailbox=plain[37:69],
         group_key=plain[69:101],
@@ -374,7 +385,7 @@ def _apply_admin(
     parent = _ZERO_ID if state is None else bytes(state.head_tx_id)
     request = _op_is(decoded.op, OP_REQUEST_JOIN)
     if request:
-        if state is None or decoded.parent.hex() not in known:
+        if state is None or decoded.parent == _ZERO_ID or decoded.parent.hex() not in known:
             raise PQError("Join request does not cite this room")
     elif decoded.parent != parent:
         raise PQError("Stale administration parent")
@@ -620,6 +631,8 @@ def _decode_admin(note: bytes) -> _Decoded:
     _canonical_set(members, "members", GROUP_MEMBER_MAX)
     if not _strictly_increasing(admins) or not _strictly_increasing(members):
         raise PQError("Administration sets must be strictly sorted")
+    if policy not in (JOINING_INVITE, JOINING_ASK):
+        raise PQError("Joining rule must be invite-only or ask-to-join")
     return _Decoded(
         parent=parent,
         group_id=group_id,

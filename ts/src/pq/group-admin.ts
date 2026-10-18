@@ -179,7 +179,8 @@ export function reduceAdmin(events: readonly AdminEvent[]): ReduceAdminResult {
     const accepted: AcceptedAdmin[] = [];
     const rejected: { txId: Uint8Array; reason: string }[] = [];
     const seen = new Set<string>();
-    const known = new Set<string>([hex(new Uint8Array(32))]);
+    // 32 zero bytes are create's parent. They are not an accepted administration id.
+    const known = new Set<string>();
     for (const event of ordered) {
         const key = hex(event.txId);
         if (seen.has(key)) {
@@ -256,10 +257,22 @@ export function openGroupKeyDelivery(note: Uint8Array, session: PQSession): {
     groupKey: Uint8Array;
     adminTxId: Uint8Array;
 } {
-    if (note.length !== PQ_DATA_HEADER_SIZE + GROUP_DELIVER_PLAINTEXT_SIZE + PQ_PROTOCOL.TAG_SIZE || note[1] !== 0x06) {
+    if (
+        note.length !== PQ_DATA_HEADER_SIZE + GROUP_DELIVER_PLAINTEXT_SIZE + PQ_PROTOCOL.TAG_SIZE
+        || note[0] !== PQ_PROTOCOL.VERSION
+        || note[1] !== 0x06
+    ) {
         throw new PQError('Not a group key delivery');
     }
+    const sender = note.slice(2, 34);
+    const handshakeId = note.slice(34, 66);
     const nonce = note.slice(66, 78);
+    if (!uint8ArrayEquals(sender, session.senderPublicKey)) {
+        throw new PQError('Key delivery sender does not match the session');
+    }
+    if (!uint8ArrayEquals(handshakeId, session.handshakeId)) {
+        throw new PQError('Key delivery is for a different handshake');
+    }
     let plain: Uint8Array;
     try {
         plain = chacha20poly1305(session.sessionKey, nonce, note.slice(0, PQ_DATA_HEADER_SIZE)).decrypt(
@@ -271,8 +284,10 @@ export function openGroupKeyDelivery(note: Uint8Array, session: PQSession): {
     if (plain.length !== GROUP_DELIVER_PLAINTEXT_SIZE || plain[0] !== GROUP_DELIVER_ACTION) {
         throw new PQError('Group key delivery plaintext is not action 5');
     }
+    const epoch = readU32(plain, 1);
+    if (epoch < 1) throw new PQError('Group epoch must be from 1 through 4294967295');
     return {
-        epoch: readU32(plain, 1),
+        epoch,
         groupId: plain.slice(5, 37),
         mailbox: plain.slice(37, 69),
         groupKey: plain.slice(69, 101),
@@ -294,7 +309,9 @@ function applyAdmin(
     const parent = state?.headTxId ?? new Uint8Array(32);
     const request = decoded.op === ADMIN_OP.REQUEST_JOIN;
     if (request) {
-        if (!state || !known.has(hex(decoded.parent))) throw new PQError('Join request does not cite this room');
+        if (!state || isZero(decoded.parent) || !known.has(hex(decoded.parent))) {
+            throw new PQError('Join request does not cite this room');
+        }
     } else if (!uint8ArrayEquals(decoded.parent, parent)) {
         throw new PQError('Stale administration parent');
     }
@@ -472,6 +489,9 @@ function decodeAdmin(note: Uint8Array): DecodedAdmin {
     canonicalSet(members, 'members', GROUP_MEMBER_MAX);
     if (!strictlyIncreasing(admins) || !strictlyIncreasing(members)) {
         throw new PQError('Administration sets must be strictly sorted');
+    }
+    if (policy !== JOINING.INVITE && policy !== JOINING.ASK) {
+        throw new PQError('Joining rule must be invite-only or ask-to-join');
     }
     return { parent, groupId, mailbox, epoch, op, name, policy, owner, admins, members, subject };
 }

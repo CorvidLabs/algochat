@@ -9,6 +9,9 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.bouncycastle.crypto.modes.ChaCha20Poly1305
+import org.bouncycastle.crypto.params.AEADParameters
+import org.bouncycastle.crypto.params.KeyParameter
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -145,6 +148,101 @@ class GroupAdminTest {
         assertEquals(delivery.str("admin_tx_id"), hex(opened.adminTxId))
     }
 
+    @Test
+    fun `action 5 binds version session and a positive epoch`() {
+        val session = PQSession(ByteArray(32) { 0x42 }, ByteArray(32) { 0x11 }, ByteArray(32), ByteArray(32) { 0x43 })
+        val nonce = ByteArray(12) { 0x55 }
+        val groupId = ByteArray(32) { 7 }
+        val mailbox = ByteArray(32) { 9 }
+        val note = GroupAdmin.sealGroupKeyDelivery(session, 1, groupId, mailbox, ByteArray(32) { 4 }, ByteArray(32) { 10 }, nonce)
+        assertEquals(1, GroupAdmin.openGroupKeyDelivery(note, session).epoch)
+        val senderError = assertThrows<RoomAdminException> {
+            GroupAdmin.openGroupKeyDelivery(note, PQSession(session.sessionKey, ByteArray(32) { 0x22 }, ByteArray(32), session.handshakeId))
+        }
+        assertTrue(senderError.message?.contains("sender") == true, senderError.message)
+        val handshakeError = assertThrows<RoomAdminException> {
+            GroupAdmin.openGroupKeyDelivery(note, PQSession(session.sessionKey, session.senderPublicKey, ByteArray(32), ByteArray(32) { 0x44 }))
+        }
+        assertTrue(handshakeError.message?.contains("handshake") == true, handshakeError.message)
+        val flipped = note.copyOf()
+        flipped[flipped.size - 1] = (flipped[flipped.size - 1].toInt() xor 1).toByte()
+        val tagError = assertThrows<RoomAdminException> { GroupAdmin.openGroupKeyDelivery(flipped, session) }
+        assertTrue(tagError.message?.contains("authentication") == true, tagError.message)
+        val plain = ByteArray(133)
+        plain[0] = 5
+        groupId.copyInto(plain, 5)
+        mailbox.copyInto(plain, 37)
+        ByteArray(32) { 4 }.copyInto(plain, 69)
+        ByteArray(32) { 10 }.copyInto(plain, 101)
+        for (version in listOf(0, 1, 3, 255)) {
+            val error = assertThrows<RoomAdminException> {
+                GroupAdmin.openGroupKeyDelivery(sealRaw(session, plain, version, nonce), session)
+            }
+            assertTrue(error.message?.contains("Not a group key delivery") == true, "version $version ${error.message}")
+        }
+        val epochError = assertThrows<RoomAdminException> {
+            GroupAdmin.openGroupKeyDelivery(sealRaw(session, plain, PQProtocol.VERSION.toInt(), nonce), session)
+        }
+        assertTrue(epochError.message?.contains("epoch") == true, epochError.message)
+    }
+
+    @Test
+    fun `undefined joining policies are rejected and leave the room unchanged`() {
+        val owner = ByteArray(32) { 1 }
+        val groupId = ByteArray(32) { 7 }
+        val mailbox = ByteArray(32) { 9 }
+        val create = GroupAdmin.draftAdmin(null, 1, owner, ByteArray(32), "team".toByteArray(), 1, groupId, mailbox)
+        for (policy in listOf(0, 3, 255)) {
+            val reduced = GroupAdmin.reduceAdmin(listOf(AdminEvent(withPolicy(create, policy), owner, ByteArray(32) { 10 }, 1, 0)))
+            assertEquals(null, reduced.state)
+            assertEquals(0, reduced.accepted.size)
+            assertTrue(reduced.rejected[0].reason.contains("invite-only or ask-to-join"))
+        }
+        val created = GroupAdmin.reduceAdmin(listOf(AdminEvent(create, owner, ByteArray(32) { 10 }, 1, 0)))
+        val state = created.state ?: error("create")
+        val setPolicy = GroupAdmin.draftAdmin(state, 3, owner, policy = 2)
+        for (policy in listOf(0, 3, 255)) {
+            val reduced = GroupAdmin.reduceAdmin(listOf(
+                AdminEvent(create, owner, ByteArray(32) { 10 }, 1, 0),
+                AdminEvent(withPolicy(setPolicy, policy), owner, ByteArray(32) { 11 }, 1, 1)
+            ))
+            assertEquals(1, reduced.state?.policy)
+            assertTrue(reduced.state?.headTxId.contentEquals(ByteArray(32) { 10 }) == true)
+            assertEquals(1, reduced.rejected.size)
+            assertTrue(reduced.rejected[0].reason.contains("invite-only or ask-to-join"))
+        }
+    }
+
+    @Test
+    fun `a join request must cite an accepted administration transaction`() {
+        val owner = ByteArray(32) { 1 }
+        val friend = ByteArray(32) { 2 }
+        val groupId = ByteArray(32) { 7 }
+        val mailbox = ByteArray(32) { 9 }
+        val create = GroupAdmin.draftAdmin(null, 1, owner, ByteArray(32), "general".toByteArray(), 2, groupId, mailbox)
+        val created = GroupAdmin.reduceAdmin(listOf(AdminEvent(create, owner, ByteArray(32) { 10 }, 1, 0)))
+        val state = created.state ?: error("create")
+        val real = GroupAdmin.draftAdmin(state, 8, friend, friend)
+        val zero = real.copyOf()
+        ByteArray(32).copyInto(zero, 2)
+        val unknown = real.copyOf()
+        ByteArray(32) { 0x99.toByte() }.copyInto(unknown, 2)
+        val base = AdminEvent(create, owner, ByteArray(32) { 10 }, 1, 0)
+        val zeroed = GroupAdmin.reduceAdmin(listOf(base, AdminEvent(zero, friend, ByteArray(32) { 11 }, 1, 1)))
+        assertEquals(0, zeroed.state?.pending?.size)
+        assertTrue(zeroed.state?.headTxId.contentEquals(ByteArray(32) { 10 }) == true)
+        assertTrue(zeroed.rejected[0].reason.contains("cite"))
+        val missed = GroupAdmin.reduceAdmin(listOf(base, AdminEvent(unknown, friend, ByteArray(32) { 11 }, 1, 1)))
+        assertEquals(0, missed.state?.pending?.size)
+        assertEquals(2, missed.state?.policy)
+        assertTrue(missed.rejected[0].reason.contains("cite"))
+        val accepted = GroupAdmin.reduceAdmin(listOf(base, AdminEvent(real, friend, ByteArray(32) { 11 }, 1, 1)))
+        assertEquals(0, accepted.rejected.size)
+        assertEquals(1, accepted.state?.pending?.size)
+        assertTrue(accepted.state?.pending?.get(0)?.contentEquals(friend) == true)
+        assertTrue(accepted.state?.headTxId.contentEquals(ByteArray(32) { 10 }) == true)
+    }
+
     private fun reduce(reduction: JsonObject): ReduceAdminResult {
         val events = reduction.arr("events").map { element ->
             val item = element.jsonObject
@@ -199,6 +297,28 @@ class GroupAdminTest {
             return bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }
         }
     }
+}
+
+private fun withPolicy(note: ByteArray, policy: Int): ByteArray {
+    val out = note.copyOf()
+    val nameLen = out[103].toInt() and 0xff
+    out[104 + nameLen] = policy.toByte()
+    return out
+}
+
+private fun sealRaw(session: PQSession, plain: ByteArray, version: Int, nonce: ByteArray): ByteArray {
+    val header = ByteArray(PQProtocol.DATA_HEADER_SIZE)
+    header[0] = version.toByte()
+    header[1] = GroupProtocol.MEMBERSHIP_ID
+    session.senderPublicKey.copyInto(header, 2)
+    session.handshakeId.copyInto(header, 34)
+    nonce.copyInto(header, 66)
+    val cipher = ChaCha20Poly1305()
+    cipher.init(true, AEADParameters(KeyParameter(session.sessionKey), 128, nonce, header))
+    val output = ByteArray(cipher.getOutputSize(plain.size))
+    val written = cipher.processBytes(plain, 0, plain.size, output, 0)
+    cipher.doFinal(output, written)
+    return header + output
 }
 
 private fun JsonObject.str(name: String): String {

@@ -118,8 +118,8 @@ object GroupAdmin {
         val accepted = mutableListOf<AcceptedAdmin>()
         val rejected = mutableListOf<RejectedAdmin>()
         val seen = HashSet<String>()
+        // 32 zero bytes are create's parent, not an accepted administration id.
         val known = HashSet<String>()
-        known.add(hexKey(ByteArray(32)))
         for (event in ordered) {
             val key = hexKey(event.txId)
             if (seen.contains(key)) {
@@ -189,10 +189,18 @@ object GroupAdmin {
 
     fun openGroupKeyDelivery(note: ByteArray, session: PQSession): OpenedGroupKeyDelivery {
         val expected = PQProtocol.DATA_HEADER_SIZE + DELIVER_PLAINTEXT_SIZE + Protocol.TAG_SIZE
-        if (note.size != expected || note[1] != GroupProtocol.MEMBERSHIP_ID) {
+        if (note.size != expected || note[0] != PQProtocol.VERSION || note[1] != GroupProtocol.MEMBERSHIP_ID) {
             throw RoomAdminException("Not a group key delivery")
         }
+        val sender = note.copyOfRange(2, 34)
+        val handshakeId = note.copyOfRange(34, 66)
         val nonce = note.copyOfRange(66, 78)
+        if (!sender.contentEquals(session.senderPublicKey)) {
+            throw RoomAdminException("Key delivery sender does not match the session")
+        }
+        if (!handshakeId.contentEquals(session.handshakeId)) {
+            throw RoomAdminException("Key delivery is for a different handshake")
+        }
         val header = note.copyOfRange(0, PQProtocol.DATA_HEADER_SIZE)
         val plain = try {
             aeadDecrypt(session.sessionKey, nonce, note.copyOfRange(PQProtocol.DATA_HEADER_SIZE, note.size), header)
@@ -202,8 +210,12 @@ object GroupAdmin {
         if (plain.size != DELIVER_PLAINTEXT_SIZE || (plain[0].toInt() and 0xff) != DELIVER_ACTION) {
             throw RoomAdminException("Group key delivery plaintext is not action 5")
         }
+        val epoch = readU32(plain, 1)
+        if (epoch == 0) {
+            throw RoomAdminException("Group epoch must be from 1 through 4294967295")
+        }
         return OpenedGroupKeyDelivery(
-            readU32(plain, 1),
+            epoch,
             plain.copyOfRange(5, 37),
             plain.copyOfRange(37, 69),
             plain.copyOfRange(69, 101),
@@ -265,7 +277,7 @@ object GroupAdmin {
         val parent = state?.headTxId ?: ByteArray(32)
         val request = decoded.op == OP_REQUEST_JOIN
         if (request) {
-            if (state == null || !known.contains(hexKey(decoded.parent))) {
+            if (state == null || isZero(decoded.parent) || !known.contains(hexKey(decoded.parent))) {
                 throw RoomAdminException("Join request does not cite this room")
             }
         } else if (!decoded.parent.contentEquals(parent)) {
@@ -470,6 +482,9 @@ object GroupAdmin {
         canonicalSet(members, "members", MEMBER_MAX)
         if (!strictlyIncreasing(admins) || !strictlyIncreasing(members)) {
             throw RoomAdminException("Administration sets must be strictly sorted")
+        }
+        if (policy != JOINING_INVITE && policy != JOINING_ASK) {
+            throw RoomAdminException("Joining rule must be invite-only or ask-to-join")
         }
         return DecodedAdmin(parent, groupId, mailbox, epoch, op, name, policy, owner, admins, members, subject)
     }

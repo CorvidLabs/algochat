@@ -204,7 +204,8 @@ public enum GroupAdmin {
         var accepted: [Accepted] = []
         var rejected: [Rejection] = []
         var seen = Set<Data>()
-        var known: Set<Data> = [Data(count: keySize)]
+        // 32 zero bytes are create's parent, not an accepted administration id.
+        var known = Set<Data>()
         for event in ordered {
             if seen.contains(event.txID) {
                 rejected.append(Rejection(txID: Data(event.txID), reason: "replay"))
@@ -309,8 +310,16 @@ public enum GroupAdmin {
         try requireCount("sender public key", senderPublicKey, keySize)
         try requireCount("handshake id", handshakeID, keySize)
         let bytes = [UInt8](note)
-        guard bytes.count == deliveryNoteSize, bytes[1] == GroupMailbox.membershipID else {
+        guard bytes.count == deliveryNoteSize, bytes[0] == version, bytes[1] == GroupMailbox.membershipID else {
             throw fail("Not a group key delivery")
+        }
+        let sender = try slice(bytes, 2, keySize)
+        let handshake = try slice(bytes, 34, keySize)
+        guard sender == senderPublicKey else {
+            throw fail("Key delivery sender does not match the session")
+        }
+        guard handshake == handshakeID else {
+            throw fail("Key delivery is for a different handshake")
         }
         let nonce = try slice(bytes, 66, nonceSize)
         let header = Data(bytes[..<GroupMailbox.membershipHeaderSize])
@@ -325,8 +334,12 @@ public enum GroupAdmin {
             throw fail("Group key delivery plaintext is not action 5")
         }
         let plain = [UInt8](plaintext)
+        let epoch = try readU32(plain, at: 1)
+        guard epoch >= 1 else {
+            throw fail("Group epoch must be from 1 through 4294967295")
+        }
         return Delivery(
-            epoch: try readU32(plain, at: 1),
+            epoch: epoch,
             groupID: try slice(plain, 5, keySize),
             mailbox: try slice(plain, 37, keySize),
             groupKey: try slice(plain, 69, keySize),
@@ -397,7 +410,7 @@ public enum GroupAdmin {
         let parent = state?.headTxID ?? Data(count: keySize)
         let request = decoded.op == Op.requestJoin
         if request {
-            if state == nil || !known.contains(decoded.parent) {
+            if state == nil || isZero(decoded.parent) || !known.contains(decoded.parent) {
                 throw fail("Join request does not cite this room")
             }
         } else if decoded.parent != parent {
@@ -675,6 +688,9 @@ public enum GroupAdmin {
         _ = try canonicalSet(members, label: "members", max: memberMax)
         if !strictlyIncreasing(admins) || !strictlyIncreasing(members) {
             throw fail("Administration sets must be strictly sorted")
+        }
+        if policy != joiningInvite && policy != joiningAsk {
+            throw fail("Joining rule must be invite-only or ask-to-join")
         }
         return Decoded(
             parent: parent,

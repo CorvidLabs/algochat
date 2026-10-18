@@ -27,6 +27,7 @@ import {
     deliveryAuthorized,
     draftAdmin,
     reduceAdmin,
+    openGroupKeyDelivery,
     sealGroupKeyDelivery,
     senderMayPost,
     type AdminEvent,
@@ -50,6 +51,11 @@ interface Reply {
     state?: Record<string, unknown> | null;
     allowed?: boolean;
     text?: string;
+    epoch?: number;
+    group_id?: string;
+    mailbox?: string;
+    group_key?: string;
+    admin_tx_id?: string;
 }
 
 interface Receipt {
@@ -323,6 +329,109 @@ async function agreeDelivery(tools: Tool[], session: PQSession, fields: {
     }));
 }
 
+async function agreeOpen(tools: Tool[], session: PQSession, note: Uint8Array, fields: {
+    epoch: number;
+    groupId: Uint8Array;
+    mailbox: Uint8Array;
+    groupKey: Uint8Array;
+    adminTxId: Uint8Array;
+}): Promise<string> {
+    const body = {
+        op: "deliverOpen",
+        note: hex(note),
+        session_key: hex(session.sessionKey),
+        sender_x25519: hex(session.senderPublicKey),
+        handshake_id: hex(session.handshakeId),
+    };
+    const keys = await Promise.all(tools.map(async (tool) => {
+        const reply = await tool.call(body);
+        requireOk(tool.name, reply, "deliverOpen");
+        if (reply.admin_tx_id !== hex(fields.adminTxId)) {
+            throw new Error(`${tool.name} cited ${reply.admin_tx_id}, not the administration transaction`);
+        }
+        if (reply.epoch !== fields.epoch || reply.group_id !== hex(fields.groupId) || reply.mailbox !== hex(fields.mailbox)) {
+            throw new Error(`${tool.name} opened a different room`);
+        }
+        if (reply.group_key !== hex(fields.groupKey)) throw new Error(`${tool.name} recovered a different room key`);
+        const wrongHandshake = await tool.call({ ...body, handshake_id: hex(randomBytes(32)) });
+        if (wrongHandshake.ok) throw new Error(`${tool.name} opened a delivery for a different handshake`);
+        const wrongSender = await tool.call({ ...body, sender_x25519: hex(randomBytes(32)) });
+        if (wrongSender.ok) throw new Error(`${tool.name} opened a delivery for a different session sender`);
+        return reply.group_key ?? "";
+    }));
+    if (keys.some((item) => item !== keys[0])) throw new Error("recovered room keys differ");
+    return keys[0] ?? "";
+}
+
+async function rejectOpen(tools: Tool[], note: Uint8Array, session: PQSession, label: string): Promise<void> {
+    await Promise.all(tools.map(async (tool) => {
+        const reply = await tool.call({
+            op: "deliverOpen",
+            note: hex(note),
+            session_key: hex(session.sessionKey),
+            sender_x25519: hex(session.senderPublicKey),
+            handshake_id: hex(session.handshakeId),
+        });
+        if (reply.ok) throw new Error(`${tool.name} ${label}`);
+    }));
+}
+
+function localRecipientOpen(): void {
+    const session: PQSession = {
+        sessionKey: randomBytes(32),
+        senderPublicKey: randomBytes(32),
+        recipientPublicKey: randomBytes(32),
+        handshakeId: randomBytes(32),
+    };
+    const groupId = randomBytes(32);
+    const mailbox = randomBytes(32);
+    const groupKey = randomBytes(32);
+    const adminTxId = randomBytes(32);
+    const recipient = randomBytes(32);
+    const note = sealGroupKeyDelivery(session, 1, groupId, mailbox, groupKey, adminTxId, randomBytes(12));
+    const opened = openGroupKeyDelivery(note, session);
+    if (hex(opened.adminTxId) !== hex(adminTxId) || hex(opened.groupId) !== hex(groupId)) {
+        throw new Error("opened delivery did not cite the administration transaction");
+    }
+    if (hex(opened.groupKey) !== hex(groupKey)) throw new Error("opened delivery did not recover the room key");
+    const message = sealGroupMessage(
+        new TextEncoder().encode("from the delivered key"),
+        opened.groupKey,
+        opened.groupId,
+        opened.epoch,
+        0,
+        recipient,
+        randomBytes(12),
+    );
+    const read = openGroupMessage(message, opened.groupKey, recipient, []);
+    if (new TextDecoder().decode(read.plaintext) !== "from the delivered key") {
+        throw new Error("recovered room key did not open the mailbox note");
+    }
+    const wrongSender: PQSession = { ...session, senderPublicKey: randomBytes(32) };
+    const wrongHandshake: PQSession = { ...session, handshakeId: randomBytes(32) };
+    const removed: PQSession = { ...session, sessionKey: randomBytes(32) };
+    for (const [label, bad] of [
+        ["wrong session sender", wrongSender],
+        ["wrong handshake", wrongHandshake],
+        ["removed member", removed],
+    ] as const) {
+        let failed = false;
+        try {
+            openGroupKeyDelivery(note, bad);
+        } catch {
+            failed = true;
+        }
+        if (!failed) throw new Error(`${label} opened the delivery`);
+    }
+    console.log(JSON.stringify({
+        localnet: "down",
+        recipient_open: "unit",
+        note_bytes: note.length,
+        admin_tx_id: hex(opened.adminTxId),
+        used_recovered_key: true,
+    }));
+}
+
 function tally(receipts: Receipt[], phase: Receipt["phase"]) {
     const rows = receipts.filter((item) => item.phase === phase);
     return {
@@ -350,7 +459,20 @@ async function handshake(owner: algosdk.Account, member: algosdk.Account): Promi
     });
 }
 
+async function localnetReachable(): Promise<boolean> {
+    try {
+        const response = await fetch("http://127.0.0.1:4001/health", { signal: AbortSignal.timeout(1500) });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
 async function main(): Promise<void> {
+    if (!await localnetReachable()) {
+        localRecipientOpen();
+        return;
+    }
     const algod = new algosdk.Algodv2(TOKEN, "http://127.0.0.1", 4001);
     await algod.status().do();
     const tools = LANGS.map((name) => {
@@ -447,6 +569,7 @@ async function main(): Promise<void> {
             if (!session) throw new Error("missing session");
             const nonce = randomBytes(12);
             const note = sealGroupKeyDelivery(session, epoch, room.groupId, room.mailbox, groupKey, adminTxId, nonce);
+            let recoveredKey = "";
             if (check) {
                 await agreeDelivery(tools, session, {
                     epoch,
@@ -456,21 +579,34 @@ async function main(): Promise<void> {
                     adminTxId,
                     nonce,
                 }, note);
+                if (!deliveryAuthorized(reduceAdmin(room.events).accepted, adminTxId, pub(owner), pub(member), epoch)) {
+                    throw new Error("recipient is not authorized for this delivery");
+                }
+                recoveredKey = await agreeOpen(tools, session, note, {
+                    epoch,
+                    groupId: room.groupId,
+                    mailbox: room.mailbox,
+                    groupKey,
+                    adminTxId,
+                });
             }
             const paid = await submit(algod, owner, member.addr.toString(), 0, note, phase, "deliver");
             receipts.push(paid.receipt);
+            return { note, recoveredKey };
         };
 
         console.error("team room");
         const teamFund = await submit(algod, owner, team.mailboxAccount.addr.toString(), 100_000, undefined, "setup", "fund-mailbox");
         receipts.push(teamFund.receipt);
         await postAdmin(team, owner, "setup", "create", { op: ADMIN_OP.CREATE, name: "team", policy: JOINING.INVITE }, true);
+        let recoveredTeamKey = "";
         for (const [index, member] of teamInvite.entries()) {
             const adminTxId = await postAdmin(team, owner, "membership", "add", {
                 op: ADMIN_OP.ADD_MEMBER,
                 subject: pub(member),
             }, index === 0);
-            await deliver(team, member, 1, teamKey, adminTxId, "membership", index === 0);
+            const delivered = await deliver(team, member, 1, teamKey, adminTxId, "membership", index === 0);
+            if (index === 0) recoveredTeamKey = delivered.recoveredKey;
         }
         if (team.state().members.length !== 5 || team.state().epoch !== 1) throw new Error("team roster");
 
@@ -549,10 +685,23 @@ async function main(): Promise<void> {
                 requireOk(tool.name, reply, "groupRead");
                 if (reply.text !== text) throw new Error(`${tool.name} read ${reply.text}`);
             }));
-            return paid.receipt;
+            return { receipt: paid.receipt, note };
         };
         const teamMessage = await postMessage(team, teamKey, "team line");
         const generalMessage = await postMessage(general, generalKey, "general line");
+        if (!recoveredTeamKey) throw new Error("missing key recovered from the recipient session");
+        await Promise.all(tools.map(async (tool) => {
+            const reply = await tool.call({
+                op: "groupRead",
+                note: hex(teamMessage.note),
+                groupKey: recoveredTeamKey,
+                senderAddress: hex(pub(owner)),
+                text: "team line",
+                seen: [],
+            });
+            requireOk(tool.name, reply, "groupRead with the key opened from action 5");
+            if (reply.text !== "team line") throw new Error(`${tool.name} did not read with the recovered key`);
+        }));
 
         console.error("removal");
         const removed = teamOnly[2]!;
@@ -561,10 +710,15 @@ async function main(): Promise<void> {
             subject: pub(removed),
         }, true);
         const teamKeyEpoch2 = randomBytes(32);
+        let rotatedNote: Uint8Array | undefined;
         for (const [index, member] of [owner, friend, teamOnly[0]!, teamOnly[1]!].entries()) {
             if (member === owner) continue;
-            await deliver(team, member, 2, teamKeyEpoch2, adminTxId, "removal", index === 1);
+            const delivered = await deliver(team, member, 2, teamKeyEpoch2, adminTxId, "removal", index === 1);
+            if (index === 1) rotatedNote = delivered.note;
         }
+        const removedSession = sessions.get(removed.addr.toString());
+        if (!rotatedNote || !removedSession) throw new Error("missing rotated delivery");
+        await rejectOpen(tools, rotatedNote, removedSession, "removed member opened the new key");
         const ownerDelivery = sealGroupKeyDelivery(
             sessions.get(friend.addr.toString())!,
             2,
@@ -629,13 +783,14 @@ async function main(): Promise<void> {
                 members_after_removal: team.state().members.length,
                 policy: team.state().policy,
                 epoch_after_removal: team.state().epoch,
-                message: teamMessage,
+                message: teamMessage.receipt,
+                recipient_open: "the recipient session opened action 5 and that key read the mailbox note",
             },
             general: {
                 members: general.state().members.length,
                 policy: general.state().policy,
                 epoch: general.state().epoch,
-                message: generalMessage,
+                message: generalMessage.receipt,
             },
             costs: {
                 faucet: tally(receipts, "faucet"),

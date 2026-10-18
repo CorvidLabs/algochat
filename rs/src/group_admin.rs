@@ -224,8 +224,8 @@ pub fn reduce_admin(events: &[AdminEvent]) -> ReduceAdminResult {
     let mut accepted = Vec::new();
     let mut rejected = Vec::new();
     let mut seen = HashSet::new();
-    // Accepted non-request ids. Create's parent is the zero id.
-    let mut known = HashSet::from([[0u8; 32]]);
+    // Accepted administration ids. Create's parent is 32 zero bytes and is not one of them.
+    let mut known: HashSet<[u8; 32]> = HashSet::new();
     for event in ordered {
         if seen.contains(&event.tx_id) {
             rejected.push(RejectedAdmin {
@@ -325,8 +325,14 @@ pub fn open_group_key_delivery(
     note: &[u8],
     session: &PqSession,
 ) -> Result<GroupKeyDelivery, GroupAdminError> {
-    if note.len() != DELIVER_NOTE || note[1] != DELIVER_PROTOCOL {
+    if note.len() != DELIVER_NOTE || note[0] != PROTOCOL_VERSION_V2 || note[1] != DELIVER_PROTOCOL {
         return Err(fail("Not a group key delivery"));
+    }
+    if note[2..34] != session.sender_public {
+        return Err(fail("Key delivery sender does not match the session"));
+    }
+    if note[34..66] != session.handshake_id {
+        return Err(fail("Key delivery is for a different handshake"));
     }
     let cipher = ChaCha20Poly1305::new_from_slice(&session.session_key)
         .map_err(|error| fail(error.to_string()))?;
@@ -342,8 +348,12 @@ pub fn open_group_key_delivery(
     if plain.len() != DELIVER_PLAINTEXT || plain[0] != 5 {
         return Err(fail("Group key delivery plaintext is not action 5"));
     }
+    let epoch = u32::from_be_bytes([plain[1], plain[2], plain[3], plain[4]]);
+    if epoch < 1 {
+        return Err(fail("Group epoch must be from 1 through 4294967295"));
+    }
     Ok(GroupKeyDelivery {
-        epoch: u32::from_be_bytes([plain[1], plain[2], plain[3], plain[4]]),
+        epoch,
         group_id: read32(&plain, 5),
         mailbox: read32(&plain, 37),
         group_key: read32(&plain, 69),
@@ -362,7 +372,7 @@ fn apply_admin(
     }
     let request = decoded.op == OP_REQUEST_JOIN;
     if request {
-        if state.is_none() || !known.contains(&decoded.parent) {
+        if state.is_none() || is_zero(&decoded.parent) || !known.contains(&decoded.parent) {
             return Err(fail("Join request does not cite this room"));
         }
     } else if decoded.parent != state.map_or([0u8; 32], |item| item.head_tx_id) {
@@ -654,6 +664,9 @@ fn decode_admin(note: &[u8]) -> Result<Decoded, GroupAdminError> {
     canonical_set(&members, "members", MEMBER_MAX)?;
     if !strictly_increasing(&admins) || !strictly_increasing(&members) {
         return Err(fail("Administration sets must be strictly sorted"));
+    }
+    if policy != JOINING_INVITE && policy != JOINING_ASK {
+        return Err(fail("Joining rule must be invite-only or ask-to-join"));
     }
     Ok(Decoded {
         parent,
@@ -1036,5 +1049,171 @@ mod tests {
             legacy.to_string().contains("not a group membership note"),
             "{legacy}"
         );
+    }
+
+    #[test]
+    fn rejects_unbound_delivery_undefined_policy_and_zero_join_parent() {
+        let owner = [1u8; 32];
+        let friend = [2u8; 32];
+        let group_id = [7u8; 32];
+        let mailbox = [9u8; 32];
+        let create = draft_admin(
+            None,
+            &AdminDraft {
+                op: OP_CREATE,
+                sender: owner,
+                subject: None,
+                name: Some(b"team".to_vec()),
+                policy: Some(JOINING_INVITE),
+                group_id: Some(group_id),
+                mailbox: Some(mailbox),
+            },
+        )
+        .unwrap();
+        for policy in [0u8, 3, 255] {
+            let reduced = reduce_admin(&[event(with_policy(&create, policy), owner, 10, 0)]);
+            assert!(reduced.state.is_none());
+            assert!(reduced.accepted.is_empty());
+            assert!(reduced.rejected[0].reason.contains("invite-only or ask-to-join"));
+        }
+        let created = reduce_admin(&[event(create.clone(), owner, 10, 0)]);
+        let state = created.state.as_ref().unwrap();
+        let set_policy = draft_admin(
+            Some(state),
+            &AdminDraft {
+                op: OP_SET_POLICY,
+                sender: owner,
+                subject: None,
+                name: None,
+                policy: Some(JOINING_ASK),
+                group_id: None,
+                mailbox: None,
+            },
+        )
+        .unwrap();
+        for policy in [0u8, 3, 255] {
+            let reduced = reduce_admin(&[
+                event(create.clone(), owner, 10, 0),
+                event(with_policy(&set_policy, policy), owner, 11, 1),
+            ]);
+            let room = reduced.state.unwrap();
+            assert_eq!(room.policy, JOINING_INVITE);
+            assert_eq!(room.head_tx_id, [10u8; 32]);
+            assert!(reduced.rejected[0].reason.contains("invite-only or ask-to-join"));
+        }
+
+        let ask = draft_admin(
+            None,
+            &AdminDraft {
+                op: OP_CREATE,
+                sender: owner,
+                subject: None,
+                name: Some(b"general".to_vec()),
+                policy: Some(JOINING_ASK),
+                group_id: Some(group_id),
+                mailbox: Some(mailbox),
+            },
+        )
+        .unwrap();
+        let asked = reduce_admin(&[event(ask.clone(), owner, 10, 0)]);
+        let real = draft_admin(
+            asked.state.as_ref(),
+            &AdminDraft {
+                op: OP_REQUEST_JOIN,
+                sender: friend,
+                subject: Some(friend),
+                name: None,
+                policy: None,
+                group_id: None,
+                mailbox: None,
+            },
+        )
+        .unwrap();
+        let mut zero = real.clone();
+        zero[2..34].fill(0);
+        let mut unknown = real.clone();
+        unknown[2..34].fill(0x99);
+        let zeroed = reduce_admin(&[event(ask.clone(), owner, 10, 0), event(zero, friend, 11, 1)]);
+        assert!(zeroed.state.as_ref().unwrap().pending.is_empty());
+        assert_eq!(zeroed.state.as_ref().unwrap().head_tx_id, [10u8; 32]);
+        assert!(zeroed.rejected[0].reason.contains("cite"));
+        let missed = reduce_admin(&[event(ask.clone(), owner, 10, 0), event(unknown, friend, 11, 1)]);
+        assert!(missed.state.as_ref().unwrap().pending.is_empty());
+        assert_eq!(missed.state.as_ref().unwrap().policy, JOINING_ASK);
+        assert!(missed.rejected[0].reason.contains("cite"));
+        let accepted = reduce_admin(&[event(ask, owner, 10, 0), event(real, friend, 11, 1)]);
+        assert!(accepted.rejected.is_empty());
+        assert_eq!(accepted.state.as_ref().unwrap().pending, vec![friend]);
+        assert_eq!(accepted.state.as_ref().unwrap().head_tx_id, [10u8; 32]);
+
+        let session = PqSession {
+            session_key: [0x42u8; 32],
+            sender_public: [0x11u8; 32],
+            recipient_public: [0u8; 32],
+            handshake_id: [0x43u8; 32],
+        };
+        let nonce = [0x55u8; 12];
+        let note = seal_group_key_delivery(&session, 1, &group_id, &mailbox, &[4u8; 32], &[10u8; 32], &nonce).unwrap();
+        assert_eq!(open_group_key_delivery(&note, &session).unwrap().epoch, 1);
+        let mut other_sender = session.clone();
+        other_sender.sender_public = [0x22u8; 32];
+        let sender_error = open_group_key_delivery(&note, &other_sender).unwrap_err();
+        assert!(sender_error.to_string().contains("sender"), "{sender_error}");
+        let mut other_handshake = session.clone();
+        other_handshake.handshake_id = [0x44u8; 32];
+        let handshake_error = open_group_key_delivery(&note, &other_handshake).unwrap_err();
+        assert!(handshake_error.to_string().contains("handshake"), "{handshake_error}");
+        let mut flipped = note.clone();
+        let last = flipped.len() - 1;
+        flipped[last] ^= 1;
+        let tag_error = open_group_key_delivery(&flipped, &session).unwrap_err();
+        assert!(tag_error.to_string().contains("authentication"), "{tag_error}");
+        let mut plain = [0u8; DELIVER_PLAINTEXT];
+        plain[0] = 5;
+        plain[5..37].copy_from_slice(&group_id);
+        plain[37..69].copy_from_slice(&mailbox);
+        plain[69..101].copy_from_slice(&[4u8; 32]);
+        plain[101..133].copy_from_slice(&[10u8; 32]);
+        for version in [0u8, 1, 3, 255] {
+            let bad = seal_raw(&session, &plain, version, &nonce);
+            let error = open_group_key_delivery(&bad, &session).unwrap_err();
+            assert!(error.to_string().contains("Not a group key delivery"), "{version} {error}");
+        }
+        let epoch_zero = seal_raw(&session, &plain, PROTOCOL_VERSION_V2, &nonce);
+        let epoch_error = open_group_key_delivery(&epoch_zero, &session).unwrap_err();
+        assert!(epoch_error.to_string().contains("epoch"), "{epoch_error}");
+    }
+
+    fn event(note: Vec<u8>, sender: [u8; 32], tx: u8, offset: u64) -> AdminEvent {
+        AdminEvent {
+            note,
+            sender,
+            tx_id: [tx; 32],
+            round: 1,
+            offset,
+        }
+    }
+
+    fn with_policy(note: &[u8], policy: u8) -> Vec<u8> {
+        let mut out = note.to_vec();
+        let name_len = usize::from(out[103]);
+        out[104 + name_len] = policy;
+        out
+    }
+
+    fn seal_raw(session: &PqSession, plain: &[u8], version: u8, nonce: &[u8; 12]) -> Vec<u8> {
+        use chacha20poly1305::aead::{Aead, KeyInit, Payload};
+        use chacha20poly1305::{ChaCha20Poly1305, Nonce};
+
+        let mut header = vec![version, super::DELIVER_PROTOCOL];
+        header.extend_from_slice(&session.sender_public);
+        header.extend_from_slice(&session.handshake_id);
+        header.extend_from_slice(nonce);
+        let cipher = ChaCha20Poly1305::new_from_slice(&session.session_key).unwrap();
+        let sealed = cipher
+            .encrypt(Nonce::from_slice(nonce), Payload { msg: plain, aad: &header })
+            .unwrap();
+        header.extend_from_slice(&sealed);
+        header
     }
 }

@@ -1,3 +1,4 @@
+import Crypto
 import Foundation
 import Testing
 @testable import AlgoChat
@@ -119,6 +120,134 @@ struct GroupAdminTests {
                 handshakeID: handshakeID
             )
         }
+    }
+
+    @Test("action 5 binds version, the supplied session, and a positive epoch")
+    func bindsDelivery() throws {
+        let key = fill(0x42)
+        let sender = fill(0x11)
+        let handshake = fill(0x43)
+        let nonce = Data(repeating: 0x55, count: 12)
+        let groupID = fill(7)
+        let mailbox = fill(9)
+        let note = try GroupAdmin.sealKeyDelivery(
+            sessionKey: key,
+            senderPublicKey: sender,
+            handshakeID: handshake,
+            epoch: 1,
+            groupID: groupID,
+            mailbox: mailbox,
+            groupKey: fill(4),
+            adminTxID: fill(10),
+            nonce: nonce
+        )
+        let opened = try GroupAdmin.openKeyDelivery(note: note, sessionKey: key, senderPublicKey: sender, handshakeID: handshake)
+        #expect(opened.epoch == 1)
+        try expectDescription("sender") {
+            _ = try GroupAdmin.openKeyDelivery(note: note, sessionKey: key, senderPublicKey: fill(0x22), handshakeID: handshake)
+        }
+        try expectDescription("handshake") {
+            _ = try GroupAdmin.openKeyDelivery(note: note, sessionKey: key, senderPublicKey: sender, handshakeID: fill(0x44))
+        }
+        var flipped = note
+        flipped[flipped.count - 1] ^= 1
+        try expectDescription("authentication") {
+            _ = try GroupAdmin.openKeyDelivery(note: flipped, sessionKey: key, senderPublicKey: sender, handshakeID: handshake)
+        }
+        var plain = Data(count: 133)
+        plain[0] = 5
+        plain.replaceSubrange(5..<37, with: groupID)
+        plain.replaceSubrange(37..<69, with: mailbox)
+        plain.replaceSubrange(69..<101, with: fill(4))
+        plain.replaceSubrange(101..<133, with: fill(10))
+        for version in [UInt8(0), 1, 3, 255] {
+            let bad = try sealRaw(sessionKey: key, sender: sender, handshake: handshake, plaintext: plain, version: version, nonce: nonce)
+            try expectDescription("Not a group key delivery") {
+                _ = try GroupAdmin.openKeyDelivery(note: bad, sessionKey: key, senderPublicKey: sender, handshakeID: handshake)
+            }
+        }
+        let epochZero = try sealRaw(sessionKey: key, sender: sender, handshake: handshake, plaintext: plain, version: GroupAdmin.version, nonce: nonce)
+        try expectDescription("epoch") {
+            _ = try GroupAdmin.openKeyDelivery(note: epochZero, sessionKey: key, senderPublicKey: sender, handshakeID: handshake)
+        }
+    }
+
+    @Test("undefined joining policies are rejected and leave the room unchanged")
+    func rejectsUndefinedPolicy() throws {
+        let owner = fill(1)
+        let groupID = fill(7)
+        let mailbox = fill(9)
+        let create = try GroupAdmin.draft(
+            state: nil,
+            op: 1,
+            sender: owner,
+            name: Data("team".utf8),
+            policy: 1,
+            groupID: groupID,
+            mailbox: mailbox
+        )
+        for policy in [UInt8(0), 3, 255] {
+            let reduced = GroupAdmin.reduce([
+                GroupAdmin.Event(note: withPolicy(create, policy), sender: owner, txID: fill(10), round: 1, offset: 0)
+            ])
+            #expect(reduced.state == nil)
+            #expect(reduced.accepted.isEmpty)
+            #expect(reduced.rejected[0].reason.contains("invite-only or ask-to-join"))
+        }
+        let created = GroupAdmin.reduce([
+            GroupAdmin.Event(note: create, sender: owner, txID: fill(10), round: 1, offset: 0)
+        ])
+        let state = try #require(created.state)
+        let setPolicy = try GroupAdmin.draft(state: state, op: 3, sender: owner, policy: 2)
+        for policy in [UInt8(0), 3, 255] {
+            let reduced = GroupAdmin.reduce([
+                GroupAdmin.Event(note: create, sender: owner, txID: fill(10), round: 1, offset: 0),
+                GroupAdmin.Event(note: withPolicy(setPolicy, policy), sender: owner, txID: fill(11), round: 1, offset: 1),
+            ])
+            #expect(reduced.state?.policy == 1)
+            #expect(reduced.state?.headTxID == fill(10))
+            #expect(reduced.rejected.count == 1)
+            #expect(reduced.rejected[0].reason.contains("invite-only or ask-to-join"))
+        }
+    }
+
+    @Test("a join request must cite an accepted administration transaction")
+    func rejectsZeroJoinParent() throws {
+        let owner = fill(1)
+        let friend = fill(2)
+        let groupID = fill(7)
+        let mailbox = fill(9)
+        let create = try GroupAdmin.draft(
+            state: nil,
+            op: 1,
+            sender: owner,
+            name: Data("general".utf8),
+            policy: 2,
+            groupID: groupID,
+            mailbox: mailbox
+        )
+        let created = GroupAdmin.reduce([
+            GroupAdmin.Event(note: create, sender: owner, txID: fill(10), round: 1, offset: 0)
+        ])
+        let state = try #require(created.state)
+        let real = try GroupAdmin.draft(state: state, op: 8, sender: friend, subject: friend)
+        var zero = real
+        zero.replaceSubrange(2..<34, with: Data(count: 32))
+        var unknown = real
+        unknown.replaceSubrange(2..<34, with: Data(repeating: 0x99, count: 32))
+        let base = GroupAdmin.Event(note: create, sender: owner, txID: fill(10), round: 1, offset: 0)
+        let zeroed = GroupAdmin.reduce([base, GroupAdmin.Event(note: zero, sender: friend, txID: fill(11), round: 1, offset: 1)])
+        #expect(zeroed.state?.pending.isEmpty == true)
+        #expect(zeroed.state?.headTxID == fill(10))
+        #expect(zeroed.rejected[0].reason.contains("cite"))
+        let missed = GroupAdmin.reduce([base, GroupAdmin.Event(note: unknown, sender: friend, txID: fill(11), round: 1, offset: 1)])
+        #expect(missed.state?.pending.isEmpty == true)
+        #expect(missed.state?.policy == 2)
+        #expect(missed.rejected[0].reason.contains("cite"))
+        let accepted = GroupAdmin.reduce([base, GroupAdmin.Event(note: real, sender: friend, txID: fill(11), round: 1, offset: 1)])
+        #expect(accepted.rejected.isEmpty)
+        #expect(accepted.state?.pending == [friend])
+        #expect(accepted.state?.headTxID == fill(10))
     }
 }
 
@@ -357,4 +486,38 @@ private func data(hex: String) throws -> Data {
 
 private func hex(_ data: Data) -> String {
     data.map { String(format: "%02x", $0) }.joined()
+}
+
+private func fill(_ byte: UInt8) -> Data {
+    Data(repeating: byte, count: 32)
+}
+
+private func withPolicy(_ note: Data, _ policy: UInt8) -> Data {
+    var out = note
+    let nameLen = Int(out[103])
+    out[104 + nameLen] = policy
+    return out
+}
+
+private func sealRaw(
+    sessionKey: Data,
+    sender: Data,
+    handshake: Data,
+    plaintext: Data,
+    version: UInt8,
+    nonce: Data
+) throws -> Data {
+    var header = Data([version, GroupMailbox.membershipID])
+    header.append(sender)
+    header.append(handshake)
+    header.append(nonce)
+    let box = try ChaChaPoly.seal(
+        plaintext,
+        using: SymmetricKey(data: sessionKey),
+        nonce: try ChaChaPoly.Nonce(data: nonce),
+        authenticating: header
+    )
+    header.append(box.ciphertext)
+    header.append(box.tag)
+    return header
 }

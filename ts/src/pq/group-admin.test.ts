@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { PQ_PROTOCOL, type PQSession } from './types.js';
+import { chacha20poly1305 } from '@noble/ciphers/chacha';
+import { PQ_DATA_HEADER_SIZE, PQ_PROTOCOL, type PQSession } from './types.js';
 import { openGroupMembership, openGroupMessage, sealGroupMessage } from './group.js';
 import {
     ADMIN_OP,
@@ -39,6 +40,27 @@ function create(policy: number = JOINING.INVITE, name = 'team'): { state: RoomSt
 
 function bytes(text: string): Uint8Array {
     return new TextEncoder().encode(text);
+}
+
+function withPolicy(note: Uint8Array, policy: number): Uint8Array {
+    const out = note.slice();
+    const nameLen = out[103] ?? 0;
+    out[104 + nameLen] = policy;
+    return out;
+}
+
+function sealRaw(session: PQSession, plaintext: Uint8Array, version: number, nonce: Uint8Array): Uint8Array {
+    const header = new Uint8Array(PQ_DATA_HEADER_SIZE);
+    header[0] = version;
+    header[1] = 0x06;
+    header.set(session.senderPublicKey, 2);
+    header.set(session.handshakeId, 34);
+    header.set(nonce, 66);
+    const sealed = chacha20poly1305(session.sessionKey, nonce, header).encrypt(plaintext);
+    const out = new Uint8Array(header.length + sealed.length);
+    out.set(header);
+    out.set(sealed, header.length);
+    return out;
 }
 
 describe('room administration', () => {
@@ -342,6 +364,83 @@ describe('room administration', () => {
         );
         expect(toHex(sealed)).toBe(vector.delivery.note);
         expect(toHex(openGroupKeyDelivery(sealed, session).groupKey)).toBe(vector.delivery.group_key);
+    });
+
+    test('action 5 binds version 0x02, the supplied session, and a positive epoch', () => {
+        const session: PQSession = {
+            sessionKey: addr(0x42),
+            senderPublicKey: addr(0x11),
+            recipientPublicKey: new Uint8Array(32),
+            handshakeId: addr(0x43),
+        };
+        const nonce = new Uint8Array(12).fill(0x55);
+        const note = sealGroupKeyDelivery(session, 1, groupId, mailbox, addr(4), addr(10), nonce);
+        expect(openGroupKeyDelivery(note, session).adminTxId).toEqual(addr(10));
+        expect(() => openGroupKeyDelivery(note, { ...session, senderPublicKey: addr(0x22) })).toThrow(/sender/);
+        expect(() => openGroupKeyDelivery(note, { ...session, handshakeId: addr(0x44) })).toThrow(/handshake/);
+        const flipped = note.slice();
+        flipped[flipped.length - 1] ^= 1;
+        expect(() => openGroupKeyDelivery(flipped, session)).toThrow(/authentication/);
+        const plain = new Uint8Array(133);
+        plain[0] = 5;
+        plain.set(groupId, 5);
+        plain.set(mailbox, 37);
+        plain.set(addr(4), 69);
+        plain.set(addr(10), 101);
+        for (const version of [0, 1, 3, 255]) {
+            expect(() => openGroupKeyDelivery(sealRaw(session, plain, version, nonce), session)).toThrow(/Not a group key delivery/);
+        }
+        expect(() => openGroupKeyDelivery(sealRaw(session, plain, PQ_PROTOCOL.VERSION, nonce), session)).toThrow(/epoch/);
+    });
+
+    test('undefined joining policies are rejected and leave the room unchanged', () => {
+        const createNote = draftAdmin(null, {
+            op: ADMIN_OP.CREATE, sender: owner, name: bytes('team'), policy: JOINING.INVITE, groupId, mailbox,
+        });
+        for (const policy of [0, 3, 255]) {
+            const reduced = reduceAdmin([event(withPolicy(createNote, policy), owner, 10)]);
+            expect(reduced.state).toBeNull();
+            expect(reduced.accepted).toHaveLength(0);
+            expect(reduced.rejected[0]?.reason).toMatch(/invite-only or ask-to-join/);
+        }
+        const created = reduceAdmin([event(createNote, owner, 10)]);
+        const setPolicy = draftAdmin(created.state, { op: ADMIN_OP.SET_POLICY, sender: owner, policy: JOINING.ASK });
+        for (const policy of [0, 3, 255]) {
+            const reduced = reduceAdmin([
+                event(createNote, owner, 10),
+                event(withPolicy(setPolicy, policy), owner, 11, 2),
+            ]);
+            expect(reduced.state?.policy).toBe(JOINING.INVITE);
+            expect(reduced.state?.headTxId).toEqual(addr(10));
+            expect(reduced.rejected).toHaveLength(1);
+            expect(reduced.rejected[0]?.reason).toMatch(/invite-only or ask-to-join/);
+        }
+    });
+
+    test('a join request must cite an accepted administration transaction, not the zero parent', () => {
+        const createNote = draftAdmin(null, {
+            op: ADMIN_OP.CREATE, sender: owner, name: bytes('general'), policy: JOINING.ASK, groupId, mailbox,
+        });
+        const created = reduceAdmin([event(createNote, owner, 10)]);
+        const real = draftAdmin(created.state, { op: ADMIN_OP.REQUEST_JOIN, sender: friend, subject: friend });
+        const zero = real.slice();
+        zero.set(new Uint8Array(32), 2);
+        const unknown = real.slice();
+        unknown.set(addr(0x99), 2);
+        const base = [event(createNote, owner, 10)];
+        const zeroed = reduceAdmin([...base, event(zero, friend, 11, 2)]);
+        expect(zeroed.state?.epoch).toBe(1);
+        expect(zeroed.state?.pending).toHaveLength(0);
+        expect(zeroed.state?.headTxId).toEqual(addr(10));
+        expect(zeroed.rejected[0]?.reason).toMatch(/cite/);
+        const missed = reduceAdmin([...base, event(unknown, friend, 11, 2)]);
+        expect(missed.state?.pending).toHaveLength(0);
+        expect(missed.state?.policy).toBe(JOINING.ASK);
+        expect(missed.rejected[0]?.reason).toMatch(/cite/);
+        const accepted = reduceAdmin([...base, event(real, friend, 11, 2)]);
+        expect(accepted.rejected).toHaveLength(0);
+        expect(accepted.state?.pending).toEqual([friend]);
+        expect(accepted.state?.headTxId).toEqual(addr(10));
     });
 });
 
