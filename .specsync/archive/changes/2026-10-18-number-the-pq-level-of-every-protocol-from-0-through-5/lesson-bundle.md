@@ -1,4 +1,4 @@
-# Lesson bundle — number-the-pq-level-of-every-protocol-from-0-through-5
+# Lesson bundle: number-the-pq-level-of-every-protocol-from-0-through-5
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
