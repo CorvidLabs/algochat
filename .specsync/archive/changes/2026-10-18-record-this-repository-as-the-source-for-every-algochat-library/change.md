@@ -1,6 +1,6 @@
 ---
 id: record-this-repository-as-the-source-for-every-algochat-library
-state: implementing
+state: archived
 type: documentation
 base_commit: b522d8c8f347050d17b44d53758650c65702530f
 ---
