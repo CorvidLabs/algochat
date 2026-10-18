@@ -1,7 +1,8 @@
 [tasks]
 validate = "bun scripts/validate.ts"
 intent = "hi check"
+release_checks = "python3 -m unittest discover -s scripts/release -v"
 
 [lanes.verify]
 description = "Validate protocol documents and implementation registry"
-steps = ["validate"]
+steps = ["validate", "release_checks"]

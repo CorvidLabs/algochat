@@ -1,0 +1,51 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "human:user",
+      "timestamp": 1792284660,
+      "digest": "4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6",
+      "note": "User answered yes at 2026-10-18 00:49:44 UTC to the definition and RELEASE-1/RELEASE-2, relayed by source thread 01a118b4-4fe7-70fc-9f2d-dbbe961ba009. Approved definition digest 4dcd151952d26119b19ae25c2bab9d0f5403084499c05aab5ce18b96bcd17fb6; semantic delta transcribes those requirements without scope changes. Definition only, not implementation acceptance.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "prepare-reproducible-six-language-release-qualification-without-publishing-or-altering-protocol-behavior",
+        "title": "Prepare reproducible six-language release qualification without publishing or altering protocol behavior",
+        "description": "Prepare reproducible six-language release qualification without publishing or altering protocol behavior",
+        "kind": "feature",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          ".github/workflows/",
+          "README.md",
+          "docs/RELEASE.md",
+          "fledge.toml",
+          "scripts/release/",
+          "specs/release/"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "All six existing hosted lanes test and build non-publishing qualification artifacts; Artifact checks fail on missing or malformed expected contents; Release provenance verification rejects missing evidence and empty or invalid ranges; The release checklist separates local hosted author-reported and unrun evidence and preserves package identities destinations and versions; No protocol crypto session or publishing behavior changes"
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {
+        "release": "c7ff4f0ef4cc5bc5195703d942aa639f416040facfef9badedcc22034b3bcc0d"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792286439,
+      "digest": "349c251f266d4f7c2d26bbef93b5a26afcd5d2170f3827f7847c5ab031f3c007",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

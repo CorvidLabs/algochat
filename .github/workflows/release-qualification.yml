@@ -1,0 +1,75 @@
+name: Release qualification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - run: python3 -m unittest discover -s scripts/release -v
+  ts:
+    uses: ./.github/workflows/ts.yml
+  py:
+    uses: ./.github/workflows/py.yml
+  go:
+    uses: ./.github/workflows/go.yml
+  kt:
+    uses: ./.github/workflows/kt.yml
+  rs:
+    uses: ./.github/workflows/rs.yml
+  swift:
+    uses: ./.github/workflows/swift.yml
+  swift-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      # Ubuntu runner supplies Swift; qualify.py records the actual version.
+      - run: python3 scripts/release/qualify.py swift-linux "${{ runner.temp }}/qualification-swift-linux"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qualification-swift-linux
+          path: ${{ runner.temp }}/qualification-swift-linux/
+          if-no-files-found: error
+  complete:
+    if: always()
+    needs: [checks, ts, py, rs, kt, go, swift, swift-linux]
+    runs-on: ubuntu-latest
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      JOB_RESULTS: ${{ toJSON(needs) }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Reject failed or skipped jobs
+        run: |
+          python3 - <<'PY'
+          import json, os
+          jobs = json.loads(os.environ['JOB_RESULTS'])
+          assert all(job['result'] == 'success' for job in jobs.values()), jobs
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qualification-*
+          path: ${{ runner.temp }}/qualification
+      - name: Verify exact candidate evidence and every artifact hash
+        run: python3 scripts/release/evidence.py "${{ runner.temp }}/qualification" "$CANDIDATE_SHA"

@@ -2,10 +2,19 @@
   "format_version": 1,
   "hashes": {
     ".specsync/config.toml": "893fd4e16d8de5f357c9f1c28303c76fa92fc4c0c09a73b6fe7ead0000798853",
-    "PROTOCOL.md": "7a82de5c0704c6a53398e950a947e98097ff5451cc58d99e1bc02b8fc6a9244b",
-    "TEST-VECTORS.md": "9a551bf17ed830387dc3fef1a191e0ca160486115fd0bc2f1d573839b5e1a117",
-    "specs/protocol/protocol.spec.md": "bc487f27bb9eb334886ee559e1dfe24bae689c27c0004bb4752c0aad2a172937",
-    "specs/protocol/requirements.md": "2825af2a290a3e0a18aa7fc0be61dac0ba74e25795c9b0da92b30062662854a8"
+    "PROTOCOL.md": "58bf1a3a2afd656f706c799ccb7f535f251593f2332e82f2715c733d9b8b5dcb",
+    "TEST-VECTORS.md": "33e788f1ed6f6e8790fc24e64c3e1166778165518f20efb14e39e15fbedf0e2f",
+    "scripts/release/evidence.py": "b28cdd457ae4a30fd7c0417e7aa376cdcf9980d4d8ff90034f61fcba14d02c67",
+    "scripts/release/packages.py": "b7b095429a9e2fc29813d87ae7afde93f741c3b8c69a1ec196aedc667e2bd40c",
+    "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
+    "scripts/release/qualify.py": "c5f49204b97645d4ff4cef7d8cb39dfed1c68fdbcf3377ce6553157d8faa59ff",
+    "scripts/release/test_release.py": "be6d1d8edabcbf3ec6c44f2097e82d0b8fcafd1124abda84492656eff8db112d",
+    "specs/protocol/protocol.spec.md": "8fcf9f636a9b741ba596f00435db8706879b05ff76026dacde6e33bb3816edda",
+    "specs/protocol/requirements.md": "ee2d881caa36d0080d01e7d54e9157b2825f20044862c8e514a60434e9e052ef",
+    "specs/release/context.md": "9df5b419b94532a784e2e7c7d741c0a2c4dc5ad9fe57a53efb07aa2a45d6470b",
+    "specs/release/release.spec.md": "7fad33e4dd3abec96359ff87c51e5458771c4c168b8114d289525e7ec5c6aa6c",
+    "specs/release/requirements.md": "5ae515cdb2a18e2c0df19ba0f27ef2f0b2104a9e9a007c98601281e246529025",
+    "specs/release/testing.md": "49736139edee376dcc2d738dfb5ef216ba809f6b41026fe5b70a92dbf0dfde7e"
   },
   "snapshots": {
     "specs/protocol/protocol.spec.md": {
@@ -14,8 +23,17 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "47721209a9b20b9c96742319a248122ab254efdb4352c3297fa37dff20a834dc",
-      "snapshot_digest": "2a570d738c5a55ca2a6ab3722b0304344d9c1b28b7bb24c5307b6713c3447557"
+      "input_digest": "88c5f3c20546562e5d840c00ce9a8736c458b66df9271e0ff11100f07b7c9fcf",
+      "snapshot_digest": "217bbffcecc86bf75e694ce961c730b48b3fecd31c8b631d18e510c00b0c4682"
+    },
+    "specs/release/release.spec.md": {
+      "snapshot_version": 1,
+      "spec_path": "specs/release/release.spec.md",
+      "errors": [],
+      "warnings": [],
+      "notices": [],
+      "input_digest": "88f5081e3c668ac286e86a230187c7744f03c5afad9d2c94f6a4fba125ced7a6",
+      "snapshot_digest": "703b4110888a62122b13189608c253d89b9dc95fb32febef5d6c89d9f6746cde"
     }
   }
 }
