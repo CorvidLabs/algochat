@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "let-the-swift-room-administration-tests-seal-a-note",
+  "slug": "let-the-swift-room-administration-tests-seal-a-note",
+  "title": "Let the Swift room-administration tests seal a note",
+  "description": "Let the Swift room-administration tests seal a note",
+  "kind": "bug_fix",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "25f2ecb8115e972df7303ebbfc288cf604c73b2a",
+  "created_at": 1792362537,
+  "updated_at": 1792362585,
+  "affected_specs": [],
+  "affected_paths": [
+    "Package.swift"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "AlgoChatTests seals an action-5 fixture with ChaChaPoly. Package.swift is the test-target dependency, not a module spec.",
+  "acceptance_criteria": [
+    "AlgoChatTests links swift-crypto and the GroupAdmin suite seals an action-5 note."
+  ],
+  "selected_artifacts": [
+    "context",
+    "testing",
+    "tasks"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

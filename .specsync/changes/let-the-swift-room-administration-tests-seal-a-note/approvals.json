@@ -1,0 +1,35 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792362581,
+      "digest": "48b0beb8a94fbd3b090f3edabd8390d76ac78418563071138315e10dc050832a",
+      "note": "Operator ordered the review fixes and a green SpecSync audit. This records the test-target Crypto dependency.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "let-the-swift-room-administration-tests-seal-a-note",
+        "title": "Let the Swift room-administration tests seal a note",
+        "description": "Let the Swift room-administration tests seal a note",
+        "kind": "bug_fix",
+        "affected_specs": [],
+        "affected_paths": [
+          "Package.swift"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "AlgoChatTests seals an action-5 fixture with ChaChaPoly. Package.swift is the test-target dependency, not a module spec.",
+        "acceptance_criteria": [
+          "AlgoChatTests links swift-crypto and the GroupAdmin suite seals an action-5 note."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}
