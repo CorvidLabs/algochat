@@ -7,11 +7,11 @@
   "title": "Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes",
   "description": "Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "237a97488ac663fdf326e07badc383b4452db4ad",
   "created_at": 1792334994,
-  "updated_at": 1792335926,
+  "updated_at": 1792336186,
   "affected_specs": [
     "release"
   ],
