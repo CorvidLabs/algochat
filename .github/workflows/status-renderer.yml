@@ -1,0 +1,31 @@
+name: Status renderer
+
+# Cheap regressions for the dashboard renderer. A change to the renderer, its
+# tests, or the status workflow runs them. A README edit does not start this
+# job or the language matrix.
+on:
+  pull_request:
+    paths:
+      - "scripts/generate-status.ts"
+      - "scripts/generate-status.test.ts"
+      - ".github/workflows/status.yml"
+      - ".github/workflows/status-renderer.yml"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/generate-status.ts"
+      - "scripts/generate-status.test.ts"
+      - ".github/workflows/status.yml"
+      - ".github/workflows/status-renderer.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: oven-sh/setup-bun@v2
+      - run: bun test scripts/generate-status.test.ts

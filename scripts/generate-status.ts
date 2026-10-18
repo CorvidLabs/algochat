@@ -1,7 +1,12 @@
 /**
- * Generate status.html from test results
+ * Generate status.html from test results.
  *
- * Usage: bun scripts/generate-status.ts [--results-dir <path>]
+ * Usage: bun scripts/generate-status.ts --candidate-sha <40-hex> [--results-dir <path>] [--now <ISO-8601>]
+ *
+ * A PASS cell requires a well-formed result for that implementation whose
+ * commit is the candidate SHA, whose status is exactly "passing", whose
+ * error is null, and whose timestamp falls in the freshness window. Missing,
+ * malformed, stale, mismatched, or unknown-status evidence is never PASS.
  */
 
 interface Implementation {
@@ -15,21 +20,91 @@ interface Implementation {
     testCommand: string | null;
 }
 
-interface TestResult {
+export interface TestResult {
     implementationId: string;
     status: "passing" | "failing";
     duration: number;
     error: string | null;
     timestamp: string;
+    commit: string;
 }
+
+/** Daily status evidence older than this is stale. */
+export const EVIDENCE_MAX_AGE_MS = 36 * 60 * 60 * 1000;
+/** Reject timestamps this far in the future. */
+export const EVIDENCE_FUTURE_SKEW_MS = 15 * 60 * 1000;
+
+export type EvidenceCell = "pending" | "invalid" | "pass" | "fail";
+
+const SHA = /^[0-9a-f]{40}$/i;
 
 interface ImplementationsConfig {
     implementations: Implementation[];
 }
 
-const resultsDir = process.argv.includes("--results-dir")
-    ? process.argv[process.argv.indexOf("--results-dir") + 1]
-    : "./test-results";
+export function argumentValue(args: string[], name: string): string | undefined {
+    const index = args.indexOf(name);
+    if (index < 0 || index + 1 >= args.length) {
+        return undefined;
+    }
+    return args[index + 1];
+}
+
+export function classifyEvidence(
+    raw: unknown,
+    expectedId: string,
+    candidateSha: string,
+    now: Date,
+): EvidenceCell {
+    if (raw === null || raw === undefined) {
+        return "pending";
+    }
+    if (!isAcceptableEvidence(raw, expectedId, candidateSha, now)) {
+        return "invalid";
+    }
+    return raw.status === "passing" ? "pass" : "fail";
+}
+
+function isAcceptableEvidence(
+    raw: unknown,
+    expectedId: string,
+    candidateSha: string,
+    now: Date,
+): raw is TestResult {
+    if (!SHA.test(candidateSha) || !raw || typeof raw !== "object" || Array.isArray(raw)) {
+        return false;
+    }
+    const result = raw as Record<string, unknown>;
+    if (result.implementationId !== expectedId) {
+        return false;
+    }
+    if (result.status !== "passing" && result.status !== "failing") {
+        return false;
+    }
+    if (typeof result.duration !== "number" || !Number.isFinite(result.duration) || result.duration < 0) {
+        return false;
+    }
+    const errorOk = result.status === "passing"
+        ? result.error === null
+        : typeof result.error === "string" && result.error !== "";
+    if (!errorOk) {
+        return false;
+    }
+    if (typeof result.timestamp !== "string") {
+        return false;
+    }
+    const timestamp = Date.parse(result.timestamp);
+    if (Number.isNaN(timestamp)) {
+        return false;
+    }
+    const age = now.getTime() - timestamp;
+    if (age > EVIDENCE_MAX_AGE_MS || age < -EVIDENCE_FUTURE_SKEW_MS) {
+        return false;
+    }
+    return typeof result.commit === "string"
+        && SHA.test(result.commit)
+        && result.commit.toLowerCase() === candidateSha.toLowerCase();
+}
 
 async function loadImplementations(): Promise<Implementation[]> {
     const file = Bun.file("./implementations.json");
@@ -37,7 +112,7 @@ async function loadImplementations(): Promise<Implementation[]> {
     return config.implementations;
 }
 
-async function loadTestResults(implementationId: string): Promise<TestResult | null> {
+async function loadTestResults(resultsDir: string, implementationId: string): Promise<unknown> {
     const file = Bun.file(`${resultsDir}/${implementationId}.json`);
     if (!(await file.exists())) {
         return null;
@@ -45,7 +120,7 @@ async function loadTestResults(implementationId: string): Promise<TestResult | n
     try {
         return await file.json();
     } catch {
-        return null;
+        return { malformed: true };
     }
 }
 
@@ -79,7 +154,7 @@ function getStatusLabel(status: Implementation["status"]): string {
     }
 }
 
-function generateTableRow(impl: Implementation, result: TestResult | null): string {
+function generateTableRow(impl: Implementation, cell: EvidenceCell): string {
     const statusClass = getStatusClass(impl.status);
     const statusLabel = getStatusLabel(impl.status);
     const sourceUrl = `https://github.com/${impl.repo}${impl.path ? `/tree/main/${impl.path}` : ""}`;
@@ -87,14 +162,16 @@ function generateTableRow(impl: Implementation, result: TestResult | null): stri
     let testsCell: string;
     if (impl.testCommand === null) {
         testsCell = `<span class="test-status test-none">-</span>`;
-    } else if (result === null) {
+    } else if (cell === "pending") {
         testsCell = `<span class="test-status test-pending">...</span>`;
-    } else if (result.error !== null) {
-        testsCell = `<span class="test-status test-error">ERR</span>`;
-    } else if (result.status === "failing") {
+    } else if (cell === "invalid") {
+        testsCell = `<span class="test-status test-invalid">INVALID</span>`;
+    } else if (cell === "fail") {
         testsCell = `<span class="test-status test-error">FAIL</span>`;
-    } else {
+    } else if (cell === "pass") {
         testsCell = `<span class="test-status test-success">PASS</span>`;
+    } else {
+        testsCell = `<span class="test-status test-invalid">INVALID</span>`;
     }
 
     return `
@@ -109,25 +186,25 @@ function generateTableRow(impl: Implementation, result: TestResult | null): stri
                 </tr>`;
 }
 
-function generateSvgBadge(impl: Implementation, result: TestResult | null): string {
+function generateSvgBadge(impl: Implementation, cell: EvidenceCell): string {
     let value: string;
     let color: string;
 
     if (impl.testCommand === null) {
         value = "no tests";
         color = "#6c757d";
-    } else if (result === null) {
+    } else if (cell === "pending") {
         value = "pending";
         color = "#6c757d";
-    } else if (result.error !== null) {
-        value = "error";
-        color = "#e76e55";
-    } else if (result.status === "failing") {
+    } else if (cell === "fail") {
         value = "failing";
         color = "#e76e55";
-    } else {
+    } else if (cell === "pass") {
         value = "passing";
         color = "#92cc41";
+    } else {
+        value = "invalid";
+        color = "#e76e55";
     }
 
     const label = impl.id;
@@ -157,17 +234,19 @@ function generateSvgBadge(impl: Implementation, result: TestResult | null): stri
 </svg>`;
 }
 
-function generateHtml(implementations: Implementation[], results: Map<string, TestResult | null>): string {
+function generateHtml(
+    implementations: Implementation[],
+    cells: Map<string, EvidenceCell>,
+    candidateSha: string,
+): string {
     const rows = implementations
-        .map((impl) => generateTableRow(impl, results.get(impl.id) ?? null))
+        .map((impl) => generateTableRow(impl, cells.get(impl.id) ?? "invalid"))
         .join("\n");
 
-    const testedImpls = Array.from(results.values()).filter(
-        (r): r is TestResult => r !== null && r.error === null
-    );
-    const passingCount = testedImpls.filter((r) => r.status === "passing").length;
-    const failingCount = testedImpls.filter((r) => r.status === "failing").length;
-    const totalCount = testedImpls.length;
+    const values = Array.from(cells.values());
+    const passingCount = values.filter((cell) => cell === "pass").length;
+    const failingCount = values.filter((cell) => cell === "fail").length;
+    const totalCount = values.filter((cell) => cell === "pass" || cell === "fail").length;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -254,6 +333,7 @@ function generateHtml(implementations: Implementation[], results: Map<string, Te
         .test-error { color: #e76e55; }
         .test-none { color: #6c757d; }
         .test-pending { color: #6c757d; }
+        .test-invalid { color: #e76e55; }
 
         .links {
             display: flex;
@@ -281,7 +361,7 @@ function generateHtml(implementations: Implementation[], results: Map<string, Te
             <i class="nes-icon trophy"></i>
             <h1>Implementation Status</h1>
             <p>Reported test snapshots for AlgoChat libraries</p>
-            <p>Results on this page are not bound to a candidate SHA or artifact hashes. Missing results remain pending. The legacy daily workflow omits Go and has known result-upload limitations; project labels do not establish release readiness. Use the <a href="docs/RELEASE.html">release qualification receipts</a> and <a href="docs/ACCURACY.html">accuracy report</a> for evidence and limits.</p>
+            <p>A PASS cell is a result whose commit is <code>${escapeHtml(candidateSha)}</code>, whose status is passing, and whose timestamp is inside the 36-hour freshness window. Missing, malformed, stale, or mismatched evidence is never shown as PASS. Project labels do not establish release readiness. Use the <a href="docs/RELEASE.html">release qualification receipts</a> and <a href="docs/ACCURACY.html">accuracy report</a> for evidence and limits.</p>
         </div>
 
         <section class="nes-container with-title is-dark">
@@ -335,40 +415,66 @@ ${rows}
 }
 
 async function main(): Promise<void> {
+    const resultsDir = argumentValue(process.argv, "--results-dir") ?? "./test-results";
+    const outputDir = argumentValue(process.argv, "--output-dir") ?? ".";
+    const candidateSha = argumentValue(process.argv, "--candidate-sha") ?? "";
+    const nowValue = argumentValue(process.argv, "--now");
+    const now = nowValue ? new Date(nowValue) : new Date();
+    if (!SHA.test(candidateSha) || Number.isNaN(now.getTime())) {
+        throw new Error("A 40-hex --candidate-sha and a valid --now are required before any PASS cell can be rendered");
+    }
+
     console.log("Loading implementations...");
     const implementations = await loadImplementations();
     console.log(`Found ${implementations.length} implementations`);
 
     console.log("Loading test results...");
-    const results = new Map<string, TestResult | null>();
+    const cells = new Map<string, EvidenceCell>();
+    let rejected = !SHA.test(candidateSha);
     for (const impl of implementations) {
-        const result = await loadTestResults(impl.id);
-        results.set(impl.id, result);
-        console.log(
-            result !== null
-                ? `  ${impl.id}: ${result.status}`
-                : `  ${impl.id}: no results`
-        );
+        if (impl.testCommand === null) {
+            cells.set(impl.id, "pending");
+            console.log(`  ${impl.id}: no test command`);
+            continue;
+        }
+        const raw = await loadTestResults(resultsDir, impl.id);
+        const cell = classifyEvidence(raw, impl.id, candidateSha, now);
+        cells.set(impl.id, cell);
+        console.log(`  ${impl.id}: ${cell}`);
+        if (cell !== "pass" && cell !== "fail") {
+            rejected = true;
+        }
     }
 
     console.log("Generating status.html...");
-    const html = generateHtml(implementations, results);
-    await Bun.write("status.html", html);
+    const html = generateHtml(implementations, cells, candidateSha);
+    if ((html.match(/test-success">PASS/g) ?? []).length !== Array.from(cells.values()).filter((cell) => cell === "pass").length) {
+        throw new Error("PASS markup does not match accepted evidence");
+    }
+    await Bun.write(`${outputDir}/status.html`, html);
     console.log("Generated status.html");
 
     console.log("Generating badges...");
-    const badgesDir = "./badges";
+    const badgesDir = `${outputDir}/badges`;
     await Bun.write(`${badgesDir}/.gitkeep`, "");
     for (const impl of implementations) {
-        const badge = generateSvgBadge(impl, results.get(impl.id) ?? null);
+        const badge = generateSvgBadge(impl, cells.get(impl.id) ?? "invalid");
+        if (cells.get(impl.id) !== "pass" && badge.includes(">passing<")) {
+            throw new Error(`badge rendered passing without accepted evidence for ${impl.id}`);
+        }
         await Bun.write(`${badgesDir}/${impl.id}.svg`, badge);
         console.log(`  Generated ${impl.id}.svg`);
     }
 
+    if (rejected) {
+        throw new Error("Missing or invalid evidence. No PASS cell was rendered for it.");
+    }
     console.log("Done!");
 }
 
-main().catch((error) => {
-    console.error("Error:", error);
-    process.exit(1);
-});
+if (import.meta.main) {
+    main().catch((error) => {
+        console.error("Error:", error);
+        process.exit(1);
+    });
+}

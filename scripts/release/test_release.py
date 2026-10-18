@@ -654,4 +654,56 @@ class WorkflowTests(unittest.TestCase):
                     check_workflow(text + '\n  run: npm publish')
 
 
+class NpmPackTests(unittest.TestCase):
+    def test_scoped_json_name_uses_the_archive_on_disk(self):
+        from qualify import resolve_npm_tarball
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            destination = root / 'out'
+            package = root / 'pkg'
+            destination.mkdir()
+            package.mkdir()
+            written = destination / 'corvidlabs-ts-algochat-0.9.0.tgz'
+            written.write_bytes(b'packed-bytes')
+            stdout = json.dumps([{'filename': '@corvidlabs/ts-algochat-0.9.0.tgz'}])
+            found = resolve_npm_tarball(stdout, destination, package)
+            self.assertEqual(found, written)
+            self.assertEqual(found.read_bytes(), b'packed-bytes')
+
+    def test_pack_destination_miss_copies_the_package_directory_archive(self):
+        from qualify import resolve_npm_tarball
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            destination = root / 'out'
+            package = root / 'pkg'
+            destination.mkdir()
+            package.mkdir()
+            written = package / 'corvidlabs-ts-algochat-0.9.0.tgz'
+            written.write_bytes(b'from-package-dir')
+            stdout = json.dumps([{'filename': '@corvidlabs/ts-algochat-0.9.0.tgz'}])
+            found = resolve_npm_tarball(stdout, destination, package)
+            self.assertEqual(found, destination / written.name)
+            self.assertEqual(found.read_bytes(), b'from-package-dir')
+
+    def test_reported_filename_wins_when_that_file_exists(self):
+        from qualify import resolve_npm_tarball
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / 'out'
+            destination.mkdir()
+            reported = destination / 'corvidlabs-ts-algochat-0.9.0.tgz'
+            reported.write_bytes(b'reported')
+            stdout = json.dumps([{'filename': reported.name}])
+            found = resolve_npm_tarball(stdout, destination, destination)
+            self.assertEqual(found, reported)
+
+    def test_missing_archive_is_not_a_successful_pack(self):
+        from qualify import resolve_npm_tarball
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / 'out'
+            destination.mkdir()
+            stdout = json.dumps([{'filename': '@corvidlabs/ts-algochat-0.9.0.tgz'}])
+            with self.assertRaises(FileNotFoundError):
+                resolve_npm_tarball(stdout, destination, destination)
+
+
 if __name__ == '__main__': unittest.main()
