@@ -1,6 +1,6 @@
 ---
 id: implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox
-state: implementing
+state: archived
 type: feature
 base_commit: 5902ad01b3a645bda92b47434f65425504e04d33
 ---

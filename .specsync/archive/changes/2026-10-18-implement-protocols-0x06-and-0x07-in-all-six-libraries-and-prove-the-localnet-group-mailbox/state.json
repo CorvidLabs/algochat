@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox",
+  "slug": "implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox",
+  "title": "Implement protocols 0x06 and 0x07 in all six libraries and prove the LocalNet group mailbox",
+  "description": "Implement protocols 0x06 and 0x07 in all six libraries and prove the LocalNet group mailbox",
+  "kind": "feature",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "5902ad01b3a645bda92b47434f65425504e04d33",
+  "created_at": 1792336475,
+  "updated_at": 1792337722,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "ts",
+    "go",
+    "rs",
+    "py",
+    "kt",
+    "swift",
+    "scripts",
+    "PROTOCOL.md",
+    "TEST-VECTORS.md",
+    "PARITY.md",
+    "README.md",
+    "SECURITY.md",
+    "implementations.json",
+    "vectors",
+    "docs",
+    "hi"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "TypeScript, Go, Rust, Python, Kotlin, and Swift seal and open the same 0x06 and 0x07 notes from vectors/group-v1.json. A LocalNet run creates a group of three, adds a fourth, removes one, and posts one 0x07 payment to that group's mailbox. Every library opens that message. Opening it with the removed member's previous group key fails. A repeated sender, epoch, and counter fails. PROTOCOL.md section 5.8.4, TEST-VECTORS.md, and PARITY.md record the bytes and the run. Identifier 0x03 stays unassigned."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

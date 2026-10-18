@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox",
+  "implementation_commit": "8581279ec9dd1037e3db94cd6ae5fc468579bc15",
+  "implementation_tree": "54ddda18d6145f680c692ad98b97b393ceda94fc",
+  "contract_digest": "56d44d3104de6df6068511225fd22b57a3fdc26625a252adedd7b184cea7e8ba",
+  "workspace_digest": "0127986896bdfe29e83b1b07f23ac3c406f80ccc0f135ff3fc3f282e7d0277e2",
+  "closing_digest": "598c2e7df9fba8bb165015e868acb3ea5cae4475cd21821f9e2e2c2581aa2165",
+  "review_digest": "70a6d9c8615ed84ddc2081a0baac66fddd68cb15ca5f2c81c1edd25967a0a45d",
+  "finalization_digest": "c1287ca8763a639d28381f94520957427b97fe50a18bc976c9a27a3ead144c47",
+  "timestamp": 1792337687
+}
