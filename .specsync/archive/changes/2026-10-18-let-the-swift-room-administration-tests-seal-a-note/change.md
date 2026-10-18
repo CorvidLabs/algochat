@@ -1,6 +1,6 @@
 ---
 id: let-the-swift-room-administration-tests-seal-a-note
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 25f2ecb8115e972df7303ebbfc288cf604c73b2a
 ---

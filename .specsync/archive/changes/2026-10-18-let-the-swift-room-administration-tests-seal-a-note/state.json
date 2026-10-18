@@ -7,11 +7,11 @@
   "title": "Let the Swift room-administration tests seal a note",
   "description": "Let the Swift room-administration tests seal a note",
   "kind": "bug_fix",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "25f2ecb8115e972df7303ebbfc288cf604c73b2a",
   "created_at": 1792362537,
-  "updated_at": 1792362589,
+  "updated_at": 1792362639,
   "affected_specs": [],
   "affected_paths": [
     "Package.swift"

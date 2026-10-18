@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "let-the-swift-room-administration-tests-seal-a-note",
+      "reviewer": "leif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "9d2293c6b078c0f30ca8976691525ce5773ab10d",
+      "contract_digest": "48b0beb8a94fbd3b090f3edabd8390d76ac78418563071138315e10dc050832a",
+      "execution_digest": "3e80465aaa1b609604e0812c5c50ae9e3fcbc5fc74ac2217f6e6bdc5dcdb20b4",
+      "workspace_digest": "bc87bcd52b271b59a2f93e3ca0aa06360390a5d0bd1e30bb4b43137740afe50f",
+      "timestamp": 1792362593
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "timestamp": 1792362588,
+  "commit": "9d2293c6b078c0f30ca8976691525ce5773ab10d",
+  "contract_digest": "48b0beb8a94fbd3b090f3edabd8390d76ac78418563071138315e10dc050832a",
+  "execution_digest": "3e80465aaa1b609604e0812c5c50ae9e3fcbc5fc74ac2217f6e6bdc5dcdb20b4",
+  "workspace_digest": "bc87bcd52b271b59a2f93e3ca0aa06360390a5d0bd1e30bb4b43137740afe50f",
+  "acceptance_input_digest": "5f28e3cbdc134988181dfcbf2541c0b51efe72aefe3af2427f43b6151105d98d",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "Package.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "720f5fd2c0e982153ca5618a4b784ff31caba3d97d50655bc5c6ab7137411411",
+        "entry_digest": "c264f36056901eaf7eeefcef286a4d86e8dfc7c0bfc221b0c2deb5bf0757c7ec",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check (no spec in scope)",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}
