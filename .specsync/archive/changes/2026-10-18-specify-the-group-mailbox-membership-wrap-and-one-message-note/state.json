@@ -7,11 +7,11 @@
   "title": "Specify the group mailbox, membership wrap, and one message note",
   "description": "Specify the group mailbox, membership wrap, and one message note",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "237a97488ac663fdf326e07badc383b4452db4ad",
   "created_at": 1792335900,
-  "updated_at": 1792335956,
+  "updated_at": 1792336001,
   "affected_specs": [
     "protocol"
   ],
