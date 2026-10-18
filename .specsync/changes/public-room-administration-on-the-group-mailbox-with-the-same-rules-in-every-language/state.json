@@ -11,14 +11,15 @@
   "canonical_applied": true,
   "base_commit": "d71341d1cc6e2f43fd49ddb47d902a0741048d11",
   "created_at": 1792356915,
-  "updated_at": 1792358135,
+  "updated_at": 1792360211,
   "affected_specs": [
     "protocol"
   ],
   "affected_paths": [
     "PROTOCOL.md",
     "TEST-VECTORS.md",
-    "vectors/group-admin-v1.json"
+    "vectors/group-admin-v1.json",
+    ".github/workflows/spec-sync.yml"
   ],
   "no_spec_change": false,
   "no_spec_change_rationale": null,

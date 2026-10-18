@@ -34,7 +34,10 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: spec-sync check
-        uses: CorvidLabs/spec-sync@v6
+        uses: CorvidLabs/spec-sync@v6.1.1
         with:
           version: "6.1.1"
           require-coverage: "0"
+          lifecycle-enforce: "true"
+      - name: spec-sync change audit
+        run: specsync change audit
