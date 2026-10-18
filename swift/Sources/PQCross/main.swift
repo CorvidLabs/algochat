@@ -83,6 +83,18 @@ private enum PQCross {
             return try groupWrite(object)
         case "groupRead":
             return try groupRead(object)
+        case "adminDraft":
+            return try adminDraft(object)
+        case "adminReduce":
+            return try adminReduce(object)
+        case "deliverSeal":
+            return try deliverSeal(object)
+        case "deliverOpen":
+            return try deliverOpen(object)
+        case "senderMayPost":
+            return try senderMayPost(object)
+        case "deliveryAuthorized":
+            return try deliveryAuthorized(object)
         default:
             throw ChatError.invalidEnvelope("unknown op \(op)")
         }
@@ -334,6 +346,269 @@ private enum PQCross {
             "counter": counter,
             "groupId": hexEncode(opened.groupID),
         ]
+    }
+
+    static func adminDraft(_ object: [String: Any]) throws -> [String: Any] {
+        let note = try GroupAdmin.draft(
+            state: try roomState(object["basis_state"], name: "basis_state"),
+            op: try byteValue(object["admin_op"], name: "admin_op"),
+            sender: try hexDecode(try string(object, "sender")),
+            subject: try optionalHex(object, "subject"),
+            name: try optionalUTF8(object, "name_utf8"),
+            policy: try optionalByte(object, "policy"),
+            groupID: try optionalHex(object, "group_id"),
+            mailbox: try optionalHex(object, "mailbox")
+        )
+        return ["note": hexEncode(note)]
+    }
+
+    static func adminReduce(_ object: [String: Any]) throws -> [String: Any] {
+        let reduced = GroupAdmin.reduce(try adminEvents(object["events"]))
+        return [
+            "state": try jsonState(reduced.state),
+            "accepted": try jsonAccepted(reduced.accepted),
+            "rejected": reduced.rejected.map { item in
+                ["tx_id": hexEncode(item.txID), "reason": item.reason] as [String: Any]
+            },
+        ]
+    }
+
+    static func deliverSeal(_ object: [String: Any]) throws -> [String: Any] {
+        let note = try GroupAdmin.sealKeyDelivery(
+            sessionKey: try hexDecode(try string(object, "session_key")),
+            senderPublicKey: try hexDecode(try string(object, "sender_x25519")),
+            handshakeID: try hexDecode(try string(object, "handshake_id")),
+            epoch: try uint32Value(object["epoch"], name: "epoch"),
+            groupID: try hexDecode(try string(object, "group_id")),
+            mailbox: try hexDecode(try string(object, "mailbox")),
+            groupKey: try hexDecode(try string(object, "group_key")),
+            adminTxID: try hexDecode(try string(object, "admin_tx_id")),
+            nonce: try hexDecode(try string(object, "nonce"))
+        )
+        return ["note": hexEncode(note)]
+    }
+
+    static func deliverOpen(_ object: [String: Any]) throws -> [String: Any] {
+        let opened = try GroupAdmin.openKeyDelivery(
+            note: try hexDecode(try string(object, "note")),
+            sessionKey: try hexDecode(try string(object, "session_key")),
+            senderPublicKey: try hexDecode(try string(object, "sender_x25519")),
+            handshakeID: try hexDecode(try string(object, "handshake_id"))
+        )
+        guard let epoch = Int(exactly: opened.epoch) else {
+            throw ChatError.invalidEnvelope("epoch does not fit a JSON number")
+        }
+        return [
+            "epoch": epoch,
+            "group_id": hexEncode(opened.groupID),
+            "mailbox": hexEncode(opened.mailbox),
+            "group_key": hexEncode(opened.groupKey),
+            "admin_tx_id": hexEncode(opened.adminTxID),
+        ]
+    }
+
+    static func senderMayPost(_ object: [String: Any]) throws -> [String: Any] {
+        guard let state = try roomState(object["state"], name: "state") else {
+            throw ChatError.invalidEnvelope("missing state")
+        }
+        let allowed = try GroupAdmin.senderMayPost(
+            state: state,
+            sender: try hexDecode(try string(object, "sender")),
+            epoch: try uint32Value(object["epoch"], name: "epoch")
+        )
+        return ["allowed": allowed]
+    }
+
+    static func deliveryAuthorized(_ object: [String: Any]) throws -> [String: Any] {
+        let allowed = GroupAdmin.deliveryAuthorized(
+            accepted: try acceptedRecords(object["accepted"]),
+            adminTxID: try hexDecode(try string(object, "admin_tx_id")),
+            sender: try hexDecode(try string(object, "sender")),
+            recipient: try hexDecode(try string(object, "recipient")),
+            epoch: try uint32Value(object["epoch"], name: "epoch")
+        )
+        return ["allowed": allowed]
+    }
+
+    static func roomState(_ value: Any?, name: String) throws -> GroupAdmin.State? {
+        guard let value, !(value is NSNull) else {
+            return nil
+        }
+        guard let fields = objectFields(value) else {
+            throw ChatError.invalidEnvelope("\(name) must be an object")
+        }
+        return GroupAdmin.State(
+            groupID: try hexDecode(try string(fields, "group_id")),
+            mailbox: try hexDecode(try string(fields, "mailbox")),
+            owner: try hexDecode(try string(fields, "owner")),
+            admins: try hexList(fields["admins"], name: "admins"),
+            members: try hexList(fields["members"], name: "members"),
+            pending: try hexList(fields["pending"], name: "pending"),
+            policy: try byteValue(fields["policy"], name: "policy"),
+            name: try hexDecode(try string(fields, "name_hex")),
+            epoch: try uint32Value(fields["epoch"], name: "epoch"),
+            headTxID: try hexDecode(try string(fields, "head_tx_id"))
+        )
+    }
+
+    static func jsonState(_ state: GroupAdmin.State?) throws -> Any {
+        guard let state else {
+            return NSNull()
+        }
+        guard let policy = Int(exactly: state.policy), let epoch = Int(exactly: state.epoch) else {
+            throw ChatError.invalidEnvelope("state field does not fit a JSON number")
+        }
+        return [
+            "group_id": hexEncode(state.groupID),
+            "mailbox": hexEncode(state.mailbox),
+            "owner": hexEncode(state.owner),
+            "admins": state.admins.map { hexEncode($0) },
+            "members": state.members.map { hexEncode($0) },
+            "pending": state.pending.map { hexEncode($0) },
+            "policy": policy,
+            "name_hex": hexEncode(state.name),
+            "epoch": epoch,
+            "head_tx_id": hexEncode(state.headTxID),
+        ] as [String: Any]
+    }
+
+    static func jsonAccepted(_ items: [GroupAdmin.Accepted]) throws -> [[String: Any]] {
+        try items.map { item in
+            guard let op = Int(exactly: item.op), let epoch = Int(exactly: item.epoch) else {
+                throw ChatError.invalidEnvelope("accepted field does not fit a JSON number")
+            }
+            return [
+                "tx_id": hexEncode(item.txID),
+                "sender": hexEncode(item.sender),
+                "op": op,
+                "epoch": epoch,
+                "subject": hexEncode(item.subject),
+                "members": item.members.map { hexEncode($0) },
+            ]
+        }
+    }
+
+    static func adminEvents(_ value: Any?) throws -> [GroupAdmin.Event] {
+        guard let items = try list(value, name: "events") else {
+            throw ChatError.invalidEnvelope("events must be a list")
+        }
+        var events: [GroupAdmin.Event] = []
+        events.reserveCapacity(items.count)
+        for item in items {
+            guard let fields = objectFields(item) else {
+                throw ChatError.invalidEnvelope("event must be an object")
+            }
+            events.append(
+                GroupAdmin.Event(
+                    note: try hexDecode(try string(fields, "note")),
+                    sender: try hexDecode(try string(fields, "sender")),
+                    txID: try hexDecode(try string(fields, "tx_id")),
+                    round: try jsonInt(fields["round"], name: "round"),
+                    offset: try jsonInt(fields["offset"], name: "offset")
+                )
+            )
+        }
+        return events
+    }
+
+    static func acceptedRecords(_ value: Any?) throws -> [GroupAdmin.Accepted] {
+        guard let items = try list(value, name: "accepted") else {
+            throw ChatError.invalidEnvelope("accepted must be a list")
+        }
+        var accepted: [GroupAdmin.Accepted] = []
+        accepted.reserveCapacity(items.count)
+        for item in items {
+            guard let fields = objectFields(item) else {
+                throw ChatError.invalidEnvelope("accepted entry must be an object")
+            }
+            accepted.append(
+                GroupAdmin.Accepted(
+                    txID: try hexDecode(try string(fields, "tx_id")),
+                    sender: try hexDecode(try string(fields, "sender")),
+                    op: try byteValue(fields["op"], name: "op"),
+                    epoch: try uint32Value(fields["epoch"], name: "epoch"),
+                    subject: try hexDecode(try string(fields, "subject")),
+                    members: try hexList(fields["members"], name: "members")
+                )
+            )
+        }
+        return accepted
+    }
+
+    static func list(_ value: Any?, name: String) throws -> [Any]? {
+        guard let value, !(value is NSNull) else {
+            throw ChatError.invalidEnvelope("missing \(name)")
+        }
+        if let items = value as? [Any] {
+            return items
+        }
+        if let items = value as? NSArray {
+            return items.map { $0 }
+        }
+        throw ChatError.invalidEnvelope("\(name) must be a list")
+    }
+
+    static func hexList(_ value: Any?, name: String) throws -> [Data] {
+        guard let items = try list(value, name: name) else {
+            throw ChatError.invalidEnvelope("missing \(name)")
+        }
+        return try items.map { item in
+            guard let text = item as? String else {
+                throw ChatError.invalidEnvelope("\(name) entry must be hex")
+            }
+            return try hexDecode(text)
+        }
+    }
+
+    static func optionalHex(_ object: [String: Any], _ name: String) throws -> Data? {
+        guard let value = object[name], !(value is NSNull) else {
+            return nil
+        }
+        guard let text = value as? String else {
+            throw ChatError.invalidEnvelope("missing \(name)")
+        }
+        return try hexDecode(text)
+    }
+
+    static func optionalUTF8(_ object: [String: Any], _ name: String) throws -> Data? {
+        guard let value = object[name], !(value is NSNull) else {
+            return nil
+        }
+        guard let text = value as? String else {
+            throw ChatError.invalidEnvelope("missing \(name)")
+        }
+        guard let data = text.data(using: .utf8) else {
+            throw ChatError.invalidEnvelope("Room name is not UTF-8")
+        }
+        return data
+    }
+
+    static func optionalByte(_ object: [String: Any], _ name: String) throws -> UInt8? {
+        guard let value = object[name], !(value is NSNull) else {
+            return nil
+        }
+        return try byteValue(value, name: name)
+    }
+
+    static func byteValue(_ value: Any?, name: String) throws -> UInt8 {
+        let number = try uint32Value(value, name: name)
+        guard number <= UInt32(UInt8.max) else {
+            throw ChatError.invalidEnvelope("bad \(name)")
+        }
+        return UInt8(number)
+    }
+
+    static func jsonInt(_ value: Any?, name: String) throws -> Int {
+        guard let value, !(value is NSNull) else {
+            throw ChatError.invalidEnvelope("missing \(name)")
+        }
+        if let number = value as? Int {
+            return number
+        }
+        if let number = value as? NSNumber {
+            return number.intValue
+        }
+        throw ChatError.invalidEnvelope("bad \(name)")
     }
 
     static func seenCounters(_ value: Any?) throws -> [GroupMailbox.Counter] {

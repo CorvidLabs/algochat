@@ -4,7 +4,7 @@ The Swift package manifest is at the root of [CorvidLabs/algochat](https://githu
 
 > **Security Notice**: This library has not been independently audited. While it uses well-established cryptographic primitives from [swift-crypto](https://github.com/apple/swift-crypto), use in production is at your own risk.
 
-Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 and async/await. PQ levels are integers 0 through 5 in [PROTOCOL.md section 5.4.2](../PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0, Extra lock `0x02` is level 1, and hybrid `0x04` and `0x05` are level 3. `0x03` is not assigned.
+Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 and async/await. PQ levels are integers 0 through 5 in [PROTOCOL.md section 5.4.2](../PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0, Extra lock `0x02` is level 1, and hybrid `0x04` and `0x05` are level 3. Room administration `0x03` is public and has no PQ level.
 
 ## Version and requirements
 

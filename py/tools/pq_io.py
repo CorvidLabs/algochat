@@ -21,6 +21,17 @@ from algochat.group import (
     seal_group_membership,
     seal_group_message,
 )
+from algochat.group_admin import (
+    AcceptedAdmin,
+    AdminEvent,
+    RoomState,
+    delivery_authorized,
+    draft_admin,
+    open_group_key_delivery,
+    reduce_admin,
+    seal_group_key_delivery,
+    sender_may_post,
+)
 from algochat.pq import (
     PQSession,
     accept_pq_session,
@@ -166,6 +177,182 @@ def _optional_nonce(req: dict) -> bytes | None:
     return _hex_bytes(req["nonce"])
 
 
+def _optional_text(req: dict, key: str) -> str | None:
+    if key not in req or req[key] is None:
+        return None
+    value = req[key]
+    if not isinstance(value, str):
+        raise RuntimeError(f"{key} must be a string")
+    return value
+
+
+def _optional_hex_field(req: dict, key: str) -> bytes | None:
+    value = _optional_text(req, key)
+    if value is None:
+        return None
+    return _hex_bytes(value)
+
+
+def _room_state(value: object) -> RoomState | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise RuntimeError("basis_state must be an object or null")
+    return RoomState(
+        group_id=_hex_bytes(value["group_id"]),
+        mailbox=_hex_bytes(value["mailbox"]),
+        owner=_hex_bytes(value["owner"]),
+        admins=[_hex_bytes(item) for item in value["admins"]],
+        members=[_hex_bytes(item) for item in value["members"]],
+        pending=[_hex_bytes(item) for item in value["pending"]],
+        policy=int(value["policy"]),
+        name=_hex_bytes(value["name_hex"]),
+        epoch=int(value["epoch"]),
+        head_tx_id=_hex_bytes(value["head_tx_id"]),
+    )
+
+
+def _room_state_json(state: RoomState | None) -> dict | None:
+    if state is None:
+        return None
+    return {
+        "group_id": state.group_id.hex(),
+        "mailbox": state.mailbox.hex(),
+        "owner": state.owner.hex(),
+        "admins": [item.hex() for item in state.admins],
+        "members": [item.hex() for item in state.members],
+        "pending": [item.hex() for item in state.pending],
+        "policy": state.policy,
+        "name_hex": state.name.hex(),
+        "epoch": state.epoch,
+        "head_tx_id": state.head_tx_id.hex(),
+    }
+
+
+def _deliver_session(req: dict) -> PQSession:
+    return PQSession(
+        session_key=_hex_bytes(req["session_key"]),
+        sender_public_key=_hex_bytes(req["sender_x25519"]),
+        recipient_public_key=bytes(32),
+        handshake_id=_hex_bytes(req["handshake_id"]),
+    )
+
+
+def _room_op(req: dict) -> int:
+    # `op` is the pqcross command, so the room operation is `admin_op`.
+    raw = req.get("admin_op")
+    if raw is None and type(req.get("op")) is int:
+        raw = req["op"]
+    if raw is None:
+        raw = 0
+    return int(raw)
+
+
+def admin_draft(req: dict) -> dict:
+    name_utf8 = _optional_text(req, "name_utf8")
+    policy = req.get("policy")
+    note = draft_admin(
+        _room_state(req.get("basis_state")),
+        _room_op(req),
+        _hex_bytes(req["sender"]),
+        subject=None if req.get("subject") is None else _hex_bytes(req["subject"]),
+        name=None if name_utf8 is None else name_utf8.encode("utf-8"),
+        policy=None if policy is None else int(policy),
+        group_id=_optional_hex_field(req, "group_id"),
+        mailbox=_optional_hex_field(req, "mailbox"),
+    )
+    return {"note": note.hex()}
+
+
+def admin_reduce(req: dict) -> dict:
+    raw_events = req["events"]
+    if not isinstance(raw_events, list):
+        raise RuntimeError("events must be an array")
+    events = [
+        AdminEvent(
+            note=_hex_bytes(item["note"]),
+            sender=_hex_bytes(item["sender"]),
+            tx_id=_hex_bytes(item["tx_id"]),
+            round=int(item["round"]),
+            offset=int(item["offset"]),
+        )
+        for item in raw_events
+    ]
+    result = reduce_admin(events)
+    return {
+        "state": _room_state_json(result.state),
+        "accepted": [
+            {
+                "tx_id": item.tx_id.hex(),
+                "sender": item.sender.hex(),
+                "op": item.op,
+                "epoch": item.epoch,
+                "subject": item.subject.hex(),
+                "members": [member.hex() for member in item.members],
+            }
+            for item in result.accepted
+        ],
+        "rejected": [{"tx_id": item.tx_id.hex(), "reason": item.reason} for item in result.rejected],
+    }
+
+
+def deliver_seal(req: dict) -> dict:
+    note = seal_group_key_delivery(
+        _deliver_session(req),
+        int(req["epoch"]),
+        _hex_bytes(req["group_id"]),
+        _hex_bytes(req["mailbox"]),
+        _hex_bytes(req["group_key"]),
+        _hex_bytes(req["admin_tx_id"]),
+        _hex_bytes(req["nonce"]),
+    )
+    return {"note": note.hex()}
+
+
+def deliver_open(req: dict) -> dict:
+    opened = open_group_key_delivery(_hex_bytes(req["note"]), _deliver_session(req))
+    return {
+        "epoch": opened.epoch,
+        "group_id": opened.group_id.hex(),
+        "mailbox": opened.mailbox.hex(),
+        "group_key": opened.group_key.hex(),
+        "admin_tx_id": opened.admin_tx_id.hex(),
+    }
+
+
+def sender_may_post_op(req: dict) -> dict:
+    state = _room_state(req["state"])
+    if state is None:
+        raise RuntimeError("state must be an object")
+    return {"allowed": sender_may_post(state, _hex_bytes(req["sender"]), int(req["epoch"]))}
+
+
+def delivery_authorized_op(req: dict) -> dict:
+    raw_accepted = req["accepted"]
+    if not isinstance(raw_accepted, list):
+        raise RuntimeError("accepted must be an array")
+    accepted = [
+        AcceptedAdmin(
+            tx_id=_hex_bytes(item["tx_id"]),
+            sender=_hex_bytes(item["sender"]),
+            op=int(item["op"]),
+            epoch=int(item["epoch"]),
+            subject=_hex_bytes(item["subject"]),
+            members=[_hex_bytes(member) for member in item["members"]],
+        )
+        for item in raw_accepted
+    ]
+    return {
+        "allowed": delivery_authorized(
+            accepted,
+            _hex_bytes(req["admin_tx_id"]),
+            _hex_bytes(req["sender"]),
+            _hex_bytes(req["recipient"]),
+            int(req["epoch"]),
+        )
+    }
+
+
 def group_seal(req: dict) -> dict:
     note = seal_group_membership(
         _group_session(req),
@@ -287,6 +474,18 @@ def handle(line: str) -> None:
             body = write05s(req["aliceSeed"], req["bobSeed"], texts)
         elif op == "groupSeal":
             body = group_seal(req)
+        elif op == "adminDraft":
+            body = admin_draft(req)
+        elif op == "adminReduce":
+            body = admin_reduce(req)
+        elif op == "deliverSeal":
+            body = deliver_seal(req)
+        elif op == "deliverOpen":
+            body = deliver_open(req)
+        elif op == "senderMayPost":
+            body = sender_may_post_op(req)
+        elif op == "deliveryAuthorized":
+            body = delivery_authorized_op(req)
         elif op == "groupOpen":
             body = group_open(req)
         elif op == "groupWrite":

@@ -13,6 +13,16 @@ import {
     sealGroupMembership,
     sealGroupMessage,
 } from "../src/pq/group.js";
+import {
+    deliveryAuthorized,
+    draftAdmin,
+    openGroupKeyDelivery,
+    reduceAdmin,
+    sealGroupKeyDelivery,
+    senderMayPost,
+    type AcceptedAdmin,
+    type RoomState,
+} from "../src/pq/group-admin.js";
 import { deriveMLKEMKeyPair } from "../src/pq/kem.js";
 import {
     acceptPQSession,
@@ -45,11 +55,57 @@ interface Request {
     action?: number;
     epoch?: number;
     groupId?: string;
+    group_id?: string;
     mailbox?: string;
     groupKey?: string;
+    group_key?: string;
+    session_key?: string;
+    sender_x25519?: string;
+    handshake_id?: string;
     nonce?: string;
     senderAddress?: string;
     seen?: Array<{ epoch: number; counter: number }>;
+    basis_state?: BasisState | null;
+    admin_op?: number;
+    subject?: string;
+    name_utf8?: string;
+    policy?: number;
+    sender?: string;
+    recipient?: string;
+    admin_tx_id?: string;
+    events?: AdminWireEvent[];
+    accepted?: AcceptedWire[];
+    state?: BasisState | null;
+}
+
+interface BasisState {
+    group_id: string;
+    mailbox: string;
+    owner: string;
+    admins: string[];
+    members: string[];
+    pending: string[];
+    policy: number;
+    name_hex: string;
+    epoch: number;
+    head_tx_id: string;
+}
+
+interface AdminWireEvent {
+    note: string;
+    sender: string;
+    tx_id: string;
+    round: number;
+    offset: number;
+}
+
+interface AcceptedWire {
+    tx_id: string;
+    sender: string;
+    op: number;
+    epoch: number;
+    subject: string;
+    members: string[];
 }
 
 function fromHex(hex: string): Uint8Array {
@@ -240,6 +296,136 @@ function groupWrite(req: Request): Record<string, unknown> {
     };
 }
 
+function reviveRoom(state: BasisState | null | undefined): RoomState | null {
+    if (!state) return null;
+    return {
+        groupId: fromHex(state.group_id),
+        mailbox: fromHex(state.mailbox),
+        owner: fromHex(state.owner),
+        admins: state.admins.map(fromHex),
+        members: state.members.map(fromHex),
+        pending: state.pending.map(fromHex),
+        policy: state.policy,
+        name: fromHex(state.name_hex),
+        epoch: state.epoch,
+        headTxId: fromHex(state.head_tx_id),
+    };
+}
+
+function snapRoom(state: RoomState | null): BasisState | null {
+    if (!state) return null;
+    return {
+        group_id: toHex(state.groupId),
+        mailbox: toHex(state.mailbox),
+        owner: toHex(state.owner),
+        admins: state.admins.map(toHex),
+        members: state.members.map(toHex),
+        pending: state.pending.map(toHex),
+        policy: state.policy,
+        name_hex: toHex(state.name),
+        epoch: state.epoch,
+        head_tx_id: toHex(state.headTxId),
+    };
+}
+
+function snapAccepted(item: AcceptedAdmin): AcceptedWire {
+    return {
+        tx_id: toHex(item.txId),
+        sender: toHex(item.sender),
+        op: item.op,
+        epoch: item.epoch,
+        subject: toHex(item.subject),
+        members: item.members.map(toHex),
+    };
+}
+
+function adminDraft(req: Request): Record<string, unknown> {
+    const note = draftAdmin(reviveRoom(req.basis_state), {
+        op: Number(req.admin_op ?? 0),
+        sender: fromHex(req.sender ?? ""),
+        subject: req.subject ? fromHex(req.subject) : undefined,
+        name: req.name_utf8 === undefined ? undefined : new TextEncoder().encode(req.name_utf8),
+        policy: req.policy,
+        groupId: req.group_id ? fromHex(req.group_id) : undefined,
+        mailbox: req.mailbox ? fromHex(req.mailbox) : undefined,
+    });
+    return { note: toHex(note) };
+}
+
+function adminReduce(req: Request): Record<string, unknown> {
+    const reduced = reduceAdmin((req.events ?? []).map((item) => ({
+        note: fromHex(item.note),
+        sender: fromHex(item.sender),
+        txId: fromHex(item.tx_id),
+        round: item.round,
+        offset: item.offset,
+    })));
+    return {
+        state: snapRoom(reduced.state),
+        accepted: reduced.accepted.map(snapAccepted),
+        rejected: reduced.rejected.map((item) => ({ tx_id: toHex(item.txId), reason: item.reason })),
+    };
+}
+
+function deliverSession(req: Request): PQSession {
+    return {
+        sessionKey: fromHex(req.session_key ?? req.sessionKey ?? ""),
+        senderPublicKey: fromHex(req.sender_x25519 ?? req.senderPublicKey ?? ""),
+        recipientPublicKey: new Uint8Array(32),
+        handshakeId: fromHex(req.handshake_id ?? req.handshakeId ?? ""),
+    };
+}
+
+function deliverSeal(req: Request): Record<string, unknown> {
+    const note = sealGroupKeyDelivery(
+        deliverSession(req),
+        Number(req.epoch ?? 0),
+        fromHex(req.group_id ?? req.groupId ?? ""),
+        fromHex(req.mailbox ?? ""),
+        fromHex(req.group_key ?? req.groupKey ?? ""),
+        fromHex(req.admin_tx_id ?? ""),
+        req.nonce ? fromHex(req.nonce) : undefined,
+    );
+    return { note: toHex(note) };
+}
+
+function deliverOpen(req: Request): Record<string, unknown> {
+    const opened = openGroupKeyDelivery(fromHex(req.note ?? ""), deliverSession(req));
+    return {
+        epoch: opened.epoch,
+        group_id: toHex(opened.groupId),
+        mailbox: toHex(opened.mailbox),
+        group_key: toHex(opened.groupKey),
+        admin_tx_id: toHex(opened.adminTxId),
+    };
+}
+
+function mayPost(req: Request): Record<string, unknown> {
+    const state = reviveRoom(req.state);
+    if (!state) throw new Error("missing room");
+    return { allowed: senderMayPost(state, fromHex(req.sender ?? ""), Number(req.epoch ?? 0)) };
+}
+
+function deliveryOk(req: Request): Record<string, unknown> {
+    const accepted: AcceptedAdmin[] = (req.accepted ?? []).map((item) => ({
+        txId: fromHex(item.tx_id),
+        sender: fromHex(item.sender),
+        op: item.op,
+        epoch: item.epoch,
+        subject: fromHex(item.subject),
+        members: item.members.map(fromHex),
+    }));
+    return {
+        allowed: deliveryAuthorized(
+            accepted,
+            fromHex(req.admin_tx_id ?? ""),
+            fromHex(req.sender ?? ""),
+            fromHex(req.recipient ?? ""),
+            Number(req.epoch ?? 0),
+        ),
+    };
+}
+
 function groupRead(req: Request): Record<string, unknown> {
     const opened = openGroupMessage(
         fromHex(req.note ?? ""),
@@ -284,6 +470,12 @@ function handle(line: string): void {
         else if (req.op === "groupOpen") body = groupOpen(req);
         else if (req.op === "groupWrite") body = groupWrite(req);
         else if (req.op === "groupRead") body = groupRead(req);
+        else if (req.op === "adminDraft") body = adminDraft(req);
+        else if (req.op === "adminReduce") body = adminReduce(req);
+        else if (req.op === "deliverSeal") body = deliverSeal(req);
+        else if (req.op === "deliverOpen") body = deliverOpen(req);
+        else if (req.op === "senderMayPost") body = mayPost(req);
+        else if (req.op === "deliveryAuthorized") body = deliveryOk(req);
         else throw new Error(`unknown op ${req.op}`);
         reply({ id: req.id, ok: true, ...body });
     } catch (error) {

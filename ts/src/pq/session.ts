@@ -2,7 +2,7 @@
  * One-note PQ handshake (protocol 0x04) and steady-state messages (0x05).
  *
  * The ML-KEM ciphertext is 1088 bytes and fits in the 4096-byte note, so the
- * handshake is not split. 0x03 is not used.
+ * handshake is not split. Room administration is group-admin.ts, not this handshake.
  */
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha';
