@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "preserve-the-verified-six-language-parity-audit-with-portable-replay-scripts-and-explicit-rust-replay-and-swift-history",
+  "slug": "preserve-the-verified-six-language-parity-audit-with-portable-replay-scripts-and-explicit-rust-replay-and-swift-history",
+  "title": "Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes",
+  "description": "Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes",
+  "kind": "documentation",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "created_at": 1792334994,
+  "updated_at": 1792336186,
+  "affected_specs": [
+    "release"
+  ],
+  "affected_paths": [
+    "docs/verification",
+    "scripts/parity",
+    "specs/release",
+    "docs/ACCURACY.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "The PR preserves a dated audit tied to237a974 with exact tested counts, runtime/fixture limitations, raw interoperability receipts, all84 unchanged intent criteria and explicit open defects; provides portable six-language offline replay plus Rust concurrent-replay and Swift same-transaction-history probes that fail when required behavior is violated; keeps probes isolated from tracked library source and fails on missing tools/errors; validates the replay scripts and root Trust/strict SpecSync; opens and attaches the PR without claiming full parity, statistical95percent correctness, behavior fixes or release authorization."
+  ],
+  "selected_artifacts": [
+    "context",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

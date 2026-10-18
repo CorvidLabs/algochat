@@ -1,0 +1,128 @@
+{
+  "runtime": "v18.0.0",
+  "checks": [
+    {
+      "name": "default_account_falcon",
+      "status": "pass"
+    },
+    {
+      "name": "falcon_phrase_scheme_recovery",
+      "status": "pass"
+    },
+    {
+      "name": "ed_phrase_valid_address",
+      "status": "pass"
+    },
+    {
+      "name": "cross_scheme_encryption_key_same",
+      "status": "pass"
+    },
+    {
+      "name": "readme_classical_recipient",
+      "status": "pass"
+    },
+    {
+      "name": "readme_classical_sender",
+      "status": "pass"
+    },
+    {
+      "name": "classical_wrong_key_rejected",
+      "status": "pass"
+    },
+    {
+      "name": "readme_psk_classification",
+      "status": "pass"
+    },
+    {
+      "name": "readme_psk_recipient",
+      "status": "pass"
+    },
+    {
+      "name": "readme_psk_sender",
+      "status": "pass"
+    },
+    {
+      "name": "psk_wrong_key_rejected",
+      "status": "pass"
+    },
+    {
+      "name": "readme_uri_roundtrip",
+      "status": "pass"
+    },
+    {
+      "name": "readme_send_counter",
+      "status": "pass"
+    },
+    {
+      "name": "stateful_replay_rejected",
+      "status": "pass"
+    },
+    {
+      "name": "hybrid_handshake_size",
+      "status": "pass"
+    },
+    {
+      "name": "hybrid_recipient",
+      "status": "pass"
+    },
+    {
+      "name": "hybrid_sender",
+      "status": "pass"
+    },
+    {
+      "name": "key_file_roundtrip",
+      "status": "pass"
+    },
+    {
+      "name": "key_file_is_encrypted",
+      "status": "pass"
+    },
+    {
+      "name": "key_file_final_permissions_0600",
+      "status": "pass"
+    },
+    {
+      "name": "key_wrong_password_rejected",
+      "status": "pass"
+    },
+    {
+      "name": "key_tamper_rejected",
+      "status": "pass"
+    },
+    {
+      "name": "key_clear_password_rejects_retrieve",
+      "status": "pass"
+    },
+    {
+      "name": "queue_durable_new_instance",
+      "status": "pass"
+    },
+    {
+      "name": "queue_file_permissions_0600",
+      "status": "pass"
+    },
+    {
+      "name": "offline_defers_send",
+      "status": "pass"
+    },
+    {
+      "name": "reconnect_processes_send",
+      "status": "pass"
+    },
+    {
+      "name": "bounded_retries_failure_event",
+      "status": "pass"
+    }
+  ],
+  "summary": {
+    "pass": 28,
+    "fail": 0
+  },
+  "observations": [
+    {
+      "name": "phrase_without_scheme_does_not_recover_default_falcon_address",
+      "value": true
+    }
+  ],
+  "scope": "Packed root public API crypto/account/PSK/PQ; direct built-file imports for unexported Node storage. Durable storage uses new instances rather than process restart; key directory overridden to isolated temp. Offline send/confirmation/indexer are stubs, no network."
+}

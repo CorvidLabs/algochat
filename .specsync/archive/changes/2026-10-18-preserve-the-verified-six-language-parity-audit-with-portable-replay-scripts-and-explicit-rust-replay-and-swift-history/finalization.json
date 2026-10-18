@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "preserve-the-verified-six-language-parity-audit-with-portable-replay-scripts-and-explicit-rust-replay-and-swift-history",
+  "implementation_commit": "5fad37b4f60334c219ae6e75e285eaaa3456450a",
+  "implementation_tree": "59c157f9982099da58edb33ffb715b27d783191b",
+  "contract_digest": "450e254a3d628b5989e33462aad2d5b4272457d43b4a3d8cb09f85ea2f4c9195",
+  "workspace_digest": "822eaf292078610c3c29f4c8be1eace0ff12200cab5c7246237c8ac6cb2d90ff",
+  "closing_digest": "9ac1821e7b91c178916d8d211041a5766d91916e53026fa5281fb2f0c93dcbbf",
+  "review_digest": "b28bec825d81ba3c83463bad7c1caa4774835c9426dacb37764ba46ad224e1c6",
+  "finalization_digest": "f72e3837e20d631c6b68e2c79bc4e19726217f993c128286cb069362f3984530",
+  "timestamp": 1792336167
+}

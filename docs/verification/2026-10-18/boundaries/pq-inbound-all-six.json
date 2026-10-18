@@ -1,0 +1,56 @@
+{
+  "candidate": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "wire_bytes": 4097,
+  "plaintext_bytes": 4003,
+  "results": [
+    {
+      "language": "ts",
+      "accepted": true,
+      "plaintext_bytes": 4003,
+      "exit": 0,
+      "error": null,
+      "response_sha256": "5a1f2d907715ced8490a531ddde0be93e06b941ed34302a65d7166a585ac59dd"
+    },
+    {
+      "language": "go",
+      "accepted": true,
+      "plaintext_bytes": 4003,
+      "exit": 0,
+      "error": null,
+      "response_sha256": "92d3eb5fda009d5aad2636c31c078033ef1ece3f07628e466758a72b6e9dc751"
+    },
+    {
+      "language": "rs",
+      "accepted": true,
+      "plaintext_bytes": 4003,
+      "exit": 0,
+      "error": null,
+      "response_sha256": "92d3eb5fda009d5aad2636c31c078033ef1ece3f07628e466758a72b6e9dc751"
+    },
+    {
+      "language": "py",
+      "accepted": true,
+      "plaintext_bytes": 4003,
+      "exit": 0,
+      "error": null,
+      "response_sha256": "ceedd70e0317f2bef6c9f74060872438430174d21054c41b36ca6ae8fc3fbd62"
+    },
+    {
+      "language": "kt",
+      "accepted": true,
+      "plaintext_bytes": 4003,
+      "exit": 0,
+      "error": null,
+      "response_sha256": "5a1f2d907715ced8490a531ddde0be93e06b941ed34302a65d7166a585ac59dd"
+    },
+    {
+      "language": "swift",
+      "accepted": true,
+      "plaintext_bytes": 4003,
+      "exit": 0,
+      "error": null,
+      "response_sha256": "8040c0de5f2a3d3ea2cb74e9af9f60a9f679c8d41b8c319f1e069e6f5bfddcc4"
+    }
+  ],
+  "scope": "Synthetic correctly authenticated low-level PQ note, both sender and recipient opens. Reuses public test-session context only to test input rejection; never submitted on chain and not a production nonce-generation test."
+}

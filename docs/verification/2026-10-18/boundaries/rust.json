@@ -1,0 +1,199 @@
+{
+  "authenticated_pq_4097": {
+    "accepted": true,
+    "length": 4097,
+    "plaintext_length": 4003
+  },
+  "psk_4097_decode": true,
+  "psk_minimum_frame": [
+    {
+      "decoded": false,
+      "detected": false,
+      "length": 129
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 130
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 131
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 132
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 133
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 134
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 135
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 136
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 137
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 138
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 139
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 140
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 141
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 142
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 143
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 144
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 145
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 146
+    }
+  ],
+  "psk_send_exhaustion": {
+    "first": 4294967295,
+    "future_counter_accepted": true,
+    "next": 1,
+    "second": 0
+  },
+  "standard_4097_decode": true,
+  "standard_minimum_frame": [
+    {
+      "decoded": false,
+      "detected": false,
+      "length": 125
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 126
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 127
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 128
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 129
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 130
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 131
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 132
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 133
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 134
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 135
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 136
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 137
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 138
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 139
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 140
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 141
+    },
+    {
+      "decoded": true,
+      "detected": true,
+      "length": 142
+    }
+  ]
+}

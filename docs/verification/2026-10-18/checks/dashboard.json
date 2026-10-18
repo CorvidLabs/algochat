@@ -1,0 +1,30 @@
+{
+  "cases": [
+    {
+      "case": "empty",
+      "exit": 0,
+      "PASS_cells": 0,
+      "pending_cells": 6,
+      "output": "Loading implementations...\nFound 6 implementations\nLoading test results...\n  swift-algochat: no results\n  ts-algochat: no results\n  py-algochat: no results\n  rs-algochat: no results\n  kt-algochat: no results\n  go-algochat: no results\nGenerating status.html...\nGenerated status.html\nGenerating badges...\n  Generated swift-algochat.svg\n  Generated ts-algochat.svg\n  Generated py-algochat.svg\n  Generated rs-algochat.svg\n  Generated kt-algochat.svg\n  Generated go-algochat.svg\nDone!\n"
+    },
+    {
+      "case": "wrong-sha",
+      "exit": 0,
+      "PASS_cells": 6,
+      "pending_cells": 0,
+      "output": "Loading implementations...\nFound 6 implementations\nLoading test results...\n  swift-algochat: passing\n  ts-algochat: passing\n  py-algochat: passing\n  rs-algochat: passing\n  kt-algochat: passing\n  go-algochat: passing\nGenerating status.html...\nGenerated status.html\nGenerating badges...\n  Generated swift-algochat.svg\n  Generated ts-algochat.svg\n  Generated py-algochat.svg\n  Generated rs-algochat.svg\n  Generated kt-algochat.svg\n  Generated go-algochat.svg\nDone!\n"
+    },
+    {
+      "case": "unknown-status",
+      "exit": 0,
+      "PASS_cells": 6,
+      "pending_cells": 0,
+      "output": "Loading implementations...\nFound 6 implementations\nLoading test results...\n  swift-algochat: invalid-status\n  ts-algochat: invalid-status\n  py-algochat: invalid-status\n  rs-algochat: invalid-status\n  kt-algochat: invalid-status\n  go-algochat: invalid-status\nGenerating status.html...\nGenerated status.html\nGenerating badges...\n  Generated swift-algochat.svg\n  Generated ts-algochat.svg\n  Generated py-algochat.svg\n  Generated rs-algochat.svg\n  Generated kt-algochat.svg\n  Generated go-algochat.svg\nDone!\n"
+    }
+  ],
+  "findings": [
+    "Renderer accepts mismatched candidate SHA and ancient timestamp as PASS.",
+    "Renderer treats an unrecognized status string with null error as PASS."
+  ],
+  "scope": "Temporary renderer inputs in isolated tracked-source copy; no production dashboard or workflow modified."
+}

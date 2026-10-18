@@ -1,0 +1,2006 @@
+{
+  "candidate": "237a97488ac663fdf326e07badc383b4452db4ad",
+  "criteria_count": 84,
+  "status_meaning": "Evidence dispositions, not user acceptance or completion percentages. Root-scoped IDs remain distinct.",
+  "reference_resolution": "repository_source.path is relative to repository root at candidate. included_evidence.path is relative to this dated directory. omitted_local_artifact.catalog_id resolves to omitted-artifacts.json entries, not to an available file. selector is a source line or original JSON check name, not a completion claim.",
+  "criteria": [
+    {
+      "root": ".",
+      "id": "ACCOUNT-1",
+      "text": "A new identity can be a Falcon-1024 account that signs payments with pqsig.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "falcon-localnet.json"
+        }
+      ],
+      "limits": "Actual TypeScript default Falcon payment confirmed and both endpoints recover through indexer; not all-six Falcon client qualification."
+    },
+    {
+      "root": ".",
+      "id": "ACCOUNT-1.a",
+      "text": "Importing a 25-word phrase without naming a scheme recovers the classical Ed25519 account.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "ts-go/ts-commands.json"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts"
+        }
+      ],
+      "limits": "Default Ed25519 import and Falcon opt-in paths covered by source unit tests."
+    },
+    {
+      "root": ".",
+      "id": "ACCOUNT-2",
+      "text": "Falcon identity does not make X25519 key exchange quantum-safe.",
+      "status": "reviewed_boundary",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "SECURITY.md"
+        },
+        {
+          "kind": "repository_source",
+          "path": "PROTOCOL.md"
+        }
+      ],
+      "limits": "Falcon payment signing does not replace envelope key agreement; algorithm/security boundary, not a probabilistic security proof."
+    },
+    {
+      "root": ".",
+      "id": "ENCRYPT-1",
+      "text": "Only the sender and recipient can read a message.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "localnet-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "falcon-localnet.json"
+        }
+      ],
+      "limits": "Successful sender/recipient opens plus wrong-recipient negative cases; finite tests do not prove universal confidentiality."
+    },
+    {
+      "root": ".",
+      "id": "ENCRYPT-1.a",
+      "text": "If someone tampers with the bytes, decryption fails closed and never leaks plaintext.",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/python.json"
+        }
+      ],
+      "limits": "Authenticated payload/tag tamper cases reject; v1 header binding is weaker than v2 and broad all-byte promise needs mode-specific treatment."
+    },
+    {
+      "root": ".",
+      "id": "ENCRYPT-2",
+      "text": "When we both have a post-quantum key, a message stays private even if X25519 is later broken, and a person without that key still gets a classical message.",
+      "status": "gap",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "docs/ACCURACY.md",
+          "selector": "27"
+        }
+      ],
+      "limits": "Low-level hybrid mesh passes; automatic high-level PQ selection/classical fallback is not integrated."
+    },
+    {
+      "root": ".",
+      "id": "HONEST-1",
+      "text": "Addresses, timing, and on-chain activity stay public. The protocol does not claim otherwise.",
+      "status": "reviewed_boundary",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "SECURITY.md"
+        },
+        {
+          "kind": "repository_source",
+          "path": "PROTOCOL.md"
+        }
+      ],
+      "limits": "Current protocol/security docs disclose public addresses, timing and activity; no anonymity claim."
+    },
+    {
+      "root": ".",
+      "id": "HONEST-2",
+      "text": "The protocol does not provide forward secrecy.",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "SECURITY.md"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/ForwardSecrecyProof.swift"
+        }
+      ],
+      "limits": "Protocol docs correctly disclaim forward secrecy; misleading developer test/demo labels remain."
+    },
+    {
+      "root": ".",
+      "id": "PSK-1",
+      "text": "I can add a pre-shared key so the message key does not rest on X25519 alone.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "localnet-summary.json"
+        }
+      ],
+      "limits": "Cross-language Extra lock envelopes require correct PSK in targeted negative cases; no complete state-machine acceptance claim."
+    },
+    {
+      "root": ".",
+      "id": "RELEASE-1",
+      "text": "I can qualify all six libraries before a release without publishing packages.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "qualification-catalog.json"
+        }
+      ],
+      "limits": "All six local package/consumer qualification lanes plus Swift Linux are checked; no remote registry publication or old Apple/Android qualification."
+    },
+    {
+      "root": ".",
+      "id": "RELEASE-2",
+      "text": "I can see exactly which release evidence is missing and which checks ran against the candidate commit.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "candidate.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "qualification-catalog.json"
+        },
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "MANIFEST.sha256"
+        }
+      ],
+      "limits": "Local evidence records exact candidate, toolchains, exits, artifacts, known missing coverage and failures; it is not hosted/release authorization."
+    },
+    {
+      "root": ".",
+      "id": "REPO-1",
+      "text": "I can find the protocol and the TypeScript, Swift, Python, Rust, Kotlin, and Go libraries in one AlgoChat repository.",
+      "status": "reviewed_structure",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "candidate.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/documentation-structure.json"
+        }
+      ],
+      "limits": "Single checkout contains canonical protocol and all six language roots."
+    },
+    {
+      "root": ".",
+      "id": "REPO-2",
+      "text": "The libraries speak envelope versions 0x01 and 0x02, and protocols 0x01, 0x02, 0x04, and 0x05. Identifier 0x03 is unassigned. The earlier note that postponed post-quantum envelopes is historical.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "localnet-summary.json"
+        }
+      ],
+      "limits": "Current cross-language reads cover v1/v2 classical/PSK and hybrid protocols04/05; no unassigned03 writer path."
+    },
+    {
+      "root": ".",
+      "id": "SEND-1",
+      "text": "A message is an encrypted note on an Algorand payment. There is no mailbox or extra router.",
+      "status": "tested_slice",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "localnet-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "falcon-localnet.json"
+        }
+      ],
+      "limits": "Direct payment notes confirmed on LocalNet, including separate high-level TypeScript Falcon send/read; no router contract involved."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-1",
+      "sentence": "My 25-word recovery phrase is all I need to get my chat identity back.",
+      "criterion": "ts/hi/keys.md:15",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts",
+          "selector": "49"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts",
+          "selector": "141"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "falcon_phrase_scheme_recovery"
+        }
+      ],
+      "assessment": "Identity reconstruction tested for explicit schemes. A default Falcon phrase imported without scheme produces an Ed25519 address, so the words alone do not select original identity; PSK/session state recovery is separate."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-1.a",
+      "sentence": "Importing a phrase I already use elsewhere gives me the same address my wallet shows.",
+      "criterion": "ts/hi/keys.md:16",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts",
+          "selector": "39"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts",
+          "selector": "90"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "130"
+        }
+      ],
+      "assessment": "Ed25519 import/address and algosdk account equivalence exercised locally; no external wallet UI tested."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-1.b",
+      "sentence": "The same words give me the same encryption key whichever signature scheme I pick.",
+      "criterion": "ts/hi/keys.md:17",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts",
+          "selector": "169"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "cross_scheme_encryption_key_same"
+        }
+      ],
+      "assessment": "Same mnemonic produces identical X25519 keys across Ed25519/Falcon, with distinct addresses."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-2",
+      "sentence": "A brand-new account signs with a post-quantum signature unless I ask otherwise.",
+      "criterion": "ts/hi/keys.md:18",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/mnemonic.service.test.ts",
+          "selector": "133"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "default_account_falcon"
+        }
+      ],
+      "assessment": "Default Falcon account creation exercised. Explicit Ed25519 import exercised; signer transaction tests use stubs."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-3",
+      "sentence": "I can publish my encryption key so anyone can start writing to me.",
+      "criterion": "ts/hi/keys.md:19",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "331"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "361"
+        }
+      ],
+      "assessment": "Signed announcement/payment construction exercised with stubbed algod; no high-level fresh on-chain publish/discover acceptance in this TS lane."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-4",
+      "sentence": "I can find someone's encryption key from their address alone, without asking them for it.",
+      "criterion": "ts/hi/keys.md:20",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "164"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "397"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "503"
+        }
+      ],
+      "assessment": "Address-based discovery/pagination exercised with stub indexers. Not an unrestricted live network discovery proof."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-4.a",
+      "sentence": "I am told whether that key is proven to belong to the address or only trusted on first use.",
+      "criterion": "ts/hi/keys.md:21",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "124"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "189"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/message-indexer.test.ts",
+          "selector": "55"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.ts",
+          "selector": "440"
+        }
+      ],
+      "assessment": "Verified/TOFU metadata positive and negative cases exercised; concrete service exposes discoverPublicKeyWithMetadata."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-4.b",
+      "sentence": "A forged key announcement is never accepted, not even as an unverified key.",
+      "criterion": "ts/hi/keys.md:22",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "110"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "137"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "148"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/discovery.test.ts",
+          "selector": "307"
+        }
+      ],
+      "assessment": "Malformed/wrong-signer/invalid-signature announcements rejected in finite local fixtures."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-4.c",
+      "sentence": "I can show a short fingerprint so two people can compare keys out of band.",
+      "criterion": "ts/hi/keys.md:23",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/signature.test.ts",
+          "selector": "56"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/signature.test.ts",
+          "selector": "65"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/signature.test.ts",
+          "selector": "73"
+        }
+      ],
+      "assessment": "Fingerprint format/determinism/distinction tested. Actual person-to-person comparison untested."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-5",
+      "sentence": "My private keys never leave my process; everything is signed where I run it.",
+      "criterion": "ts/hi/keys.md:24",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "278"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "308"
+        }
+      ],
+      "assessment": "Ed25519/Falcon local signing and outgoing signed transaction exercised with stubbed transport. No exhaustive private-key exfiltration instrumentation/security audit."
+    },
+    {
+      "root": "ts",
+      "id": "KEYS-6",
+      "sentence": "When I keep keys on disk they are encrypted with my password and readable only by my user.",
+      "criterion": "ts/hi/keys.md:25",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "key_file_roundtrip"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "key_file_is_encrypted"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "key_file_final_permissions_0600"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "key_wrong_password_rejected"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "key_tamper_rejected"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript-package-exports.json"
+        }
+      ],
+      "assessment": "Direct built FileKeyStorage implementation passes password/tamper/final permissions checks under temp directory override. It is absent from root package exports; recommended /node subpath throws ERR_PACKAGE_PATH_NOT_EXPORTED. No transient write-permission/race proof."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-1",
+      "sentence": "Only the sender and the recipient can read what a message says.",
+      "criterion": "ts/hi/private.md:15",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "96"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "114"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "242"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "264"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/pq/pq.test.ts",
+          "selector": "28"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "classical_wrong_key_rejected"
+        }
+      ],
+      "assessment": "Sender/recipient/wrong-key cases pass; six-language interoperability is separate parent evidence. Finite tests do not establish exclusive readability against all attackers."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-1.a",
+      "sentence": "A tampered message fails to open instead of showing altered or partial text.",
+      "criterion": "ts/hi/private.md:16",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "427"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "552"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/pq/pq.test.ts",
+          "selector": "58"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript.json",
+          "selector": "psk_v2_header_tamper_0..129"
+        }
+      ],
+      "assessment": "Recorded standard/PSK/PQ corruption cases fail closed without plaintext. Complete adversarial input space untested."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-1.b",
+      "sentence": "Changing any header byte, the version included, makes the message fail to open.",
+      "criterion": "ts/hi/private.md:17",
+      "status": "gap",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "454"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "427"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript.json",
+          "selector": "psk_v2_header_tamper_0..129"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/conformance/vectors/06-negative-cases.json"
+        }
+      ],
+      "assessment": "Version2 full-header binding exercised; legacy version1 remains readable and lacks full-header authentication. The unconditional criterion is not met by every supported version."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-2",
+      "sentence": "I am told plainly what is not protected: who talks to whom, when, and my whole history if a key or phrase leaks.",
+      "criterion": "ts/hi/private.md:18",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/README.md",
+          "selector": "37"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/README.md",
+          "selector": "44"
+        },
+        {
+          "kind": "repository_source",
+          "path": "docs/ACCURACY.md"
+        }
+      ],
+      "assessment": "Documentation explicitly states public metadata/no forward secrecy and mode-specific recovery limits. No usability comprehension test performed."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-3",
+      "sentence": "I can add a pre-shared key so an attacker needs it as well as the key exchange to read my messages.",
+      "criterion": "ts/hi/private.md:19",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "260"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "294"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "286"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "readme_psk_recipient"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "psk_wrong_key_rejected"
+        }
+      ],
+      "assessment": "PSK positive and missing/wrong-key failures exercised. Classical optional PSK and counter-bearing PSK are distinct APIs."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-3.a",
+      "sentence": "I can hand that key to the other person with one QR scan.",
+      "criterion": "ts/hi/private.md:20",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "455"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "503"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "readme_uri_roundtrip"
+        }
+      ],
+      "assessment": "Exchange URI roundtrip exercised; QR encoding/camera scan/device exchange not part of library and not tested."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-3.b",
+      "sentence": "A replayed pre-shared-key message is rejected.",
+      "criterion": "ts/hi/private.md:21",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "405"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript.json",
+          "selector": "psk_reject_duplicate"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/state.ts",
+          "selector": "25"
+        }
+      ],
+      "assessment": "Explicit helper rejects recorded duplicate when caller validates/persists state. Low-level decrypt does not itself enforce replay; atomic concurrent check/record and restart persistence not established. Negative/fractional counters accepted; send counter overflows wire range."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-4",
+      "sentence": "Messages written before a protocol upgrade stay readable after it.",
+      "criterion": "ts/hi/private.md:22",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "454"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/conformance/tools/verify.mjs"
+        },
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "ts-go/ts-conformance.log"
+        }
+      ],
+      "assessment": "Legacy version1 decryption and frozen compatibility fixtures pass85 checks. This does not cover every historical app/storage migration."
+    },
+    {
+      "root": "ts",
+      "id": "PRIVATE-5",
+      "sentence": "The cryptography comes from audited libraries rather than home-grown primitives.",
+      "criterion": "ts/hi/private.md:23",
+      "status": "unverified",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/package.json",
+          "selector": "24"
+        },
+        {
+          "kind": "repository_source",
+          "path": "SECURITY.md"
+        },
+        {
+          "kind": "repository_source",
+          "path": "docs/ACCURACY.md"
+        }
+      ],
+      "assessment": "No independent audit evidence for the complete shipped PQ/signature dependency set or AlgoChat integration. Algorithm standardization is not audit acceptance."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-1",
+      "sentence": "I can send an encrypted message to any Algorand address with one call once I have their key.",
+      "criterion": "ts/hi/send.md:15",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "278"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "308"
+        }
+      ],
+      "assessment": "One-call standard send signs/submits with stubbed algod using valid accounts. High-level automatic PQ/PSK negotiation and arbitrary live recipients are unproven."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-1.a",
+      "sentence": "A reply carries a pointer to the message it answers and a short preview of it.",
+      "criterion": "ts/hi/send.md:16",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "166"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "331"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/readme-reply-typecheck.txt"
+        }
+      ],
+      "assessment": "Actual service reply path tested with string txid plus preview. README sends ReplyContext object as fifth argument, yielding TS2554 expected6-7 got5; documented example is broken."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-1.b",
+      "sentence": "I choose whether a send waits for confirmation, for the indexer, or for neither.",
+      "criterion": "ts/hi/send.md:17",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.ts",
+          "selector": "196"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.ts",
+          "selector": "204"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/models/types.ts"
+        }
+      ],
+      "assessment": "Options implemented; default non-wait sends exercised. No targeted confirmation/indexer success/timeout path tests found or executed in native suite."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-2",
+      "sentence": "A message too big for one payment note is refused before anything is signed or paid for.",
+      "criterion": "ts/hi/send.md:18",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.test.ts",
+          "selector": "471"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/note-fee.test.ts",
+          "selector": "66"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "224"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript.json",
+          "selector": "standard_reject_max_plus1"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript.json",
+          "selector": "psk_reject_max_plus1"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript.json",
+          "selector": "pq_reject_max_plus1"
+        }
+      ],
+      "assessment": "Outgoing one-byte oversize limits and byte-count Unicode overflow exercised before send/sign. Decoders accept oversize inbound objects; authenticated PQ4097 decrypt succeeds."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-3",
+      "sentence": "I can rebuild a conversation, both sides of it, from the chain alone with nothing stored locally.",
+      "criterion": "ts/hi/send.md:19",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "114"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.ts",
+          "selector": "318"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/message-indexer.ts",
+          "selector": "92"
+        }
+      ],
+      "assessment": "Classical sender/recipient crypto recovery tested. Full high-level chain reconstruction without cache not exercised in this TS lane; PSK secret/replay state and PQ sessions are additional recovery requirements."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-3.a",
+      "sentence": "I can read my own sent messages back, not only the ones sent to me.",
+      "criterion": "ts/hi/send.md:20",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/crypto/encryption.test.ts",
+          "selector": "114"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/psk/psk.test.ts",
+          "selector": "264"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/pq/pq.test.ts",
+          "selector": "28"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "readme_classical_sender"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "hybrid_sender"
+        }
+      ],
+      "assessment": "Sender opens recorded notes for each mode using its required keys; no high-level complete sent-history acceptance asserted."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-3.b",
+      "sentence": "Messages come back in the order they happened.",
+      "criterion": "ts/hi/send.md:21",
+      "status": "gap",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/models/Conversation.test.ts",
+          "selector": "32"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/models/Conversation.test.ts",
+          "selector": "116"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.ts",
+          "selector": "409"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/message-indexer.ts",
+          "selector": "131"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript-history.json"
+        }
+      ],
+      "assessment": "Runtime reproducer uses one round/one timestamp with offsets5 then1: concrete AlgorandService reorders correctly, exported MessageIndexer and abstract MessageIndexer return offset5 before1, and Conversation retains reversed insertion order. Ledger ordering is inconsistent."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-3.c",
+      "sentence": "A note I cannot decrypt is skipped instead of breaking the whole conversation.",
+      "criterion": "ts/hi/send.md:22",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/message-indexer.ts",
+          "selector": "124"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/services/algorand.service.ts",
+          "selector": "400"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript-history.json"
+        }
+      ],
+      "assessment": "Actual fetch/decrypt with a stub indexer containing valid sent, tampered received, valid received notes passed for concrete service, exported MessageIndexer and abstract MessageIndexer on Node18. Bad note skipped, both good directions recovered; no live indexer/network proof."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-4",
+      "sentence": "I can queue messages while offline and have them go out when I am back online.",
+      "criterion": "ts/hi/send.md:23",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "offline_defers_send"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "reconnect_processes_send"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/queue/SyncManager.ts",
+          "selector": "136"
+        }
+      ],
+      "assessment": "Temp runtime harness exercises offline queue and reconnect processing with service stub; actual network loss/reconnect and background timers not established."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-4.a",
+      "sentence": "A message that keeps failing stops retrying after a bounded number of attempts, and I am told.",
+      "criterion": "ts/hi/send.md:24",
+      "status": "tested_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/queue/SendQueue.test.ts",
+          "selector": "115"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/queue/SendQueue.test.ts",
+          "selector": "161"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "bounded_retries_failure_event"
+        }
+      ],
+      "assessment": "Native queue transitions and temp SyncManager stub fail exactly3 attempts then notify permanent failure."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-4.b",
+      "sentence": "The queue survives a restart when I give it durable storage.",
+      "criterion": "ts/hi/send.md:25",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/src/queue/SendQueue.test.ts",
+          "selector": "282"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "queue_durable_new_instance"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json",
+          "selector": "queue_file_permissions_0600"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/typescript-package-exports.json"
+        }
+      ],
+      "assessment": "Native persistence test uses in-memory storage. Temp file backend saves/loads across new instances, not killed process/crash. File backend has no supported package export and explicit save is required."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-5",
+      "sentence": "A message sent from this library reads the same in every other AlgoChat implementation, and theirs read the same here.",
+      "criterion": "ts/hi/send.md:26",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "ts-go/ts-conformance.log"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/pq/pq.test.ts",
+          "selector": "28"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "localnet-summary.json"
+        }
+      ],
+      "assessment": "TS85-check frozen corpus passes; parent has six-language mesh evidence. Complete high-level client/platform parity is absent and finite cross-language cases do not prove every possible message."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-5.a",
+      "sentence": "A change to the bytes on the wire is caught as a protocol change, not waved through as a test update.",
+      "criterion": "ts/hi/send.md:27",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "ts/conformance/README.md"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/conformance/tools/verify.mjs"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/conformance/tools/generate.mjs"
+        },
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "ts-go/ts-conformance.log"
+        }
+      ],
+      "assessment": "Frozen verifier85 checks ran locally; deterministic-regeneration tripwire is not in active qualification and was not rerun in this lane. Review policy governs fixture changes."
+    },
+    {
+      "root": "ts",
+      "id": "SEND-6",
+      "sentence": "I can test everything my app does with AlgoChat without a live network or credentials.",
+      "criterion": "ts/hi/send.md:28",
+      "status": "partial",
+      "evidence": [
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "ts-go/ts-source-tests.log"
+        },
+        {
+          "kind": "repository_source",
+          "path": "ts/src/blockchain/interfaces.ts"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "checks/typescript-node18.json"
+        }
+      ],
+      "assessment": "270 unique source tests execute offline plus28 runtime checks with stubs. FileKeyStorage/SyncManager/high-level wait/indexer acceptance not completely covered natively; no all-app-behavior proof."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-1",
+      "criterion": "I can share a pre-shared key with a contact as a single link.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKExchangeURITests.swift",
+          "selector": "13"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "1413"
+        }
+      ],
+      "limits": "URI encode/parse/import/send tested on LocalNet."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-1.a",
+      "criterion": "A malformed link is refused rather than half imported.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKExchangeURITests.swift",
+          "selector": "54"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKExchangeURITests.swift",
+          "selector": "61"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKExchangeURITests.swift",
+          "selector": "73"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKExchangeURITests.swift",
+          "selector": "80"
+        }
+      ],
+      "limits": "Invalid scheme, missing fields and wrong key length cases rejected; not exhaustive arbitrary-input fuzzing."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-2",
+      "criterion": "Reading a message with a PSK contact takes both the pre-shared key and our account keys.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKEncryptionTests.swift",
+          "selector": "64"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKEncryptionTests.swift",
+          "selector": "92"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "1331"
+        }
+      ],
+      "limits": "Wrong PSK/private key and third-party paths reject; successful correct-peer LocalNet path also exercised."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-3",
+      "criterion": "Every PSK message uses its own key derived from the shared one.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "gap",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKRatchetTests.swift",
+          "selector": "43"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKRatchetTests.swift",
+          "selector": "50"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKRatchetTests.swift",
+          "selector": "57"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "sendCounterAtMax"
+        }
+      ],
+      "limits": "Ordinary derivation vectors pass, but send counter max wraps to0, reusing the position-key input. Unique-per-message goal is not met over counter exhaustion."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-4",
+      "criterion": "A PSK message that someone copies into a new transaction is refused as a replay.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKStateTests.swift",
+          "selector": "43"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "pskSameTransactionReopen"
+        }
+      ],
+      "limits": "Counter duplicate rejection works, but transaction identity is not distinguished: legitimate same-transaction reopening is rejected. Concurrent high-level PSK receive atomicity not claimed."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-4.a",
+      "criterion": "A message whose counter is far outside what I expect from that contact is refused.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKStateTests.swift",
+          "selector": "33"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKStateTests.swift",
+          "selector": "18"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKStateTests.swift",
+          "selector": "26"
+        }
+      ],
+      "limits": "Bounded +/-200 window exercised. UInt32 API excludes fractional/negative values by type; no dynamic JavaScript-style number conversion path."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-4.b",
+      "criterion": "A message that fails to decrypt never uses up a counter.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "pskFailedDecryptCounter"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/Blockchain/MessageIndexer.swift",
+          "selector": "450"
+        }
+      ],
+      "limits": "Actual public indexer path returns0 for auth-flipped note then1 for valid same-counter note, proving this tested failed decrypt did not burn counter."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-4.c",
+      "criterion": "Reading the same transaction again, as when I reopen a conversation, is never treated as a replay.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "gap",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "pskSameTransactionReopen"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/Blockchain/MessageIndexer.swift",
+          "selector": "450"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/PSK/PSKManager.swift",
+          "selector": "131"
+        }
+      ],
+      "limits": "Same transaction first read1, second read0, new manager over stored state0. Deterministically violates reopening criterion."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-5",
+      "criterion": "PSK messaging is optional, and standard messages keep working alongside it.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CrossProtocolTests.swift",
+          "selector": "97"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CrossProtocolTests.swift",
+          "selector": "193"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "608"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "666"
+        }
+      ],
+      "limits": "Standard/PSK coexistence and optional PSK paths exercised."
+    },
+    {
+      "root": "swift",
+      "id": "PSK-6",
+      "criterion": "My PSK contacts and their counters survive a restart.",
+      "intent_file": "swift/hi/psk.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "pskSameTransactionReopen"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "pskStorage"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/Storage/FilePSKStorage.swift"
+        }
+      ],
+      "limits": "New manager reads retained contact/counter state from file, but separate OS process/crash-durability test not run. Plain JSON secret/state does not provide encryption at rest; reimporting via addContact initializes state if manager cache is empty."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-1",
+      "criterion": "I can send a text message to any Algorand address, and only that person and I can read it.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "221"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "342"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/EnvelopeSecurityTests.swift",
+          "selector": "72"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/EnvelopeSecurityTests.swift",
+          "selector": "324"
+        }
+      ],
+      "limits": "Standard local-chain send/receive, sender readback and wrong/third-party keys exercised; this is not independent cryptographic assurance."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-1.a",
+      "criterion": "Anyone watching the chain can see that we talked, when, and roughly how much, but never what was said.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "342"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/EnvelopeSecurityTests.swift",
+          "selector": "72"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "localnet-notes.jsonl"
+        }
+      ],
+      "limits": "Local-chain metadata and ciphertext plus wrong-key rejection support the boundary; does not establish an absolute never-content assurance or side-channel audit."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-1.b",
+      "criterion": "I can read my own sent messages again from the chain, on any device that holds my account.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "221"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "1261"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/EnvelopeSecurityTests.swift",
+          "selector": "324"
+        }
+      ],
+      "limits": "Sender readback exercised; cross-device account restoration not an end-to-end acceptance test, and PSK history additionally requires PSK/state. Reopening an already seen PSK tx fails (PSK-4.c)."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-2",
+      "criterion": "A message too big for one transaction is refused before anything is paid for.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/AlgoChatTests.swift",
+          "selector": "123"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/MessageIndexerTests.swift",
+          "selector": "76"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CustomAmountTests.swift",
+          "selector": "238"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKEncryptionTests.swift",
+          "selector": "308"
+        }
+      ],
+      "limits": "Outbound encryption/transaction construction rejects oversize before sending. Standalone inbound parser/PQ size gaps are separate recorded defects."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-3",
+      "criterion": "I choose whether sending returns as soon as the message is submitted, once it is confirmed, or once it can be read back.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CustomAmountTests.swift",
+          "selector": "25"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CustomAmountTests.swift",
+          "selector": "35"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "221"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "458"
+        }
+      ],
+      "limits": "Option models and successful confirmation/indexer LocalNet flows exercised; three timing/failure semantics not independently fault-injected."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-3.a",
+      "criterion": "Even when I do not wait, I get the message back straight away to show in my own view.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "221"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/AlgoChat.swift",
+          "selector": "381"
+        }
+      ],
+      "limits": "Returned message used in successful sends; no strict immediate-return timing assertion or submission-failure acceptance test."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-4",
+      "criterion": "I can open a conversation with someone and refresh it without downloading everything again.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "1054"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/ConversationMergeTests.swift",
+          "selector": "30"
+        }
+      ],
+      "limits": "Incremental refresh and de-duplication exercised; history pagination/PSK repeat reads have separate gaps."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-4.a",
+      "criterion": "I can page back through older history when I want it.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "unexercised",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/AlgoChat.swift",
+          "selector": "247"
+        }
+      ],
+      "limits": "loadOlder is implemented, but no exact backward-conversation-pagination acceptance test identified/executed. Key-discovery pagination tests do not establish this criterion."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-4.b",
+      "criterion": "Messages I have already cached are still there when I am offline.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CacheTests.swift",
+          "selector": "28"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CacheTests.swift",
+          "selector": "61"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/AlgoChat.swift",
+          "selector": "235"
+        }
+      ],
+      "limits": "Cache storage/retrieval tested; actual network-offline cached conversation UX and process restart not exercised. Default optional cache is not a durable store."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-5",
+      "criterion": "I can reply to a specific message, and the other side sees what I was replying to.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "714"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PSKEncryptionTests.swift",
+          "selector": "120"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/ReplyContextTests.swift",
+          "selector": "8"
+        }
+      ],
+      "limits": "Reply metadata/preview roundtrip and on-chain context preserved in tested standard/PSK cases."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-6",
+      "criterion": "A message written by any AlgoChat implementation can be read by this one, and the other way round.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "localnet-summary.json"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PQTests.swift",
+          "selector": "87"
+        }
+      ],
+      "limits": "Six-language valid-note mesh and LocalNet matrix support interoperable tested paths. Parser minimum/maximum and counter-state differences prevent full edge-case parity; automatic high-level PQ not integrated."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-7",
+      "criterion": "When I am offline, a message I write waits in a queue and goes out later.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/SyncManagerTests.swift",
+          "selector": "106"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/SyncManagerTests.swift",
+          "selector": "135"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/FileSendQueueStorageTests.swift",
+          "selector": "227"
+        }
+      ],
+      "limits": "Queue creation, persistence and online-state behavior tested. SyncManager tests omit a real chat client; end-to-end offline queue recovery/send not exercised."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-7.a",
+      "criterion": "A queued message is never reported as sent when it was not.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/QueueTests.swift",
+          "selector": "154"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/FileSendQueueStorageTests.swift",
+          "selector": "275"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/SyncManagerTests.swift",
+          "selector": "281"
+        }
+      ],
+      "limits": "Failed queue-state persistence tested; no actual blockchain submission-failure/recovery acceptance with SyncManager."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-8",
+      "criterion": "Something on the chain that is not a message for me never breaks my conversation list.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+          "selector": "116"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/ErrorHandlingTests.swift",
+          "selector": "54"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/EnvelopeDecoderTests.swift",
+          "selector": "100"
+        }
+      ],
+      "limits": "Known nonchat/malformed envelope cases rejected/skipped. No exhaustive/fuzzed conversation-list pollution acceptance run; parser oversize gaps remain."
+    },
+    {
+      "root": "swift",
+      "id": "MESSAGE-9",
+      "criterion": "A message costs me the network minimum and nothing more unless I choose to send more.",
+      "intent_file": "swift/hi/message.md",
+      "disposition": "gap",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/CustomAmountTests.swift",
+          "selector": "184"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/Blockchain/MessageTransaction.swift"
+        }
+      ],
+      "limits": "Current expected fees 1000/1098/1308 include note-size surcharge above1024, contradicting the unconditional minimum-only sentence. User criterion retained unchanged."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-1",
+      "criterion": "My encryption key comes from my Algorand account, so the account is the only thing I have to back up.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyStorageTests.swift",
+          "selector": "117"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        }
+      ],
+      "limits": "Account-derived classical encryption identity only; does not claim recovery of independently shared PSKs or state."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-1.a",
+      "criterion": "The same account gives the same encryption key on every device and in every AlgoChat implementation.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "included_evidence",
+          "path": "mesh-summary.json"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "mesh-checks.jsonl"
+        }
+      ],
+      "limits": "Six local implementations and two account pairs; not every supported runtime/platform."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-2",
+      "criterion": "I can make myself reachable before anyone has messaged me by publishing my key once.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "421"
+        }
+      ],
+      "limits": "Publish-key LocalNet path exercised on the recorded candidate."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-3",
+      "criterion": "Someone can find my key on the chain without having to ask me for it.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PaginatedKeyDiscoveryTests.swift",
+          "selector": "152"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PaginatedKeyDiscoveryTests.swift",
+          "selector": "177"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+          "selector": "221"
+        }
+      ],
+      "limits": "Mock pagination plus LocalNet account-key discovery; public networks not exercised."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-3.a",
+      "criterion": "A key I published myself is shown as proven to belong to my address.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+          "selector": "33"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+          "selector": "64"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+          "selector": "93"
+        }
+      ],
+      "limits": "Signed announcement verification, wrong-account and corrupted-signature cases."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-3.b",
+      "criterion": "A key that was only seen in passing is shown as unverified, never as trusted.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+          "selector": "11"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+          "selector": "129"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/DiscoveredKeyTests.swift",
+          "selector": "8"
+        }
+      ],
+      "limits": "Unsigned/observed classical and PSK keys retain unverified status in tested cases."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-3.c",
+      "criterion": "I can limit how much history is searched when looking for a key.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PaginatedKeyDiscoveryTests.swift",
+          "selector": "208"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PaginatedKeyDiscoveryTests.swift",
+          "selector": "306"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/PaginatedKeyDiscoveryTests.swift",
+          "selector": "329"
+        }
+      ],
+      "limits": "Mock search limits/page size/backward-compatible depth exercised."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-4",
+      "criterion": "I can compare a short fingerprint of a key with someone out of band.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/SignatureVerifierTests.swift",
+          "selector": "100"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/SignatureVerifierTests.swift",
+          "selector": "111"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/SignatureVerifierTests.swift",
+          "selector": "128"
+        }
+      ],
+      "limits": "Fingerprint format and stability exercised; no human comparison ceremony."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-5",
+      "criterion": "On Apple devices my stored encryption key can sit behind Face ID, Touch ID or Optic ID.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "gap",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Sources/AlgoChat/Storage/KeychainKeyStorage.swift"
+        }
+      ],
+      "limits": "Biometric hardware/UX not locally exercised; tvOS/watchOS memory fallback does not provide this Apple-device storage capability. Generic-password Keychain is not Secure Enclave storage."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-6",
+      "criterion": "Everywhere else my stored encryption key is protected by a password I choose.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "partial",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/FileKeyStorageTests.swift",
+          "selector": "25"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/FileKeyStorageTests.swift",
+          "selector": "97"
+        },
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/FileKeyStorageTests.swift",
+          "selector": "127"
+        },
+        {
+          "kind": "omitted_local_artifact",
+          "catalog_id": "swift-linux/qualification-swift-linux/commands.json"
+        }
+      ],
+      "limits": "Explicit password-file storage tested on macOS and Linux (Linux FileKeyStorage tests executed in isolated container). Other Apple platforms are not exercised; fallback is memory unless durable storage is selected explicitly."
+    },
+    {
+      "root": "swift",
+      "id": "KEY-7",
+      "criterion": "A wrong password or a damaged key file fails with an error and never hands back a wrong key.",
+      "intent_file": "swift/hi/key.md",
+      "disposition": "tested_in_scope",
+      "evidence": [
+        {
+          "kind": "repository_source",
+          "path": "swift/Tests/AlgoChatTests/FileKeyStorageTests.swift",
+          "selector": "140"
+        },
+        {
+          "kind": "included_evidence",
+          "path": "boundaries/swift.json",
+          "selector": "corruptKeyFile"
+        }
+      ],
+      "limits": "Wrong password and a last-byte-corrupted encrypted key file both fail without returning a key on macOS; arbitrary filesystem failure cases not exhaustive."
+    }
+  ]
+}

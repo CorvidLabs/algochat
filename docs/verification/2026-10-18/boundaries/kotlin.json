@@ -1,0 +1,93 @@
+{
+  "sendCounterAtMax": {
+    "firstReturned": "4294967295",
+    "secondReturned": "0",
+    "nextStored": "1"
+  },
+  "receiveFarFuture": {
+    "acceptedMillion": true,
+    "acceptedZeroAfterMillion": false,
+    "nextStored": "1000001"
+  },
+  "receiveCounterAtMax": {
+    "acceptedMax": true,
+    "storedAfterMax": "0",
+    "acceptedZeroAfterMax": true
+  },
+  "standardDecoder": [
+    {
+      "size": 125,
+      "accepted": false,
+      "error": "com.corvidlabs.algochat.AlgoChatException$InvalidEnvelope: Invalid envelope: Data too short: 125 bytes (minimum 126)"
+    },
+    {
+      "size": 126,
+      "accepted": true
+    },
+    {
+      "size": 141,
+      "accepted": true
+    },
+    {
+      "size": 142,
+      "accepted": true
+    },
+    {
+      "size": 4096,
+      "accepted": true
+    },
+    {
+      "size": 4097,
+      "accepted": true
+    },
+    {
+      "size": 8192,
+      "accepted": true
+    }
+  ],
+  "pskDecoder": [
+    {
+      "size": 129,
+      "accepted": false,
+      "error": "com.corvidlabs.algochat.AlgoChatException$InvalidEnvelope: Invalid envelope: PSK data too short: 129 bytes (minimum 130)"
+    },
+    {
+      "size": 130,
+      "accepted": true
+    },
+    {
+      "size": 145,
+      "accepted": true
+    },
+    {
+      "size": 146,
+      "accepted": true
+    },
+    {
+      "size": 4096,
+      "accepted": true
+    },
+    {
+      "size": 4097,
+      "accepted": true
+    },
+    {
+      "size": 8192,
+      "accepted": true
+    }
+  ],
+  "addressMismatch": {
+    "actual": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
+    "derived": "RKEOHXLUBHYZL7KS3MWTZOS5OLFGOCN7DWKBEG7TOSEADNAPN5OOTUNSLE",
+    "mismatchAccepted": true
+  },
+  "timestampOverridesRoundOrder": [
+    "round20",
+    "round10"
+  ],
+  "tiedTimestampKeepsInsertionOrder": [
+    "offset2",
+    "offset1"
+  ],
+  "concurrentDuplicateReceiveAccepted": 1
+}
