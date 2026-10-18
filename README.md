@@ -19,7 +19,7 @@ This is the public specification and the language implementations. It is not a c
 | [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05` | `./gradlew test` |
 | [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05` | `go test ./...` |
 
-Parity for protocol 1.3.0 is [PARITY.md](PARITY.md). On LocalNet, each library writes empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, and one `0x04` handshake. Every library opens every confirmed note.
+The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
 
 ```mermaid
 flowchart LR
@@ -82,7 +82,13 @@ The Swift package name is `algochat`. The library product is `AlgoChat`.
 .product(name: "AlgoChat", package: "algochat")
 ```
 
-Tag `0.4.0` on the archived [swift-algochat](https://github.com/CorvidLabs/swift-algochat) repository still resolves for apps that have not switched the URL. Those tags are not created by this document.
+Tag `0.4.0` on the archived [swift-algochat](https://github.com/CorvidLabs/swift-algochat) repository belongs to the previous distribution. The monorepo tags `v1.3.0` and `go/v0.2.0` exist on commit `8f4eaff`; their release record and dated registry observations are in [the distribution table](docs/RELEASE.md#package-versions-and-distribution). Source versions do not imply that every registry has published those versions.
+
+## Implementation boundaries and intent
+
+The low-level libraries expose hybrid session APIs; existing high-level clients do not automatically select PQ from a peer's available keys. An application must handle that integration. Standard-mode transaction uniqueness also does not reject an encrypted envelope copied into a different transaction; PSK replay handling requires its state machinery.
+
+[The documentation accuracy and intent report](docs/ACCURACY.md) records checked claims, known implementation gaps, and unverified evidence. The accepted sentences in `hi/`, `ts/hi/`, and `swift/hi/` remain desired outcomes, with permanent IDs. A structural `hi check` or 100% source/export inventory is not proof that every goal is implemented or independently audited.
 
 ## Protocol
 
@@ -105,8 +111,8 @@ A note of 1024 bytes or fewer pays one minimum fee, 0.001 ALGO for an Ed25519 si
 | --- | --- |
 | Metadata is public | Addresses, amounts, and timing are on the chain |
 | No deletion | A confirmed note stays |
-| No forward secrecy | The 25 words open that account's past messages |
-| About 4.5 seconds | Algorand finality |
+| No forward secrecy | Account recovery material can expose past messages; PSK mode additionally requires the shared secret |
+| Confirmation and indexing | Network confirmation and indexer visibility are separate waits |
 
 ## Release qualification
 

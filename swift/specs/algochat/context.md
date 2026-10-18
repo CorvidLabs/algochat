@@ -19,8 +19,12 @@ spec: algochat.spec.md
 
 ## Current Status
 
-The implemented package builds under Swift 6. Its deterministic verification lane passes 70 cryptographic tests, 172 other unit and envelope-security tests, and a separate CLI product build. LocalNet integration remains an explicit environment-dependent workflow rather than part of this migration gate.
+The root package declares Swift tools 6.0 and source release 1.3.0. Active root qualification runs full package tests/build on macOS 26+ and Linux, then checks exported sources and a separate consumer. The module-local Fledge lane retains filtered crypto/unit batches and a CLI build; fixed counts from the governance migration are historical. LocalNet remains environment dependent. Hybrid ML-KEM methods require Apple OS 26 and are omitted on Linux; their non-ML-KEM helpers remain available.
 
 ## Operational Notes
 
-The project is pre-1.0 and not independently audited. Consumers should treat key material, PSKs, transaction permanence, and public-chain metadata according to the threat model in `SECURITY.md`.
+The project is not independently audited. Consumers should treat key material, PSKs, transaction permanence, and public-chain metadata according to the threat model in `SECURITY.md`.
+
+## Current implementation limits
+
+The canonical inventory now includes `Crypto/PQSession.swift` and `Sources/PQCross/main.swift`. Hybrid sessions remain low-level helpers separate from client/indexer routing. Current behavior and unmet accepted requirements are recorded in the [accuracy ledger](../../../docs/ACCURACY.md), including inbound size checks and unsupported-platform Keychain fallback.

@@ -68,6 +68,7 @@ Define the optional AlgoChat v1 pre-shared-key protocol: deterministic ratchet d
 | `HYBRID_KEY_INFO_PREFIX` | Existing psk symbol; its behavior and invariants are defined by the owning API group below. |
 | `SENDER_KEY_INFO_PREFIX` | Existing psk symbol; its behavior and invariants are defined by the owning API group below. |
 | `PSKEnvelope` | Existing psk symbol; its behavior and invariants are defined by the owning API group below. |
+| `version` | Writers/default construction emit `0x01`; decoding accepts `0x01` and `0x02`. Version `0x02` authenticates the full 130-byte payload header, including the sender wrap; sender-key wrapping itself uses empty AAD. |
 | `ratchetCounter` | Existing psk symbol; its behavior and invariants are defined by the owning API group below. |
 | `senderPublicKey` | Existing psk symbol; its behavior and invariants are defined by the owning API group below. |
 | `ephemeralPublicKey` | Existing psk symbol; its behavior and invariants are defined by the owning API group below. |
@@ -137,3 +138,6 @@ Then EncryptionFailed is thrown and no envelope is returned
 
 The PSK contract was established from the existing production sources and the known-answer, state, envelope, hybrid-encryption, and exchange cases in `PSKTest`. Adoption changes governance only; it does not change ratchet or envelope behavior.
 
+## Implementation gap status (2026-10-18)
+
+`PSKState.receive(counter) { decrypt() }` is atomic under one mutex and records only after successful decryption. The lower-level `acceptReceiveCounter` records immediately, so it cannot replace the authenticated receive wrapper. Current `nextSendCounter` wraps at `UInt.MAX_VALUE`; receive validation accepts any future counter, with a trailing window only. Preserve stronger fail-before-wrap and bounded-counter intent as unresolved work rather than treating the current arithmetic as proof. See the [accuracy ledger](../../../docs/ACCURACY.md).

@@ -17,7 +17,7 @@ depends_on:
 
 ## Purpose
 
-Provide the coroutine-based Kotlin client, Algorand transport abstractions, conversation models, retry queue, and storage contracts used to publish keys, encrypt messages, discover peers, and maintain local conversation state.
+Provide the coroutine-based Kotlin client, Algorand transport abstractions, conversation models, retry queue, and storage contracts used to encrypt messages, discover peers, process/sync indexed transactions, and maintain local conversation state.
 
 ## Public API
 
@@ -26,18 +26,18 @@ Provide the coroutine-based Kotlin client, Algorand transport abstractions, conv
 | Export | Description |
 |---|---|
 | `AlgoChatConfig` | Selects an `AlgorandConfig` and cache/discovery behavior; includes localnet, testnet, and mainnet factories. |
-| `AlgoChatClient` | Creates an identity from a seed and exposes conversation, key discovery, encryption, decryption, send, fetch, and queue operations. |
+| `AlgoChatClient` | Derives key material from a seed and exposes conversations, key discovery, encryption/decryption, transaction processing, sync, and queue/cache accessors. It has no public send/fetch or key-publication operation. |
 | `AlgorandConfig` | Holds algod/indexer endpoints and tokens, with network factories and `withIndexer`. |
 | `AlgodClient` / `IndexerClient` | Suspend-only transport interfaces for chain state, submission, confirmation, and note-transaction searches. |
 | `TransactionInfo`, `NoteTransaction`, `SuggestedParams`, `AccountInfo` | Typed blockchain responses consumed by the client. |
-| `discoverEncryptionKey` | Finds the newest valid key announcement and records signature verification metadata. |
+| `discoverEncryptionKey` | Returns the first usable self-transfer key announcement in the supplied indexer result order and records signature/transaction metadata. |
 
 ### Conversation and delivery models
 
 | Export | Description |
 |---|---|
 | `Message`, `MessageDirection`, `ReplyContext` | Immutable received/sent message data and reply preview metadata. |
-| `Conversation` | Deduplicates messages by transaction id, orders them by round and intra-round offset, and exposes directional queries. |
+| `Conversation` | Deduplicates messages by transaction id, currently sorts by timestamp, and exposes directional queries. Canonical round/offset ordering remains an implementation gap. |
 | `DiscoveredKey` | Public-key bytes plus verification and chain-discovery provenance. |
 | `SendOptions`, `SendResult` | Confirmation, indexer, reply, and amount controls plus the resulting transaction/message. |
 | `PendingMessage`, `PendingStatus`, `QueueConfig`, `SendQueue` | Retryable queued delivery with bounded capacity, state transitions, retry delay, and pruning. |
@@ -46,8 +46,9 @@ Provide the coroutine-based Kotlin client, Algorand transport abstractions, conv
 
 | Export | Description |
 |---|---|
-| `Storage`, `InMemoryStorage` | Suspendable byte storage contract and deterministic in-memory implementation. |
-| `ConversationStore`, `PublicKeyCache` | Typed persistence for messages, fetch rounds, discovered keys, and verified-key lookups. |
+| `MessageCache`, `InMemoryMessageCache` | Suspendable message persistence, per-address sync-round tracking, conversation retrieval, and clearing. |
+| `PublicKeyCache` | In-memory TTL cache retaining key bytes and their verification bit. |
+| `EncryptionKeyStorage`, `InMemoryKeyStorage`, `FileKeyStorage` | Suspendable private encryption-key storage; file storage uses AES-GCM with a PBKDF2-derived key. |
 
 ### Complete export index
 
@@ -172,7 +173,7 @@ SpecSync's Kotlin member parser additionally exposes the following constructor p
 ```text
 Given a seeded client and an indexer containing a signed public-key announcement
 When discoverKey is called for the announcing address
-Then the newest key is returned with isVerified true and may be cached
+Then the first usable key in indexer order is returned with isVerified true and may be cached
 
 Given a conversation that already contains transaction A
 When a fetched batch containing A and a later transaction B is merged
@@ -183,15 +184,15 @@ Then A remains singular and B follows it in deterministic chain order
 
 | Error | When | Behavior |
 |---|---|---|
-| `AlgoChatException.InvalidKey` | Key bytes or an Algorand address are malformed. | Reject the operation before cryptographic use. |
-| `AlgoChatException.KeyNotFound` | No usable recipient key can be discovered. | Return the documented missing-key failure instead of sending plaintext. |
-| `AlgoChatException.BlockchainError` | Transport, submission, confirmation, or indexing fails. | Preserve the cause and fail the suspend operation. |
+| `AlgoChatException.InvalidPublicKey` / `IllegalArgumentException` | Key or required fixed-size input is malformed. | Reject invalid input according to the owning API. |
+| `AlgoChatException.PublicKeyNotFound` | Transaction processing cannot discover the other party's key. | Fail processing; direct `discoverKey` returns null for absence. |
+| Adapter exception | A caller-supplied transport operation fails. | The exception propagates from the suspend operation. |
 | `IllegalStateException` | A queue is full or an invalid required delivery state is encountered. | Leave unrelated queued messages intact. |
 
 ## Dependencies
 
 - Kotlin coroutines for mutex-protected state and suspend contracts.
-- Algorand Java SDK model/address primitives.
+- Bouncy Castle primitives, Kotlin coroutines, and Kotlin serialization as declared in `build.gradle.kts`; no Algorand Java SDK dependency is bundled.
 - The `protocol` spec for envelopes, keys, signatures, and payload encoding.
 
 ## Change Log
@@ -205,3 +206,13 @@ Then A remains singular and B follows it in deterministic chain order
 
 The client contract was established from the existing production sources and `AlgoChatClientTest`, `AlgoChatTest`, `BlockchainTest`, `ModelsTest`, `QueueTest`, and `StorageTest`. Adoption changes governance only; it does not change client behavior.
 
+## Implementation gaps (2026-10-18)
+
+The normative identity, round/offset ordering, private-key persistence, and byte-isolation requirements remain unchanged. Current source differs in these places:
+
+- `fromSeed` derives X25519 and Ed25519 keys but accepts the caller's address verbatim, without deriving/checking it.
+- `fromSeed` calls `keyStorage.store(..., requireBiometric=false)`, and `FileKeyStorage` persists encryption private keys. This exceeds the stated no-private-key-persistence boundary in the requirements.
+- `Conversation.append` sorts by timestamp alone, rather than confirmed round/intra-round offset.
+- `decrypt` ignores its `senderPublicKeyBytes` parameter and delegates to `decryptFull`; identity discovery is a separate `processTransaction` path.
+
+Source-grounded API descriptions above do not waive these stronger contracts. See the [accuracy ledger](../../../docs/ACCURACY.md).

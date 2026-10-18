@@ -109,7 +109,8 @@
         <div class="header">
             <i class="nes-icon trophy"></i>
             <h1>Implementation Status</h1>
-            <p>Test results for AlgoChat protocol implementations</p>
+            <p>Reported test snapshots for AlgoChat libraries</p>
+            <p>Results on this page are not bound to a candidate SHA or artifact hashes. Missing results remain pending. The legacy daily workflow omits Go and has known result-upload limitations; project labels do not establish release readiness. Use the <a href="docs/RELEASE.html">release qualification receipts</a> and <a href="docs/ACCURACY.html">accuracy report</a> for evidence and limits.</p>
         </div>
 
         <section class="nes-container with-title is-dark">
@@ -117,11 +118,11 @@
             <div class="summary">
                 <div class="stat">
                     <span class="stat-value green">0</span>
-                    <span class="stat-label">Passed</span>
+                    <span class="stat-label">Passing</span>
                 </div>
                 <div class="stat">
                     <span class="stat-value ">0</span>
-                    <span class="stat-label">Failed</span>
+                    <span class="stat-label">Failing</span>
                 </div>
                 <div class="stat">
                     <span class="stat-value">0</span>
@@ -138,7 +139,7 @@
                         <th>Name</th>
                         <th>Language</th>
                         <th>Platforms</th>
-                        <th>Status</th>
+                        <th>Project label</th>
                         <th class="tests-col">Tests</th>
                     </tr>
                 </thead>
@@ -146,7 +147,7 @@
 
                 <tr>
                     <td>
-                        <a href="https://github.com/CorvidLabs/swift-algochat">swift-algochat</a>
+                        <a href="https://github.com/CorvidLabs/algochat/tree/main/swift">swift-algochat</a>
                     </td>
                     <td>Swift</td>
                     <td>iOS, macOS, Linux</td>
@@ -156,7 +157,7 @@
 
                 <tr>
                     <td>
-                        <a href="https://github.com/CorvidLabs/ts-algochat">ts-algochat</a>
+                        <a href="https://github.com/CorvidLabs/algochat/tree/main/ts">ts-algochat</a>
                     </td>
                     <td>TypeScript</td>
                     <td>Node.js, Browsers</td>
@@ -166,7 +167,7 @@
 
                 <tr>
                     <td>
-                        <a href="https://github.com/CorvidLabs/py-algochat">py-algochat</a>
+                        <a href="https://github.com/CorvidLabs/algochat/tree/main/py">py-algochat</a>
                     </td>
                     <td>Python</td>
                     <td>Python 3.10+</td>
@@ -176,7 +177,7 @@
 
                 <tr>
                     <td>
-                        <a href="https://github.com/CorvidLabs/rs-algochat">rs-algochat</a>
+                        <a href="https://github.com/CorvidLabs/algochat/tree/main/rs">rs-algochat</a>
                     </td>
                     <td>Rust</td>
                     <td>Cargo crate</td>
@@ -186,7 +187,7 @@
 
                 <tr>
                     <td>
-                        <a href="https://github.com/CorvidLabs/kt-algochat">kt-algochat</a>
+                        <a href="https://github.com/CorvidLabs/algochat/tree/main/kt">kt-algochat</a>
                     </td>
                     <td>Kotlin</td>
                     <td>JVM, Android</td>
@@ -196,10 +197,10 @@
 
                 <tr>
                     <td>
-                        <a href="https://github.com/CorvidLabs/algochat-web">algochat-web</a>
+                        <a href="https://github.com/CorvidLabs/algochat/tree/main/go">go-algochat</a>
                     </td>
-                    <td>Angular</td>
-                    <td>Web app with NES.css</td>
+                    <td>Go</td>
+                    <td>Go module</td>
                     <td><span class="nes-text is-warning">Active</span></td>
                     <td class="tests-col"><span class="test-status test-pending">...</span></td>
                 </tr>
@@ -209,18 +210,12 @@
 
         <div class="links">
             <a href="index.html" class="nes-btn is-primary">Protocol</a>
-            <a href="https://github.com/CorvidLabs/protocol-algochat" class="nes-btn">GitHub</a>
+            <a href="https://github.com/CorvidLabs/algochat" class="nes-btn">GitHub</a>
         </div>
 
         <footer>
             <p>Made with <i class="nes-icon is-small heart"></i> by <span class="corvid">Corvid Labs</span></p>
-            <p style="margin-top: 8px;">
-                <a href="https://github.com/CorvidLabs" target="_blank" rel="noopener noreferrer">GitHub</a>
-                &nbsp;·&nbsp;
-                <a href="https://discord.gg/JJWFBPkSJm" target="_blank" rel="noopener noreferrer">Discord</a>
-                &nbsp;·&nbsp;
-                <a href="https://x.com/corvid_algo" target="_blank" rel="noopener noreferrer">Twitter</a>
-            </p>
+            <p style="margin-top: 8px;">Page generated: 2026-10-18 UTC. This is not the time each test ran.</p>
         </footer>
     </div>
 </body>

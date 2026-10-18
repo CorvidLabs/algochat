@@ -73,7 +73,7 @@ Acceptance Criteria
 PSK envelopes and exchange URIs SHALL round-trip all required fields and SHALL reject malformed, unsupported, or unsafe inputs.
 
 Acceptance Criteria
-- Binary envelope and `algochat://` URI tests cover valid labels, encoding, malformed keys, versions, protocols, counters, and lengths.
+- Binary envelope and `algochat-psk://v1` URI tests cover valid labels, encoding, malformed keys, versions, protocols, counters, and lengths.
 
 ### REQ-algochat-010
 
@@ -172,6 +172,10 @@ The package SHALL disclose that encryption protects content but not public addre
 
 Acceptance Criteria
 - The canonical specification and README security table both state the metadata and traffic-analysis limitation.
+
+## Implementation status
+
+The standard/PSK writers use header-authenticated envelope version `0x02`, while legacy version `0x01` remains readable. The high-level service/indexers handle standard protocol `0x01`; ratcheting PSK and hybrid sessions are low-level operations. Replay helpers require callers to validate, record after authentication and preserve state. These facts qualify coverage claims rather than changing accepted SHALL requirements; see [implementation gaps](../../../docs/ACCURACY.md).
 
 ## Constraints
 

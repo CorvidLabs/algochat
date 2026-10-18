@@ -7,6 +7,7 @@ files:
   - src/crypto.rs
   - src/envelope.rs
   - src/keys.rs
+  - src/pq.rs
   - src/signature.rs
   - src/types.rs
 db_tables: []
@@ -32,11 +33,11 @@ remaining able to decode version 1 messages.
 | `generate_ephemeral_keypair` | Generates a fresh X25519 keypair from the system CSPRNG. |
 | `x25519_ecdh` | Produces the 32-byte X25519 shared secret. |
 | `encrypt_message` | Encrypts a standard v1 payload using empty AEAD associated data. |
-| `encrypt_message_v2` | Encrypts a standard v2 payload while authenticating the 78-byte header prefix. |
+| `encrypt_message_v2` | Encrypts a standard v2 payload while authenticating the 126-byte full header. |
 | `decrypt_message` | Decrypts v1 or v2 for sender or recipient and decodes reply JSON when present. |
 | `encode` | Serializes a standard envelope with fixed-width header fields. |
 | `decode` | Parses and validates a standard v1/v2 envelope. |
-| `v2_aad` | Reconstructs the canonical v2 standard header prefix. |
+| `v2_aad` | Reconstructs the canonical full 126-byte v2 standard header. |
 | `is_chat_message` | Recognizes supported standard envelope version and protocol bytes at minimum length. |
 | `sign_encryption_key` | Signs a 32-byte X25519 public key with Ed25519. |
 | `verify_encryption_key` | Verifies an Ed25519 signature using a parsed verifying key. |
@@ -47,8 +48,8 @@ remaining able to decode version 1 messages.
 | `PROTOCOL_VERSION` | Standard legacy envelope version byte 0x01. |
 | `PROTOCOL_VERSION_V2` | Standard authenticated-header version byte 0x02. |
 | `PROTOCOL_ID` | Standard message protocol discriminator 0x01. |
-| `STANDARD_V2_AAD_LEN` | Standard v2 authenticated metadata length, 78 bytes. |
-| `PSK_V2_AAD_LEN` | Shared PSK v2 authenticated metadata length, 82 bytes. |
+| `STANDARD_V2_AAD_LEN` | Standard v2 authenticated metadata length, 126 bytes. |
+| `PSK_V2_AAD_LEN` | Shared PSK v2 authenticated metadata length, 130 bytes. |
 | `HEADER_SIZE` | Standard envelope fixed header length, 126 bytes. |
 | `TAG_SIZE` | ChaCha20-Poly1305 authentication tag length, 16 bytes. |
 | `ENCRYPTED_SENDER_KEY_SIZE` | Wrapped sender-key field length, 48 bytes. |
@@ -73,10 +74,31 @@ remaining able to decode version 1 messages.
 | `AlgoChatError` | Typed validation, crypto, storage, blockchain, queue, and protocol failures. |
 | `Result` | Crate result alias using `AlgoChatError`. |
 
+### Hybrid ML-KEM session exports
+
+`src/pq.rs` is re-exported at the crate root. It implements the low-level protocol 1.3.0 session path, independently of standard/PSK client orchestration:
+
+| Export | Contract |
+|---|---|
+| `PqSession` | Public `session_key`, `sender_public`, `recipient_public`, and `handshake_id` arrays; the id is SHA-256 of the handshake note. |
+| `MlkemKeys` | Public `encaps_key` bytes and private ML-KEM decapsulation material. |
+| `derive_mlkem768` | Derives ML-KEM-768 d/z through the fixed HKDF domains. |
+| `derive_hybrid_pq_key` | HKDF-combines X25519 then ML-KEM secrets and binds keys, ciphertext, and recipient encapsulation-key hash. |
+| `initiate_pq_handshake` | Takes sender seed and recipient X25519/ML-KEM keys; returns a 2366-byte note and sender session. |
+| `accept_pq_handshake` | Reconstructs the recipient session from the note and account seed. |
+| `open_pq_handshake_as_sender` | Reopens the sender history copy using the sender seed and its derived ML-KEM secret. |
+| `encrypt_pq_message` | Emits version 0x02/id 0x05 data, a 78-byte authenticated header, and at most 4002 plaintext bytes. |
+| `decrypt_pq_message` | Checks data/session identity and authenticates before returning UTF-8 plaintext. |
+| `PqAnnouncement` | Public `encaps_key` and `verified` fields from ACPQ parsing. |
+| `is_pq_announcement` | Recognizes the ACPQ prefix. |
+| `parse_pq_announcement` | Parses exact unsigned/signed ACPQ lengths, returning an unverified unsigned key or verified signed key; invalid signatures return `None`. |
+
+Handshake id 0x04 and data id 0x05 use version 0x02; id 0x03 is unused. PQ constants and direct KEM encapsulate/decapsulate operations are private in this port. `pq::tests::parity_fixture` reads the committed `vectors/pq-mlkem768.json`; `live_localnet_note` is conditional evidence, not a required live network run. See the [accuracy ledger](../../../docs/ACCURACY.md).
+
 ## Invariants
 
 1. Standard envelopes use protocol ID `0x01`; only versions `0x01` and `0x02` are accepted.
-2. V2 encryption authenticates exactly the version, protocol ID, sender key, ephemeral key, and nonce prefix.
+2. V2 encryption authenticates the full 126-byte header, including the encrypted sender-key field; sender-key wrapping uses empty AAD.
 3. Standard plaintext may not exceed 3954 bytes, so the encoded note is at most 4096 bytes. The header stays 126 bytes and the tag stays 16 bytes. An 882-byte plaintext still encrypts, and that note is at most 1024 bytes.
 4. A note payment fee is one minimum fee plus the consensus surcharge for bytes past 1024. At a minimum fee of 1000 microAlgos, notes of 1024, 2000, and 4096 bytes cost 1000, 1098, and 1308. This crate does not add a Falcon signer.
 5. Seed, public-key, nonce, signature, and fixed header fields are rejected at incorrect lengths.

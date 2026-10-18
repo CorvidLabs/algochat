@@ -14,7 +14,7 @@ Equal initial PSKs and counters SHALL produce equal session, position, and curre
 
 ### REQ-psk-003 — V2 counter binding
 
-Version 2 SHALL authenticate the exact 82-byte header prefix, including the ratchet counter, so header or downgrade tampering fails.
+Version 2 SHALL authenticate the exact 130-byte full header, including the ratchet counter, so header or downgrade tampering fails.
 
 ### REQ-psk-004 — Replay protection
 
@@ -55,7 +55,7 @@ Acceptance Criteria
 
 ### REQ-psk-003
 
-Version 2 SHALL authenticate the exact 82-byte PSK header including its counter.
+Version 2 SHALL authenticate the exact 130-byte PSK header including its counter.
 
 Acceptance Criteria
 - PSK known-answer and tamper vectors pass.

@@ -6,9 +6,10 @@ import Foundation
 
  Each message uses a fresh ephemeral key pair. The symmetric encryption key
  is derived from the ephemeral private key and recipient's static public key.
- This provides sender-side forward secrecy: compromising the sender's key
- does not reveal past messages. Note: recipient key compromise exposes all
- messages encrypted to that recipient.
+ This separates per-message keys; it does not provide forward secrecy. The
+ recipient's long-term key can recover past message keys from published
+ ephemeral public keys. The sender's long-term key can reopen the sender-key
+ wraps included in standard envelopes, exposing the same stored plaintext.
  */
 public struct EphemeralKeyManager: Sendable {
     public init() {}

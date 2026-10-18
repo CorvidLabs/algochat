@@ -7,23 +7,25 @@ pub const PROTOCOL_VERSION: u8 = 0x01;
 
 /// Protocol version byte for v2 (AEAD header binding).
 ///
-/// v2 envelopes are wire-identical to v1 except the leading version byte is
-/// `0x02` and both AEAD operations bind the header metadata prefix as
-/// Associated Data (AAD). See proposal 0001. v1 envelopes remain fully valid.
+/// v2 uses the same field layout as v1 with leading version byte `0x02`.
+/// Payload encryption authenticates the full fixed header, including the
+/// wrapped sender key, as Associated Data (AAD). The sender-key wrap uses
+/// empty AAD. v1 envelopes remain valid with empty payload AAD.
 pub const PROTOCOL_VERSION_V2: u8 = 0x02;
 
 /// Protocol ID byte.
 pub const PROTOCOL_ID: u8 = 0x01;
 
-/// Length of the standard v2 AAD: the metadata prefix of the header.
+/// Length of the standard v2 payload AAD: the full fixed header.
 ///
-/// `version(1) + protocol_id(1) + sender_public_key(32) + ephemeral_public_key(32) + nonce(12)`
+/// `version(1) + protocol_id(1) + sender_public_key(32) + ephemeral_public_key(32)`
+/// `+ nonce(12) + encrypted_sender_key(48) = 126`
 pub const STANDARD_V2_AAD_LEN: usize = 126;
 
-/// Length of the PSK v2 AAD: the metadata prefix of the PSK header.
+/// Length of the PSK v2 payload AAD: the full fixed header.
 ///
 /// `version(1) + protocol_id(1) + ratchet_counter(4) + sender_public_key(32)`
-/// `+ ephemeral_public_key(32) + nonce(12)`
+/// `+ ephemeral_public_key(32) + nonce(12) + encrypted_sender_key(48) = 130`
 pub const PSK_V2_AAD_LEN: usize = 130;
 
 /// Size of the envelope header in bytes.

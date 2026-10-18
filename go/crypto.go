@@ -101,7 +101,8 @@ func concatBytes(slices ...[]byte) []byte {
 	return result
 }
 
-// EncryptMessage encrypts a message for a recipient with forward secrecy.
+// EncryptMessage encrypts a message with a fresh ephemeral key for per-message
+// key separation. Long-term keys recover stored history; there is no forward secrecy.
 func EncryptMessage(plaintext string, senderPublicKey, recipientPublicKey [KeySize]byte) (*ChatEnvelope, error) {
 	messageBytes := []byte(plaintext)
 	if len(messageBytes) > MaxPayloadSize {

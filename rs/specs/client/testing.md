@@ -25,3 +25,7 @@ No live Algorand operation is required for this governance-only migration; deplo
 | Expired cached key | Retrieval misses and discovery can refresh it. |
 | Invalid ownership signature | Verified discovery rejects the key. |
 | Wrong storage password | Retrieval fails without returning key bytes. |
+
+## Evidence limit
+
+Existing contact/replay tests exercise sequential state transitions. They do not establish atomic rejection of simultaneous copies of one PSK envelope. A separately approved implementation fix needs a concurrent receive regression test.

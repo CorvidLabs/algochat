@@ -60,3 +60,6 @@ Storage implementations SHALL preserve namespaced messages, sync rounds, keys, v
 Acceptance Criteria
 - Existing persistence, cache, and key-storage cases pass in `StorageTest`.
 
+## Implementation gap status
+
+`REQ-client-001`, `REQ-client-003`, and the private-key persistence constraint remain normative. Source currently accepts an unchecked caller address, sorts conversation messages by timestamp, and persists encryption keys through `EncryptionKeyStorage`. Existing construction/model tests do not prove the stronger criteria. See the [accuracy ledger](../../../docs/ACCURACY.md); correcting these behaviors requires separately approved implementation work.

@@ -25,7 +25,7 @@ private and their supported public items are re-exported from the crate root.
 
 The root publicly re-exports the supported client, blockchain, model, queue,
 storage, standard cryptography, envelope, key, signature, shared type, PSK
-cryptography, PSK envelope, exchange, ratchet, state, and PSK type APIs. The
+cryptography, PSK envelope, exchange, ratchet, state, PSK type, and hybrid ML-KEM session APIs. The
 implementation modules themselves remain private and expose no separate module symbol.
 
 ### Exported Types

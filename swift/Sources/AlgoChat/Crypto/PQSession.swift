@@ -109,7 +109,9 @@ public struct PQAnnouncement: Sendable, Equatable {
  Hybrid session established by one `0x04` note.
 
  The session key needs both the X25519 secret and the ML-KEM secret. The
- long-term ML-KEM key opens every handshake sent to that account.
+ recipient's long-term ML-KEM key decapsulates each addressed handshake;
+ session recovery also needs the recipient's X25519 key. The sender copy
+ likewise needs both sender long-term keys. This is not forward secrecy.
  */
 public struct PQSession: Sendable {
     public let sessionKey: Data

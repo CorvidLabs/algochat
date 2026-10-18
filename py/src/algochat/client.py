@@ -71,7 +71,7 @@ class AlgoChatConfig:
     """Whether to cache messages locally."""
 
     allow_unverified_keys: bool = True
-    """Whether to allow using encryption keys that failed Ed25519 verification.
+    """Whether to allow using encryption keys without verified Ed25519 binding.
 
     When ``False``, discovered keys whose signature could not be verified against
     the address's Ed25519 key are rejected at use time, preventing key
@@ -244,8 +244,8 @@ class AlgoChat:
 
         A key with ``is_verified=False`` has not been cryptographically bound to
         the Algorand address via an Ed25519 signature, so using it risks a key
-        substitution attack. Callers must opt in to unverified keys explicitly
-        via the client config.
+        substitution attack. The client currently allows unverified keys by
+        default; set ``allow_unverified_keys=False`` to reject them.
 
         Raises:
             UnverifiedKeyError: If the key is unverified and unverified keys are

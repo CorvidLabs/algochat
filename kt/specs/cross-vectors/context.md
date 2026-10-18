@@ -16,3 +16,7 @@ AlgoChat's envelope is a language-neutral binary protocol. Unit round trips with
 - Producer-specific tests make compatibility failures attributable.
 - Optional sibling discovery supplements, but never replaces, committed evidence.
 - Export remains a test utility so no fixture machinery enters the library API.
+
+## Accuracy audit
+
+The legacy fixture format is named `.hex` files with seed/plaintext constants in the test, not a JSON record containing per-fixture seeds. Directory and individual-file absence can produce a green test with no imported evidence; the producer requirements remain conditional on actual fixture presence. Export bytes vary with production randomness. Committed PQ parity is a separate test.

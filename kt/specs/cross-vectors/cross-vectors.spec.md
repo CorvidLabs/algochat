@@ -14,15 +14,13 @@ depends_on:
 
 ## Purpose
 
-Define the executable interoperability boundary that decrypts envelopes emitted by Swift, TypeScript, Python, Rust, and Kotlin implementations and can export deterministic Kotlin envelopes for reciprocal consumers.
+Define the executable interoperability boundary that decrypts envelopes emitted by Swift, TypeScript, Python, Rust, and Kotlin implementations and can export Kotlin envelopes for reciprocal consumers using production randomness.
 
 ## Public API
 
-This module is test-only and exports no library API. Its contract is the `CrossImplTest` fixture schema and the assertions applied to sibling implementation artifacts.
+This module is test-only and exports no library API. Its contract is the `CrossImplTest` named `.hex` corpus and the assertions applied to optional sibling implementation artifacts.
 
-Each fixture records hex sender and recipient seeds, a hex-encoded envelope,
-expected UTF-8 plaintext, and an implementation label so failures identify the
-compatibility boundary that regressed.
+Each fixture file is `<corpus-name>.hex` containing encoded envelope bytes only. Alice/Bob seeds and expected plaintext are constants in `CrossImplTest`; the producer is identified by the fixture directory/test method. Directories are searched at `../test-envelopes-<producer>` and `../test-algochat/test-envelopes-<producer>` relative to `kt/`. Export writes `../test-envelopes-kotlin/*.hex` and uses fresh ephemeral keys/nonces, so encoded bytes vary between runs.
 
 | Test export | Contract role |
 |---|---|
@@ -39,13 +37,13 @@ compatibility boundary that regressed.
 
 1. Every imported envelope is decoded and authenticated by production Kotlin protocol code, not by a fixture-specific shortcut.
 2. Swift, TypeScript, Python, Rust, and Kotlin fixtures must resolve to their declared plaintext using the declared seed identities.
-3. Kotlin export uses the same production encryption path and a stable machine-readable fixture shape.
+3. Kotlin export uses the production encryption path and named hex-file corpus; key/nonce randomness means the emitted bytes are not deterministic.
 4. Optional sibling-repository fixture discovery may add evidence but absence of an uncommitted sibling checkout does not make the committed suite nondeterministic.
 
 ## Behavioral Examples
 
 ```text
-Given a Rust-produced fixture containing seeds, envelope bytes, and expected text
+Given a Rust-produced named hex fixture and the fixed seeds/expected text in the Kotlin corpus
 When CrossImplTest derives the Kotlin recipient identity and decrypts the envelope
 Then authenticated plaintext equals the fixture text exactly
 ```
@@ -74,3 +72,6 @@ Then authenticated plaintext equals the fixture text exactly
 
 The interoperability contract was established from the existing `CrossImplTest` producer-specific decrypt and Kotlin export cases. Adoption changes governance only; it does not change fixture or production protocol behavior.
 
+## Evidence limits
+
+Every producer method returns normally when its directory is absent, and absent individual corpus files are ignored. Thus the tests can pass with zero imported fixtures. Parse/decrypt errors on present files count as failures, but a green suite alone does not prove that every producer was exercised. The export case creates 20 named files using fresh random encryption material. Committed PQ parity vectors are covered separately by `PQTest` and the protocol contract. See the [accuracy ledger](../../../docs/ACCURACY.md).

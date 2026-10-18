@@ -16,3 +16,7 @@ The client composes the wire-level primitives into application-facing coroutine 
 - Algod, indexer, and storage are interfaces so tests and host applications control I/O.
 - Mutable conversation and queue state is protected with coroutine mutexes.
 - Verified and merely discovered keys remain distinguishable to callers.
+
+## Accuracy audit
+
+The actual public storage types are `MessageCache`, `PublicKeyCache`, and `EncryptionKeyStorage` with their concrete implementations, rather than `Storage`/`ConversationStore`. The build has no Algorand Java SDK dependency; transport is application supplied. The normative identity, ordering, and persistence constraints remain in place while the [accuracy ledger](../../../docs/ACCURACY.md) records their current implementation gaps.

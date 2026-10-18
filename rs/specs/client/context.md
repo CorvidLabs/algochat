@@ -23,3 +23,7 @@ spec: client.spec.md
 ## Notes
 
 - Proposal 0001 remains canonical for v2 header authentication and identity verification.
+
+## Accuracy audit
+
+The current `receive_psk` check/decrypt/record sequence spans separate locks; the synchronized contact-state requirement is not fully met for concurrent receives. This is an implementation gap, not permission to relax the requirement. The [accuracy ledger](../../../docs/ACCURACY.md) tracks the distinction.

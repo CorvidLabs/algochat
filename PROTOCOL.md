@@ -24,6 +24,7 @@ AlgoChat is an end-to-end encrypted messaging protocol that uses the Algorand bl
 |----------|-----------|-----------|
 | Key Agreement | X25519 ECDH | RFC 7748 |
 | Authenticated Encryption | ChaCha20-Poly1305 | RFC 8439 |
+| Optional Hybrid Key Encapsulation | ML-KEM-768, combined with X25519 | FIPS 203 |
 | Key Derivation | HKDF-SHA256 | RFC 5869 |
 
 ## 4. Key Derivation
@@ -58,7 +59,7 @@ feed 32-byte seeds. Those seeds are mnemonic entropy. They are unchanged.
 
 ### 4.2 Ephemeral Key Pair
 
-Each message uses a fresh ephemeral key pair:
+Each standard (`0x01`) or PSK (`0x02`) message uses a fresh ephemeral key pair. A hybrid handshake (`0x04`) also creates one; subsequent `0x05` messages reuse its session key:
 
 ```
 ephemeral_private = RANDOM(32)
@@ -178,7 +179,7 @@ A plaintext of 878 bytes still encrypts. That envelope is 1024 bytes. It remains
 
 This mode is optional. A peer with no ML-KEM encapsulation key still receives `0x01` or `0x02`. Identifier `0x03` is not assigned.
 
-ML-KEM-768 (FIPS 203, category 3) is combined with X25519. The recipient derives the session key from both shared secrets. The long-term ML-KEM key opens every handshake sent to that account on that path. This is not forward secrecy.
+ML-KEM-768 ([FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), finalized August 2024, category 3) is combined with X25519. Using this standardized algorithm does not establish an implementation audit or FIPS validation. The recipient derives the session key from both shared secrets. The long-term ML-KEM key decapsulates the ML-KEM half of every handshake sent to that account; recovering the session also requires the recipient's X25519 secret. This is not forward secrecy.
 
 The handshake also carries a sender copy of the session key. That copy is sealed under both of these secrets, which the sender can recompute later:
 
@@ -240,6 +241,8 @@ The ciphertext and 16-byte tag follow. Maximum plaintext is 4002 bytes (4096 - 7
 
 ### 6.1 Message Encryption (Sender → Recipient)
 
+Sections 6–7 describe standard mode. `payload_aad` is empty for version `0x01` and the complete 126-byte fixed header for version `0x02`. Compute the sender-key wrap in section 6.2 before sealing the payload so that the header includes it. The wrap always uses empty associated data.
+
 ```
 // Generate ephemeral key pair
 ephemeral_private, ephemeral_public = GENERATE_KEYPAIR()
@@ -251,9 +254,11 @@ shared_secret = X25519(ephemeral_private, recipient_public_key)
 info = "AlgoChatV1" || sender_public_key || recipient_public_key
 symmetric_key = HKDF-SHA256(shared_secret, ephemeral_public, info, 32)
 
-// Encrypt message
+// Choose the nonce, compute the sender wrap (section 6.2), then serialize the header
 nonce = RANDOM(12)
-ciphertext = ChaCha20-Poly1305-ENCRYPT(symmetric_key, nonce, plaintext)
+encrypted_sender_key = wrap_symmetric_key_as_in_section_6_2()
+payload_aad = empty_aad if version == 0x01 else serialize_fixed_header(envelope_fields)
+ciphertext = ChaCha20-Poly1305-ENCRYPT(symmetric_key, nonce, plaintext, payload_aad)
 ```
 
 ### 6.2 Sender Key Encryption (Self-Decryption)
@@ -269,7 +274,7 @@ sender_info = "AlgoChatV1-SenderKey" || sender_public_key
 sender_encryption_key = HKDF-SHA256(sender_shared_secret, ephemeral_public, sender_info, 32)
 
 // Encrypt the symmetric key
-encrypted_sender_key = ChaCha20-Poly1305-ENCRYPT(sender_encryption_key, nonce, symmetric_key)
+encrypted_sender_key = ChaCha20-Poly1305-ENCRYPT(sender_encryption_key, nonce, symmetric_key, empty_aad)
 ```
 
 ## 7. Decryption
@@ -285,7 +290,8 @@ info = "AlgoChatV1" || sender_public_key || recipient_public_key
 symmetric_key = HKDF-SHA256(shared_secret, ephemeral_public_key, info, 32)
 
 // Decrypt message
-plaintext = ChaCha20-Poly1305-DECRYPT(symmetric_key, nonce, ciphertext)
+payload_aad = empty_aad if envelope.version == 0x01 else serialize_fixed_header(envelope)
+plaintext = ChaCha20-Poly1305-DECRYPT(symmetric_key, nonce, ciphertext, payload_aad)
 ```
 
 ### 7.2 Sender Decryption (Own Messages)
@@ -299,10 +305,11 @@ sender_info = "AlgoChatV1-SenderKey" || sender_public_key
 sender_decryption_key = HKDF-SHA256(sender_shared_secret, ephemeral_public_key, sender_info, 32)
 
 // Decrypt the symmetric key
-symmetric_key = ChaCha20-Poly1305-DECRYPT(sender_decryption_key, nonce, encrypted_sender_key)
+symmetric_key = ChaCha20-Poly1305-DECRYPT(sender_decryption_key, nonce, encrypted_sender_key, empty_aad)
 
 // Decrypt message
-plaintext = ChaCha20-Poly1305-DECRYPT(symmetric_key, nonce, ciphertext)
+payload_aad = empty_aad if envelope.version == 0x01 else serialize_fixed_header(envelope)
+plaintext = ChaCha20-Poly1305-DECRYPT(symmetric_key, nonce, ciphertext, payload_aad)
 ```
 
 ## 8. PSK Ratcheting Mode (Protocol `0x02`)
@@ -397,6 +404,8 @@ psk_sender_key = HKDF-SHA256(
 
 ### 8.3 PSK Encryption
 
+For version `0x01`, `payload_aad` is empty. For version `0x02`, it is the complete 130-byte fixed header, including the counter and wrapped sender key. Compute the wrap first, with empty associated data, then seal the payload.
+
 ```
 // Generate ephemeral key pair
 ephemeral_private, ephemeral_public = GENERATE_KEYPAIR()
@@ -414,9 +423,8 @@ psk_symmetric_key = HKDF-SHA256(
     length: 32
 )
 
-// Encrypt message
+// Choose the nonce before wrapping the key
 nonce = RANDOM(12)
-ciphertext = ChaCha20-Poly1305-ENCRYPT(psk_symmetric_key, nonce, plaintext)
 
 // Encrypt symmetric key for sender
 sender_shared_secret = X25519(ephemeral_private, sender_public_key)
@@ -427,7 +435,11 @@ psk_sender_key = HKDF-SHA256(
     info: sender_info,
     length: 32
 )
-encrypted_sender_key = ChaCha20-Poly1305-ENCRYPT(psk_sender_key, nonce, psk_symmetric_key)
+encrypted_sender_key = ChaCha20-Poly1305-ENCRYPT(psk_sender_key, nonce, psk_symmetric_key, empty_aad)
+
+// Seal the payload after the complete fixed header is available
+payload_aad = empty_aad if version == 0x01 else serialize_fixed_header(envelope_fields)
+ciphertext = ChaCha20-Poly1305-ENCRYPT(psk_symmetric_key, nonce, plaintext, payload_aad)
 
 // Increment ratchet counter for next message
 ratchet_counter += 1
@@ -465,7 +477,8 @@ psk_symmetric_key = HKDF-SHA256(
 )
 
 // Decrypt message
-plaintext = ChaCha20-Poly1305-DECRYPT(psk_symmetric_key, nonce, ciphertext)
+payload_aad = empty_aad if envelope.version == 0x01 else serialize_fixed_header(envelope)
+plaintext = ChaCha20-Poly1305-DECRYPT(psk_symmetric_key, nonce, ciphertext, payload_aad)
 
 // Update counter tracking
 update_peer_counter(envelope.sender_public_key, ratchet_counter)
@@ -486,8 +499,9 @@ psk_sender_key = HKDF-SHA256(
     length: 32
 )
 
-symmetric_key = ChaCha20-Poly1305-DECRYPT(psk_sender_key, nonce, encrypted_sender_key)
-plaintext = ChaCha20-Poly1305-DECRYPT(symmetric_key, nonce, ciphertext)
+symmetric_key = ChaCha20-Poly1305-DECRYPT(psk_sender_key, nonce, encrypted_sender_key, empty_aad)
+payload_aad = empty_aad if envelope.version == 0x01 else serialize_fixed_header(envelope)
+plaintext = ChaCha20-Poly1305-DECRYPT(symmetric_key, nonce, ciphertext, payload_aad)
 ```
 
 ### 8.5 Counter Window
@@ -499,6 +513,8 @@ Counter validation rules:
 2. A counter value more than `COUNTER_WINDOW` behind the highest seen counter SHOULD be rejected
 3. A counter value more than `COUNTER_WINDOW` ahead of the highest seen counter SHOULD be rejected (potential attack or state desynchronization)
 4. Within the window, any unseen counter value MUST be accepted regardless of order
+
+These are protocol requirements, not a claim that every port persists or enforces this state. See [docs/ACCURACY.md](docs/ACCURACY.md) for implementation gaps.
 
 ### 8.6 PSK Exchange
 
@@ -524,6 +540,8 @@ The PSK MUST be generated using a cryptographically secure random number generat
 
 ## 9. Message Payload
 
+The structured payloads below coexist with legacy raw UTF-8 text. Readers preserve legacy text rather than requiring every plaintext to parse as JSON. The byte limits apply to the actual encoded plaintext, including any JSON overhead.
+
 ### 9.1 Text Message
 
 ```json
@@ -546,7 +564,7 @@ The PSK MUST be generated using a cryptographically secure random number generat
 
 ### 9.3 Key Publish
 
-Used to publish encryption public key for key discovery:
+Used to publish an encryption public key for key discovery. The `publicKey` payload field is optional and redundant with the envelope's sender-key field; `{"type":"key-publish"}` is also a valid marker and is filtered from user message lists:
 
 ```json
 {
@@ -586,6 +604,8 @@ also attach an Ed25519 signature over the X25519 public key (the v1.1
 announce format). That extra signature is optional, applies only when the
 sender address is an Ed25519 public key, and MUST NOT be required for
 Falcon-1024 senders.
+
+The trustworthy sender address is the transaction's `sender`, not the envelope's `sender_pubkey`. Anyone can construct an envelope naming another X25519 key using public information. Clients must retain the transaction context and apply their key-binding policy; successfully decrypting an envelope alone does not authenticate its claimed sender.
 
 ### 10.3 Fees
 
@@ -630,6 +650,8 @@ When querying the indexer, filter by note prefix to match the protocol mode:
 | Standard, version `0x02` | `0x0201` | Full header is payload associated data |
 | Extra lock, version `0x01` | `0x0102` | Empty associated data |
 | Extra lock, version `0x02` | `0x0202` | Full header is payload associated data |
+| Hybrid handshake | `0x0204` | One 2366-byte session handshake |
+| Hybrid message | `0x0205` | 78-byte header is payload associated data |
 
 To discover everyday and Extra lock notes, query for all four prefixes:
 
@@ -646,9 +668,9 @@ See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for pseudocode examples.
 
 ### 11.1 Forward Secrecy — Not Provided
 
-**AlgoChat does not provide forward secrecy.** Every message uses a fresh ephemeral
-key pair, which separates per-message symmetric keys, but that ephemeral key belongs
-to the *sender* and its public half travels in the envelope. Recovering a message key
+**AlgoChat does not provide forward secrecy.** Standard and PSK messages use fresh ephemeral
+key pairs, which separate per-message symmetric keys, but the ephemeral key belongs
+to the *sender* and its public half travels in the envelope. In standard mode, recovering a message key
 requires only a long-term private key and that public value:
 
 ```
@@ -661,22 +683,24 @@ that derives it — can therefore retroactively decrypt **every base-mode messag
 has ever sent or received** (PSK-mode decryption additionally requires the PSK), and no revocation or key rotation can undo this,
 because the ciphertext remains publicly retrievable forever.
 
-This applies to both modes. In PSK mode (`0x02`) the pre-shared key is mixed into
+In PSK mode (`0x02`) the pre-shared key is mixed into
 HKDF alongside the ECDH secret, so an attacker needs the PSK *as well as* a
 long-term key — a meaningful additional barrier, but not forward secrecy: the PSK
 is static, and every position key is a deterministic function of it (see
 [8.1](#81-psk-ratchet-mechanism)).
+
+Hybrid mode (`0x04`/`0x05`) reuses the handshake session key for subsequent messages. The recipient can recover it with the long-term X25519 and ML-KEM keys; the sender can recover the wrapped copy with the sender's long-term X25519 and ML-KEM keys. These keys are deterministically recoverable from mnemonic entropy, so mnemonic compromise also exposes hybrid history. Compromise of a session key exposes every `0x05` message in that session.
 
 No key material is ever ratcheted forward and destroyed. Achieving forward secrecy
 would require a scheme such as the Double Ratchet, in which past keys become
 unrecoverable after use.
 
 **Implication for users:** a recovery phrase exposes the complete, permanent base-mode
-message history of that account; PSK-mode history additionally requires the PSK. It must be protected accordingly.
+message history of that account and derives the keys needed to recover hybrid history; PSK-mode history additionally requires the PSK. It must be protected accordingly.
 
 ### 11.2 Replay Protection
 
-The blockchain provides replay protection through transaction uniqueness. PSK mode adds counter-based replay protection within the ratchet window.
+Transaction uniqueness prevents the identical signed transaction from being accepted twice. It does not prevent copying a note into a new transaction. PSK mode requires counter-based replay protection within the ratchet window (section 8.5). Standard and hybrid applications must track transaction/session context as appropriate; there is no universal envelope-level replay cache. See [docs/ACCURACY.md](docs/ACCURACY.md) for port limitations.
 
 ### 11.3 Metadata Leakage
 
@@ -685,11 +709,12 @@ The following metadata is visible on-chain:
 - Recipient Algorand address
 - Timestamp (block time)
 - Message size (approximate)
-- Protocol mode (`0x01` vs `0x02`) reveals whether PSK is in use
+- Protocol mode (`0x01`, `0x02`, `0x04`, or `0x05`) reveals standard, PSK, handshake, or session-message use
+- Hybrid handshakes expose both X25519 keys; session messages expose their handshake hash
 
 ### 11.4 Key Compromise
 
-If a recipient's private key is compromised:
+For standard and PSK modes, if a recipient's X25519 private key is compromised:
 - **All past messages to that key are compromised.** Envelopes stay publicly
   retrievable from the chain indefinitely, so the exposure is retroactive and
   permanent (see [11.1](#111-forward-secrecy--not-provided))
@@ -702,6 +727,8 @@ If a recipient's private key is compromised:
   secrecy — an attacker holding both the PSK and a long-term key recovers the full
   history
 
+For hybrid mode, the recipient path requires both the recipient's X25519 and ML-KEM keys, and the sender-copy path requires both of the sender's keys. The mnemonic derives both kinds of keys. A leaked session key exposes that session.
+
 Because compromise is retroactive and irreversible, key rotation limits future
 exposure only. There is no mechanism to protect already-published ciphertext.
 
@@ -709,7 +736,8 @@ exposure only. There is no mechanism to protect already-published ciphertext.
 
 ```
 // Standard mode
-PROTOCOL_VERSION       = 0x01
+PROTOCOL_VERSION       = 0x01  // Legacy empty-AAD envelope
+PROTOCOL_VERSION_AAD   = 0x02  // Full fixed header as payload AAD; readers accept both
 PROTOCOL_STANDARD      = 0x01
 HEADER_SIZE            = 126
 MAX_PAYLOAD_SIZE       = 3954
@@ -720,6 +748,13 @@ PSK_HEADER_SIZE        = 130
 PSK_MAX_PAYLOAD_SIZE   = 3950
 PSK_SESSION_SIZE       = 100
 COUNTER_WINDOW         = 200
+
+// Hybrid session (always envelope version 0x02)
+PROTOCOL_PQ_HANDSHAKE  = 0x04
+PROTOCOL_PQ_MESSAGE    = 0x05
+PQ_HANDSHAKE_SIZE      = 2366
+PQ_DATA_HEADER_SIZE    = 78
+PQ_MAX_PAYLOAD_SIZE    = 4002
 
 // Shared
 MAX_NOTE_SIZE          = 4096

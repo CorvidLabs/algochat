@@ -17,3 +17,7 @@ The PSK variant adds an out-of-band secret and ratchet position to the normal as
 - A bounded receive window tolerates limited reordering while rejecting replay.
 - Receive state commits only after the supplied decrypt block succeeds.
 - PSK plaintext max is 4096 minus the 130-byte header and 16-byte tag.
+
+## Implementation gap status
+
+The current window bounds how far behind a counter can be; it does not bound future jumps. Unsigned send-counter arithmetic wraps rather than failing before reuse. Stronger counter-exhaustion/window intent remains open in the [accuracy ledger](../../../docs/ACCURACY.md).

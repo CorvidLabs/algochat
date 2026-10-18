@@ -5,6 +5,7 @@ status: active
 owner: CorvidLabs
 files:
   - tests/cross_impl.rs
+  - src/bin/pqcross.rs
 db_tables: []
 depends_on:
   - client
@@ -34,7 +35,15 @@ tamper, and identity vectors always run from data embedded in the Rust tests.
 | Header tamper | Flips authenticated metadata and requires decryption failure. |
 | Signed announcement | Requires account A's signature to verify for A and fail for account B. |
 
-This test module intentionally exports no library API.
+This module exports no library API. `src/bin/pqcross.rs` is a test/mesh process entry point reading one JSON request per stdin line and returning a matching id plus success data or an error. It invokes the production standard/PSK/PQ primitives; it does not submit transactions itself.
+
+| Tool operation | Contract |
+|---|---|
+| `identity` | Derives X25519 and ML-KEM public keys from a supplied test seed. |
+| `write`, `read` | Builds or consumes a PQ handshake/data pair and checks sender/recipient recovery. |
+| `write01`, `read01` | Produces or consumes standard envelopes. |
+| `write02`, `read02` | Produces or consumes PSK envelopes. |
+| `write05s` | Produces multiple PQ data notes in one session. |
 
 ## Invariants
 

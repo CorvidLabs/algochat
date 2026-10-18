@@ -14,10 +14,16 @@ spec: algochat.spec.md
 
 - Independent cryptographic audit is not represented as completed.
 - External Algorand node, indexer, and LocalNet availability are not claimed by deterministic unit verification.
-- The package remains pre-1.0, so future public contract changes require their own reviewed SpecSync lifecycle.
+- Future public contract changes require their own reviewed SpecSync lifecycle.
 
 ## Review Sign-offs
 
 - **Product contract**: represented by the implemented public API and reviewed canonical requirements
-- **Native verification**: 242 deterministic tests and the CLI product build pass
+- **Native verification at the governance migration**: the recorded 242 tests and CLI build are historical evidence, not a current run
 - **Governance**: portable definition and closing approvals are recorded through the SpecSync lifecycle
+
+## Accuracy reconciliation
+
+- [x] Inventory the existing hybrid-session source and PQCross fixture adapter.
+- [x] Correct package/runtime, crypto labels, storage APIs and current workflow documentation.
+- [x] Preserve accepted requirements while recording the inbound-size and storage gaps in the [accuracy ledger](../../../docs/ACCURACY.md).

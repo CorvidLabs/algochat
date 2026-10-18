@@ -10,6 +10,7 @@ files:
   - src/algochat/envelope.py
   - src/algochat/keys.py
   - src/algochat/models.py
+  - src/algochat/pq.py
   - src/algochat/psk_crypto.py
   - src/algochat/psk_envelope.py
   - src/algochat/psk_exchange.py
@@ -159,6 +160,54 @@ The explicit exception hierarchy keeps protocol, cryptographic, transport, addre
 
 The PSK v1.1 surface covers wire constants, hierarchical ratchet derivation, hybrid authenticated encryption, replay-safe receive state, and exchange URI handling.
 
+### Hybrid ML-KEM session exports
+
+`src/algochat/pq.py` implements the shipped low-level protocol 1.3.0 session API. It is re-exported through `algochat.__init__`; the high-level client does not automatically orchestrate PQ handshakes/data. The 29 public exports are:
+
+| Export | Contract |
+|---|---|
+| `PQError` | Typed failure for hybrid session derivation, handshake, message authentication, and size checks. |
+| `PQ_VERSION` | PQ wire version 0x02. |
+| `PQ_HANDSHAKE_ID` | Handshake discriminator 0x04. |
+| `PQ_DATA_ID` | Steady-state data discriminator 0x05. |
+| `MLKEM_EK_SIZE` | ML-KEM-768 encapsulation key size, 1184 bytes. |
+| `MLKEM_CT_SIZE` | ML-KEM-768 ciphertext size, 1088 bytes. |
+| `PQ_HANDSHAKE_SIZE` | One-note handshake size, 2366 bytes. |
+| `PQ_DATA_HEADER_SIZE` | Steady-state authenticated header size, 78 bytes. |
+| `PQ_MAX_PAYLOAD_SIZE` | Maximum PQ plaintext size, 4002 UTF-8 bytes. |
+| `PQ_ANNOUNCE_MAGIC` | ACPQ announcement discriminator. |
+| `PQ_ANNOUNCE_VERSION` | ACPQ announcement format version 0x01. |
+| `MLKEMKeyPair` | Encapsulation key and 64-byte d || z key-generation seed retained as decaps_key. |
+| `PQSession` | Session key, sender/recipient X25519 public keys, and SHA-256 handshake identifier. |
+| `PQAnnouncement` | Parsed encapsulation key and signature-verification state. |
+| `derive_mlkem_keypair` | Derives ML-KEM-768 from a 32-byte account seed through the fixed HKDF d/z domains. |
+| `encapsulate` | Returns ML-KEM shared secret and ciphertext for a recipient encapsulation key. |
+| `decapsulate` | Recovers a shared secret with a 1088-byte ciphertext and 64-byte d || z seed. |
+| `derive_hybrid_pq_key` | HKDF-combines X25519 then ML-KEM secrets while binding both identities, ephemeral key, ciphertext, and encapsulation-key hash. |
+| `initiate_pq_session` | Builds the one-note handshake and returns its sender-side session. |
+| `accept_pq_session` | Checks recipient/key-hash identity and reconstructs a session from a handshake. |
+| `open_pq_session_as_sender` | Reopens sent history using the sender X25519 and ML-KEM secrets. |
+| `encrypt_pq_message` | Encrypts a data note with fresh nonce and the full 78-byte data header as AAD. |
+| `decrypt_pq_message` | Checks session identity and authenticates a data note before UTF-8 decoding. |
+| `is_pq_handshake` | Recognizes the exact handshake length and version/id markers. |
+| `is_pq_message` | Recognizes minimum PQ data length and version/id markers. |
+| `encode_pq_key_announcement` | Encodes an unsigned or Ed25519-signed ACPQ encapsulation-key note. |
+| `parse_pq_key_announcement` | Parses ACPQ announcements; unsigned results are unverified and invalid signatures fail parsing. |
+| `is_pq_key_announcement` | Recognizes the ACPQ prefix before standard X25519 announcement parsing. |
+| `pq_announcement_signing_input` | SHA-256 digest of the announcement signing label, version, and encapsulation key. |
+
+The following additional constants are public in `algochat.pq` but are not root-package re-exports:
+
+| Export | Contract |
+|---|---|
+| `MLKEM_DK_SIZE` | Expanded ML-KEM-768 decapsulation key size, 2400 bytes; exported key-pair storage uses the 64-byte seed instead. |
+| `MLKEM_SEED_SIZE` | ML-KEM d || z key-generation seed size, 64 bytes. |
+| `PQ_EK_HASH_SIZE` | SHA-256 encapsulation-key hash size, 32 bytes. |
+| `PQ_HANDSHAKE_ID_SIZE` | SHA-256 handshake identifier size, 32 bytes. |
+| `PQ_WRAPPED_KEY_SIZE` | Wrapped 32-byte session key plus authentication tag, 48 bytes. |
+
+`tests/test_pq.py` reads the committed `vectors/pq-mlkem768.json` for ML-KEM parity, the combiner, recipient acceptance and sender reopening, tamper rejection, the 4002-byte payload boundary, and ACPQ exclusion from standard discovery. Legacy standard and PSK messages remain independent formats. See the [accuracy ledger](../../../docs/ACCURACY.md) for behavior gaps and evidence limits.
+
 ## Invariants
 
 1. Standard messages use the existing X25519, HKDF-SHA256, and ChaCha20-Poly1305 construction and remain decryptable by the intended recipient and originating sender.
@@ -198,7 +247,7 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 ## Dependencies
 
 - Python 3.10 or newer
-- `cryptography` for X25519, ChaCha20-Poly1305, HKDF, AES-GCM, and PBKDF2 primitives
+- `cryptography>=50` for ML-KEM-768 seed import, X25519, ChaCha20-Poly1305, HKDF, Ed25519, AES-GCM, and PBKDF2 primitives
 - Algorand-compatible transaction and note transport supplied through the existing abstractions
 
 ## Change Log

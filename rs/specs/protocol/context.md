@@ -5,7 +5,7 @@ spec: protocol.spec.md
 ## Key Decisions
 
 - Preserve version 1 empty-AAD compatibility.
-- Require version 2 to authenticate its 78-byte metadata prefix.
+- Require version 2 to authenticate its 126-byte header.
 - Derive X25519 keys deterministically from exact 32-byte seed material.
 - Sign published X25519 keys with the account Ed25519 identity.
 
@@ -22,3 +22,9 @@ spec: protocol.spec.md
 ## Notes
 
 - specs/proposals/0001-aead-header-binding-and-identity-verification.md explains v2.
+
+## Accuracy audit
+
+The active implementation authenticates the full standard/PSK payload headers (126/130 bytes), including the wrapped sender key. Sender-key wrapping uses empty AAD. Prefix-only wording in proposal 0001 is historical and is superseded by the active implementation and canonical contract; no runtime interoperability change is part of this correction.
+
+The protocol source inventory includes `src/pq.rs`, covering the shipped low-level ML-KEM session exports separately from high-level client dispatch. See the [accuracy ledger](../../../docs/ACCURACY.md).

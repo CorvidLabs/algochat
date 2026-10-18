@@ -3,8 +3,8 @@ import Foundation
 /**
  The wire format for encrypted messages stored in transaction notes
 
- **Format** - Forward secrecy with bidirectional decryption:
- - Version: 1 byte (0x01)
+ **Format** - Per-message key separation with bidirectional decryption, without forward secrecy:
+ - Version: 1 byte (0x01 for empty payload AAD, 0x02 for full-header payload AAD)
  - Protocol: 1 byte (0x01 = AlgoChat)
  - Sender Static Public Key: 32 bytes (X25519)
  - Sender Ephemeral Public Key: 32 bytes (X25519)
@@ -18,7 +18,7 @@ import Foundation
 public struct ChatEnvelope: Sendable {
     // MARK: - Constants
 
-    /// Current version
+    /// Default version emitted by this implementation; readers also accept 0x02
     public static let version: UInt8 = 0x01
 
     /// AlgoChat protocol identifier
@@ -41,10 +41,10 @@ public struct ChatEnvelope: Sendable {
 
     // MARK: - Properties
 
-    /// Sender's static X25519 public key (for identity/key discovery)
+    /// Sender's static X25519 public key for key discovery; sender identity comes from the signed payment
     public let senderPublicKey: Data
 
-    /// Sender's ephemeral X25519 public key (for forward secrecy)
+    /// Sender's ephemeral X25519 public key for per-message key separation
     public let ephemeralPublicKey: Data
 
     /// Encrypted symmetric key for sender decryption
@@ -63,7 +63,7 @@ public struct ChatEnvelope: Sendable {
     // MARK: - Initialization
 
     /**
-     Creates an envelope with forward secrecy and bidirectional decryption
+     Creates an envelope with per-message key separation and bidirectional decryption
 
      - Precondition: `senderPublicKey` must be 32 bytes (X25519 public key)
      - Precondition: `ephemeralPublicKey` must be 32 bytes (X25519 public key)

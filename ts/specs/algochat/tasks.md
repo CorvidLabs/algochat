@@ -11,3 +11,6 @@ spec: algochat.spec.md
 - [x] Tie each normative requirement to deterministic native verification.
 - [x] Remove the raven mailbox router; keep encrypted payment notes and Falcon-1024 `pqsig` accounts.
 - [x] Raise the note ceiling to 4096 bytes and price notes past 1024 bytes with the consensus surcharge (protocol 1.2.1).
+
+- [x] Reconcile the source/export inventory with existing header-AAD and hybrid-session modules.
+- [x] Document low-level/high-level API boundaries and link accepted implementation gaps.

@@ -15,3 +15,9 @@ spec: algochat.spec.md
 - Corrupt, truncated, forged, wrong-key, replayed, and oversize inputs must fail closed.
 - Network-facing tests use injected fixtures and never require credentials or mutate Algorand networks.
 - Cross-implementation protocol vectors remain an independent compatibility boundary where supplied by the protocol repository.
+
+### Separate compatibility evidence
+
+- `bun conformance/tools/verify.mjs` (from `ts/`) verifies the frozen standard/PSK corpus with 85 checks; it is not called by the active root qualification script.
+- `src/pq/pq.test.ts` and root `vectors/` cover hybrid KDF, handshake, sender recovery, announcements, session data and tampering. Coverage by those cases does not establish replay handling or high-level hybrid integration.
+- The active root release qualification packs the package and checks imports/declarations in a separate Node.js consumer. See the [accuracy ledger](../../../docs/ACCURACY.md) for accepted-contract gaps that tests or structural coverage do not resolve.

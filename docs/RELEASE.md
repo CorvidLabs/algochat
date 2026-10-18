@@ -114,27 +114,38 @@ claim another author's historical actions or fabricate human implementation acce
 
 ## Package versions and distribution
 
-`CorvidLabs/algochat` is the source. Archived language repositories stay archived. These identities are the release set. Creating the tags and publishing still need a separate authorization.
+`CorvidLabs/algochat` is the source. Archived language repositories stay archived. These are the source package identities. The protocol/Swift tag `v1.3.0` and nested Go tag `go/v0.2.0` already exist on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`; they do not select the latest `main`. Further tags, releases, package publication, or deployment require separate authorization.
 
-| Library | Identity | Version | Where a later publish goes |
+| Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
 | Protocol and Swift | package `algochat`, product `AlgoChat` | repository tag `v1.3.0` | this repository |
 | TypeScript | `@corvidlabs/ts-algochat` | `0.9.0` | GitHub Packages for this repository |
-| Python | `py-algochat` | `0.2.0` | PyPI, trusted publisher still not configured |
-| Rust | `algochat` | `0.3.0` | crates.io, trusted publisher still not configured |
+| Python | `py-algochat` | `0.2.0` | PyPI; not uploaded in the 1.3.0 release |
+| Rust | `algochat` | `0.3.0` | crates.io; not uploaded in the 1.3.0 release |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.2.0` | GitHub Packages for this repository |
 | Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.2.0` | this repository |
 
-Kotlin's README now matches the POM. The old coordinate `com.corvidlabs:algochat:0.2.0` was the documentation error. Go consumers use `go get github.com/CorvidLabs/algochat/go@v0.2.0` after tag `go/v0.2.0`. A root tag `v1.3.0` does not select that nested module. Apps still on archived `swift-algochat` `0.4.0` keep that URL. New Swift apps use this repository from `1.3.0`.
+Distribution observations checked on **2026-10-18**:
 
-Runtime gaps accepted for this release: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not the runners that passed qualification. Swift hybrid remains macOS 26 only. Linux builds the Swift library without ML-KEM.
+- The [1.3.0 release](https://github.com/CorvidLabs/algochat/releases/tag/v1.3.0) exists and describes the [Go tag](https://github.com/CorvidLabs/algochat/tree/go/v0.2.0) on the same commit. Its notes say Python, Rust, and Kotlin packages were not uploaded in that release.
+- The [PyPI metadata endpoint](https://pypi.org/pypi/py-algochat/json) returned HTTP 404. Use the monorepo source installation in the Python README.
+- The [crates.io registry](https://crates.io/crates/algochat/0.2.1) reports latest version `0.2.1` from the archived Rust repository, rather than source version `0.3.0`. Use the monorepo git dependency for the current implementation.
+- GitHub Packages metadata lists TypeScript [`0.9.0`](https://github.com/orgs/CorvidLabs/packages/npm/ts-algochat/1403579758), with package repository association still set to archived `CorvidLabs/ts-algochat`.
+- GitHub Packages metadata lists Kotlin [`0.2.0`](https://github.com/CorvidLabs/kt-algochat/packages/3318797?version=0.2.0), associated with archived `CorvidLabs/kt-algochat`. That metadata does not establish availability at the intended monorepo Maven endpoint or artifact equivalence to current source.
+- Authenticated remote installs, artifact-to-source provenance, and registry-side publisher bindings were not verified. There is no root PyPI, crates.io, or Kotlin publishing workflow. Qualification does not configure those external bindings; the TypeScript manual publishing workflow's presence is not a publication receipt.
+
+Kotlin's coordinate is `com.corvidlabs:kt-algochat:0.2.0`. The old coordinate `com.corvidlabs:algochat:0.2.0` was a documentation error. Go consumers request `go get github.com/CorvidLabs/algochat/go@v0.2.0`; a root tag `v1.3.0` does not select that nested module. Apps using archived `swift-algochat` `0.4.0` retain that repository URL until migrated. New Swift apps use this repository from `1.3.0`.
+
+Runtime gaps recorded for this release: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not the runners used for qualification. Swift hybrid qualification covers macOS 26 only; its APIs declare availability on Apple OS 26 platforms. Linux builds the Swift library without ML-KEM.
 
 Nested legacy workflows remain historical references, not active root publication
 flows. Do not move them to root to activate publishing. Any future publication
 requires separate explicit authorization, manual invocation and verified credentials
 or trusted-publisher bindings; none are configured by qualification.
 
-## Release checklist
+## Historical 1.3.0 release preparation checklist
+
+This checklist records the preparation state before the tags above. Its unchecked items are not a current assertion that the release is still unpublished, and its checked items do not qualify later commits. For a new candidate, copy the gates into a fresh record with that candidate's SHA, run URLs, artifact hashes, retained evidence, and explicit owner approvals. See [the accuracy report](ACCURACY.md) for remaining evidence gaps.
 
 - [x] Owner selects this repository as the source. Protocol tag `v1.3.0`. Library versions stay TypeScript `0.9.0`, Python `0.2.0`, Rust `0.3.0`, Kotlin `0.2.0`, and Go tag `go/v0.2.0`.
 - [ ] All seven exact-head qualification lanes and aggregate pass on the final candidate; archive logs, hashes, and the run URL.

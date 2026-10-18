@@ -52,7 +52,7 @@
       "path": "kt",
       "status": "active-dev",
       "description": "JVM, Android",
-      "testCommand": "gradle test",
+      "testCommand": "./gradlew test",
       "protocols": ["0x01", "0x02", "0x04", "0x05"]
     },
     {
@@ -65,16 +65,6 @@
       "description": "Go module",
       "testCommand": "go test ./...",
       "protocols": ["0x01", "0x02", "0x04", "0x05"]
-    },
-    {
-      "id": "algochat-web",
-      "name": "algochat-web",
-      "language": "Angular",
-      "repo": "CorvidLabs/algochat-web",
-      "status": "active-dev",
-      "description": "Web app with NES.css",
-      "testCommand": "bun test",
-      "protocols": ["0x01", "0x02"]
     }
   ]
 }

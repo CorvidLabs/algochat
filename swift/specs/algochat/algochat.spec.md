@@ -9,6 +9,7 @@ files:
   - Sources/AlgoChat/Crypto/EphemeralKeyManager.swift
   - Sources/AlgoChat/Crypto/KeyDerivation.swift
   - Sources/AlgoChat/Crypto/MessageEncryptor.swift
+  - Sources/AlgoChat/Crypto/PQSession.swift
   - Sources/AlgoChat/Crypto/PSKRatchet.swift
   - Sources/AlgoChat/Crypto/SignatureVerifier.swift
   - Sources/AlgoChat/Errors/ChatError.swift
@@ -39,6 +40,7 @@ files:
   - Sources/AlgoChat/Storage/PublicKeyCache.swift
   - Sources/AlgoChat/Storage/StorageDirectory.swift
   - Sources/AlgoChatCLI/AlgoChatCLI.swift
+  - Sources/PQCross/main.swift
 db_tables: []
 depends_on: []
 ---
@@ -49,11 +51,11 @@ depends_on: []
 
 Provide a Swift 6, async/await API and CLI for encrypted peer-to-peer messages carried in Algorand payment transaction notes. The library owns standard and PSK wire envelopes, encryption and signing, blockchain publication and discovery, conversation models, durable queues, synchronization, and platform-appropriate local key and contact storage.
 
-The package is pre-1.0 and has not received an independent security audit. Its public cryptographic behavior remains interoperable with the other AlgoChat language implementations.
+The current source release is 1.3.0 and has not received an independent security audit. Its public cryptographic behavior remains interoperable with the other AlgoChat language implementations.
 
 ## Public API
 
-The contract includes every public declaration exported by the `AlgoChat` library and the `algochat` executable entry point. The exact symbol inventory below is generated from the implemented Swift sources and reviewed with this specification.
+The contract includes every public declaration exported by the `AlgoChat` library and the `algochat` executable entry point. The symbol inventory below records the governed Swift sources; structural inventory is separate from behavioral verification.
 
 ### Exported Symbols
 
@@ -341,9 +343,46 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 | `defaultDirectoryName` |
 | `resolve` |
 
+### Existing hybrid/session exports
+
+| Symbol | Existing behavior |
+|---|---|
+| `PQProtocol` | Version `0x02`, handshake `0x04`, data `0x05`, 2366-byte handshake, 78-byte data header and 4002-byte plaintext maximum. |
+| `PQAnnouncement` | ACPQ encapsulation-key note detection, encoding and optional Ed25519 verification. |
+| `PQSession` | Hybrid session key, participant keys and SHA-256 handshake identity. |
+| `encapsKey` | Announcement encapsulation-key bytes. |
+| `magic` | ACPQ note prefix. |
+| `isAnnouncement` | Announcement prefix detection. |
+| `sessionKey` | Shared session encryption key. |
+| `recipientPublicKey` | Session recipient's X25519 public key. |
+| `handshakeID` | Session identity derived from the handshake; also the handshake protocol identifier on `PQProtocol`. |
+| `messageID` | Session-data protocol identifier. |
+| `encapsKeySize` | ML-KEM-768 encapsulation-key width. |
+| `ciphertextSize` | ML-KEM-768 ciphertext width. |
+| `sharedSecretSize` | Shared-secret width. |
+| `nonceSize` | Session nonce width. |
+| `wrappedKeySize` | Wrapped session-key width. |
+| `handshakeSize` | Encoded handshake width. |
+| `messageHeaderSize` | Encoded session-data header width. |
+| `isHandshake` | Recognize the version/identifier and fixed handshake length. |
+| `isMessage` | Recognize the version/identifier and minimum data length. |
+| `encapsulationPrivateKey` | Derive ML-KEM-768 material from account seed, Apple OS 26 only. |
+| `deriveHybridKey` | Transcript-bound X25519 + ML-KEM shared-secret combiner. |
+| `initiate` | Build the hybrid handshake/session, Apple OS 26 only. |
+| `accept` | Open the handshake as recipient, Apple OS 26 only. |
+| `openAsSender` | Recover the hybrid session via sender wrap, Apple OS 26 only. |
+| `envelopeVersion` | Existing standard/PSK envelope instance version. |
+| `headerData` | Existing standard-envelope fixed header, used as AAD for version `0x02`. |
+
+The existing `encode`, `parse`, `encrypt` and `decrypt` names also apply to hybrid announcements/session data. `Sources/PQCross/main.swift` is the `pqcross` fixture adapter. The high-level `AlgoChat` client/indexer does not route `0x04` or `0x05` notes. ML-KEM methods are omitted on Linux, while non-ML-KEM helpers remain compiled.
+
+## Implementation status
+
+Standard/PSK writers emit version `0x01`; decoding/decryption also accepts version `0x02` with header AAD. Their inbound decoders check minimum length without rejecting notes over 4096 bytes. Unsupported-platform `KeychainKeyStorage` uses ephemeral process memory, and PSK contact/state files and the file send queue are plaintext JSON. These facts remain gaps against accepted size/storage requirements and do not relax them; see the [accuracy ledger](../../../docs/ACCURACY.md).
+
 ## Invariants
 
-1. Standard envelopes use version `0x01`, protocol `0x01`, a 126-byte header, and a 4,096-byte transaction-note ceiling; PSK envelopes use protocol `0x02` and a 130-byte header. A maximum plaintext encodes to exactly 4,096 bytes.
+1. Standard envelopes are written with version `0x01` and also read version `0x02` with header AAD; they use protocol `0x01`, a 126-byte header, and a 4,096-byte transaction-note ceiling; PSK envelopes use protocol `0x02` and a 130-byte header. A maximum plaintext encodes to exactly 4,096 bytes.
 2. Standard encryption combines a fresh X25519 ephemeral key, HKDF-SHA256 domain separation, and ChaCha20-Poly1305; sender-key wrapping permits both participants to decrypt the stored message.
 3. PSK mode combines the ratcheted 32-byte pre-shared key with ephemeral ECDH, rejects replayed or out-of-window counters, and records a receive counter only after successful decryption.
 4. On-chain message and key-publication transactions use the configured payment amount, never exceeding the 4,096-byte note limit; the default amount is 1,000 microAlgos. The fee is one minimum fee plus the rounded note surcharge for bytes past 1,024. Ed25519 does not add Falcon fees.

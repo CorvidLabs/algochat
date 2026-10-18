@@ -1,4 +1,4 @@
-# protocol-algochat
+# AlgoChat
 
 I want two people to send encrypted notes on Algorand payments, readable only by them, without a mailbox or extra router. New identities can be Falcon-1024. The chain still sees who talked to whom, and I would rather say that out loud than pretend otherwise.
 
@@ -10,6 +10,7 @@ I want two people to send encrypted notes on Algorand payments, readable only by
 - [encrypt](hi/encrypt.md): ENCRYPT (3 criteria)
 - [honest](hi/honest.md): HONEST (2 criteria)
 - [psk](hi/psk.md): PSK (1 criterion)
+- [release](hi/release.md): RELEASE (2 criteria)
 - [repo](hi/repo.md): REPO (2 criteria)
 - [send](hi/send.md): SEND (1 criterion)
 <!-- /hi:index -->

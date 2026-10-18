@@ -39,7 +39,8 @@ export class EncryptionError extends Error {
 }
 
 /**
- * Encrypts a message for a recipient with forward secrecy
+ * Encrypts a message using a fresh ephemeral key for per-message key separation.
+ * This does not provide forward secrecy: long-term keys recover stored history.
  *
  * Note: senderPublicKey is used for bidirectional decryption - it allows
  * the sender to decrypt their own sent messages.

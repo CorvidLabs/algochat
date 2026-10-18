@@ -31,10 +31,14 @@ pip install py-algochat==0.2.0
 ## Usage
 
 ```python
+import os
+
 from algochat import derive_keys_from_seed, encrypt_message, decrypt_message
 from algochat import encode_envelope, decode_envelope
 
-# Derive keys from a 32-byte seed (e.g., from Algorand account)
+# Fresh demo identities; use the 32-byte seeds from your accounts in an app.
+seed_bytes = os.urandom(32)
+recipient_seed = os.urandom(32)
 sender_private, sender_public = derive_keys_from_seed(seed_bytes)
 recipient_private, recipient_public = derive_keys_from_seed(recipient_seed)
 
@@ -91,6 +95,8 @@ The protocol supports bidirectional decryption, allowing senders to decrypt thei
 The PSK (Pre-Shared Key) v1.1 protocol adds a shared secret layer on top of the standard X25519 key agreement. The two-level schedule derives keys from the initial secret. It does not provide forward secrecy.
 
 ```python
+import os
+
 from algochat import (
     derive_keys_from_seed,
     derive_psk_at_counter,
@@ -107,7 +113,9 @@ from algochat import (
     parse_psk_exchange_uri,
 )
 
-# Derive keys
+# Fresh demo identities; retain your real account seeds securely.
+sender_seed = os.urandom(32)
+recipient_seed = os.urandom(32)
 sender_private, sender_public = derive_keys_from_seed(sender_seed)
 recipient_private, recipient_public = derive_keys_from_seed(recipient_seed)
 
@@ -135,13 +143,19 @@ envelope = encrypt_psk_message(
 encoded = encode_psk_envelope(envelope)
 assert is_psk_message(encoded)
 
-# Decode and decrypt
+# Validate, authenticate, then record only a successful receive.
+# Serialize this sequence per peer in an application.
+receive_state = PSKState()
 decoded = decode_psk_envelope(encoded)
+if not validate_counter(receive_state, decoded.ratchet_counter):
+    raise ValueError("Replay or counter outside the receive window")
 psk_for_counter = derive_psk_at_counter(initial_psk, decoded.ratchet_counter)
 text = decrypt_psk_message(decoded, recipient_private, recipient_public, psk_for_counter)
+receive_state = record_receive(receive_state, decoded.ratchet_counter)
+assert text == "Hello with PSK!"
 
 # Exchange PSK via URI
-uri = create_psk_exchange_uri(address, initial_psk, label="My Chat")
+uri = create_psk_exchange_uri("YOUR_ALGORAND_ADDRESS", initial_psk, label="My Chat")
 parsed = parse_psk_exchange_uri(uri)
 ```
 
@@ -155,13 +169,16 @@ The ratchet derives unique keys per message using a two-level hierarchy:
 
 Counter state tracks send/receive counters with replay protection:
 - Rejects duplicate counters (replay attacks)
-- Maintains a sliding window (200 messages) for out-of-order delivery
+- Accepts counters up to 200 behind the highest seen counter and any future counter
 - Prunes old counters automatically
 
-## Cross-Implementation Compatibility
+## Hybrid ML-KEM sessions
 
-This implementation is fully compatible with:
-- [AlgoChat](https://github.com/CorvidLabs/algochat) (TypeScript, Swift, Rust, Kotlin, and Go)
+Protocol 1.3.0 also exports low-level X25519 + ML-KEM-768 session primitives from `algochat.pq`: a 2366-byte handshake (id `0x04`), 78-byte data header (id `0x05`), and ACPQ key announcements. `cryptography>=50` supplies ML-KEM. These sessions require explicit application orchestration; the high-level client does not automatically dispatch them. See the [Python API contract](specs/algochat/algochat.spec.md#hybrid-ml-kem-session-exports).
+
+## Compatibility evidence and limits
+
+The repository tests shared protocol vectors across TypeScript, Swift, Python, Rust, Kotlin, and Go. A passing local suite can skip optional sibling fixtures; it does not establish every runtime or end-to-end client workflow. See the [accuracy and implementation gap ledger](../docs/ACCURACY.md).
 
 ## License
 

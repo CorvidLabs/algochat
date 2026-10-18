@@ -1,6 +1,6 @@
 # Swift
 
-The Swift package is the root of [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). The package name is `algochat`. The product is `AlgoChat`. CI is the monorepo Swift workflow. The archived swift-algochat repository remains at tag `0.4.0` for apps that have not switched the URL.
+The Swift package manifest is at the root of [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). The package name is `algochat`. The product is `AlgoChat`. CI is the monorepo Swift workflow. The archived swift-algochat repository remains at tag `0.4.0` for apps that have not switched the URL.
 
 > **Security Notice**: This library has not been independently audited. While it uses well-established cryptographic primitives from [swift-crypto](https://github.com/apple/swift-crypto), use in production is at your own risk.
 
@@ -17,13 +17,13 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 - **End-to-End Encryption** - X25519 key agreement + ChaCha20-Poly1305
 - **No forward secrecy** - A long-term key opens that account's past messages. A fresh ephemeral key only separates message keys.
 - **Quantum Defense-in-Depth** - Optional ratcheting PSK mode (protocol v1.1) provides hybrid X25519 + pre-shared key encryption
-- **Replay Protection** - Counter-based sliding window for PSK messages
+- **PSK Replay Controls** - The configured PSK manager checks and records received counters; standard mode has no cryptographic replay check
 - **Immutable Messages** - Permanently recorded on-chain
 - **Decentralized** - No central server controls delivery
 - **Bidirectional Decryption** - Both sender and recipient can decrypt messages
 - **Reply Support** - Thread conversations with reply context
 - **Biometric Storage** - Protect encryption keys with Face ID / Touch ID
-- **Cross-Implementation** - Compatible with [ts-algochat](https://github.com/CorvidLabs/ts-algochat), [rs-algochat](https://github.com/CorvidLabs/rs-algochat), [py-algochat](https://github.com/CorvidLabs/py-algochat), [kt-algochat](https://github.com/CorvidLabs/kt-algochat)
+- **Cross-Implementation** - Shared protocol fixtures with the [other implementations](../README.md); client and platform capabilities differ
 - **Multi-Platform** - iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, visionOS 1+. The hybrid ML-KEM session needs macOS 26. Linux builds the library without those methods, because swift-crypto has no `MLKEM768` there.
 
 ## Installation
@@ -121,26 +121,33 @@ try await chat.publishKeyAndWait()
 PSK mode adds a pre-shared key layer on top of standard ECDH encryption, providing defense-in-depth against future quantum attacks on key exchange.
 
 ```swift
-// Generate and share a PSK exchange URI
-let psk = PSKExchangeURI(
-    address: account.address.description,
-    psk: Data.random(count: 32),
-    label: "Alice"
-)
-let uri = psk.toString()
-// Share uri out-of-band: algochat-psk://v1?addr=...&psk=...&label=Alice
+import Foundation
+import Crypto
+import Algorand
 
-// Import a PSK from a received URI
+// Generate 32 bytes with the cryptographic library's secure random generator.
+let sharedPSK = SymmetricKey(size: .bits256).withUnsafeBytes { Data($0) }
+let pskStorage = try FilePSKStorage(directoryName: ".algochat")
+let pskChat = try await AlgoChat(network: .testnet, account: account, pskStorage: pskStorage)
+
+// Send this URI through a confidential out-of-band channel.
+let exchange = await pskChat.generatePSKExchangeURI(psk: sharedPSK, label: "Alice")
+let uri = exchange.toString()
+
+// On Bob's client, use separate local storage and import Alice's URI.
+let bobAccount = try Account()
+let bobAddress = bobAccount.address
+let bobStorage = try FilePSKStorage(directoryName: ".algochat-bob")
+let bobChat = try await AlgoChat(network: .testnet, account: bobAccount, pskStorage: bobStorage)
 let received = try PSKExchangeURI.parse(uri)
-let contact = PSKContact(
-    address: received.address,
-    initialPSK: received.psk,
-    label: received.label
-)
+try await bobChat.addPSKContact(uri: received)
 
-// Manage PSK contacts
-let pskManager = PSKManager(storage: FilePSKStorage(directory: ".algochat"))
-try await pskManager.addContact(contact)
+// On Alice's client, add Bob using the same shared bytes and send.
+try await pskChat.addPSKContact(address: bobAddress.description, psk: sharedPSK, label: "Bob")
+// Fund both accounts; Bob must publish his key and wait for indexer visibility
+// (or already have a discoverable message) before Alice can send.
+let conversation = try await pskChat.conversation(with: bobAddress)
+try await pskChat.sendPSK("Hello with PSK!", to: conversation)
 ```
 
 ## Core Concepts
@@ -174,16 +181,24 @@ Messages are encrypted using modern cryptographic primitives:
 - **Header size**: 130 bytes
 - **Maximum message**: 3950 bytes (after encryption overhead)
 
+The Swift standard and PSK encryptors write envelope version `0x01` (empty payload associated data). Decoders also accept version `0x02`, which authenticates the full 126-byte or 130-byte header. The field labeled `version: 1` above has a width of one byte. See the [protocol](../PROTOCOL.md).
+
+### Low-Level Hybrid Sessions
+
+`PQSession` exposes an X25519 + ML-KEM-768 handshake (protocol `0x04`, 2366 bytes), sender recovery, and session-data encryption/decryption (protocol `0x05`, a 78-byte header and 4002-byte plaintext maximum). `PQAnnouncement` encodes and parses `ACPQ` encapsulation-key announcements. These APIs are separate from the `AlgoChat` client's send, discovery and indexer flows: applications must transport notes, retain session state and apply replay policy. ML-KEM key creation and handshake methods require Apple OS 26 and are omitted on Linux; the non-ML-KEM helpers remain available.
+
 ### Key Storage
 
 ```swift
-// Biometric-protected storage (Apple platforms)
+// Load a previously stored key on iOS, macOS or visionOS.
 let storage = KeychainKeyStorage()
-let chatAccount = try await ChatAccount(account: algorandAccount, storage: storage)
+let chatAccount = try await ChatAccount(account: account, storage: storage)
 
 // Password-encrypted file storage (Linux/cross-platform)
-let storage = FileKeyStorage(directory: ".algochat", password: "secret")
+let fileStorage = FileKeyStorage(password: "secret") // ~/.algochat/keys/
 ```
+
+On iOS, macOS and visionOS, `KeychainKeyStorage.store(..., requireBiometric: true)` requests user-presence access control; these are generic-password Keychain items, not Secure Enclave private keys. On tvOS, watchOS and Linux this type falls back to process memory. `FilePSKStorage` stores PSKs and counter state as plaintext JSON, so applications must protect the storage directory. Accepted storage and decode requirements that exceed current behavior are tracked in [implementation gaps](../docs/ACCURACY.md).
 
 ### Send Options
 
@@ -259,7 +274,7 @@ See [SECURITY.md](SECURITY.md) for:
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) file for details.
+MIT License - See [LICENSE](../LICENSE) file for details.
 
 ## Resources
 

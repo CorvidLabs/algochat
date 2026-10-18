@@ -52,9 +52,10 @@ class PSKState(
      * - It is not more than [PSKProtocol.COUNTER_WINDOW] behind the highest
      *   accepted counter
      *
-     * Per the protocol specification there is no upper bound: counters arbitrarily
-     * far ahead are accepted (they advance the window), and only counters too far
-     * behind the peer's last counter are rejected.
+     * This implementation accepts arbitrarily far-ahead counters, advancing the
+     * window, and enforces only the lower bound and seen-counter check. The
+     * protocol recommends rejecting counters more than COUNTER_WINDOW ahead
+     * (SHOULD); that upper-window recommendation is not enforced here.
      *
      * @param counter The received counter value
      * @return True if the counter is valid and was accepted
@@ -73,11 +74,10 @@ class PSKState(
      * Validates a received counter, runs the decrypt action, then records the
      * counter only if decryption succeeds.
      *
-     * This is the secure receive path: it enforces replay protection (a counter is
-     * never accepted twice) and the sliding window before decryption is attempted,
-     * and it does not consume a counter for messages that fail to decrypt or are
-     * rejected as replays. This prevents an attacker from exhausting counter slots
-     * or replaying captured ciphertext.
+     * Checks the seen-counter set and lower window bound before decryption,
+     * and does not record counters for failed decryption or rejected replays.
+     * These checks depend on retained state; callers must preserve it across
+     * restarts. The upper-window recommendation is not enforced here.
      *
      * @param counter The ratchet counter from the received envelope
      * @param decrypt A block that performs decryption and returns the result; it

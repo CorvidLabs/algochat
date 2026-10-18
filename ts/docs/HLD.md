@@ -4,9 +4,9 @@ title: High-Level Design
 
 # ts-algochat: High-Level Design
 
-This document describes how `@corvidlabs/ts-algochat` (version 0.6.1) works, end to end. It is written from the source in [`src/`](../src/index.ts), the SpecSync contract in [`specs/algochat/`](../specs/algochat/algochat.spec.md), the conformance suite in [`conformance/`](../conformance/README.md) and the workflows in `.github/workflows/`. Where the code does not settle a question, the text says **Unknown**.
+This document describes how `@corvidlabs/ts-algochat` (source version 0.9.0, protocol 1.3.0) works, end to end. It is written from the source in [`src/`](../src/index.ts), the SpecSync contract in [`specs/algochat/`](../specs/algochat/algochat.spec.md), the conformance suite in [`conformance/`](../conformance/README.md) and the active root workflows in [`../../.github/workflows/`](../../.github/workflows/). Where the code does not settle a question, the text says **Unknown**.
 
-The protocol itself is specified in [CorvidLabs/protocol-algochat](https://github.com/CorvidLabs/protocol-algochat). This page covers this implementation of it.
+The protocol itself is specified in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat). This page covers this implementation of it.
 
 ## Contents
 
@@ -47,7 +47,7 @@ flowchart LR
 
 - **algod and indexer** are the only network services the SDK talks to. [`AlgorandService`](../src/services/algorand.service.ts) builds `algosdk.Algodv2` and `algosdk.Indexer` clients from an `AlgorandConfig` (`algodServer`, `algodToken`, `indexerServer`, `indexerToken`, optional ports) that the caller supplies. The [`localnet()`, `testnet()` and `mainnet()`](../src/blockchain/types.ts) helpers return AlgoKit LocalNet or public Nodely endpoints, overridable with `ALGOCHAT_ALGOD_URL`, `ALGOCHAT_ALGOD_TOKEN`, `ALGOCHAT_INDEXER_URL` and `ALGOCHAT_INDEXER_TOKEN`. They return the differently shaped `BlockchainConfig` (`algodUrl`, `indexerUrl`), so an app maps the fields itself before constructing the service.
 - **The ledger** holds every message, key announcement and key-publish transaction permanently. There is no smart contract, box or off-chain relay: [spec invariant 12](../specs/algochat/algochat.spec.md) limits delivery to payment notes.
-- **Other implementations** ([swift-algochat](https://github.com/CorvidLabs/swift-algochat), [rs-algochat](https://github.com/CorvidLabs/rs-algochat), [py-algochat](https://github.com/CorvidLabs/py-algochat), [kt-algochat](https://github.com/CorvidLabs/kt-algochat)) interoperate through the same bytes. The [conformance vectors](../conformance/README.md) pin those bytes.
+- **Other implementations** ([swift-algochat](https://github.com/CorvidLabs/algochat/tree/main/swift), [rs-algochat](https://github.com/CorvidLabs/algochat/tree/main/rs), [py-algochat](https://github.com/CorvidLabs/algochat/tree/main/py), [kt-algochat](https://github.com/CorvidLabs/algochat/tree/main/kt), [Go](https://github.com/CorvidLabs/algochat/tree/main/go)) interoperate through the same bytes. The [conformance vectors](../conformance/README.md) pin those bytes.
 - **The file system** is used only by the Node-only storage classes ([`FileKeyStorage`](../src/storage/file-key-storage.ts), [`FileSendQueueStorage`](../src/queue/file-send-queue-storage.ts)).
 
 ## 3. Components
@@ -83,13 +83,14 @@ flowchart LR
 | `services/` | The high-level API. `AlgorandService` sends, replies, fetches messages and conversations, publishes and discovers keys, and waits for confirmation or indexing. `MessageIndexer` offers paginated history reads. `mnemonic.service` creates `ChatAccount`s. | [`algorand.service.ts`](../src/services/algorand.service.ts), [`MessageIndexer.ts`](../src/services/MessageIndexer.ts), [`mnemonic.service.ts`](../src/services/mnemonic.service.ts) |
 | `crypto/` | Standard protocol cryptography: X25519 key derivation, ChaCha20-Poly1305 envelope encryption with bidirectional decryption, the 126-byte envelope codec, header AAD, Ed25519 key-announcement signatures and fingerprints. | [`keys.ts`](../src/crypto/keys.ts), [`encryption.ts`](../src/crypto/encryption.ts), [`envelope.ts`](../src/crypto/envelope.ts), [`aad.ts`](../src/crypto/aad.ts), [`signature.ts`](../src/crypto/signature.ts) |
 | `psk/` | PSK v1.1: the two-level ratchet, hybrid key derivation, the 130-byte PSK envelope, replay-window state and `algochat-psk://` exchange URIs. Pure functions; no network. | [`ratchet.ts`](../src/psk/ratchet.ts), [`encryption.ts`](../src/psk/encryption.ts), [`envelope.ts`](../src/psk/envelope.ts), [`state.ts`](../src/psk/state.ts), [`exchange.ts`](../src/psk/exchange.ts) |
+| `pq/` | Low-level X25519 + ML-KEM-768 handshakes, session data, the transcript-bound hybrid KDF and `ACPQ` key announcements. Not wired into the high-level service/indexers. | [`session.ts`](../src/pq/session.ts), [`kem.ts`](../src/pq/kem.ts), [`kdf.ts`](../src/pq/kdf.ts), [`announce.ts`](../src/pq/announce.ts) |
 | `blockchain/` | SDK-agnostic `AlgodClient` / `IndexerClient` interfaces, network presets, standalone key discovery (`discoverEncryptionKey`, `parseKeyAnnouncement`), plus an unsigned-transaction builder and an interface-based message indexer. | [`interfaces.ts`](../src/blockchain/interfaces.ts), [`types.ts`](../src/blockchain/types.ts), [`discovery.ts`](../src/blockchain/discovery.ts), [`message-transaction.ts`](../src/blockchain/message-transaction.ts), [`message-indexer.ts`](../src/blockchain/message-indexer.ts) |
 | `queue/` | Offline delivery. `SendQueue` holds pending messages with bounded retries. `SyncManager` drains the queue and polls known conversations on a timer. | [`SendQueue.ts`](../src/queue/SendQueue.ts), [`SyncManager.ts`](../src/queue/SyncManager.ts), [`file-send-queue-storage.ts`](../src/queue/file-send-queue-storage.ts) |
 | `models/` | Shared types (`ChatEnvelope`, `Message`, `DiscoveredKey`, `PendingMessage`, `SendOptions`), the `PROTOCOL` constants and the `Conversation` class. | [`types.ts`](../src/models/types.ts), [`Conversation.ts`](../src/models/Conversation.ts) |
 | `storage/`, `cache/` | `EncryptionKeyStorage` (in-memory and password-encrypted file), a TTL `PublicKeyCache`, and `MessageCache`. `cache/` holds an older cache API kept for compatibility (`LegacyMessageCache`). | [`storage/index.ts`](../src/storage/index.ts), [`file-key-storage.ts`](../src/storage/file-key-storage.ts), [`cache/index.ts`](../src/cache/index.ts) |
 | `errors/` | `ChatError` with a stable `ChatErrorCode`, plus `isChatError` and `wrapError`. | [`ChatError.ts`](../src/errors/ChatError.ts) |
 
-Not everything in `src/` is reachable from the package entry point. `package.json` declares a single export (`.`). These are **not** re-exported from [`src/index.ts`](../src/index.ts): `MessageTransaction`, `MessageTooLargeError`, `MAX_NOTE_SIZE`, `MINIMUM_PAYMENT`, the interface-based `blockchain/MessageIndexer` and its `PublicKeyNotFoundError`, `x25519ECDH`, the header-AAD helpers, and the Node-only `FileKeyStorage` and `FileSendQueueStorage`. Source comments point to a `ts-algochat/node` subpath for the Node-only classes. **Unknown:** that subpath is not declared in `package.json`, so it is not clear how consumers are meant to import them today.
+Not everything in `src/` is reachable from the package entry point. `package.json` declares a single export (`.`). These are **not** re-exported from [`src/index.ts`](../src/index.ts): `MessageTransaction`, `MessageTooLargeError`, `MAX_NOTE_SIZE`, `MINIMUM_PAYMENT`, the interface-based `blockchain/MessageIndexer` and its `PublicKeyNotFoundError`, `x25519ECDH`, the header-AAD helpers, and the Node-only `FileKeyStorage` and `FileSendQueueStorage`. Source comments point to a `ts-algochat/node` subpath for the Node-only classes, but `package.json` declares no such export. These source-only helpers are not a supported package-root or subpath import; see [implementation gaps](../../docs/ACCURACY.md).
 
 ## 4. Protocol implementation
 
@@ -168,7 +169,7 @@ The code has two ways to mix a pre-shared key into encryption. They are easy to 
 | Envelope | protocol `0x01`, 126-byte header | protocol `0x02`, 130-byte header with a 4-byte big-endian ratchet counter at offset 2 |
 | Key material | `ikm = HKDF(ECDH, salt = PSK, info 'AlgoChatV1-PSK')`, then the standard HKDF | `HKDF(ECDH ‖ positionPSK, salt = ephemeralPub, info 'AlgoChatV1-PSK' ‖ senderPub ‖ recipientPub)`. The sender wrap key uses info `'AlgoChatV1-PSK-SenderKey' ‖ senderPub` |
 | Ratchet | none: the same 32-byte PSK for every message | `sessionPSK = HKDF(initialPSK, salt 'AlgoChat-PSK-Session', info = uint32BE(counter / 100))`, then `positionPSK = HKDF(sessionPSK, salt 'AlgoChat-PSK-Position', info = uint32BE(counter % 100))` |
-| Replay control | on-chain transaction uniqueness only | `validateCounter` / `recordReceive`: reject seen counters and counters outside `peerLastCounter ± 200` |
+| Replay control | no cryptographic replay state; copied note bytes can appear in a different transaction | `validateCounter` / `recordReceive`: reject seen counters and counters outside `peerLastCounter ± 200` |
 | Plaintext limit | 3954 bytes | 3950 bytes |
 | Used by `AlgorandService` | yes: one PSK passed to the constructor applies to every send and fetch of that service | **no**: `isChatMessage` only accepts protocol `0x01`, so the service skips PSK v1.1 notes. Apps compose the low-level functions and their own transport |
 
@@ -176,7 +177,13 @@ Both PSK envelope versions follow the same AAD rule as the standard envelope: `0
 
 PSK keys are shared out of band as `algochat-psk://v1?addr=<address>&psk=<base64url>&label=<label>` ([`exchange.ts`](../src/psk/exchange.ts)). The parser requires `addr` and a 32-byte `psk`.
 
-### 4.4 Key announcements
+### 4.4 Hybrid sessions
+
+[`pq/`](../src/pq/index.ts) exports the protocol 1.3.0 hybrid primitives. `deriveMLKEMKeyPair` deterministically expands the account seed with HKDF labels `AlgoChat-v1-mlkem768`, `mlkem768-d` and `mlkem768-z`. `initiatePQSession` combines ephemeral X25519 and ML-KEM-768 secrets into a session key and produces a 2366-byte `0x04` handshake with separate recipient and sender ML-KEM ciphertexts. `acceptPQSession` opens it as recipient; `openPQSessionAsSender` recovers the wrapped session key for the sender.
+
+`encryptPQMessage` / `decryptPQMessage` use version `0x02`, protocol `0x05`, and a 78-byte authenticated header containing sender key, SHA-256 handshake ID and nonce. Plaintext is limited to 4002 bytes. `encodePQKeyAnnouncement` / `parsePQKeyAnnouncement` handle `ACPQ` encapsulation-key notes with optional Ed25519 signatures. These primitives do not supply network transport, session persistence or replay state and are not wired into `AlgorandService` or the message indexers.
+
+### 4.5 Key announcements
 
 A correspondent's X25519 key is found in their own transactions ([`discovery.ts`](../src/blockchain/discovery.ts), `paginatedKeyDiscovery` in [`algorand.service.ts`](../src/services/algorand.service.ts)):
 
@@ -481,21 +488,17 @@ classDiagram
 
 The package is a library: it runs inside the consumer's process, with no server of its own. `tsc` compiles `src/` to ES2022 ESM with `NodeNext` resolution in `dist/` ([`tsconfig.json`](../tsconfig.json)). `package.json` requires Node.js 18 or later. The browser needs Web Crypto for `@noble/ciphers/webcrypto` randomness. `publicKeyToBase64` and `base64ToPublicKey` use `Buffer`, so browsers need a polyfill for those two helpers.
 
-```mermaid
-flowchart LR
-    accTitle: CI, release and documentation pipeline
-    dev["Pull request or push"] --> trust["trust.yml<br/>CorvidLabs Trust gate<br/>(required check)"]
-    dev --> conf["conformance.yml<br/>bun test, 79 vector checks,<br/>deterministic regeneration"]
-    dev -->|"src, package.json,<br/>tsconfig, bun.lock"| ci["ci.yml<br/>bun install, build, test"]
-    ci -->|"push to main and<br/>version changed"| pub["npm publish to<br/>GitHub Packages<br/>(GITHUB_TOKEN)"]
-    main["push to main<br/>src, docs, README, typedoc.json"] --> docs["docs.yml<br/>TypeDoc + HLD + Mermaid"]
-    docs --> pages["GitHub Pages<br/>corvidlabs.github.io/ts-algochat"]
-```
+The active workflows live at the [monorepo root](../../.github/workflows/). The nested `ts/.github/workflows/` files are historical standalone configuration and do not run as GitHub Actions workflows from this location.
 
-- **Local lifecycle** is defined in [`fledge.toml`](../fledge.toml): `fledge run build` (`bun run tsc`), `fledge run test` (`bun test`), `fledge run docs` (TypeDoc) and the `verify` lane (build, then test). `fledge trust verify` runs that lane, the SpecSync contract check, the Augur risk gate (`.augur.toml`: review at 35, block at 65) and provenance (`.attest.json`).
-- **Release**: [`ci.yml`](../.github/workflows/ci.yml) publishes `@corvidlabs/ts-algochat` to GitHub Packages when the version in `package.json` differs from the published one. Tags such as `0.6.1` exist in the repository. **Unknown:** how GitHub Releases are cut; no release workflow is checked in.
-- **Docs**: [`docs.yml`](../.github/workflows/docs.yml) builds TypeDoc from [`typedoc.json`](../typedoc.json) into `_site/`. It includes this HLD as a project document and loads [`docs/assets/mermaid.js`](assets/mermaid.js), which renders `mermaid` code blocks in the browser with Mermaid 11 from jsDelivr. The repository-root `index.html` is not part of the published site.
-- **Tests**: 10 colocated `*.test.ts` files in `src/` cover crypto, signatures, discovery, indexing, the service (against a stubbed algod), mnemonics, conversations, PSK, caches and the queue. They need no network or credentials ([`specs/algochat/testing.md`](../specs/algochat/testing.md)). After a build, `bun test` also runs the compiled copies in `dist/`.
+| Active workflow | Behavior |
+|---|---|
+| [`release-qualification.yml`](../../.github/workflows/release-qualification.yml) → [`ts.yml`](../../.github/workflows/ts.yml) | Candidate qualification uses Bun 1.3.6 and Node.js 22, runs tests and a build, packs the package, installs it into a separate consumer, and checks Node ESM imports and TypeScript declarations. Exact versions and artifacts are recorded by [`qualify.py`](../../scripts/release/qualify.py). |
+| [`trust.yml`](../../.github/workflows/trust.yml) | Runs the root trust gate; module Fledge lanes remain separately defined. |
+| [`publish-npm.yml`](../../.github/workflows/publish-npm.yml) | Explicit `workflow_dispatch` publishes to GitHub Packages. A push or version change alone does not invoke this workflow. |
+
+Local [`fledge.toml`](../fledge.toml) defines `build`, `test`, `docs` and a `verify` lane (build then test). Module trust configuration adds its SpecSync, Augur and provenance policies. Local checks, hosted qualification, package publication and deployment of a documentation site are separate evidence boundaries; this document does not assert a current deployment of the former standalone documentation site.
+
+The native tests cover crypto, signatures, discovery, indexing, stubbed service behavior, mnemonics, conversations, PSK, hybrid sessions, caches and the queue. The [standard/PSK vector verifier](../conformance/README.md) is a separate explicit command; the active TypeScript qualification script does not invoke it.
 
 ## 8. Security and trust boundaries
 

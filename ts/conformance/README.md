@@ -1,8 +1,9 @@
 # AlgoChat Conformance Test Vectors
 
 Deterministic, language-agnostic test vectors for the AlgoChat protocol,
-generated from the reference implementation (`@corvidlabs/ts-algochat`
-v0.4.1) and verified against it **79/79 checks green** at generation time.
+checked against the current TypeScript implementation with **85 verifier checks**.
+Vector metadata still records the historical generator label `v0.4.1`; it is not
+the current package version (see [`package.json`](../package.json)).
 
 These vectors exist so that:
 
@@ -15,9 +16,9 @@ These vectors exist so that:
    composition is self-consistent and spec-conformant before spending a
    single hour on adversarial analysis.
 
-This is a self-consistency contract, **not a security audit**. It proves the
-implementation does what the spec says, deterministically. It does not prove
-the spec is safe. Both matter; don't conflate them.
+This is a self-consistency contract, **not a security audit**. It checks the recorded
+protocol cases; it does not establish complete specification coverage or prove
+that the protocol is secure.
 
 ## Layout
 
@@ -45,15 +46,15 @@ symmetry, round-trips, replay rejection) — vectors must never enshrine
 broken behavior.
 
 ```bash
-# regenerate (overwrites vectors/) — run from anywhere, paths are self-relative
+# Run these commands from the ts/ directory.
+# Regenerate (overwrites conformance/vectors/)
 bun conformance/tools/generate.mjs
 
 # verify the current source tree against the frozen vectors
 bun conformance/tools/verify.mjs
 ```
 
-(The repo is bun-first; the tools are plain ESM with no dependencies beyond
-the package source itself and `algosdk`.)
+(The `.mjs` tools import TypeScript source and its dependencies; the documented runner is Bun.)
 
 ### Regeneration semantics (verified empirically)
 
@@ -69,12 +70,13 @@ the package source itself and `algosdk`.)
 
 ## Continuous integration
 
-A ready-to-install workflow ships at `conformance/ci/conformance.yml` —
-copy it to `.github/workflows/conformance.yml` to enable. On every push and
-pull request it runs `bun test`, the 79-check verifier, and a regeneration
-tripwire that fails the build if any deterministic vector file stops
-regenerating byte-identically — a protocol-change alarm, not just a test
-failure.
+The file `conformance/ci/conformance.yml` is a historical standalone workflow
+template, not an active monorepo workflow. Its old 79-check step label predates
+the current 85-check verifier. The active root [TypeScript workflow](../../.github/workflows/ts.yml)
+calls the package tests, build and consumer qualification through
+[`qualify.py`](../../scripts/release/qualify.py); it does not invoke this vector
+verifier or regeneration tripwire. Run the commands above explicitly when
+checking these vectors.
 
 ## Verifying an independent implementation
 
@@ -97,11 +99,12 @@ third-party implementation passes when, for every vector file:
 Surfaced while generating these vectors — each is recorded in the vectors
 with a note, and collected here because they are easy to get wrong:
 
-1. **The recipient decryption path never reads `encryptedSenderKey`.** It
-   decrypts via ephemeral-key ECDH. The field exists only for the sender
-   path, where it is protected by its own AEAD tag — so a tampered
-   `encryptedSenderKey` still decrypts fine on the recipient path and *fails*
-   on the sender path (see `06`). This is by design, but surprising.
+1. **Version `0x02` authenticates the whole fixed header.** The recipient
+   derives its key through ephemeral ECDH rather than unwrapping
+   `encryptedSenderKey`, but that field is still part of the payload AAD.
+   Tampering with it therefore fails both decryption paths in current
+   captured vectors (see `06`). Only legacy version `0x01`, which has no
+   header AAD, permits recipient decryption after sender-wrap tampering.
 2. **AEAD authentication failures surface as generic `Error`** (from
    `@noble/ciphers`) at the decrypt layer, while wire-format violations
    (truncation, bad version) throw the typed `EnvelopeError` at the decode
@@ -111,22 +114,23 @@ with a note, and collected here because they are easy to get wrong:
 3. **Replay window is enforced relative to the highest accepted counter:**
    with `peerLastCounter = 2` and `COUNTER_WINDOW = 200`, counter 250 is
    already "unreasonably far ahead" and is rejected (see `03` transcript).
-4. **Packaging note (non-protocol):** the published `dist/` ESM uses
-   extensionless relative imports, which Bun and bundlers accept but raw
-   Node.js ESM rejects. Consumers on plain Node need a bundling step until
-   the build emits explicit `.js` extensions.
+4. **Packaging note (non-protocol):** source relative imports use `.js`
+   extensions and the build uses TypeScript `NodeNext`. The active release
+   qualification installs the packed artifact into a separate consumer,
+   imports it with Node.js, and checks its TypeScript declarations. This
+   package check is separate from the vector verifier.
 
 ## Relationship to the existing `bun test` suite
 
 The unit tests and these vectors test **different properties**, and the gap
 runs in both directions:
 
-- `bun test` proves **self-consistency with fresh randomness**: round-trips,
-  key uniqueness per message, wrong-key rejection, PSK option behavior. It
-  pins **no fixed bytes** — if the HKDF salt or wire layout changed tomorrow,
-  the unit tests would stay green (everything still round-trips) while every
-  previously sent message becomes undecryptable. That is the exact
-  regression class these vectors exist to catch.
+- `bun test` checks runtime behavior, randomized round-trips and selected
+  fixtures, including the newer hybrid helpers. This frozen corpus separately
+  records standard/PSK bytes and failure transcripts for independent consumers.
+  Passing a round-trip alone would miss a coordinated encoder/decoder change
+  that made old messages unreadable; the frozen compatibility values help
+  detect that regression.
 - Conversely, the vectors do **not** cover everything the unit tests do:
   key-publish payloads decrypting to `null`, empty-PSK equivalence with
   no-PSK, invalid-PSK-length errors, ephemeral uniqueness, and the
@@ -138,7 +142,9 @@ They are complements. Run both.
 ## Coverage and non-goals
 
 Covered: key derivation, ECDH, both envelope wire formats, the PSK ratchet
-and its replay window, exchange URIs, and mandatory failure behavior.
+and its replay window, exchange URIs, and recorded failure behavior. These
+vectors do not cover hybrid ML-KEM sessions (`0x04` / `0x05`); those have
+separate tests and root [`vectors/`](../../vectors/) fixtures.
 
 Deliberately not covered (and why): on-chain transport, key announcement
 discovery, indexing, queue/sync, and storage — these are I/O boundaries, not

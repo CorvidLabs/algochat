@@ -16,55 +16,59 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Installation
 
-Add to your `Cargo.toml`:
+Use the monorepo release source for the current 0.3.0 crate:
 
 ```toml
 [dependencies]
-algochat = "0.3.0"
+algochat = { git = "https://github.com/CorvidLabs/algochat.git", tag = "v1.3.0" }
 ```
+
+Cargo locates the crate in `rs/Cargo.toml`. The protocol tag does not publish it to crates.io. The registry currently has the older 0.2.1 crate; use `algochat = "0.3.0"` only after that version is separately published. See the [dated publication evidence](../docs/RELEASE.md).
 
 ## Usage
 
 ### Client API
 
+The high-level type is `AlgoChat<A, I, S, M>`. Applications supply implementations of the async `AlgodClient` and `IndexerClient` traits; the crate does not include concrete HTTP adapters. This factory can be called from an async runtime with your adapters and the matching account address:
+
 ```rust
-use algochat::{AlgoChatClient, AlgorandConfig};
+use algochat::{AlgoChat, AlgoChatConfig, AlgodClient, IndexerClient,
+    InMemoryKeyStorage, InMemoryMessageCache, Result};
 
-// Create client from a 32-byte seed
-let client = AlgoChatClient::from_seed(seed, AlgorandConfig::localnet()).await?;
-
-// Discover a recipient's public key on-chain
-let key = client.discover_key("RECIPIENT_ADDR").await?;
-
-// Encrypt a message
-let recipient_pk = key.unwrap().public_key;
-let envelope = client.encrypt("Hello, World!", &recipient_pk)?;
-
-// Decrypt a received message
-let text = client.decrypt(&envelope, &sender_pk)?;
-
-// Sync and process new messages
-let messages = client.sync().await?;
+async fn create_client<A: AlgodClient, I: IndexerClient>(
+    seed: &[u8; 32],
+    address: &str,
+    algod: A,
+    indexer: I,
+) -> Result<AlgoChat<A, I, InMemoryKeyStorage, InMemoryMessageCache>> {
+    AlgoChat::from_seed(
+        seed, address, AlgoChatConfig::localnet(), algod, indexer,
+        InMemoryKeyStorage::new(), InMemoryMessageCache::new(),
+    ).await
+}
 ```
+
+`encrypt` returns encoded bytes, and `decrypt` consumes encoded bytes. `sync` queries the supplied indexer. Encryption alone does not submit a blockchain transaction. Use encrypted file storage when persistence is required; in-memory storage is for ephemeral use.
 
 ### Low-Level Crypto
 
 ```rust
 use algochat::{derive_keys_from_seed, encrypt_message, decrypt_message, ChatEnvelope};
 
-let (sender_private, sender_public) = derive_keys_from_seed(&seed)?;
-let (recipient_private, recipient_public) = derive_keys_from_seed(&recipient_seed)?;
-
-let envelope = encrypt_message(
-    "Hello, World!",
-    &sender_private,
-    &sender_public,
-    &recipient_public,
-)?;
-
-let encoded = envelope.encode();
-let decoded = ChatEnvelope::decode(&encoded)?;
-let result = decrypt_message(&decoded, &recipient_private, &recipient_public)?;
+fn main() -> algochat::Result<()> {
+    // Fixed seeds are for this demo only; use securely retained account seeds.
+    let (sender_private, sender_public) = derive_keys_from_seed(&[0x11; 32])?;
+    let (recipient_private, recipient_public) = derive_keys_from_seed(&[0x22; 32])?;
+    let envelope = encrypt_message(
+        "Hello, World!", &sender_private, &sender_public, &recipient_public,
+    )?;
+    let encoded = envelope.encode();
+    let decoded = ChatEnvelope::decode(&encoded)?;
+    let result = decrypt_message(&decoded, &recipient_private, &recipient_public)?
+        .expect("this demo encrypts text, not a key-publication payload");
+    assert_eq!(result.text, "Hello, World!");
+    Ok(())
+}
 ```
 
 ## Protocol
@@ -84,66 +88,55 @@ The PSK (Pre-Shared Key) protocol extends AlgoChat with an additional layer of s
 
 - **Hybrid encryption**: Combines X25519 ECDH with a pre-shared key
 - **Two-level key schedule**: Session and position keys derived from the initial pre-shared key. This is not forward secrecy.
-- **Replay protection**: Counter-based state tracking with configurable window
+- **Replay protection**: Counter-based state tracking with a fixed 200-position trailing window
 - **Exchange URI**: Out-of-band key sharing via `algochat-psk://` URIs
-- **Zeroized key material**: Sensitive keys are zeroized after use
+- **Temporary key buffers**: Derived PSK encryption key buffers are zeroized on drop
 
-### PSK Usage (Client API)
+### PSK Contacts
 
-The `AlgoChatClient` manages PSK contacts and counter state automatically:
-
-```rust
-use algochat::{AlgoChatClient, AlgorandConfig, PSKContact, PSKExchangeURI};
-
-let client = AlgoChatClient::from_seed(seed, AlgorandConfig::localnet()).await?;
-
-// Add a PSK contact (exchanged out-of-band via URI)
-let uri = PSKExchangeURI::decode("algochat-psk://v1?addr=ADDR&psk=...&label=Alice")?;
-client.add_psk_contact(&uri.address, PSKContact::new(uri.psk, uri.label)).await;
-
-// Send — counter management is automatic
-let (envelope_bytes, counter) = client.send_psk("RECIPIENT_ADDR", "Hello with PSK!").await?;
-
-// Receive — replay protection is automatic
-let text = client.receive_psk(&envelope_bytes, "SENDER_ADDR").await?;
-```
+After constructing a generic `AlgoChat` with your adapters, parse a received URI with `PSKExchangeURI::parse(uri_text)?` and register it with `client.add_psk_contact(&uri.address, &uri.psk, uri.label).await?`. `send_psk(address, text)` returns encoded bytes and a counter; submit the bytes using your transaction integration. `receive_psk(bytes, sender_address)` decrypts and records the counter. Serialize receives per peer: the current client validates and records under separate locks, so concurrent receives of the same envelope are an [implementation gap](../docs/ACCURACY.md).
 
 ### Low-Level PSK API
 
-For direct control over encryption and counters:
+Rust takes the **initial** PSK and derives the per-counter PSK internally:
 
 ```rust
-use algochat::{
-    encrypt_psk_message, decrypt_psk_message,
-    encode_psk_envelope, decode_psk_envelope, is_psk_message,
-    PSKState,
-};
+use algochat::{derive_keys_from_seed, encrypt_psk_message, decrypt_psk_message,
+    encode_psk_envelope, decode_psk_envelope, PSKState};
 
-let psk = [0xAA; 32];
-let mut state = PSKState::new();
-
-// Encrypt with PSK
-let counter = state.advance_send_counter();
-let envelope = encrypt_psk_message(
-    "Hello with PSK!",
-    &sender_private,
-    &sender_public,
-    &recipient_public,
-    &psk,
-    counter,
-)?;
-
-// Encode for transmission
-let encoded = encode_psk_envelope(&envelope);
-
-// Decode and decrypt
-let decoded = decode_psk_envelope(&encoded)?;
-let text = decrypt_psk_message(&decoded, &recipient_private, &recipient_public, &psk)?;
+fn main() -> algochat::Result<()> {
+    let (sender_private, sender_public) = derive_keys_from_seed(&[0x11; 32])?;
+    let (recipient_private, recipient_public) = derive_keys_from_seed(&[0x22; 32])?;
+    // Demo material only; exchange a CSPRNG-generated 32-byte PSK in an app.
+    let initial_psk = [0xAA; 32];
+    let mut send_state = PSKState::new();
+    let mut receive_state = PSKState::new();
+    let counter = send_state.advance_send_counter();
+    let envelope = encrypt_psk_message(
+        "Hello with PSK!", &sender_private, &sender_public, &recipient_public,
+        &initial_psk, counter,
+    )?;
+    let encoded = encode_psk_envelope(&envelope);
+    let decoded = decode_psk_envelope(&encoded)?;
+    receive_state.validate_counter(decoded.ratchet_counter)?;
+    let text = decrypt_psk_message(
+        &decoded, &recipient_private, &recipient_public, &initial_psk,
+    )?;
+    receive_state.record_receive(decoded.ratchet_counter);
+    assert_eq!(text, "Hello with PSK!");
+    Ok(())
+}
 ```
-## Cross-Implementation Compatibility
 
-This implementation is fully compatible with:
-- [AlgoChat](https://github.com/CorvidLabs/algochat) (TypeScript, Swift, Python, Kotlin, and Go)
+The current send counter wraps at `u32::MAX`; stop and replace the PSK before exhaustion. The receive window rejects old/repeated counters and accepts future counters without an upper bound. Applications must persist state and serialize the validate/decrypt/record sequence.
+
+## Hybrid ML-KEM sessions
+
+Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate root: a 2366-byte handshake (id `0x04`), 78-byte data header (id `0x05`), and ACPQ announcement parsing. These functions are independent of the standard/PSK high-level client. See the [protocol API contract](specs/protocol/protocol.spec.md#hybrid-ml-kem-session-exports).
+
+## Compatibility evidence and limits
+
+Shared vectors and native tests cover specific standard, PSK, and PQ paths. Optional sibling fixtures can be absent; passing native tests does not establish every client workflow or runtime. See the [accuracy and implementation gap ledger](../docs/ACCURACY.md).
 
 ## License
 

@@ -18,3 +18,5 @@ spec: crate.spec.md
 ## Notes
 
 - Cargo package metadata and release publication remain independent workflows.
+
+The crate root also re-exports the shipped `pq.rs` items; their source inventory and behavior live in the protocol contract. The module remains private while its public types/functions are root imports.

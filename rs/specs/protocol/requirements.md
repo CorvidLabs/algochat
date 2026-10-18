@@ -10,7 +10,7 @@ Standard envelopes SHALL use protocol ID 0x01, SHALL decode versions 0x01 and 0x
 
 ### REQ-protocol-002 — V2 header authentication
 
-Version 2 SHALL authenticate the exact 78-byte metadata prefix so version, protocol, key, or nonce tampering fails authentication.
+Version 2 SHALL authenticate the exact 126-byte header so version, protocol, key, or nonce tampering fails authentication.
 
 ### REQ-protocol-003 — Payload and key bounds
 
@@ -48,7 +48,7 @@ Acceptance Criteria
 
 ### REQ-protocol-002
 
-Version 2 SHALL authenticate the exact 78-byte standard metadata prefix.
+Version 2 SHALL authenticate the exact 126-byte standard header.
 
 Acceptance Criteria
 - Known-answer and tamper vectors pass.
