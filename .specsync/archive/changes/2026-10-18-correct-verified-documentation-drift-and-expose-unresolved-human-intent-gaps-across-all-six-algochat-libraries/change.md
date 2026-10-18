@@ -1,6 +1,6 @@
 ---
 id: correct-verified-documentation-drift-and-expose-unresolved-human-intent-gaps-across-all-six-algochat-libraries
-state: implementing
+state: archived
 type: documentation
 base_commit: b4cbfaf0c40156c5c3bffcc6b14cb3fd22e6153f
 ---
