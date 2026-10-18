@@ -9,10 +9,10 @@ AlgoChat provides the following security properties:
 - Key agreement via **X25519** elliptic curve Diffie-Hellman
 - Only the sender and intended recipient can decrypt messages
 
-### Forward Secrecy
-- **Per-message ephemeral keys** ensure that compromising a long-term key does not reveal past messages
-- Each message uses a fresh X25519 keypair for key agreement
-- Ephemeral private keys are discarded immediately after encryption
+### Forward secrecy
+- Forward secrecy is not provided
+- A compromised long-term key opens that account's past messages
+- Each message uses a fresh X25519 ephemeral key, and that public key stays on the note
 
 ### Integrity
 - **Poly1305 MAC** authenticates all ciphertext
@@ -33,7 +33,7 @@ AlgoChat provides the following security properties:
 | Eavesdropping | End-to-end encryption; only endpoints can decrypt |
 | Message tampering | Authenticated encryption fails on modification |
 | Replay attacks | Unique nonce per message; blockchain prevents duplicates |
-| Key compromise (past messages) | Forward secrecy via ephemeral keys |
+| Key compromise (past messages) | Not protected. The long-term key opens past messages |
 | Man-in-the-middle | Key discovery from blockchain transaction history |
 
 ### What AlgoChat Does NOT Protect Against

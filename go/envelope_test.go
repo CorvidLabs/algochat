@@ -83,7 +83,7 @@ func TestDecodeEnvelopeTooShort(t *testing.T) {
 
 func TestDecodeEnvelopeWrongVersion(t *testing.T) {
 	data := make([]byte, HeaderSize+TagSize)
-	data[0] = 0x02 // wrong version
+	data[0] = 0x09 // unsupported version
 	data[1] = ProtocolIDStandard
 
 	_, err := DecodeEnvelope(data)
@@ -123,7 +123,8 @@ func TestIsChatMessage(t *testing.T) {
 		{"valid header", []byte{ProtocolVersion, ProtocolIDStandard, 0, 0}, true},
 		{"empty", []byte{}, false},
 		{"too short", []byte{ProtocolVersion}, false},
-		{"wrong version", []byte{0x02, ProtocolIDStandard}, false},
+		{"version 0x02", []byte{protocolVersionAAD, ProtocolIDStandard}, true},
+		{"wrong version", []byte{0x09, ProtocolIDStandard}, false},
 		{"wrong protocol", []byte{ProtocolVersion, 0xFF}, false},
 		{"random data", []byte{0xDE, 0xAD, 0xBE, 0xEF}, false},
 	}

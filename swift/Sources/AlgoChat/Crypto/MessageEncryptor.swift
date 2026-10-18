@@ -309,6 +309,9 @@ public enum MessageEncryptor {
             tag: tag
         )
 
+        if envelope.envelopeVersion == 0x02 {
+            return try ChaChaPoly.open(sealedBox, using: symmetricKey, authenticating: envelope.headerData())
+        }
         return try ChaChaPoly.open(sealedBox, using: symmetricKey)
     }
 
@@ -590,6 +593,18 @@ public enum MessageEncryptor {
             tag: tag
         )
 
+        if envelope.envelopeVersion == 0x02 {
+            var header = Data()
+            header.append(envelope.envelopeVersion)
+            header.append(PSKEnvelope.protocolID)
+            var counter = envelope.ratchetCounter.bigEndian
+            header.append(Data(bytes: &counter, count: 4))
+            header.append(envelope.senderPublicKey)
+            header.append(envelope.ephemeralPublicKey)
+            header.append(envelope.nonce)
+            header.append(envelope.encryptedSenderKey)
+            return try ChaChaPoly.open(sealedBox, using: symmetricKey, authenticating: header)
+        }
         return try ChaChaPoly.open(sealedBox, using: symmetricKey)
     }
 

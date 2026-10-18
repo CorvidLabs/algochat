@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum",
+  "implementation_commit": "1865422497844d3b44321fbed3e06a0cc8ed6b83",
+  "implementation_tree": "36efe64e2b875434f15e214322af4a9f49556b0b",
+  "contract_digest": "d3936468ea641f5a4d58bbab20b916e0fe6b481872f59f332a183579b4854228",
+  "workspace_digest": "89fd03608acc0208d6a4e3246439308fc1bb1f4caf5ce3ba19bee0ba5009b745",
+  "closing_digest": "d8a7e94d2b90769aaf1839d800de3bffebbebb096e23caa3859c6f16acbaadaa",
+  "review_digest": "4dfcc39ef1f764edf66fff505399f4484985ce40fc2cbc7af14da0b8bb66ed99",
+  "finalization_digest": "0d36a139c9cf19ee8fed1e937d75f97cb741608ccc6e6f5bb2537857aa8fced1",
+  "timestamp": 1792273203
+}

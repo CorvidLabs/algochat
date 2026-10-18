@@ -15,7 +15,8 @@ let package = Package(
     ],
     products: [
         .library(name: "AlgoChat", targets: ["AlgoChat"]),
-        .executable(name: "algochat", targets: ["AlgoChatCLI"])
+        .executable(name: "algochat", targets: ["AlgoChatCLI"]),
+        .executable(name: "pqcross", targets: ["PQCross"])
     ],
     dependencies: [
         .package(url: "https://github.com/CorvidLabs/swift-algokit.git", from: "0.0.2"),
@@ -46,6 +47,14 @@ let package = Package(
                 .product(name: "CLI", package: "swift-cli")
             ],
             path: "swift/Sources/AlgoChatCLI",
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
+        ),
+        .executableTarget(
+            name: "PQCross",
+            dependencies: ["AlgoChat"],
+            path: "swift/Sources/PQCross",
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]

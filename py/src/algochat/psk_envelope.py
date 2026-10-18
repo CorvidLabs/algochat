@@ -2,12 +2,15 @@
 
 from .psk_types import (
     PSK_VERSION,
+    _PSK_VERSION_AAD,
     PSK_PROTOCOL_ID,
     PSK_HEADER_SIZE,
     PSK_ENCRYPTED_SENDER_KEY_SIZE,
     PSKEnvelope,
 )
 from .types import PUBLIC_KEY_SIZE, NONCE_SIZE
+
+_ACCEPTED_VERSIONS = (PSK_VERSION, _PSK_VERSION_AAD)
 
 
 class PSKEnvelopeError(Exception):
@@ -35,7 +38,7 @@ def encode_psk_envelope(envelope: PSKEnvelope) -> bytes:
         Encoded bytes.
     """
     return (
-        bytes([PSK_VERSION, PSK_PROTOCOL_ID])
+        bytes([envelope.version, PSK_PROTOCOL_ID])
         + envelope.ratchet_counter.to_bytes(4, byteorder="big")
         + envelope.sender_public_key
         + envelope.ephemeral_public_key
@@ -65,7 +68,7 @@ def decode_psk_envelope(data: bytes) -> PSKEnvelope:
     version = data[0]
     protocol_id = data[1]
 
-    if version != PSK_VERSION:
+    if version not in _ACCEPTED_VERSIONS:
         raise PSKEnvelopeError(f"Unknown version: {version}")
 
     if protocol_id != PSK_PROTOCOL_ID:
@@ -96,6 +99,7 @@ def decode_psk_envelope(data: bytes) -> PSKEnvelope:
         nonce=nonce,
         encrypted_sender_key=encrypted_sender_key,
         ciphertext=ciphertext,
+        version=version,
     )
 
 
@@ -111,4 +115,4 @@ def is_psk_message(data: bytes) -> bool:
     if len(data) < PSK_HEADER_SIZE:
         return False
 
-    return data[0] == PSK_VERSION and data[1] == PSK_PROTOCOL_ID
+    return data[0] in _ACCEPTED_VERSIONS and data[1] == PSK_PROTOCOL_ID

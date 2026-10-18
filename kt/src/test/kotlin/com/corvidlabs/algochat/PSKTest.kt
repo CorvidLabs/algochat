@@ -181,7 +181,7 @@ class PSKTest {
     @Test
     fun `PSK envelope wrong version throws`() {
         val data = ByteArray(PSKProtocol.HEADER_SIZE + 16)
-        data[0] = 0x02 // Wrong version
+        data[0] = 0x09 // Unsupported version
         data[1] = PSKProtocol.PROTOCOL_ID
 
         assertThrows<AlgoChatException> {

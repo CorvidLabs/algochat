@@ -159,7 +159,7 @@ object PSKCrypto {
             envelope.senderPublicKey, recipientPubBytes
         )
 
-        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext)
+        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext, payloadAad(envelope))
     }
 
     private fun decryptAsSender(
@@ -180,7 +180,7 @@ object PSKCrypto {
         )
 
         // Now decrypt the message
-        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext)
+        return chaCha20Poly1305Decrypt(symmetricKey, envelope.nonce, envelope.ciphertext, payloadAad(envelope))
     }
 
     private fun chaCha20Poly1305Encrypt(key: ByteArray, nonce: ByteArray, plaintext: ByteArray): ByteArray {
@@ -195,9 +195,21 @@ object PSKCrypto {
         return output
     }
 
-    private fun chaCha20Poly1305Decrypt(key: ByteArray, nonce: ByteArray, ciphertext: ByteArray): ByteArray {
+    private fun payloadAad(envelope: PSKEnvelope): ByteArray? {
+        if (envelope.version != 0x02.toByte()) return null
+        val counter = ByteArray(4)
+        java.nio.ByteBuffer.wrap(counter).order(java.nio.ByteOrder.BIG_ENDIAN).putInt(envelope.ratchetCounter.toInt())
+        return byteArrayOf(envelope.version, PSKProtocol.PROTOCOL_ID) +
+            counter +
+            envelope.senderPublicKey +
+            envelope.ephemeralPublicKey +
+            envelope.nonce +
+            envelope.encryptedSenderKey
+    }
+
+    private fun chaCha20Poly1305Decrypt(key: ByteArray, nonce: ByteArray, ciphertext: ByteArray, aad: ByteArray? = null): ByteArray {
         val cipher = ChaCha20Poly1305()
-        val params = AEADParameters(KeyParameter(key), 128, nonce, null)
+        val params = AEADParameters(KeyParameter(key), 128, nonce, aad)
         cipher.init(false, params)
 
         val output = ByteArray(cipher.getOutputSize(ciphertext.size))

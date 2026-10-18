@@ -21,7 +21,9 @@
   }
 </style>
 <script type="module">
-  const blocks = document.querySelectorAll("div.language-mermaid, pre > code.language-mermaid");
+  const blocks = document.querySelectorAll(
+    "div.language-mermaid, pre > code.language-mermaid, pre > code.mermaid"
+  );
   if (blocks.length > 0) {
     for (const block of blocks) {
       const target = block.matches("code") ? block.parentElement : block;
@@ -36,6 +38,7 @@
     mermaid.initialize({
       startOnLoad: false,
       theme: "neutral",
+      securityLevel: "strict",
       flowchart: natural,
       sequence: natural,
       class: natural,

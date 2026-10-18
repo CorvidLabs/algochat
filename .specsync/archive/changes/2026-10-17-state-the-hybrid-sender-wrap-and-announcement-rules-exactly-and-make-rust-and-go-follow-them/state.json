@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "state-the-hybrid-sender-wrap-and-announcement-rules-exactly-and-make-rust-and-go-follow-them",
+  "slug": "state-the-hybrid-sender-wrap-and-announcement-rules-exactly-and-make-rust-and-go-follow-them",
+  "title": "State the hybrid sender wrap and announcement rules exactly, and make Rust and Go follow them",
+  "description": "State the hybrid sender wrap and announcement rules exactly, and make Rust and Go follow them",
+  "kind": "bug_fix",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "2e4eca63bdfb2340f6bd4caca34552fea631844d",
+  "created_at": 1792276711,
+  "updated_at": 1792278671,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "rs/src/pq.rs",
+    "rs/src/blockchain.rs",
+    "go/pq.go",
+    "ts/src/pq/pq.test.ts"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "PROTOCOL.md states the sender wrap KDF, the handshake associated data, and the 0x05 header associated data. The recipient session key still uses both shared secrets. The on-chain sender copy is X25519-only. Rust initiate accepts a recipient X25519 public key and encapsulation key. Rust X25519 discovery returns nothing for an ACPQ note. Go and Rust reject a bad ACPQ signature and accept an unsigned announcement as unverified. A TypeScript test flips ciphertext byte 78. PARITY.md counts 96 notes in rounds 41059 through 41154."
+  ],
+  "selected_artifacts": [
+    "context",
+    "testing",
+    "tasks",
+    "design",
+    "requirements",
+    "docs",
+    "research",
+    "plan"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

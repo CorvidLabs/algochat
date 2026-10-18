@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "state-the-hybrid-sender-wrap-and-announcement-rules-exactly-and-make-rust-and-go-follow-them",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "94b2ff94f66cbc4fc5a1b4fe9f65c6813c67349d",
+  "contract_digest": "a4884a706182a4405e9aedca1a434904bba1dd92106d1a5339ef3980f110432b",
+  "execution_digest": "42e00d8aeb07f2fa6c6023f3b9e2db35f711c01942c82c4c446341825c9f4ff0",
+  "workspace_digest": "8f00e3ccbb13fb9bbbe8d4e5551e2639d3ced3921eeb8f5714e5e1ce33e490f4",
+  "timestamp": 1792278645
+}

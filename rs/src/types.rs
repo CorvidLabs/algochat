@@ -18,13 +18,13 @@ pub const PROTOCOL_ID: u8 = 0x01;
 /// Length of the standard v2 AAD: the metadata prefix of the header.
 ///
 /// `version(1) + protocol_id(1) + sender_public_key(32) + ephemeral_public_key(32) + nonce(12)`
-pub const STANDARD_V2_AAD_LEN: usize = 78;
+pub const STANDARD_V2_AAD_LEN: usize = 126;
 
 /// Length of the PSK v2 AAD: the metadata prefix of the PSK header.
 ///
 /// `version(1) + protocol_id(1) + ratchet_counter(4) + sender_public_key(32)`
 /// `+ ephemeral_public_key(32) + nonce(12)`
-pub const PSK_V2_AAD_LEN: usize = 82;
+pub const PSK_V2_AAD_LEN: usize = 130;
 
 /// Size of the envelope header in bytes.
 pub const HEADER_SIZE: usize = 126;

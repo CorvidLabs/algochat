@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "9104d05a3fe0b803184fd335a8fd0e75712110c4",
+  "contract_digest": "483bfd00592174e4c74cf88228a0d41167379faf6b81173d28e3614cdb26ae3f",
+  "execution_digest": "24e92098dde44be533b811a29313561f5adcb0f5b7ff04f676905d1eb2ece16f",
+  "workspace_digest": "4a369b4197a496734894533a04bc8a3f0ca5b35b18a37a0fd30a8efb8f9e7b72",
+  "timestamp": 1792281162
+}

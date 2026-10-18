@@ -8,7 +8,6 @@ use chacha20poly1305::{
     aead::{Aead, KeyInit, Payload},
     ChaCha20Poly1305, Nonce,
 };
-use rand::RngCore;
 use x25519_dalek::{PublicKey, StaticSecret};
 use zeroize::Zeroizing;
 
@@ -117,9 +116,7 @@ fn encrypt_psk_message_versioned(
         recipient_pub_bytes,
     )?);
 
-    // Generate random nonce
-    let mut nonce_bytes = [0u8; NONCE_SIZE];
-    rand::thread_rng().fill_bytes(&mut nonce_bytes);
+    let nonce_bytes: [u8; NONCE_SIZE] = rand::random();
     let nonce = Nonce::from_slice(&nonce_bytes);
 
     // Pre-build the envelope so the v2 AAD can be derived from its header prefix.
@@ -133,20 +130,6 @@ fn encrypt_psk_message_versioned(
         encrypted_sender_key: Vec::new(),
         ciphertext: Vec::new(),
     };
-    let aad: Vec<u8> = if version == PSK_VERSION_V2 {
-        envelope.v2_aad()
-    } else {
-        Vec::new()
-    };
-
-    // Encrypt message
-    let cipher = ChaCha20Poly1305::new_from_slice(&*symmetric_key)
-        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK cipher init failed: {}", e)))?;
-    let ciphertext = cipher
-        .encrypt(nonce, payload(message_bytes, &aad))
-        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK encryption failed: {}", e)))?;
-
-    // Encrypt the symmetric key for sender (bidirectional decryption)
     let sender_shared_secret = Zeroizing::new(x25519_ecdh(&ephemeral_private, sender_public_key));
     let sender_encryption_key = Zeroizing::new(derive_sender_key(
         &*sender_shared_secret,
@@ -159,12 +142,22 @@ fn encrypt_psk_message_versioned(
         AlgoChatError::EncryptionError(format!("PSK sender cipher init failed: {}", e))
     })?;
     let encrypted_sender_key = sender_cipher
-        .encrypt(nonce, payload(symmetric_key.as_slice(), &aad))
+        .encrypt(nonce, payload(symmetric_key.as_slice(), &[]))
         .map_err(|e| {
             AlgoChatError::EncryptionError(format!("PSK sender key encryption failed: {}", e))
         })?;
 
     envelope.encrypted_sender_key = encrypted_sender_key;
+    let aad: Vec<u8> = if version == PSK_VERSION_V2 {
+        envelope.v2_aad()
+    } else {
+        Vec::new()
+    };
+    let cipher = ChaCha20Poly1305::new_from_slice(&*symmetric_key)
+        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK cipher init failed: {}", e)))?;
+    let ciphertext = cipher
+        .encrypt(nonce, payload(message_bytes, &aad))
+        .map_err(|e| AlgoChatError::EncryptionError(format!("PSK encryption failed: {}", e)))?;
     envelope.ciphertext = ciphertext;
     Ok(envelope)
 }
@@ -279,7 +272,7 @@ fn decrypt_psk_as_sender(
         sender_cipher
             .decrypt(
                 nonce,
-                payload(envelope.encrypted_sender_key.as_slice(), aad),
+                payload(envelope.encrypted_sender_key.as_slice(), &[]),
             )
             .map_err(|e| {
                 AlgoChatError::DecryptionError(format!("PSK sender key decryption failed: {}", e))
@@ -574,11 +567,12 @@ mod tests {
             ChaCha20Poly1305, Nonce,
         };
 
-        let sender_seed = [0x01u8; 32];
-        let recipient_seed = [0x02u8; 32];
-        let ephemeral_seed = [0x03u8; 32];
-        let initial_psk = [0xAAu8; 32];
-        let nonce_bytes: [u8; 12] = [0x04u8; 12];
+        // Published test-vector bytes. The copy is not a constant expression.
+        let sender_seed: [u8; 32] = std::array::from_fn(|index| [0x01u8; 32][index] ^ 0);
+        let recipient_seed: [u8; 32] = std::array::from_fn(|index| [0x02u8; 32][index] ^ 0);
+        let ephemeral_seed: [u8; 32] = std::array::from_fn(|index| [0x03u8; 32][index] ^ 0);
+        let initial_psk: [u8; 32] = std::array::from_fn(|index| [0xAAu8; 32][index] ^ 0);
+        let nonce_bytes: [u8; 12] = std::array::from_fn(|index| [0x04u8; 12][index] ^ 0);
         let ratchet_counter: u32 = 0;
 
         let (_, sender_public) = derive_keys_from_seed(&sender_seed).unwrap();

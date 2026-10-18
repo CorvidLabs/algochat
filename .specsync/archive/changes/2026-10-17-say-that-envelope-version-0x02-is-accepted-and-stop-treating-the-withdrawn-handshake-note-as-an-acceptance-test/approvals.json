@@ -1,0 +1,46 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792281100,
+      "digest": "483bfd00592174e4c74cf88228a0d41167379faf6b81173d28e3614cdb26ae3f",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test",
+        "title": "Say that envelope version 0x02 is accepted, and stop treating the withdrawn handshake note as an acceptance test",
+        "description": "Say that envelope version 0x02 is accepted, and stop treating the withdrawn handshake note as an acceptance test",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "TEST-VECTORS.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "TEST-VECTORS.md no longer says version 0x02 is unsupported. PARITY.md limits vectors/pq-mlkem768.json acceptance to the encapsulation key, ciphertext, shared secret, and combiner. The 1278-byte handshake_note is not an acceptance test."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "e74bfc07f56ef95927c7db66df0f589a84b80fde96a7fe02988165841a761a14"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792281175,
+      "digest": "62c71901f65a7a12175ff9facefac0f51016ba1d21e9fffe65763291305eae2f",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

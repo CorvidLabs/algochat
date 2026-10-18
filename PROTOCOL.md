@@ -1,6 +1,6 @@
 # AlgoChat Protocol Specification
 
-**Version**: 1.2.1
+**Version**: 1.3.0
 **Status**: Stable
 
 ## 1. Overview
@@ -10,7 +10,7 @@ AlgoChat is an end-to-end encrypted messaging protocol that uses the Algorand bl
 ## 2. Design Goals
 
 1. **Privacy** - Only sender and recipient can read messages
-2. **Per-Message Key Separation** - Each message derives its own symmetric key from a fresh ephemeral key pair. This is *not* forward secrecy; see [11.1](#111-forward-secrecy--not-provided)
+2. **Per-Message Key Separation** - Each everyday (`0x01`) and Extra lock (`0x02`) message derives its own symmetric key from a fresh ephemeral key pair. A hybrid `0x05` message reuses the session key from its `0x04` handshake. This is not forward secrecy; see [11.1](#111-forward-secrecy--not-provided)
 3. **Bidirectional Decryption** - Sender can decrypt their own sent messages. This enables chat history display on the sender's device without storing plaintext locally—messages can be re-decrypted from the blockchain on any authorized device.
 4. **Immutability** - Messages cannot be altered after transmission
 5. **Decentralization** - No trusted third parties required
@@ -101,7 +101,7 @@ that address MUST carry a Falcon `pqsig` and MUST pay the Falcon fee
 
 | Field | Size | Description |
 |-------|------|-------------|
-| version | 1 byte | Protocol version (0x01) |
+| version | 1 byte | Envelope version (`0x01` or `0x02`, section 5.4.1) |
 | protocol | 1 byte | Protocol identifier (0x01 = AlgoChat) |
 | sender_pubkey | 32 bytes | Sender's X25519 public key |
 | ephemeral_pubkey | 32 bytes | Per-message ephemeral public key |
@@ -126,6 +126,19 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 |------------|------|--------|-------------|
 | `0x01` | Standard | Stable | X25519 ECDH with ephemeral keys |
 | `0x02` | Ratcheting PSK | Stable (v1.1) | Hybrid X25519 + ratcheting pre-shared key. Provides defense-in-depth against quantum key exchange attacks. |
+| `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
+| `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
+
+Identifier `0x03` is not assigned.
+
+### 5.4.1 Envelope version
+
+Everyday (`0x01`) and Extra lock (`0x02`) notes use version byte `0x01` or `0x02`. The field layout does not change.
+
+- Version `0x01` uses empty associated data for the payload and for the sender-key wrap.
+- Version `0x02` binds the full fixed header as the payload's associated data. That header includes the wrapped sender key, so the wrap is computed first and uses empty associated data.
+
+A reader MUST accept both versions. Changing the version byte of a version `0x02` note MUST fail decryption. Protocols `0x04` and `0x05` use version byte `0x02` with the layouts in section 5.7. That is a different header from an everyday version `0x02` note. The protocol byte tells them apart.
 
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
@@ -139,7 +152,7 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 
 | Field | Size | Description |
 |-------|------|-------------|
-| version | 1 byte | Protocol version (`0x01`) |
+| version | 1 byte | Envelope version (`0x01` or `0x02`, section 5.4.1) |
 | protocol | 1 byte | Protocol identifier (`0x02` = Ratcheting PSK) |
 | ratchet_counter | 4 bytes | Big-endian message counter for PSK ratcheting |
 | sender_pubkey | 32 bytes | Sender's X25519 public key |
@@ -160,6 +173,68 @@ The `ratchet_counter` field is a monotonically increasing 32-bit unsigned intege
 A plaintext of 3950 bytes encrypts to a note of exactly 4096 bytes. One byte past that maximum MUST fail before a transaction is built. A note of 4097 bytes is not legal.
 
 A plaintext of 878 bytes still encrypts. That envelope is 1024 bytes. It remains valid and is no longer the maximum.
+
+### 5.7 Hybrid session (protocols `0x04` and `0x05`)
+
+This mode is optional. A peer with no ML-KEM encapsulation key still receives `0x01` or `0x02`. Identifier `0x03` is not assigned.
+
+ML-KEM-768 (FIPS 203, category 3) is combined with X25519. The recipient derives the session key from both shared secrets. The long-term ML-KEM key opens every handshake sent to that account on that path. This is not forward secrecy.
+
+The handshake also carries a sender copy of the session key. That copy is sealed under both of these secrets, which the sender can recompute later:
+
+- X25519 of the sender's long-term key and the ephemeral public key on the note
+- ML-KEM-768 decapsulation of a ciphertext on the note addressed to the sender's own encapsulation key
+
+An attacker who breaks only X25519, or only ML-KEM, cannot open that copy. Opening it requires both.
+
+The encapsulation key is derived from the same 32-byte account seed as the X25519 key, with HKDF-SHA256 salt `AlgoChat-v1-mlkem768` and info `mlkem768-d` and `mlkem768-z`. Those 32-byte outputs are concatenated and passed to ML-KEM key generation.
+
+An announcement note is a self-payment:
+
+```
+magic "ACPQ" (4) | version 0x01 (1) | encapsulation key (1184) | Ed25519 signature (64, optional)
+```
+
+The signature is over SHA-256 of `AlgoChat-pq-ek-v1`, the version byte, and the encapsulation key. A bad signature is rejected. No signature means the key is unverified. Implementations MUST NOT parse an `ACPQ` note as an X25519 announcement.
+
+The handshake is one note of 2366 bytes:
+
+```
+version 0x02 | protocol 0x04 | sender X25519 (32) | recipient X25519 (32)
+ephemeral X25519 (32) | recipient ML-KEM ciphertext (1088) | SHA-256(recipient encapsulation key) (32)
+sender ML-KEM ciphertext (1088) | nonce (12) | wrapped session key (48)
+```
+
+The recipient decapsulates the recipient ciphertext and runs X25519, then derives the session key. The recipient does not need the sender ciphertext.
+
+Sender wrap key, HKDF-SHA256, 32 bytes:
+
+```
+ikm  = X25519(sender long-term, ephemeral) || sender ML-KEM shared secret
+salt = ephemeral public
+info = UTF-8 "AlgoChatPQ-SenderKey" || sender X25519
+```
+
+When the handshake is built, X25519(ephemeral private, sender public) is the same shared secret. The wrap AEAD is ChaCha20-Poly1305. Its associated data is every handshake byte before the wrapped key (2318 bytes). The nonce is the 12-byte field in the handshake.
+
+A `0x05` message uses the 78-byte header as associated data. The payload ciphertext starts at byte 78.
+
+Session key, HKDF-SHA256, 32 bytes:
+
+```
+salt = UTF-8 "algochat-pq-v1"
+ikm  = X25519 shared secret || ML-KEM shared secret
+info = UTF-8 "algochat-pq-v1" || ephemeral public || ML-KEM ciphertext
+       || sender X25519 || recipient X25519 || SHA-256(encapsulation key)
+```
+
+A `0x05` message header is 78 bytes:
+
+```
+version 0x02 | protocol 0x05 | sender X25519 (32) | SHA-256(handshake note) (32) | nonce (12)
+```
+
+The ciphertext and 16-byte tag follow. Maximum plaintext is 4002 bytes (4096 - 78 - 16). A 3-byte message is a 97-byte note. The handshake is paid once. Later messages stay under 1024 bytes unless the plaintext itself is long.
 
 ## 6. Encryption
 
@@ -551,14 +626,18 @@ When querying the indexer, filter by note prefix to match the protocol mode:
 
 | Mode | Note Prefix | Description |
 |------|-------------|-------------|
-| Standard (`0x01`) | `0x0101` | Version byte + standard protocol byte |
-| Ratcheting PSK (`0x02`) | `0x0102` | Version byte + PSK protocol byte |
+| Standard, version `0x01` | `0x0101` | Empty associated data |
+| Standard, version `0x02` | `0x0201` | Full header is payload associated data |
+| Extra lock, version `0x01` | `0x0102` | Empty associated data |
+| Extra lock, version `0x02` | `0x0202` | Full header is payload associated data |
 
-To discover all AlgoChat messages, query for both prefixes:
+To discover everyday and Extra lock notes, query for all four prefixes:
 
 ```
-standardPrefix = [0x01, 0x01]
-pskPrefix      = [0x01, 0x02]
+standardV1 = [0x01, 0x01]
+standardV2 = [0x02, 0x01]
+pskV1      = [0x01, 0x02]
+pskV2      = [0x02, 0x02]
 ```
 
 See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for pseudocode examples.
@@ -672,3 +751,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.1 | Add ratcheting PSK mode (protocol `0x02`). |
 | 1.2 | Account agility: payments MAY be Falcon-1024 `pqsig` as well as Ed25519 `sig`. Encryption seed is mnemonic entropy, not a signing-key prefix. Falcon min fee is 3×. Envelope bytes and 1.1 test vectors are unchanged. |
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
+| 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |

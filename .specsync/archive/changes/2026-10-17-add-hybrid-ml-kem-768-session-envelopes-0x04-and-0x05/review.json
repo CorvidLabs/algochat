@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "add-hybrid-ml-kem-768-session-envelopes-0x04-and-0x05",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "8c7eddd0b366a0c2cc3bb62e35550094daed5fad",
+  "contract_digest": "2340ef645f3de6bc47d1337a25abbd1e562ff85270005eda9b449fda5abf7240",
+  "execution_digest": "b07517e555b86e7521488a0ce6ae2dc59f140c09256b6f0382ba3b70cfec4fc4",
+  "workspace_digest": "ac44f259c1947407d14aa7e5eca8817ee7f6aad865279b97988fd83f99ba012f",
+  "timestamp": 1792265904
+}

@@ -57,6 +57,9 @@ public struct ChatEnvelope: Sendable {
     /// Encrypted message with authentication tag
     public let ciphertext: Data
 
+    /// Envelope version. `0x01` has empty associated data. `0x02` binds the full header.
+    public let envelopeVersion: UInt8
+
     // MARK: - Initialization
 
     /**
@@ -72,7 +75,8 @@ public struct ChatEnvelope: Sendable {
         ephemeralPublicKey: Data,
         encryptedSenderKey: Data,
         nonce: Data,
-        ciphertext: Data
+        ciphertext: Data,
+        envelopeVersion: UInt8 = ChatEnvelope.version
     ) {
         precondition(senderPublicKey.count == 32, "Sender public key must be 32 bytes")
         precondition(ephemeralPublicKey.count == 32, "Ephemeral public key must be 32 bytes")
@@ -87,14 +91,27 @@ public struct ChatEnvelope: Sendable {
         self.encryptedSenderKey = Data([UInt8](encryptedSenderKey))
         self.nonce = Data([UInt8](nonce))
         self.ciphertext = Data([UInt8](ciphertext))
+        self.envelopeVersion = envelopeVersion
     }
 
     // MARK: - Encoding
 
+    /// The 126-byte header. Version 0x02 uses it as payload associated data.
+    public func headerData() -> Data {
+        var data = Data()
+        data.append(envelopeVersion)
+        data.append(Self.protocolID)
+        data.append(senderPublicKey)
+        data.append(ephemeralPublicKey)
+        data.append(nonce)
+        data.append(encryptedSenderKey)
+        return data
+    }
+
     /// Serializes to bytes for transaction note
     public func encode() -> Data {
         var data = Data()
-        data.append(Self.version)
+        data.append(envelopeVersion)
         data.append(Self.protocolID)
         data.append(senderPublicKey)
         data.append(ephemeralPublicKey)
@@ -119,7 +136,7 @@ public struct ChatEnvelope: Sendable {
             throw ChatError.unsupportedProtocol(protocolByte)
         }
 
-        guard versionByte == version else {
+        guard versionByte == version || versionByte == 0x02 else {
             throw ChatError.unsupportedVersion(versionByte)
         }
 
@@ -138,7 +155,8 @@ public struct ChatEnvelope: Sendable {
             ephemeralPublicKey: Data(ephemeralPublicKey),
             encryptedSenderKey: Data(encryptedSenderKey),
             nonce: Data(nonce),
-            ciphertext: Data(ciphertext)
+            ciphertext: Data(ciphertext),
+            envelopeVersion: versionByte
         )
     }
 }

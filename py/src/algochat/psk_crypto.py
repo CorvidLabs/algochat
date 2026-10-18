@@ -5,7 +5,14 @@ import os
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 
-from .psk_types import PSKEnvelope, PSK_MAX_PAYLOAD_SIZE
+from .psk_types import (
+    PSKEnvelope,
+    PSK_HEADER_SIZE,
+    PSK_MAX_PAYLOAD_SIZE,
+    PSK_PROTOCOL_ID,
+    PSK_VERSION,
+    _PSK_VERSION_AAD,
+)
 from .psk_ratchet import (
     derive_hybrid_symmetric_key,
     derive_sender_key,
@@ -17,6 +24,28 @@ from .keys import (
     public_key_from_bytes,
 )
 from .types import NONCE_SIZE, PSKEncryptionError, PSKDecryptionError
+
+
+def _payload_aad(envelope: PSKEnvelope) -> bytes | None:
+    """Associated data for the message ciphertext.
+
+    Version 0x01 keeps ChaCha associated data empty. Version 0x02 binds the
+    130-byte header, including the wrapped sender key. The sender-key wrap
+    itself always uses empty associated data.
+    """
+    if envelope.version < _PSK_VERSION_AAD:
+        return None
+    header = (
+        bytes([envelope.version, PSK_PROTOCOL_ID])
+        + envelope.ratchet_counter.to_bytes(4, byteorder="big")
+        + envelope.sender_public_key
+        + envelope.ephemeral_public_key
+        + envelope.nonce
+        + envelope.encrypted_sender_key
+    )
+    if len(header) != PSK_HEADER_SIZE:
+        raise PSKDecryptionError(f"Extra lock header is {len(header)} bytes, expected {PSK_HEADER_SIZE}")
+    return header
 
 
 def encrypt_psk_message(
@@ -97,6 +126,7 @@ def encrypt_psk_message(
         nonce=nonce,
         encrypted_sender_key=encrypted_sender_key,
         ciphertext=ciphertext,
+        version=PSK_VERSION,
     )
 
 
@@ -160,7 +190,7 @@ def _decrypt_psk_as_recipient(
     )
 
     cipher = ChaCha20Poly1305(symmetric_key)
-    return cipher.decrypt(envelope.nonce, envelope.ciphertext, None)
+    return cipher.decrypt(envelope.nonce, envelope.ciphertext, _payload_aad(envelope))
 
 
 def _decrypt_psk_as_sender(
@@ -185,6 +215,5 @@ def _decrypt_psk_as_sender(
     sender_cipher = ChaCha20Poly1305(sender_decryption_key)
     symmetric_key = sender_cipher.decrypt(envelope.nonce, envelope.encrypted_sender_key, None)
 
-    # Now decrypt the message
     cipher = ChaCha20Poly1305(symmetric_key)
-    return cipher.decrypt(envelope.nonce, envelope.ciphertext, None)
+    return cipher.decrypt(envelope.nonce, envelope.ciphertext, _payload_aad(envelope))

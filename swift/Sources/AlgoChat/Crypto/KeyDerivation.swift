@@ -23,6 +23,22 @@ public enum KeyDerivation {
         from account: Account
     ) throws -> (Curve25519.KeyAgreement.PrivateKey, Curve25519.KeyAgreement.PublicKey) {
         let seed = try extractPrivateSeed(from: account)
+        let keys = try deriveEncryptionKeys(fromSeed: seed)
+        return (keys.privateKey, keys.publicKey)
+    }
+
+    /**
+     Derives an X25519 encryption key pair from a 32-byte account seed.
+
+     Uses the same HKDF labels as `deriveEncryptionKeys(from:)`. The seed is the
+     Algorand private key, not the derived X25519 scalar.
+     */
+    public static func deriveEncryptionKeys(
+        fromSeed seed: Data
+    ) throws -> (privateKey: Curve25519.KeyAgreement.PrivateKey, publicKey: Curve25519.KeyAgreement.PublicKey) {
+        guard seed.count == 32 else {
+            throw ChatError.keyDerivationFailed("Account seed must be 32 bytes, got \(seed.count)")
+        }
         let encryptionSeed = deriveEncryptionSeed(from: seed)
         let privateKey = try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: encryptionSeed)
         return (privateKey, privateKey.publicKey)

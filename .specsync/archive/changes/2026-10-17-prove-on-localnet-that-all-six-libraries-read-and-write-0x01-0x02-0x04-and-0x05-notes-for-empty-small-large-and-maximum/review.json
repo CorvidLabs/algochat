@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "1865422497844d3b44321fbed3e06a0cc8ed6b83",
+  "contract_digest": "d3936468ea641f5a4d58bbab20b916e0fe6b481872f59f332a183579b4854228",
+  "execution_digest": "8506b21a806ead8c81ca20f06ad4df15b0bd76d00e4bdb9ed549f01366a481f1",
+  "workspace_digest": "89fd03608acc0208d6a4e3246439308fc1bb1f4caf5ce3ba19bee0ba5009b745",
+  "timestamp": 1792273192
+}

@@ -1,0 +1,47 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792279677,
+      "digest": "50cd614205786b276d1f803251704043a5caffa0ee1df85c541da710b1ebda52",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key",
+        "title": "Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key",
+        "description": "Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PARITY.md",
+          "PROTOCOL.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "PROTOCOL.md says everyday and Extra lock messages use a fresh ephemeral key, and a 0x05 message reuses the handshake session key. PARITY.md records LocalNet rounds 41641 through 41736 for the 2366-byte handshake and marks rounds 41059 through 41154 as withdrawn."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "91abfde9d20256a88887d5128d500fd6a4b842cdb90fcf3d5b2227eec3d78b7a"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792279744,
+      "digest": "bbab608ca9fe863932e34fd26efbc668aeca9262ca84382a79af158135dbd6d5",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

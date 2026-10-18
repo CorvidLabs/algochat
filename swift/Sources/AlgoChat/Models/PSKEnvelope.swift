@@ -56,6 +56,9 @@ public struct PSKEnvelope: Sendable {
     /// Encrypted message with authentication tag
     public let ciphertext: Data
 
+    /// Envelope version. `0x02` binds the 130-byte header as payload associated data.
+    public let envelopeVersion: UInt8
+
     // MARK: - Initialization
 
     /**
@@ -72,7 +75,8 @@ public struct PSKEnvelope: Sendable {
         ephemeralPublicKey: Data,
         nonce: Data,
         encryptedSenderKey: Data,
-        ciphertext: Data
+        ciphertext: Data,
+        envelopeVersion: UInt8 = PSKEnvelope.version
     ) {
         precondition(senderPublicKey.count == 32, "Sender public key must be 32 bytes")
         precondition(ephemeralPublicKey.count == 32, "Ephemeral public key must be 32 bytes")
@@ -87,6 +91,7 @@ public struct PSKEnvelope: Sendable {
         self.nonce = Data([UInt8](nonce))
         self.encryptedSenderKey = Data([UInt8](encryptedSenderKey))
         self.ciphertext = Data([UInt8](ciphertext))
+        self.envelopeVersion = envelopeVersion
     }
 
     // MARK: - Encoding
@@ -94,7 +99,7 @@ public struct PSKEnvelope: Sendable {
     /// Serializes to bytes for transaction note
     public func encode() -> Data {
         var data = Data()
-        data.append(Self.version)
+        data.append(envelopeVersion)
         data.append(Self.protocolID)
         // Big-endian counter
         var counter = ratchetCounter.bigEndian
@@ -122,7 +127,7 @@ public struct PSKEnvelope: Sendable {
             throw ChatError.unsupportedProtocol(protocolByte)
         }
 
-        guard versionByte == version else {
+        guard versionByte == version || versionByte == 0x02 else {
             throw ChatError.unsupportedVersion(versionByte)
         }
 
@@ -148,7 +153,8 @@ public struct PSKEnvelope: Sendable {
             ephemeralPublicKey: Data(ephemeralPublicKey),
             nonce: Data(nonce),
             encryptedSenderKey: Data(encryptedSenderKey),
-            ciphertext: Data(ciphertext)
+            ciphertext: Data(ciphertext),
+            envelopeVersion: versionByte
         )
     }
 }

@@ -1,0 +1,57 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792271553,
+      "digest": "d3936468ea641f5a4d58bbab20b916e0fe6b481872f59f332a183579b4854228",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum",
+        "title": "Prove on LocalNet that all six libraries read and write 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, including several messages in one exchange. Go gains Extra lock. Every library accepts version 0x02 header binding the way TypeScript emits it. Identifier 0x03 stays unassigned.",
+        "description": "Prove on LocalNet that all six libraries read and write 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, including several messages in one exchange. Go gains Extra lock. Every library accepts version 0x02 header binding the way TypeScript emits it. Identifier 0x03 stays unassigned.",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PARITY.md",
+          "PROTOCOL.md",
+          "Package.swift",
+          "README.md",
+          "docs",
+          "go",
+          "implementations.json",
+          "kt",
+          "py",
+          "rs",
+          "swift",
+          "ts"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "On LocalNet, each library writes 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, plus several messages in one exchange. Every other library opens those confirmed notes. Version 0x02 header binding matches TypeScript. Go implements Extra lock. Identifier 0x03 is not used."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "36fd257474088dc7cceab8def1a0a946f46c1d42822ef833ec3ef076f8ace1a2"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792273202,
+      "digest": "d8a7e94d2b90769aaf1839d800de3bffebbebb096e23caa3859c6f16acbaadaa",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

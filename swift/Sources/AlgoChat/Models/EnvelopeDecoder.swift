@@ -53,7 +53,8 @@ public enum EnvelopeDecoder {
         guard data.count >= 2 else { return false }
         let version = data[0]
         let protocolByte = data[1]
-        return version == ChatEnvelope.version
+        let knownVersion = version == ChatEnvelope.version || version == 0x02
+        return knownVersion
             && (protocolByte == ChatEnvelope.protocolID || protocolByte == PSKEnvelope.protocolID)
     }
 }

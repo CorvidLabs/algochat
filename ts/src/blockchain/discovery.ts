@@ -45,6 +45,11 @@ export function parseKeyAnnouncement(
         return undefined;
     }
 
+    // PQ encapsulation-key notes start with "ACPQ" and are not X25519 keys.
+    if (note[0] === 0x41 && note[1] === 0x43 && note[2] === 0x50 && note[3] === 0x51) {
+        return undefined;
+    }
+
     const publicKey = note.slice(0, 32);
 
     if (note.length >= 96) {

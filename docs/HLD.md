@@ -2,7 +2,7 @@
 
 This document explains how AlgoChat works end to end: the keys, the envelope on the wire, how a message is encrypted and read, how peers find each other's keys, and how the envelope rides on an Algorand payment. It also covers the machinery in this repository (validation, the status dashboard, the trust gate, GitHub Pages).
 
-It describes protocol **1.2.1**. The normative text is [PROTOCOL.md](../PROTOCOL.md). If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
+The narrative below describes protocol 1.2.1 (`0x01` and `0x02`). Protocol 1.3.0 adds an optional hybrid session in [PROTOCOL.md](../PROTOCOL.md) section 5.7. All six libraries implement it, including Extra lock. On LocalNet, rounds 41641 through 41736, each library's empty, small, large, and maximum notes for the 2366-byte handshake opened in the other five. Rounds 41059 through 41154 used the withdrawn 1278-byte handshake. The parity record is [PARITY.md](../PARITY.md). The normative text is PROTOCOL.md. If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
 
 Notation: `‖` means byte concatenation (PROTOCOL.md writes it `||`). `HKDF(ikm, salt, info)` is HKDF-SHA256 with a 32-byte output. `seal` and `open` are ChaCha20-Poly1305 encrypt and decrypt.
 
@@ -49,7 +49,7 @@ flowchart LR
     A -- "signed payment<br/>note = envelope" --> ALGOD
     ALGOD --> LEDGER
     LEDGER --> IDX
-    IDX -- "notes with prefix<br/>0x0101 or 0x0102" --> B
+    IDX -- "prefixes 0x0101, 0x0201,<br/>0x0102, 0x0202, 0x0204, 0x0205" --> B
     IDX -- "own sent notes,<br/>re-decrypted as sender" --> A
     A <-. "algochat-psk URI<br/>(mode 0x02 only)" .-> OOB
     OOB <-.-> B
@@ -61,7 +61,7 @@ Sources: [PROTOCOL.md §10](../PROTOCOL.md#10-transport-layer), [§8.6](../PROTO
 
 ```mermaid
 flowchart TB
-    subgraph repo["protocol-algochat (this repo)"]
+    subgraph repo["algochat monorepo"]
         SPEC["PROTOCOL.md<br/>normative spec"]
         GUIDE["IMPLEMENTATION.md<br/>pseudocode"]
         TV["TEST-VECTORS.md<br/>byte-exact cases"]
@@ -69,7 +69,7 @@ flowchart TB
         REG["implementations.json<br/>registry"]
         STATUS["status.yml + generate-status.ts"]
     end
-    LIBS["Implementation libraries<br/>swift-, ts-, py-, rs-, kt-, go-algochat"]
+    LIBS["Libraries in this repo<br/>ts, swift, py, rs, kt, go"]
     HARNESS["test-algochat<br/>conformance harness"]
     CLIENTS["Clients<br/>algochat-web (archived), Raven"]
     PAGES["GitHub Pages<br/>landing page + status dashboard"]
@@ -111,7 +111,7 @@ flowchart TB
     end
     subgraph L4["Transport and discovery: public chain"]
         TX["Payment transaction<br/>note up to 4096 bytes"]
-        DISC["Indexer search<br/>note prefix 0x0101 or 0x0102"]
+        DISC["Indexer search<br/>0x0101, 0x0201, 0x0102, 0x0202"]
     end
     MN --> XK
     MN --> ED
@@ -161,7 +161,7 @@ Rules that matter (all from [PROTOCOL.md §4](../PROTOCOL.md#4-key-derivation)):
 
 | Path | Owns |
 | --- | --- |
-| [PROTOCOL.md](../PROTOCOL.md) | The normative protocol, version 1.2.1 |
+| [PROTOCOL.md](../PROTOCOL.md) | The normative protocol, version 1.3.0 |
 | [IMPLEMENTATION.md](../IMPLEMENTATION.md) | Language-neutral pseudocode, data structures, error names, PSK UX guidance |
 | [TEST-VECTORS.md](../TEST-VECTORS.md) | Byte-exact vectors for key derivation, envelopes, round trips, PSK schedule, size limits |
 | [SECURITY.md](../SECURITY.md) | Threat model, PSK threat matrix, key handling guidance, vulnerability reporting |
@@ -188,12 +188,12 @@ sequenceDiagram
     participant A as Alice's client
     participant I as Indexer
     actor B as Bob
-    A->>I: search payments sent by Bob, note prefix 0x0101, limit 100
+    A->>I: search payments sent by Bob, note prefix 0x0101 or 0x0201, limit 100
     I-->>A: Bob's standard-mode AlgoChat payments
     alt an envelope parses
         Note over A: Bob's key = envelope.sender_pubkey, read from the header
     else none found
-        A->>I: search payments sent by Bob, note prefix 0x0102, limit 100
+        A->>I: search payments sent by Bob, note prefix 0x0102 or 0x0202, limit 100
         I-->>A: Bob's PSK-mode AlgoChat payments
         alt an envelope parses
             Note over A: Bob's key = envelope.sender_pubkey, read from the header
@@ -224,7 +224,7 @@ sequenceDiagram
     C->>K: encrypt payload for recipient_pub
     Note over K: eph = fresh X25519 key pair from RANDOM(32)<br/>shared = X25519(eph_priv, recipient_pub)<br/>key = HKDF(shared, eph_pub, "AlgoChatV1" ‖ sender_pub ‖ recipient_pub)<br/>nonce = RANDOM(12)<br/>ciphertext = seal(key, nonce, payload)
     Note over K: sender_shared = X25519(eph_priv, sender_pub)<br/>sender_key = HKDF(sender_shared, eph_pub, "AlgoChatV1-SenderKey" ‖ sender_pub)<br/>encrypted_sender_key = seal(sender_key, nonce, key)<br/>eph_priv is discarded, never stored
-    K-->>C: envelope = 01 01 ‖ sender_pub ‖ eph_pub ‖ nonce ‖ encrypted_sender_key ‖ ciphertext
+    K-->>C: envelope version 0x01 or 0x02, protocol 0x01, then sender_pub, eph_pub, nonce, encrypted_sender_key, ciphertext
     C->>N: get suggested params
     N-->>C: suggested params
     Note over C: payment sender to recipient, amount 0, note = envelope<br/>sign with sig (Ed25519) or pqsig (Falcon-1024)<br/>fee = scheme minimum + note surcharge (section 10.3)
@@ -250,11 +250,11 @@ sequenceDiagram
     participant C as Client
     participant K as Local crypto, holds my X25519 key
     participant I as Indexer
-    C->>I: search payments by note prefix 0x0101 and 0x0102
+    C->>I: search note prefixes 0x0101, 0x0201, 0x0102, and 0x0202
     I-->>C: payments with note bytes
     loop each note
         C->>K: parse and decrypt the note
-        alt not version 01, unknown protocol byte, or too short
+        alt not version 0x01 or 0x02, unknown protocol byte, or too short
             K-->>C: INVALID_ENVELOPE, UNKNOWN_VERSION or UNKNOWN_PROTOCOL, skip it
         else parsed
             alt my key equals sender_pubkey, so I sent it
@@ -354,6 +354,24 @@ sequenceDiagram
 
 Each test job records a failure as data instead of failing, and the generate and deploy jobs run with `if: always()`, so a failing library shows up as failing on the dashboard rather than blocking the deploy. The `status.html` and `badges/` committed in the repo are snapshots; the deployed copies are regenerated on every run.
 
+### 4.7 Open a hybrid session (`0x04`, then `0x05`)
+
+Everyday `0x01` and Extra lock `0x02` stay as above. A hybrid session is optional. The sender publishes one handshake note. Later messages on that session are shorter data notes. Byte `0x03` is not a public protocol id. The byte layout is [PROTOCOL.md](../PROTOCOL.md) section 5.7.
+
+```mermaid
+sequenceDiagram
+    participant S as Sender
+    participant L as Ledger
+    participant R as Recipient
+    S->>L: payment whose note is protocol 0x04
+    Note over S: note is 2366 bytes, version 0x02
+    L->>R: handshake
+    R->>R: decapsulate ML-KEM-768 and finish X25519
+    S->>L: payment whose note is protocol 0x05
+    L->>R: session message
+    R->>R: open with the session key
+```
+
 
 ## 5. Data
 
@@ -363,7 +381,7 @@ Offsets are from the deserializer in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (
 
 | Field | Standard `0x01` | PSK `0x02` | Size |
 | --- | --- | --- | --- |
-| `version` (always `0x01`) | `[0]` | `[0]` | 1 |
+| `version` (`0x01` or `0x02`) | `[0]` | `[0]` | 1 |
 | `protocol` | `[1]` = `0x01` | `[1]` = `0x02` | 1 |
 | `ratchet_counter`, big-endian u32 | not present | `[2, 6)` | 4 |
 | `sender_pubkey`, X25519 | `[2, 34)` | `[6, 38)` | 32 |
@@ -378,7 +396,9 @@ Offsets are from the deserializer in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (
 | Smallest valid envelope (empty payload, tag only) | 142 bytes | 146 bytes |
 | Largest envelope (Algorand note limit) | 4096 bytes | 4096 bytes |
 | Largest plaintext payload | 3954 bytes | 3950 bytes |
-| Note prefix for indexer filtering | `0x0101` | `0x0102` |
+| Note prefix for indexer filtering | `0x0101` or `0x0201` | `0x0102` or `0x0202` |
+
+Hybrid session notes are separate from this table. A handshake is version `0x02` and protocol `0x04` (prefix `0x0204`, 2366 bytes). A session message is version `0x02` and protocol `0x05` (prefix `0x0205`). The sender copy on the handshake needs both X25519 and ML-KEM. Both layouts are specified in [PROTOCOL.md](../PROTOCOL.md) section 5.7.
 
 ### 5.2 Payload
 

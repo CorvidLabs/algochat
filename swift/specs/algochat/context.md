@@ -4,7 +4,7 @@ spec: algochat.spec.md
 
 ## Key Decisions
 
-- Standard mode prioritizes interoperable forward secrecy through per-message X25519 ephemeral keys and authenticated encryption.
+- Standard mode uses a fresh X25519 ephemeral key per message and authenticated encryption. That separates message keys. It does not provide forward secrecy.
 - PSK mode is optional defense-in-depth. It adds a deterministic ratchet and replay window without replacing authenticated ECDH.
 - Transaction notes are the immutable transport; the indexer is the read/discovery plane and local caches are accelerators, not authorities.
 - Durable queues and platform-specific key storage sit behind async `Sendable` protocols so applications can substitute implementations.

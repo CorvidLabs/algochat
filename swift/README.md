@@ -14,7 +14,7 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 ## Features
 
 - **End-to-End Encryption** - X25519 key agreement + ChaCha20-Poly1305
-- **Forward Secrecy** - Per-message ephemeral keys protect past messages
+- **No forward secrecy** - A long-term key opens that account's past messages. A fresh ephemeral key only separates message keys.
 - **Quantum Defense-in-Depth** - Optional ratcheting PSK mode (protocol v1.1) provides hybrid X25519 + pre-shared key encryption
 - **Replay Protection** - Counter-based sliding window for PSK messages
 - **Immutable Messages** - Permanently recorded on-chain
@@ -23,7 +23,7 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 - **Reply Support** - Thread conversations with reply context
 - **Biometric Storage** - Protect encryption keys with Face ID / Touch ID
 - **Cross-Implementation** - Compatible with [ts-algochat](https://github.com/CorvidLabs/ts-algochat), [rs-algochat](https://github.com/CorvidLabs/rs-algochat), [py-algochat](https://github.com/CorvidLabs/py-algochat), [kt-algochat](https://github.com/CorvidLabs/kt-algochat)
-- **Multi-Platform** - iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, visionOS 1+, Linux
+- **Multi-Platform** - iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, visionOS 1+. The hybrid ML-KEM session needs macOS 26 and is not covered by a Linux CI job.
 
 ## Installation
 
@@ -151,7 +151,7 @@ Messages are encrypted using modern cryptographic primitives:
 - **Key Agreement**: X25519 elliptic curve Diffie-Hellman
 - **Encryption**: ChaCha20-Poly1305 authenticated encryption
 - **Key Derivation**: HKDF-SHA256 with domain separation
-- **Forward Secrecy**: Fresh ephemeral key per message
+- **Key separation**: A fresh ephemeral key per everyday message. This is not forward secrecy.
 
 ### Message Envelope Formats
 
@@ -246,7 +246,7 @@ algokit localnet stop
 
 - Swift 6.0+
 - iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+ / visionOS 1.0+
-- Linux (with Swift 6.0+)
+- Linux is not covered by CI for the hybrid ML-KEM session. That session needs macOS 26.
 - [AlgoKit CLI](https://github.com/algorandfoundation/algokit-cli) (optional, for localnet testing)
 
 ## Security

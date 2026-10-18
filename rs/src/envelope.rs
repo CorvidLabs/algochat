@@ -47,11 +47,11 @@ impl ChatEnvelope {
         data
     }
 
-    /// Build the v2 AEAD Associated Data (the header metadata prefix).
+    /// Payload associated data for a version 0x02 standard envelope.
     ///
-    /// This is `bytes[0..78)` of the encoded header:
-    /// `version ‖ protocol_id ‖ sender_public_key ‖ ephemeral_public_key ‖ nonce`.
-    /// Both AEAD operations of a v2 envelope authenticate this same AAD.
+    /// This is the full fixed header, including the wrapped sender key
+    /// (126 bytes). The sender-key wrap uses empty associated data.
+    /// Protocol 0x02 uses the same rule with a 130-byte header.
     pub fn v2_aad(&self) -> Vec<u8> {
         let mut aad = Vec::with_capacity(STANDARD_V2_AAD_LEN);
         aad.push(self.version);
@@ -59,6 +59,7 @@ impl ChatEnvelope {
         aad.extend_from_slice(&self.sender_public_key);
         aad.extend_from_slice(&self.ephemeral_public_key);
         aad.extend_from_slice(&self.nonce);
+        aad.extend_from_slice(&self.encrypted_sender_key);
         aad
     }
 
@@ -202,8 +203,7 @@ mod tests {
             ciphertext: vec![5u8; 32],
         };
         let aad = envelope.v2_aad();
-        assert_eq!(aad.len(), 78);
-        // The AAD must equal the first 78 bytes of the encoded envelope.
-        assert_eq!(&aad[..], &envelope.encode()[..78]);
+        assert_eq!(aad.len(), 126);
+        assert_eq!(&aad[..], &envelope.encode()[..126]);
     }
 }

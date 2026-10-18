@@ -21,20 +21,6 @@ use crate::types::{
 ///
 /// Mirrors [`ChatEnvelope::v2_aad`] but is usable before the envelope struct is
 /// assembled (i.e. during encryption).
-fn standard_v2_aad(
-    sender_pub: &[u8; 32],
-    ephemeral_pub: &[u8; 32],
-    nonce: &[u8; NONCE_SIZE],
-) -> Vec<u8> {
-    let mut aad = Vec::with_capacity(STANDARD_V2_AAD_LEN);
-    aad.push(PROTOCOL_VERSION_V2);
-    aad.push(PROTOCOL_ID);
-    aad.extend_from_slice(sender_pub);
-    aad.extend_from_slice(ephemeral_pub);
-    aad.extend_from_slice(nonce);
-    aad
-}
-
 /// Wraps a message and AAD into the `chacha20poly1305::Payload` form.
 fn payload<'a>(msg: &'a [u8], aad: &'a [u8]) -> Payload<'a, 'a> {
     Payload { msg, aad }
@@ -128,22 +114,8 @@ fn encrypt_message_versioned(
     let nonce = ChaCha20Poly1305::generate_nonce(&mut rand::thread_rng());
     let nonce_bytes: [u8; NONCE_SIZE] = nonce.into();
 
-    // On v2, both AEAD operations bind the header metadata prefix as AAD.
-    // On v1, AAD is empty (unchanged behavior).
-    let aad: Vec<u8> = if version == PROTOCOL_VERSION_V2 {
-        standard_v2_aad(sender_pub_bytes, ephemeral_pub_bytes, &nonce_bytes)
-    } else {
-        Vec::new()
-    };
-
-    // Encrypt message
-    let cipher = ChaCha20Poly1305::new_from_slice(&*symmetric_key)
-        .map_err(|e| AlgoChatError::EncryptionError(format!("Cipher init failed: {}", e)))?;
-    let ciphertext = cipher
-        .encrypt(&nonce, payload(message_bytes, &aad))
-        .map_err(|e| AlgoChatError::EncryptionError(format!("Encryption failed: {}", e)))?;
-
-    // Encrypt the symmetric key for sender (bidirectional decryption)
+    // Sender-key wrap always uses empty associated data. Version 0x02 binds
+    // the full header, including that wrap, as the payload's associated data.
     let sender_shared_secret = Zeroizing::new(x25519_ecdh(&ephemeral_private, sender_public_key));
 
     let mut sender_info = Vec::with_capacity(SENDER_KEY_INFO_PREFIX.len() + 32);
@@ -159,10 +131,28 @@ fn encrypt_message_versioned(
     let sender_cipher = ChaCha20Poly1305::new_from_slice(&*sender_encryption_key)
         .map_err(|e| AlgoChatError::EncryptionError(format!("Sender cipher init failed: {}", e)))?;
     let encrypted_sender_key = sender_cipher
-        .encrypt(&nonce, payload(symmetric_key.as_slice(), &aad))
+        .encrypt(&nonce, payload(symmetric_key.as_slice(), &[]))
         .map_err(|e| {
             AlgoChatError::EncryptionError(format!("Sender key encryption failed: {}", e))
         })?;
+
+    let aad: Vec<u8> = if version == PROTOCOL_VERSION_V2 {
+        let mut header = Vec::with_capacity(STANDARD_V2_AAD_LEN);
+        header.push(version);
+        header.push(PROTOCOL_ID);
+        header.extend_from_slice(sender_pub_bytes);
+        header.extend_from_slice(ephemeral_pub_bytes);
+        header.extend_from_slice(&nonce_bytes);
+        header.extend_from_slice(&encrypted_sender_key);
+        header
+    } else {
+        Vec::new()
+    };
+    let cipher = ChaCha20Poly1305::new_from_slice(&*symmetric_key)
+        .map_err(|e| AlgoChatError::EncryptionError(format!("Cipher init failed: {}", e)))?;
+    let ciphertext = cipher
+        .encrypt(&nonce, payload(message_bytes, &aad))
+        .map_err(|e| AlgoChatError::EncryptionError(format!("Encryption failed: {}", e)))?;
 
     Ok(ChatEnvelope {
         version,
@@ -274,7 +264,7 @@ fn decrypt_as_sender(
         sender_cipher
             .decrypt(
                 nonce,
-                payload(envelope.encrypted_sender_key.as_slice(), aad),
+                payload(envelope.encrypted_sender_key.as_slice(), &[]),
             )
             .map_err(|e| {
                 AlgoChatError::DecryptionError(format!("Sender key decryption failed: {}", e))

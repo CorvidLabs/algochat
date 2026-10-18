@@ -36,8 +36,8 @@
 // Standard envelope: 126-byte header + variable ciphertext. The on-chain note
 // limit is 4096 bytes, including the 16-byte Poly1305 tag, so the largest
 // standard plaintext is 3954 bytes. An 882-byte plaintext still encodes to
-// 1024 bytes. The header stays 126 bytes. Protocol ID 0x02 is reserved; this
-// package does not implement a PSK envelope.
+// 1024 bytes. The header stays 126 bytes. Protocol ID 0x02 is Extra lock.
+// Version 0x02 binds the full header as payload associated data.
 //
 //	Byte 0:       Version (0x01)
 //	Byte 1:       Protocol ID (0x01 = standard, 0x02 = PSK reserved)

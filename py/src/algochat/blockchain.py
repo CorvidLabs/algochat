@@ -294,6 +294,10 @@ def _parse_key_announcement(note: bytes, address: str) -> Optional[DiscoveredKey
     if len(note) < 32:
         return None
 
+    # PQ encapsulation-key notes start with "ACPQ" and are not X25519 keys.
+    if note[0:4] == b"ACPQ":
+        return None
+
     public_key = note[:32]
 
     is_verified = False

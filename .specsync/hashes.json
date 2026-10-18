@@ -1,0 +1,21 @@
+{
+  "format_version": 1,
+  "hashes": {
+    ".specsync/config.toml": "893fd4e16d8de5f357c9f1c28303c76fa92fc4c0c09a73b6fe7ead0000798853",
+    "PROTOCOL.md": "7a82de5c0704c6a53398e950a947e98097ff5451cc58d99e1bc02b8fc6a9244b",
+    "TEST-VECTORS.md": "9a551bf17ed830387dc3fef1a191e0ca160486115fd0bc2f1d573839b5e1a117",
+    "specs/protocol/protocol.spec.md": "bc487f27bb9eb334886ee559e1dfe24bae689c27c0004bb4752c0aad2a172937",
+    "specs/protocol/requirements.md": "2825af2a290a3e0a18aa7fc0be61dac0ba74e25795c9b0da92b30062662854a8"
+  },
+  "snapshots": {
+    "specs/protocol/protocol.spec.md": {
+      "snapshot_version": 1,
+      "spec_path": "specs/protocol/protocol.spec.md",
+      "errors": [],
+      "warnings": [],
+      "notices": [],
+      "input_digest": "47721209a9b20b9c96742319a248122ab254efdb4352c3297fa37dff20a834dc",
+      "snapshot_digest": "2a570d738c5a55ca2a6ab3722b0304344d9c1b28b7bb24c5307b6713c3447557"
+    }
+  }
+}

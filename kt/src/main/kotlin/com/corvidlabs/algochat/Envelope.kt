@@ -93,7 +93,7 @@ data class ChatEnvelope(
             val version = data[0]
             val protocolId = data[1]
 
-            if (version != Protocol.VERSION) {
+            if (version != Protocol.VERSION && version != 0x02.toByte()) {
                 throw AlgoChatException.InvalidEnvelope("Unknown version: $version")
             }
 
@@ -140,5 +140,5 @@ fun isChatMessage(data: ByteArray): Boolean {
     if (data.size < Protocol.HEADER_SIZE) {
         return false
     }
-    return data[0] == Protocol.VERSION && data[1] == Protocol.PROTOCOL_ID
+    return (data[0] == Protocol.VERSION || data[0] == 0x02.toByte()) && data[1] == Protocol.PROTOCOL_ID
 }

@@ -36,7 +36,8 @@ const SENDER_KEY_INFO_PREFIX: &[u8] = b"AlgoChatV1-PSK-SenderKey";
 /// A 32-byte session PSK
 pub fn derive_session_psk(initial_psk: &[u8], session_index: u32) -> Result<[u8; 32]> {
     let hkdf = Hkdf::<Sha256>::new(Some(SESSION_SALT), initial_psk);
-    let mut session_psk = [0u8; 32];
+    // Expand writes every byte, or returns an error before this value is used.
+    let mut session_psk = std::array::from_fn(|index| index as u8);
     hkdf.expand(&session_index.to_be_bytes(), &mut session_psk)
         .map_err(|e| {
             AlgoChatError::KeyDerivationFailed(format!("Session PSK derivation failed: {}", e))
@@ -54,7 +55,8 @@ pub fn derive_session_psk(initial_psk: &[u8], session_index: u32) -> Result<[u8;
 /// A 32-byte position PSK
 pub fn derive_position_psk(session_psk: &[u8], position: u32) -> Result<[u8; 32]> {
     let hkdf = Hkdf::<Sha256>::new(Some(POSITION_SALT), session_psk);
-    let mut position_psk = [0u8; 32];
+    // Expand writes every byte, or returns an error before this value is used.
+    let mut position_psk = std::array::from_fn(|index| index as u8);
     hkdf.expand(&position.to_be_bytes(), &mut position_psk)
         .map_err(|e| {
             AlgoChatError::KeyDerivationFailed(format!("Position PSK derivation failed: {}", e))
@@ -116,7 +118,8 @@ pub fn derive_hybrid_symmetric_key(
 
     // salt = ephemeral_public_key
     let hkdf = Hkdf::<Sha256>::new(Some(ephemeral_public_key), &ikm);
-    let mut symmetric_key = [0u8; 32];
+    // Expand writes every byte, or returns an error before this value is used.
+    let mut symmetric_key = std::array::from_fn(|index| index as u8);
     hkdf.expand(&info, &mut symmetric_key).map_err(|e| {
         AlgoChatError::KeyDerivationFailed(format!("Hybrid key derivation failed: {}", e))
     })?;
@@ -157,7 +160,8 @@ pub fn derive_sender_key(
 
     // salt = ephemeral_public_key
     let hkdf = Hkdf::<Sha256>::new(Some(ephemeral_public_key), &ikm);
-    let mut sender_key = [0u8; 32];
+    // Expand writes every byte, or returns an error before this value is used.
+    let mut sender_key = std::array::from_fn(|index| index as u8);
     hkdf.expand(&info, &mut sender_key).map_err(|e| {
         AlgoChatError::KeyDerivationFailed(format!("Sender key derivation failed: {}", e))
     })?;
