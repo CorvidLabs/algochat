@@ -343,6 +343,8 @@ def encrypt_pq_message(plaintext: str, session: PQSession) -> bytes:
 
 def decrypt_pq_message(note: bytes, session: PQSession) -> str:
     """Open a 0x05 note with the handshake session."""
+    if len(note) > MAX_NOTE_SIZE:
+        raise PQError(f"Note is {len(note)} bytes; the maximum is {MAX_NOTE_SIZE}")
     if not is_pq_message(note):
         raise PQError("Not a PQ message")
     sender_public_key = note[2:34]

@@ -26,4 +26,4 @@ spec: client.spec.md
 
 ## Accuracy audit
 
-The current `receive_psk` check/decrypt/record sequence spans separate locks; the synchronized contact-state requirement is not fully met for concurrent receives. This is an implementation gap, not permission to relax the requirement. The [accuracy ledger](../../../docs/ACCURACY.md) tracks the distinction.
+`receive_psk` holds one write lock across validation, decryption, and recording. Exactly one of two synchronized receives of the same valid ciphertext succeeds. A failed tag does not record the counter.

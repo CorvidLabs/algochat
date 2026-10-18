@@ -26,5 +26,11 @@ No manual plaintext inspection replaces deterministic vectors and replay tests.
 | 3951-byte plaintext | Reject with MessageTooLarge before a transaction is built. |
 | Repeated receive counter | Reject as replay. |
 | Counter older than window | Reject before decrypting. |
+| Fresh counter 1000000 | Reject. |
+| Counter `u32::MAX` then 0 | Reject 0. |
+| Second advance after `u32::MAX` | Fail, and serde keeps the counter at `u32::MAX`. |
+| PSK frame of 145 bytes | Reject as too short. |
+| PSK frame of 146 bytes | Framing is complete. |
+| Authenticated PSK note of 4097 bytes | Reject before returning plaintext. |
 | Mutated v2 counter/header | Fail AEAD authentication. |
 | URI with non-32-byte PSK | Reject parsing. |

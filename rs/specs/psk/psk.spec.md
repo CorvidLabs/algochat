@@ -33,7 +33,7 @@ the counter and remaining header metadata into AEAD authentication.
 | `encrypt_psk_message_v2` | Encrypts a PSK v2 payload and authenticates the 130-byte full header. |
 | `decrypt_psk_message` | Decrypts a supported PSK envelope for sender or recipient. |
 | `encode_psk_envelope` | Serializes fixed PSK header fields and ciphertext. |
-| `decode_psk_envelope` | Parses and validates a PSK v1/v2 envelope. |
+| `decode_psk_envelope` | Parses a PSK v1/v2 envelope of 146 to 4096 bytes. Shorter input is rejected before authentication. |
 | `is_psk_message` | Recognizes supported PSK version/protocol bytes at minimum length. |
 | `derive_session_psk` | Derives the PSK for a 100-message session using HKDF-SHA256. |
 | `derive_position_psk` | Derives the within-session PSK for a counter position. |
@@ -46,7 +46,7 @@ the counter and remaining header metadata into AEAD authentication.
 | `v2_aad` | Reconstructs the canonical full 130-byte PSK v2 authenticated header. |
 | `validate_counter` | Rejects replayed and out-of-window receive counters. |
 | `record_receive` | Records a valid counter and prunes obsolete replay entries. |
-| `advance_send_counter` | Returns the current send counter and advances with wrapping semantics. |
+| `advance_send_counter` | Returns the current send counter. At `u32::MAX`, marks send state exhausted instead of wrapping to 0. |
 | `PSK_VERSION` | Legacy PSK envelope version byte 0x01. |
 | `PSK_VERSION_V2` | Authenticated-header PSK version byte 0x02. |
 | `PSK_PROTOCOL_ID` | PSK message protocol discriminator 0x02. |
@@ -70,7 +70,7 @@ the counter and remaining header metadata into AEAD authentication.
 1. PSK envelopes use protocol ID `0x02`; only versions `0x01` and `0x02` are accepted.
 2. V2 payload authentication covers the full 130-byte header: version, protocol ID, ratchet counter, both public keys, nonce, and encrypted sender key. Sender-key wrapping uses empty AAD.
 3. Each counter deterministically selects one session PSK and one position PSK.
-4. The replay set rejects duplicates and counters more than 200 behind the highest accepted counter.
+4. Before any receive, unseen counters 0 through 200 are accepted and 1000000 is rejected. After highest accepted `N`, unseen counters run from `max(0, N-200)` through `min(u32::MAX, N+200)`. Accepting `u32::MAX` does not make 0 acceptable. A failed tag does not record a counter or move the window.
 5. PSK plaintext may not exceed 3950 bytes, so the encoded note is at most 4096 bytes. The header stays 130 bytes and the tag stays 16 bytes. An 878-byte plaintext still encrypts, and that note is at most 1024 bytes.
 6. Exchange URIs require scheme/version, address, and an exact 32-byte base64url PSK.
 
@@ -96,7 +96,9 @@ the counter and remaining header metadata into AEAD authentication.
 | Plaintext exceeds 3950 bytes | Return `MessageTooLarge` before a transaction is built. |
 | Envelope has invalid length, version, or protocol ID | Return the corresponding typed protocol error. |
 | Header, counter, ciphertext, or key material is altered | AEAD authentication fails. |
-| Counter was seen or falls outside the replay window | Return a decryption/replay error. |
+| Counter was seen or falls outside the 200-counter window in either direction | Return a decryption/replay error and leave state unchanged. |
+| Send counter is already exhausted | Return `SendCounterExhausted` and leave the stored counter at `u32::MAX`. |
+| PSK frame is shorter than 146 bytes or longer than 4096 bytes | Reject before returning plaintext. |
 
 ## Dependencies
 
@@ -120,4 +122,5 @@ the counter and remaining header metadata into AEAD authentication.
 |------|--------|--------|
 | 2026-07-14 | CorvidLabs | Adopted the existing PSK v1/v2 and ratchet contract into SpecSync 5.0.1. |
 | 2026-10-16 | CorvidLabs | Raise the PSK plaintext maximum to 3950 bytes so a maximum note is 4096 bytes. Header stays 130 and the tag stays 16. An 878-byte plaintext still encrypts. Protocol revision 1.2.1, not 1.3. |
+| 2026-10-18 | CorvidLabs | Send exhaustion does not wrap to 0 and survives serde. The receive window is 200 in both directions. Decode rejects frames shorter than 146 bytes and notes longer than 4096 bytes. |
 | 2026-07-14 | CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-rust-algochat-implementa: Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for the Rust AlgoChat implementation |

@@ -11,10 +11,10 @@
 //! - \[130..\]: ciphertext + 16-byte authentication tag
 
 use crate::psk_types::{
-    PSKEnvelope, PSK_ENCRYPTED_SENDER_KEY_SIZE, PSK_HEADER_SIZE, PSK_PROTOCOL_ID, PSK_VERSION,
-    PSK_VERSION_V2,
+    PSKEnvelope, PSK_ENCRYPTED_SENDER_KEY_SIZE, PSK_HEADER_SIZE, PSK_PROTOCOL_ID, PSK_TAG_SIZE,
+    PSK_VERSION, PSK_VERSION_V2,
 };
-use crate::types::{AlgoChatError, Result, NONCE_SIZE, PUBLIC_KEY_SIZE};
+use crate::types::{AlgoChatError, Result, MAX_NOTE_SIZE, NONCE_SIZE, PUBLIC_KEY_SIZE};
 
 /// Encodes a PSK envelope to bytes.
 ///
@@ -44,12 +44,16 @@ pub fn encode_psk_envelope(envelope: &PSKEnvelope) -> Vec<u8> {
 /// # Returns
 /// A PSKEnvelope if the data is valid
 pub fn decode_psk_envelope(data: &[u8]) -> Result<PSKEnvelope> {
-    if data.len() < PSK_HEADER_SIZE {
+    let minimum = PSK_HEADER_SIZE + PSK_TAG_SIZE;
+    if data.len() < minimum {
         return Err(AlgoChatError::InvalidEnvelope(format!(
             "PSK data too short: {} bytes (minimum {})",
             data.len(),
-            PSK_HEADER_SIZE
+            minimum
         )));
+    }
+    if data.len() > MAX_NOTE_SIZE {
+        return Err(AlgoChatError::NoteTooLarge(data.len()));
     }
 
     let version = data[0];
@@ -179,6 +183,32 @@ mod tests {
     fn test_decode_too_short() {
         let result = decode_psk_envelope(&[PSK_VERSION, PSK_PROTOCOL_ID]);
         assert!(matches!(result, Err(AlgoChatError::InvalidEnvelope(_))));
+    }
+
+    #[test]
+    fn test_decode_requires_header_plus_tag() {
+        let mut short = vec![PSK_VERSION, PSK_PROTOCOL_ID];
+        short.extend(vec![0u8; PSK_HEADER_SIZE + PSK_TAG_SIZE - 3]);
+        assert_eq!(short.len(), PSK_HEADER_SIZE + PSK_TAG_SIZE - 1);
+        assert!(matches!(
+            decode_psk_envelope(&short),
+            Err(AlgoChatError::InvalidEnvelope(_))
+        ));
+        let mut exact = vec![PSK_VERSION, PSK_PROTOCOL_ID];
+        exact.extend(vec![0u8; PSK_HEADER_SIZE + PSK_TAG_SIZE - 2]);
+        assert_eq!(exact.len(), 146);
+        assert!(decode_psk_envelope(&exact).is_ok());
+    }
+
+    #[test]
+    fn test_decode_rejects_note_over_4096() {
+        let mut data = vec![PSK_VERSION, PSK_PROTOCOL_ID];
+        data.extend(vec![0u8; MAX_NOTE_SIZE - 1]);
+        assert_eq!(data.len(), MAX_NOTE_SIZE + 1);
+        assert!(matches!(
+            decode_psk_envelope(&data),
+            Err(AlgoChatError::NoteTooLarge(_))
+        ));
     }
 
     #[test]

@@ -12,9 +12,9 @@ use zeroize::Zeroizing;
 use crate::envelope::ChatEnvelope;
 use crate::keys::{generate_ephemeral_keypair, x25519_ecdh};
 use crate::types::{
-    AlgoChatError, DecryptedContent, Result, ENCRYPTION_INFO_PREFIX, MAX_PAYLOAD_SIZE, NONCE_SIZE,
-    PROTOCOL_ID, PROTOCOL_VERSION, PROTOCOL_VERSION_V2, SENDER_KEY_INFO_PREFIX,
-    STANDARD_V2_AAD_LEN,
+    AlgoChatError, DecryptedContent, Result, ENCRYPTION_INFO_PREFIX, HEADER_SIZE, MAX_NOTE_SIZE,
+    MAX_PAYLOAD_SIZE, NONCE_SIZE, PROTOCOL_ID, PROTOCOL_VERSION, PROTOCOL_VERSION_V2,
+    SENDER_KEY_INFO_PREFIX, STANDARD_V2_AAD_LEN,
 };
 
 /// Wraps a message and AAD into the `chacha20poly1305::Payload` form.
@@ -44,6 +44,7 @@ pub fn encrypt_message(
         sender_public_key,
         recipient_public_key,
         PROTOCOL_VERSION,
+        true,
     )
 }
 
@@ -65,6 +66,7 @@ pub fn encrypt_message_v2(
         sender_public_key,
         recipient_public_key,
         PROTOCOL_VERSION_V2,
+        true,
     )
 }
 
@@ -78,10 +80,11 @@ fn encrypt_message_versioned(
     sender_public_key: &PublicKey,
     recipient_public_key: &PublicKey,
     version: u8,
+    enforce_limit: bool,
 ) -> Result<ChatEnvelope> {
     let message_bytes = plaintext.as_bytes();
 
-    if message_bytes.len() > MAX_PAYLOAD_SIZE {
+    if enforce_limit && message_bytes.len() > MAX_PAYLOAD_SIZE {
         return Err(AlgoChatError::MessageTooLarge(message_bytes.len()));
     }
 
@@ -175,6 +178,10 @@ pub fn decrypt_message(
     my_private_key: &StaticSecret,
     my_public_key: &PublicKey,
 ) -> Result<Option<DecryptedContent>> {
+    let note_len = HEADER_SIZE + envelope.ciphertext.len();
+    if note_len > MAX_NOTE_SIZE {
+        return Err(AlgoChatError::NoteTooLarge(note_len));
+    }
     let my_pub_bytes = my_public_key.as_bytes();
     let we_are_sender = my_pub_bytes == &envelope.sender_public_key;
 
@@ -536,6 +543,33 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(decrypted.text, message);
+    }
+
+    #[test]
+    fn test_open_rejects_authenticated_oversize_note() {
+        let (alice_private, alice_public) = alice_keys();
+        let (bob_private, bob_public) = bob_keys();
+        let message = "A".repeat(MAX_PAYLOAD_SIZE + 1);
+        let envelope = encrypt_message_versioned(
+            &message,
+            &alice_private,
+            &alice_public,
+            &bob_public,
+            PROTOCOL_VERSION,
+            false,
+        )
+        .unwrap();
+        let note_len = HEADER_SIZE + envelope.ciphertext.len();
+        assert_eq!(note_len, MAX_NOTE_SIZE + 1);
+        assert!(matches!(
+            decrypt_message(&envelope, &bob_private, &bob_public),
+            Err(AlgoChatError::NoteTooLarge(n)) if n == note_len
+        ));
+        let encoded = envelope.encode();
+        assert!(matches!(
+            ChatEnvelope::decode(&encoded),
+            Err(AlgoChatError::NoteTooLarge(_))
+        ));
     }
 
     #[test]

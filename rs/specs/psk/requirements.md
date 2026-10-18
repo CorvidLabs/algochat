@@ -18,7 +18,7 @@ Version 2 SHALL authenticate the exact 130-byte full header, including the ratch
 
 ### REQ-psk-004 — Replay protection
 
-Receive state SHALL reject duplicate and out-of-window counters before returning plaintext and SHALL prune obsolete replay history.
+Receive state SHALL reject duplicate counters and counters outside a 200-counter window in either direction before returning plaintext, SHALL reject counter 1000000 on a fresh state, and SHALL prune obsolete replay history. Accepting `u32::MAX` SHALL NOT make counter 0 acceptable. Failed authentication SHALL NOT record a counter or move the window. `advance_send_counter` SHALL return `u32::MAX` once and then fail without storing 0. Exhaustion SHALL survive serde.
 
 ### REQ-psk-005 — Exchange URI validity
 
@@ -62,7 +62,7 @@ Acceptance Criteria
 
 ### REQ-psk-004
 
-Receive state SHALL reject duplicate and out-of-window counters before returning plaintext.
+Receive state SHALL reject duplicate and out-of-window counters before returning plaintext, including a fresh counter of 1000000 and counter 0 after `u32::MAX`. Send exhaustion SHALL NOT wrap to 0.
 
 Acceptance Criteria
 - Replay and window tests pass.

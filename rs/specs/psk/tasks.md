@@ -20,4 +20,4 @@ No migration-specific behavior gap is accepted.
 - **Implementation review**: governance/spec-only diff
 
 - [x] Correct the PSK-v2 full-header AAD description without changing runtime behavior.
-- [ ] Implement and verify fail-before-wrap counter exhaustion and any stronger approved window bound through a separate change; see the [accuracy ledger](../../../docs/ACCURACY.md).
+- [x] Fail before wrapping the send counter, persist exhaustion, and bound the receive window by 200 in both directions.

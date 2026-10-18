@@ -25,4 +25,4 @@ spec: psk.spec.md
 
 ## Implementation and contract gaps
 
-Version 2 payload AAD is the full 130-byte header, including the wrapped sender key; wrapping itself uses empty AAD. Current send counters use wrapping arithmetic and receive validation accepts arbitrarily advanced counters. Counter exhaustion and stronger bounded-window intent remain open implementation work rather than being silently relaxed. See the [accuracy ledger](../../../docs/ACCURACY.md).
+Version 2 payload AAD is the full 130-byte header, including the wrapped sender key; wrapping itself uses empty AAD. Send counter `u32::MAX` is issued once, then the state is exhausted and does not wrap to 0. That flag survives serde. The receive window is 200 behind and ahead of the highest accepted counter, and a fresh state accepts only 0 through 200.

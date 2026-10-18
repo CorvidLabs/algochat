@@ -403,7 +403,7 @@ where
             let contact = contacts.get_mut(address).ok_or_else(|| {
                 AlgoChatError::EncryptionError(format!("No PSK configured for {}", address))
             })?;
-            let counter = contact.state.advance_send_counter();
+            let counter = contact.state.advance_send_counter()?;
             (contact.psk.clone(), counter)
         };
 
@@ -436,31 +436,22 @@ where
 
         let envelope = decode_psk_envelope(data)?;
 
-        // Validate counter and decrypt
-        let psk = {
-            let contacts = self.psk_contacts.read().await;
-            let contact = contacts.get(sender_address).ok_or_else(|| {
-                AlgoChatError::DecryptionError(format!("No PSK configured for {}", sender_address))
-            })?;
-            contact.state.validate_counter(envelope.ratchet_counter)?;
-            contact.psk.clone()
-        };
-
+        // One write lock covers validation, decryption, and recording. A
+        // failed tag returns before record_receive, so the counter and window
+        // stay unchanged. A second overlapping receive cannot pass the same
+        // counter.
+        let mut contacts = self.psk_contacts.write().await;
+        let contact = contacts.get_mut(sender_address).ok_or_else(|| {
+            AlgoChatError::DecryptionError(format!("No PSK configured for {}", sender_address))
+        })?;
+        contact.state.validate_counter(envelope.ratchet_counter)?;
         let text = decrypt_psk_message(
             &envelope,
             &self.encryption_private_key,
             &self.encryption_public_key,
-            &psk,
+            &contact.psk,
         )?;
-
-        // Record counter after successful decryption
-        {
-            let mut contacts = self.psk_contacts.write().await;
-            if let Some(contact) = contacts.get_mut(sender_address) {
-                contact.state.record_receive(envelope.ratchet_counter);
-            }
-        }
-
+        contact.state.record_receive(envelope.ratchet_counter);
         Ok(text)
     }
 
@@ -1506,6 +1497,69 @@ mod tests {
         // Replay is rejected
         let result = bob.receive_psk(&encrypted, ALICE_ADDR).await;
         assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_failed_psk_auth_does_not_consume_counter() {
+        let alice = make_alice_client(MockIndexer::new()).await;
+        let bob = make_bob_client(MockIndexer::new()).await;
+        bob.add_psk_contact(ALICE_ADDR, &TEST_PSK, None)
+            .await
+            .unwrap();
+        let encrypted = alice
+            .encrypt_psk("still good", &bob.encryption_public_key(), &TEST_PSK, 0)
+            .unwrap();
+        let mut tampered = encrypted.clone();
+        let last = tampered.len() - 1;
+        tampered[last] ^= 1;
+        assert!(bob.receive_psk(&tampered, ALICE_ADDR).await.is_err());
+        let contact = bob.get_psk_contact(ALICE_ADDR).await.unwrap();
+        assert!(contact.state.seen_counters.is_empty());
+        assert_eq!(contact.state.peer_last_counter, 0);
+        assert_eq!(
+            bob.receive_psk(&encrypted, ALICE_ADDR).await.unwrap(),
+            "still good"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_receive_psk_accepts_exactly_once() {
+        let alice = make_alice_client(MockIndexer::new()).await;
+        let bob = make_bob_client(MockIndexer::new()).await;
+        let expected = "one of two";
+        let encrypted = alice
+            .encrypt_psk(expected, &bob.encryption_public_key(), &TEST_PSK, 0)
+            .unwrap();
+
+        for _ in 0..4 {
+            bob.add_psk_contact(ALICE_ADDR, &TEST_PSK, None)
+                .await
+                .unwrap();
+            let barrier = std::sync::Barrier::new(2);
+            let results = std::thread::scope(|scope| {
+                let first = scope.spawn(|| {
+                    let runtime = tokio::runtime::Builder::new_current_thread()
+                        .build()
+                        .unwrap();
+                    barrier.wait();
+                    runtime.block_on(bob.receive_psk(&encrypted, ALICE_ADDR))
+                });
+                let second = scope.spawn(|| {
+                    let runtime = tokio::runtime::Builder::new_current_thread()
+                        .build()
+                        .unwrap();
+                    barrier.wait();
+                    runtime.block_on(bob.receive_psk(&encrypted, ALICE_ADDR))
+                });
+                (first.join().unwrap(), second.join().unwrap())
+            });
+            let mut accepted = 0;
+            for plaintext in [results.0, results.1].into_iter().flatten() {
+                accepted += 1;
+                assert_eq!(plaintext, expected);
+            }
+            assert_eq!(accepted, 1);
+        }
     }
 
     #[tokio::test]

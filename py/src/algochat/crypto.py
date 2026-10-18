@@ -21,6 +21,7 @@ from .keys import (
 from .types import (
     ENCRYPTION_INFO_PREFIX,
     HEADER_SIZE,
+    MAX_NOTE_SIZE,
     MAX_PAYLOAD_SIZE,
     NONCE_SIZE,
     SENDER_KEY_INFO_PREFIX,
@@ -133,6 +134,11 @@ def decrypt_message(
     Returns:
         DecryptedContent if successful, None if it's a key-publish message
     """
+    note_len = HEADER_SIZE + len(envelope.ciphertext)
+    if note_len > MAX_NOTE_SIZE:
+        raise DecryptionError(
+            f"Note is {note_len} bytes; the maximum is {MAX_NOTE_SIZE}"
+        )
     my_pub_bytes = public_key_to_bytes(my_public_key)
     we_are_sender = my_pub_bytes == envelope.sender_public_key
 

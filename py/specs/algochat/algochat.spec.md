@@ -164,7 +164,7 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `PSKState` | Tracks send counters, received counters, and replay-window state for a PSK conversation. |
 | `validate_counter` | Checks whether an incoming counter is new and inside the accepted receive window. |
 | `record_receive` | Returns PSK state updated with a successfully received counter. |
-| `advance_send_counter` | Returns the current send counter and PSK state advanced to the next position. |
+| `advance_send_counter` | Returns the current send counter. At 4294967295, marks send state exhausted instead of wrapping to 0. |
 | `create_psk_exchange_uri` | Encodes a pre-shared key and exchange metadata into an AlgoChat PSK URI. |
 | `parse_psk_exchange_uri` | Validates and decodes an AlgoChat PSK exchange URI. |
 | `encrypt_psk_message` | Encrypts authenticated content with the PSK v1.1 hybrid protocol. |
@@ -257,10 +257,10 @@ The following additional constants are public in `algochat.pq` but are not root-
 
 1. Standard messages use the existing X25519, HKDF-SHA256, and ChaCha20-Poly1305 construction and remain decryptable by the intended recipient and originating sender.
 2. Encoded standard and PSK envelopes preserve the established cross-implementation wire format.
-3. PSK counters derive deterministic per-message keys, reject replays, allow the configured out-of-order window, and prune obsolete receive state.
+3. PSK counters derive deterministic per-message keys, reject replays, allow a 200-counter window in both directions, reject a fresh counter of 1000000, and prune obsolete receive state. Send counter 4294967295 is issued once and then the saved state is exhausted. It does not become 0.
 4. File key storage encrypts private material at rest and preserves the interoperable salt, nonce, ciphertext, and tag layout; in-memory storage remains test-only.
 5. Blockchain, queue, and client abstractions preserve asynchronous ordering and do not silently discard protocol errors.
-6. A standard plaintext is at most 3954 bytes and a PSK plaintext is at most 3950 bytes. Those maxima encode to a 4096-byte note. One extra byte is rejected before a transaction is built. Headers stay 126 and 130 bytes, and the Poly1305 tag stays 16 bytes. Plaintexts of 882 and 878 bytes still encrypt, and those notes stay at most 1024 bytes.
+6. A standard plaintext is at most 3954 bytes and a PSK plaintext is at most 3950 bytes. Those maxima encode to a 4096-byte note. One extra byte is rejected before a transaction is built. Headers stay 126 and 130 bytes, and the Poly1305 tag stays 16 bytes. Standard decode rejects fewer than 142 bytes and PSK decode rejects fewer than 146. Exactly those lengths remain long enough to parse. A note longer than 4096 bytes is rejected before plaintext is returned, including an authenticated oversized PQ note. Plaintexts of 882 and 878 bytes still encrypt, and those notes stay at most 1024 bytes.
 7. A note payment fee is one minimum fee plus the consensus surcharge for bytes past 1024. With a minimum fee of 1000 microAlgos, notes of 1024, 2000, and 4096 bytes cost 1000, 1098, and 1308 microAlgos. This library does not add a Falcon signer.
 
 ## Behavioral Examples
