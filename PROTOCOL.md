@@ -141,6 +141,20 @@ Everyday (`0x01`) and Extra lock (`0x02`) notes use version byte `0x01` or `0x02
 
 A reader MUST accept both versions. Changing the version byte of a version `0x02` note MUST fail decryption. Protocols `0x04` and `0x05` use version byte `0x02` with the layouts in section 5.7. That is a different header from an everyday version `0x02` note. The protocol byte tells them apart.
 
+### 5.4.2 PQ levels
+
+This table is the post-quantum level of every assigned protocol. Other documents in this repository MUST follow it. Every mode uses ChaCha20-Poly1305 with a 256-bit key for the message body. That symmetric layer is the same for all of them. The level below is the key exchange, which is what differs. None of these modes provide forward secrecy. See section 11.1.
+
+| Protocol | Name | PQ level of the key exchange |
+| --- | --- | --- |
+| `0x01` | Everyday | Not post-quantum. The message key is X25519 only. A break of X25519 opens the note. A long-term X25519 key opens that account's everyday history. |
+| `0x02` | Extra lock | Post-quantum while the pre-shared key stays secret. X25519 is mixed with the ratcheted PSK, so a break of X25519 still requires the PSK. The PSK is static, so this is not forward secrecy. |
+| `0x04` | Hybrid handshake | Hybrid post-quantum. The session key requires both the X25519 shared secret and the ML-KEM-768 shared secret. Breaking only one of those does not open the handshake. The long-term X25519 key and the long-term ML-KEM key together open it. |
+| `0x05` | Hybrid message | The same level as the `0x04` handshake it belongs to. The message reuses that session key. The session key opens every `0x05` note in that handshake. |
+| `0x03` | Not assigned | No level. This byte is not a protocol and not an envelope version. |
+
+A future group protocol is not assigned in this version. If one is added, each wrap of the group key MUST meet the Extra lock level or the hybrid level in this table. A wrap that is only everyday `0x01` does not. After that wrap, the group message uses the same ChaCha20-Poly1305 body as the other modes.
+
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
 ```

@@ -1,6 +1,6 @@
 # Go
 
-Go implementation of the AlgoChat protocol. The source lives in this repository.
+Go implementation of the AlgoChat protocol. The source lives in this repository. PQ levels for `0x01`, `0x02`, `0x04`, and `0x05` are in [PROTOCOL.md section 5.4.2](../PROTOCOL.md#542-pq-levels). `0x03` is not assigned.
 
 ## Status
 
