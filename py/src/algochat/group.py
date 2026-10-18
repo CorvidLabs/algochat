@@ -20,7 +20,6 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from .pq import PQ_VERSION, PQSession
 from .types import MAX_NOTE_SIZE, NONCE_SIZE, TAG_SIZE, PQError
 
-
 GROUP_MEMBERSHIP_ID = 0x06
 GROUP_MESSAGE_ID = 0x07
 GROUP_INFO_LABEL = b"AlgoChat-group-v1"

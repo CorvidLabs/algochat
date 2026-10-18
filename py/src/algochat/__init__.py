@@ -20,6 +20,20 @@ from .client import (
 )
 from .crypto import decrypt_message, encrypt_message
 from .envelope import ChatEnvelope, decode_envelope, encode_envelope, is_chat_message
+from .group import (
+    GROUP_MAX_PAYLOAD_SIZE,
+    GROUP_MEMBERSHIP_NOTE_SIZE,
+    GroupCounter,
+    GroupMembership,
+    OpenedGroupMessage,
+    derive_group_message_key,
+    is_group_membership,
+    is_group_message,
+    open_group_membership,
+    open_group_message,
+    seal_group_membership,
+    seal_group_message,
+)
 from .keys import derive_keys_from_seed, generate_ephemeral_keypair
 from .models import (
     Conversation,
@@ -145,20 +159,6 @@ from .types import (
     UnverifiedKeyError,
     payment_fee,
 )
-from .group import (
-    GROUP_MAX_PAYLOAD_SIZE,
-    GROUP_MEMBERSHIP_NOTE_SIZE,
-    GroupCounter,
-    GroupMembership,
-    OpenedGroupMessage,
-    derive_group_message_key,
-    is_group_membership,
-    is_group_message,
-    open_group_membership,
-    open_group_message,
-    seal_group_membership,
-    seal_group_message,
-)
 from .group_admin import (
     AcceptedAdmin,
     AdminEvent,
@@ -177,6 +177,9 @@ from .group_admin import (
 __version__ = "0.2.0"
 
 __all__ = [
+    "GROUP_MAX_PAYLOAD_SIZE",
+    # Group mailbox (protocols 0x06 and 0x07)
+    "GROUP_MEMBERSHIP_NOTE_SIZE",
     "MAX_NOTE_SIZE",
     "MAX_PAYLOAD_SIZE",
     # Constants
@@ -219,6 +222,8 @@ __all__ = [
     "EncryptionError",
     "EncryptionKeyStorage",
     "FileKeyStorage",
+    "GroupCounter",
+    "GroupMembership",
     "InMemoryKeyStorage",
     "InMemoryMessageCache",
     "IndexerClient",
@@ -237,6 +242,7 @@ __all__ = [
     "MessageDirection",
     "MessageNotFoundError",
     "NoteTransaction",
+    "OpenedGroupMessage",
     "PQAnnouncement",
     # PQ (protocol 1.3.0)
     "PQError",
@@ -273,6 +279,7 @@ __all__ = [
     "decrypt_message",
     "decrypt_pq_message",
     "decrypt_psk_message",
+    "derive_group_message_key",
     "derive_hybrid_pq_key",
     "derive_hybrid_symmetric_key",
     # Keys
@@ -299,29 +306,22 @@ __all__ = [
     "generate_ephemeral_keypair",
     "initiate_pq_session",
     "is_chat_message",
+    "is_group_membership",
+    "is_group_message",
     "is_pq_handshake",
     "is_pq_key_announcement",
     "is_pq_message",
     "is_psk_message",
+    "open_group_membership",
+    "open_group_message",
     "open_pq_session_as_sender",
     "parse_pq_key_announcement",
     "parse_psk_exchange_uri",
     "payment_fee",
     "pq_announcement_signing_input",
-    # Group mailbox (protocols 0x06 and 0x07)
-    "GROUP_MEMBERSHIP_NOTE_SIZE",
-    "GROUP_MAX_PAYLOAD_SIZE",
-    "GroupMembership",
-    "GroupCounter",
-    "OpenedGroupMessage",
-    "is_group_membership",
-    "is_group_message",
-    "seal_group_membership",
-    "open_group_membership",
-    "derive_group_message_key",
-    "seal_group_message",
-    "open_group_message",
     "record_receive",
+    "seal_group_membership",
+    "seal_group_message",
     # Signature
     "sign_encryption_key",
     "validate_counter",

@@ -387,7 +387,7 @@ def group_write(req: dict) -> dict:
     sender = _hex_bytes(req["senderAddress"])
     text = req["text"]
     if not isinstance(text, str):
-        raise RuntimeError("text must be a string")
+        raise TypeError("text must be a string")
     note = seal_group_message(
         text.encode("utf-8"),
         group_key,
@@ -406,11 +406,11 @@ def group_read(req: dict) -> dict:
         raise RuntimeError("text must be a string")
     seen = req.get("seen") or []
     if not isinstance(seen, list):
-        raise RuntimeError("seen must be an array")
+        raise TypeError("seen must be an array")
     accepted: list[GroupCounter] = []
     for item in seen:
         if not isinstance(item, dict):
-            raise RuntimeError("seen entries need epoch and counter")
+            raise TypeError("seen entries need epoch and counter")
         accepted.append(GroupCounter(epoch=int(item["epoch"]), counter=int(item["counter"])))
     opened = open_group_message(
         _hex_bytes(req["note"]),
