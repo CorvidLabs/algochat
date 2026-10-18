@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "room-administration-reducer-and-action-5-key-delivery",
+  "slug": "room-administration-reducer-and-action-5-key-delivery",
+  "title": "Room administration reducer and action-5 key delivery",
+  "description": "Room administration reducer and action-5 key delivery",
+  "kind": "feature",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "65208ae7865deaf589397c58e2396c6104731dd2",
+  "created_at": 1792358021,
+  "updated_at": 1792358096,
+  "affected_specs": [
+    "algochat"
+  ],
+  "affected_paths": [
+    "src/algochat/group_admin.py",
+    "src/algochat/__init__.py"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The module spec already names the room administration exports and source file.",
+  "acceptance_criteria": [
+    "py/tests/test_group_admin.py matches vectors/group-admin-v1.json, including rejected reasons and the 227-byte action-5 note."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "none",
+    "public_contract": "no"
+  }
+}
