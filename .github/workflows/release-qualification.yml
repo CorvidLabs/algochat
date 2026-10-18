@@ -44,7 +44,10 @@ jobs:
   rs:
     uses: ./.github/workflows/rs.yml
   swift:
+    # One Linux receipt: swift.yml also has this lane for direct Swift runs.
     uses: ./.github/workflows/swift.yml
+    with:
+      skip_linux: true
   swift-linux:
     runs-on: ubuntu-latest
     timeout-minutes: 40

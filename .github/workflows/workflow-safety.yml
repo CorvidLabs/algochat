@@ -1,0 +1,37 @@
+name: Workflow safety
+
+# A lane workflow edit runs that lane, not the language matrix. These checks
+# still run the release tests against that edit.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ts.yml"
+      - ".github/workflows/py.yml"
+      - ".github/workflows/rs.yml"
+      - ".github/workflows/kt.yml"
+      - ".github/workflows/go.yml"
+      - ".github/workflows/swift.yml"
+      - ".github/workflows/workflow-safety.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ts.yml"
+      - ".github/workflows/py.yml"
+      - ".github/workflows/rs.yml"
+      - ".github/workflows/kt.yml"
+      - ".github/workflows/go.yml"
+      - ".github/workflows/swift.yml"
+      - ".github/workflows/workflow-safety.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - run: python3 -m unittest discover -s scripts/release -v

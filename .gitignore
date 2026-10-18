@@ -22,3 +22,6 @@ intent.html
 
 # Python release-check bytecode
 __pycache__/
+
+# SpecSync regenerates this cache. CI rebuilds it with --force.
+**/.specsync/hashes.json
