@@ -122,7 +122,7 @@ or trusted-publisher bindings; none are configured by qualification.
 - [x] Owner selects this repository as the source. Protocol tag `v1.3.0`. Library versions stay TypeScript `0.9.0`, Python `0.2.0`, Rust `0.3.0`, Kotlin `0.2.0`, and Go tag `go/v0.2.0`.
 - [ ] All seven exact-head qualification lanes and aggregate pass on the final candidate; archive logs, hashes, and the run URL.
 - [x] Declared minimum-runtime gaps are accepted: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not qualified. Swift hybrid is macOS 26 only.
-- [ ] Direct release-range Attest policy verification passes from `v1.2.1` through the final candidate. `d53ecbb` and `40dcc7b` still have no notes. Attest them, and every later commit, before the tag.
+- [x] `attest verify` from `v1.2.1` through `a7db7d2` passes. Notes for `d53ecbb`, `40dcc7b`, and `a7db7d2` are on the remote. Attest the merge commit of this change after its checks pass, before the tag.
 - [x] Kotlin coordinates, the Go module path, and the Swift package name are recorded above.
 - [x] `hi/repo.md` REPO-2 now includes protocols `0x04` and `0x05`. Identifier `0x03` stays unassigned.
 - [x] LocalNet: rounds 41739 through 41834, six 2366-byte handshakes, 90 messages, 540 reads, 0 failures, on the squashed 1.3.0 tree. Earlier rounds 41641 through 41736 are the same wire on the pre-squash commit. Rounds 41059 through 41154 are the withdrawn 1278-byte layout.
