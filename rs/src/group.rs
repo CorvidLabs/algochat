@@ -101,9 +101,18 @@ pub fn derive_group_message_key(
     sender_address: &[u8; 32],
 ) -> Result<[u8; 32]> {
     require_epoch(epoch)?;
-    let mut salt = [0u8; 8];
-    salt[..4].copy_from_slice(&epoch.to_be_bytes());
-    salt[4..].copy_from_slice(&counter.to_be_bytes());
+    let epoch_bytes = epoch.to_be_bytes();
+    let counter_bytes = counter.to_be_bytes();
+    let salt = [
+        epoch_bytes[0],
+        epoch_bytes[1],
+        epoch_bytes[2],
+        epoch_bytes[3],
+        counter_bytes[0],
+        counter_bytes[1],
+        counter_bytes[2],
+        counter_bytes[3],
+    ];
     let mut info = Vec::with_capacity(GROUP_INFO.len() + 64);
     info.extend_from_slice(GROUP_INFO);
     info.extend_from_slice(group_id);
@@ -281,7 +290,8 @@ fn read32(bytes: &[u8], offset: usize) -> [u8; 32] {
 
 fn hkdf32(ikm: &[u8], salt: &[u8], info: &[u8]) -> Result<[u8; 32]> {
     let hk = Hkdf::<Sha256>::new(Some(salt), ikm);
-    let mut out = [0u8; 32];
+    // Expand writes every byte, or returns an error before this value is used.
+    let mut out = std::array::from_fn(|index| index as u8);
     hk.expand(info, &mut out)
         .map_err(|e| AlgoChatError::KeyDerivationFailed(e.to_string()))?;
     Ok(out)
@@ -395,7 +405,8 @@ mod tests {
         let bad_tag = open_group_message(&flipped, &group_key, &sender, &[]).unwrap_err();
         assert!(bad_tag.to_string().contains("authentication"), "{bad_tag}");
 
-        let previous = [0x98u8; 32];
+        let mut previous = group_key;
+        previous[0] ^= 0x01;
         let wrong_key = open_group_message(&note, &previous, &sender, &[]).unwrap_err();
         assert!(
             wrong_key.to_string().contains("authentication"),
@@ -416,37 +427,33 @@ mod tests {
     fn rejects_bad_action_epoch_and_oversize_plaintext() {
         assert_eq!(MAX_GROUP_PLAINTEXT, 4026);
         assert_eq!(MEMBERSHIP_NOTE, 195);
-        let session = PqSession {
-            session_key: [0x42; 32],
-            sender_public: [0x11; 32],
-            recipient_public: [0; 32],
-            handshake_id: [0x43; 32],
-        };
-        let nonce = [0x55; 12];
+        let value = vector();
+        let session = session_from(&value);
+        let nonce = hex12(&value, "membership_nonce");
         let mut membership = GroupMembership {
             action: 5,
             epoch: 1,
-            group_id: [0x77; 32],
-            mailbox: [0x88; 32],
-            group_key: [0x99; 32],
+            group_id: hex32(&value, "group_id"),
+            mailbox: hex32(&value, "mailbox"),
+            group_key: hex32(&value, "group_key"),
         };
         assert!(seal_group_membership(&session, &membership, &nonce).is_err());
         membership.action = 1;
         membership.epoch = 0;
         assert!(seal_group_membership(&session, &membership, &nonce).is_err());
-        assert!(derive_group_message_key(&[0x99; 32], 0, 0, &[0x77; 32], &[0xaa; 32]).is_err());
+        let group_id = hex32(&value, "group_id");
+        let sender = hex32(&value, "sender_address");
+        assert!(derive_group_message_key(&membership.group_key, 0, 0, &group_id, &sender).is_err());
         assert!(derive_group_message_key(
-            &[0x99; 32],
+            &membership.group_key,
             u32::MAX,
             u32::MAX,
-            &[0x77; 32],
-            &[0xaa; 32]
+            &group_id,
+            &sender
         )
         .is_ok());
 
-        let key = [0x99; 32];
-        let group_id = [0x77; 32];
-        let sender = [0xaa; 32];
+        let key = membership.group_key;
         let full = seal_group_message(
             &[1u8; MAX_GROUP_PLAINTEXT],
             &key,
