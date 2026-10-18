@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "number-the-pq-level-of-every-protocol-from-0-through-5",
+  "slug": "number-the-pq-level-of-every-protocol-from-0-through-5",
+  "title": "Number the PQ level of every protocol from 0 through 5",
+  "description": "Number the PQ level of every protocol from 0 through 5",
+  "kind": "documentation",
+  "state": "approved",
+  "base_commit": "629a29ce8c9a0c5cd64a60936399e80a2a4aaaee",
+  "created_at": 1792335554,
+  "updated_at": 1792335585,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "SECURITY.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "Section 5.4.2 defines PQ levels 0 through 5. Everyday is 0. Extra lock is 1 while the 32-byte PSK stays secret. Hybrid handshake and message are 3. Levels 2, 4, and 5 are unused by a message protocol. 0x03 stays unassigned. README and SECURITY.md use those integers."
+  ],
+  "selected_artifacts": [
+    "context",
+    "docs",
+    "requirements"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "yes"
+  }
+}

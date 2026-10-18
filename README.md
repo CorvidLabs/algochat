@@ -19,7 +19,7 @@ This is the public specification and the language implementations. It is not a c
 | [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05` | `./gradlew test` |
 | [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05` | `go test ./...` |
 
-The post-quantum level of each protocol is [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels). Everyday `0x01` is X25519 only. Extra lock `0x02` stays closed after a break of X25519 while the pre-shared key stays secret. Hybrid `0x04` and `0x05` require both X25519 and ML-KEM-768. `0x03` is not assigned. A future group wrap has to meet the Extra lock level or the hybrid level.
+PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0. Extra lock `0x02` is level 1 while the 32-byte pre-shared key stays secret. Hybrid `0x04` and `0x05` are level 3. `0x03` is not assigned. Levels 2, 4, and 5 are not used by a message protocol. A future group wrap has to be level 3 when a hybrid key exists, and at least level 1 otherwise.
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
 
