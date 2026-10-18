@@ -1,29 +1,37 @@
 """Encryption and decryption for AlgoChat messages."""
 
-import os
 import json
-from typing import Optional
+import os
 
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.asymmetric.x25519 import (
+    X25519PrivateKey,
+    X25519PublicKey,
+)
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from .envelope import _VERSION_AAD, ChatEnvelope
+from .keys import (
+    generate_ephemeral_keypair,
+    public_key_from_bytes,
+    public_key_to_bytes,
+    x25519_ecdh,
+)
 from .types import (
-    DecryptedContent,
-    EncryptionError,
-    DecryptionError,
     ENCRYPTION_INFO_PREFIX,
-    SENDER_KEY_INFO_PREFIX,
+    HEADER_SIZE,
+    MAX_NOTE_SIZE,
     MAX_PAYLOAD_SIZE,
     NONCE_SIZE,
-    HEADER_SIZE,
+    SENDER_KEY_INFO_PREFIX,
+    DecryptedContent,
+    DecryptionError,
+    EncryptionError,
 )
-from .keys import generate_ephemeral_keypair, x25519_ecdh, public_key_to_bytes, public_key_from_bytes
-from .envelope import ChatEnvelope, _VERSION_AAD
 
 
-def _payload_aad(envelope: ChatEnvelope) -> Optional[bytes]:
+def _payload_aad(envelope: ChatEnvelope) -> bytes | None:
     """Associated data for the message ciphertext.
 
     Version 0x01 keeps ChaCha associated data empty. Version 0x02 binds the
@@ -114,7 +122,7 @@ def decrypt_message(
     envelope: ChatEnvelope,
     my_private_key: X25519PrivateKey,
     my_public_key: X25519PublicKey,
-) -> Optional[DecryptedContent]:
+) -> DecryptedContent | None:
     """
     Decrypt a message from an envelope.
 
@@ -126,6 +134,11 @@ def decrypt_message(
     Returns:
         DecryptedContent if successful, None if it's a key-publish message
     """
+    note_len = HEADER_SIZE + len(envelope.ciphertext)
+    if note_len > MAX_NOTE_SIZE:
+        raise DecryptionError(
+            f"Note is {note_len} bytes; the maximum is {MAX_NOTE_SIZE}"
+        )
     my_pub_bytes = public_key_to_bytes(my_public_key)
     we_are_sender = my_pub_bytes == envelope.sender_public_key
 

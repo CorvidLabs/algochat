@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """Export Python-generated envelopes for cross-implementation testing."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from algochat.keys import derive_keys_from_seed
 from algochat.crypto import encrypt_message
 from algochat.envelope import encode_envelope
+from algochat.keys import derive_keys_from_seed
 from test_vectors import ALICE_SEED_HEX, BOB_SEED_HEX, TEST_MESSAGES
 
 

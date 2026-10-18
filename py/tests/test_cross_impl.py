@@ -5,20 +5,24 @@ Rust, Kotlin, and Python implementations, ensuring full protocol compatibility
 for both standard v1.0 and PSK v1.1 envelopes.
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
+from typing import ClassVar
+
 import pytest
-from algochat.keys import derive_keys_from_seed
 from algochat.crypto import decrypt_message
-from algochat.envelope import decode_envelope, is_chat_message
-from algochat.psk_envelope import decode_psk_envelope, is_psk_message
+from algochat.envelope import EnvelopeError, decode_envelope, is_chat_message
+from algochat.keys import derive_keys_from_seed
 from algochat.psk_crypto import decrypt_psk_message
+from algochat.psk_envelope import PSKEnvelopeError, decode_psk_envelope, is_psk_message
 from algochat.psk_ratchet import derive_psk_at_counter
+from algochat.types import DecryptionError, PSKDecryptionError
+from cryptography.exceptions import InvalidTag
+
 from .test_vectors import (
     BOB_SEED_HEX,
     TEST_MESSAGES,
 )
-
 
 # Path to test-algochat repo with implementation envelopes
 TEST_ALGOCHAT_DIR = Path(__file__).parent.parent.parent / "test-algochat"
@@ -33,6 +37,18 @@ TS_PSK_DIR = TEST_ALGOCHAT_DIR / "test-envelopes-ts-psk"
 PYTHON_PSK_DIR = TEST_ALGOCHAT_DIR / "test-envelopes-python-psk"
 RUST_PSK_DIR = TEST_ALGOCHAT_DIR / "test-envelopes-rust-psk"
 KOTLIN_PSK_DIR = TEST_ALGOCHAT_DIR / "test-envelopes-kotlin-psk"
+
+_FIXTURE_ERRORS = (
+    OSError,
+    ValueError,
+    UnicodeError,
+    EnvelopeError,
+    PSKEnvelopeError,
+    PSKDecryptionError,
+    DecryptionError,
+    InvalidTag,
+    json.JSONDecodeError,
+)
 
 # Default test PSK (used if no metadata.json found)
 TEST_PSK = bytes.fromhex(
@@ -214,7 +230,7 @@ class TestCrossImplementationSummary:
                     passed.append(message_key)
                 else:
                     failed.append(message_key)
-            except Exception as e:
+            except _FIXTURE_ERRORS as e:
                 failed.append(f"{message_key}: {e}")
 
         assert len(failed) == 0, f"Swift failures: {failed}"
@@ -243,7 +259,7 @@ class TestCrossImplementationSummary:
                     passed.append(message_key)
                 else:
                     failed.append(message_key)
-            except Exception as e:
+            except _FIXTURE_ERRORS as e:
                 failed.append(f"{message_key}: {e}")
 
         assert len(failed) == 0, f"TypeScript failures: {failed}"
@@ -272,7 +288,7 @@ class TestCrossImplementationSummary:
                     passed.append(message_key)
                 else:
                     failed.append(message_key)
-            except Exception as e:
+            except _FIXTURE_ERRORS as e:
                 failed.append(f"{message_key}: {e}")
 
         assert len(failed) == 0, f"Rust failures: {failed}"
@@ -301,7 +317,7 @@ class TestCrossImplementationSummary:
                     passed.append(message_key)
                 else:
                     failed.append(message_key)
-            except Exception as e:
+            except _FIXTURE_ERRORS as e:
                 failed.append(f"{message_key}: {e}")
 
         assert len(failed) == 0, f"Kotlin failures: {failed}"
@@ -666,7 +682,7 @@ class TestKotlinPSKEnvelopes:
 class TestPSKCrossImplementationSummary:
     """Summary test to verify all PSK implementations are compatible."""
 
-    PSK_DIRS = {
+    PSK_DIRS: ClassVar[dict[str, Path]] = {
         "Swift": SWIFT_PSK_DIR,
         "TypeScript": TS_PSK_DIR,
         "Python": PYTHON_PSK_DIR,
@@ -703,7 +719,7 @@ class TestPSKCrossImplementationSummary:
                     passed.append(message_key)
                 else:
                     failed.append(message_key)
-            except Exception as e:
+            except _FIXTURE_ERRORS as e:
                 failed.append(f"{message_key}: {e}")
 
         assert len(failed) == 0, f"{impl_name} PSK failures: {failed}"

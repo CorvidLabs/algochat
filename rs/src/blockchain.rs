@@ -427,7 +427,7 @@ mod tests {
     #[test]
     fn test_parse_key_announcement_rejects_acpq() {
         let mut note = vec![0x41, 0x43, 0x50, 0x51, 0x01];
-        note.extend(std::iter::repeat(0u8).take(1184));
+        note.extend(std::iter::repeat_n(0u8, 1184));
         assert!(parse_key_announcement(&note, "SOMEADDR").is_none());
     }
 

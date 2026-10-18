@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from .types import MAX_NOTE_SIZE
 
-
 # Protocol constants
 PSK_VERSION = 0x01
 # Decrypt-only. Payload ChaCha associated data is the 130-byte header.
@@ -17,6 +16,33 @@ PSK_ENCRYPTED_SENDER_KEY_SIZE = 48  # 32-byte key + 16-byte tag
 PSK_MAX_PAYLOAD_SIZE = MAX_NOTE_SIZE - PSK_HEADER_SIZE - PSK_TAG_SIZE
 PSK_SESSION_SIZE = 100
 PSK_COUNTER_WINDOW = 200
+# Legal ratchet counters are uint32. Encoding must not wrap these to 0.
+_COUNTER_MAX = 4294967295
+
+
+def _is_u32_counter(counter: object) -> bool:
+    """Return whether ``counter`` is an int in ``0..=4294967295``.
+
+    ``bool`` is rejected. It is an ``int`` subclass, not a ratchet counter.
+    """
+    return (
+        isinstance(counter, int)
+        and not isinstance(counter, bool)
+        and 0 <= counter <= _COUNTER_MAX
+    )
+
+
+def _require_u32_counter(counter: object) -> int:
+    """Reject a counter before any 4-byte encoding.
+
+    Negative, fractional, non-integer, and oversized values never become
+    counter 0.
+    """
+    if not _is_u32_counter(counter):
+        raise ValueError(
+            "Ratchet counter must be an integer from 0 through 4294967295"
+        )
+    return counter
 
 
 @dataclass

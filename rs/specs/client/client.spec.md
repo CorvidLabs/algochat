@@ -204,6 +204,6 @@ boundaries while delegating cryptographic wire behavior to `protocol` and `psk`.
 | 2026-10-16 | CorvidLabs | Note capacity follows the protocol ceiling of 4096 bytes. Client trait signatures are unchanged. |
 | 2026-07-14 | CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-rust-algochat-implementa: Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for the Rust AlgoChat implementation |
 
-## Implementation gaps (2026-10-18)
+## Synchronization
 
-The normative synchronization/replay requirements remain unchanged. `receive_psk` currently validates under a read lock, decrypts after releasing it, then records under a separate write lock. Two concurrent receives can both pass the same counter. Sequential replay tests do not prove atomic receive semantics; applications must serialize receives per peer until corrected. The high-level client is `AlgoChat<A,I,S,M>` (there is no exported `AlgoChatClient` type); callers supply network adapters and address. See the [accuracy ledger](../../../docs/ACCURACY.md).
+`receive_psk` holds one write lock across validation, decryption, and recording. A tokio test using a barrier checks that two synchronized receives of the same valid ciphertext return plaintext once. Failed authentication does not consume the counter. The high-level client is `AlgoChat<A,I,S,M>` (there is no exported `AlgoChatClient` type).

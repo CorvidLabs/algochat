@@ -230,6 +230,9 @@ pub fn encrypt_pq_message(plaintext: &str, session: &PqSession) -> Result<Vec<u8
 }
 
 pub fn decrypt_pq_message(note: &[u8], session: &PqSession) -> Result<String> {
+    if note.len() > MAX_NOTE_SIZE {
+        return Err(AlgoChatError::NoteTooLarge(note.len()));
+    }
     if note.len() < DATA_HEADER + 16 || note[0] != VERSION_AAD || note[1] != ID_DATA {
         return Err(AlgoChatError::InvalidEnvelope("not a PQ message".into()));
     }
@@ -457,7 +460,8 @@ mod tests {
         let fields = parse_handshake(&note).unwrap();
         let (alice_priv, alice_pub) = derive_keys_from_seed(&[0x11u8; 32]).unwrap();
         let wrong_kem = derive_mlkem768(&[0x44u8; 32]).unwrap();
-        let wrong_ct = ml_kem::Ciphertext::<MlKem768>::try_from(fields.sender_ct.as_slice()).unwrap();
+        let wrong_ct =
+            ml_kem::Ciphertext::<MlKem768>::try_from(fields.sender_ct.as_slice()).unwrap();
         let wrong_ss = wrong_kem.decap.decapsulate(&wrong_ct);
         let agreed = x25519_ecdh(&alice_priv, &PublicKey::from(fields.ephemeral));
         let wrong_wrap = sender_wrap_key(
@@ -487,14 +491,21 @@ mod tests {
         let mut body = msg.clone();
         body[DATA_HEADER] ^= 1;
         assert!(decrypt_pq_message(&body, &session).is_err());
+        // Length is rejected before the nonce is read.
+        let oversize = vec![0u8; MAX_NOTE_SIZE + 1];
+        assert_eq!(oversize.len(), MAX_NOTE_SIZE + 1);
+        assert!(matches!(
+            decrypt_pq_message(&oversize, &session),
+            Err(AlgoChatError::NoteTooLarge(n)) if n == MAX_NOTE_SIZE + 1
+        ));
         assert!(is_pq_announcement(b"ACPQ"));
         let mut unsigned = vec![0x41, 0x43, 0x50, 0x51, 0x01];
-        unsigned.extend(std::iter::repeat(0x07u8).take(1184));
+        unsigned.extend(std::iter::repeat_n(0x07u8, 1184));
         let parsed = parse_pq_announcement(&unsigned, None).unwrap();
         assert!(!parsed.verified);
         assert_eq!(parsed.encaps_key.len(), 1184);
         let mut bad = unsigned.clone();
-        bad.extend(std::iter::repeat(0u8).take(64));
+        bad.extend(std::iter::repeat_n(0u8, 64));
         assert!(parse_pq_announcement(&bad, Some(&[0x11u8; 32])).is_none());
         let signing = ed25519_dalek::SigningKey::from_bytes(&[0x51u8; 32]);
         let mut message = b"AlgoChat-pq-ek-v1".to_vec();
@@ -503,7 +514,8 @@ mod tests {
         let digest = Sha256::digest(&message);
         let mut signed = unsigned.clone();
         signed.extend_from_slice(&signing.sign(&digest).to_bytes());
-        let verified = parse_pq_announcement(&signed, Some(signing.verifying_key().as_bytes())).unwrap();
+        let verified =
+            parse_pq_announcement(&signed, Some(signing.verifying_key().as_bytes())).unwrap();
         assert!(verified.verified);
         assert_eq!(verified.encaps_key, unsigned[5..]);
     }

@@ -1,10 +1,10 @@
 """Tests for the send queue."""
 
-import pytest
 from datetime import timedelta
-from algochat.queue import SendQueue, QueueConfig
-from algochat.models import PendingMessage, PendingStatus
 
+import pytest
+from algochat.models import PendingMessage, PendingStatus
+from algochat.queue import QueueConfig, SendQueue
 
 # ============================================================================
 # SendQueue

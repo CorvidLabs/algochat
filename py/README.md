@@ -171,7 +171,10 @@ The ratchet derives unique keys per message using a two-level hierarchy:
 
 Counter state tracks send/receive counters with replay protection:
 - Rejects duplicate counters (replay attacks)
-- Accepts counters up to 200 behind the highest seen counter and any future counter
+- Before any receive, accepts unseen counters 0 through 200 and rejects 1000000
+- After the highest accepted counter N, accepts unseen counters from max(0, N-200) through min(4294967295, N+200)
+- Issuing 4294967295 exhausts sending. The stored counter does not become 0, a later advance fails, and exhaustion stays on the saved state object, including pickle
+- Rejects negative, fractional, non-integer, and oversized counters before 4-byte encoding
 - Prunes old counters automatically
 
 ## Hybrid ML-KEM sessions

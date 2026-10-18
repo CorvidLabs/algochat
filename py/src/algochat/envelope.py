@@ -3,12 +3,14 @@
 from dataclasses import dataclass
 
 from .types import (
-    PROTOCOL_VERSION,
-    PROTOCOL_ID,
-    HEADER_SIZE,
-    PUBLIC_KEY_SIZE,
-    NONCE_SIZE,
     ENCRYPTED_SENDER_KEY_SIZE,
+    HEADER_SIZE,
+    MAX_NOTE_SIZE,
+    NONCE_SIZE,
+    PROTOCOL_ID,
+    PROTOCOL_VERSION,
+    PUBLIC_KEY_SIZE,
+    TAG_SIZE,
 )
 
 # Decrypt-only. Payload ChaCha associated data is the 126-byte header.
@@ -30,7 +32,6 @@ class ChatEnvelope:
 
 class EnvelopeError(Exception):
     """Raised when envelope encoding/decoding fails."""
-    pass
 
 
 def encode_envelope(envelope: ChatEnvelope) -> bytes:
@@ -75,8 +76,13 @@ def decode_envelope(data: bytes) -> ChatEnvelope:
     Raises:
         EnvelopeError: If data is invalid
     """
-    if len(data) < HEADER_SIZE:
-        raise EnvelopeError(f"Data too short: {len(data)} bytes (minimum {HEADER_SIZE})")
+    minimum = HEADER_SIZE + TAG_SIZE
+    if len(data) < minimum:
+        raise EnvelopeError(f"Data too short: {len(data)} bytes (minimum {minimum})")
+    if len(data) > MAX_NOTE_SIZE:
+        raise EnvelopeError(
+            f"Note is {len(data)} bytes; the maximum is {MAX_NOTE_SIZE}"
+        )
 
     version = data[0]
     protocol_id = data[1]

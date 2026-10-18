@@ -4,11 +4,15 @@ This module defines the core types for messages, conversations, accounts,
 and related structures used throughout the library.
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Iterator, List, Optional
 import uuid
+from collections.abc import Iterator
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @dataclass
@@ -64,7 +68,7 @@ class Message:
     direction: MessageDirection
     """Message direction relative to the current user."""
 
-    reply_context: Optional[ReplyContext] = None
+    reply_context: ReplyContext | None = None
     """Reply context if this message is a reply."""
 
     @property
@@ -88,13 +92,13 @@ class Conversation:
     participant: str
     """The other party's Algorand address."""
 
-    participant_encryption_key: Optional[bytes] = None
+    participant_encryption_key: bytes | None = None
     """Cached encryption public key for the participant (32 bytes)."""
 
-    _messages: List[Message] = field(default_factory=list)
+    _messages: list[Message] = field(default_factory=list)
     """Messages in chronological order."""
 
-    last_fetched_round: Optional[int] = None
+    last_fetched_round: int | None = None
     """The round of the last fetched message (for pagination)."""
 
     @property
@@ -103,17 +107,17 @@ class Conversation:
         return self.participant
 
     @property
-    def messages(self) -> List[Message]:
+    def messages(self) -> list[Message]:
         """Returns all messages in the conversation."""
         return self._messages
 
     @property
-    def last_message(self) -> Optional[Message]:
+    def last_message(self) -> Message | None:
         """Returns the most recent message."""
         return self._messages[-1] if self._messages else None
 
     @property
-    def last_received(self) -> Optional[Message]:
+    def last_received(self) -> Message | None:
         """Returns the most recent received message."""
         for msg in reversed(self._messages):
             if msg.direction == MessageDirection.RECEIVED:
@@ -121,7 +125,7 @@ class Conversation:
         return None
 
     @property
-    def last_sent(self) -> Optional[Message]:
+    def last_sent(self) -> Message | None:
         """Returns the most recent sent message."""
         for msg in reversed(self._messages):
             if msg.direction == MessageDirection.SENT:
@@ -155,7 +159,7 @@ class Conversation:
         self._messages.append(message)
         self._messages.sort(key=lambda m: m.timestamp)
 
-    def merge(self, new_messages: List[Message]) -> None:
+    def merge(self, new_messages: list[Message]) -> None:
         """Merges new messages into the conversation."""
         for message in new_messages:
             self.append(message)
@@ -188,7 +192,7 @@ class SendOptions:
     indexer_timeout_secs: int = 30
     """Maximum seconds to wait for indexer."""
 
-    reply_context: Optional[ReplyContext] = None
+    reply_context: ReplyContext | None = None
     """Reply context if replying to a message."""
 
     @classmethod
@@ -245,22 +249,22 @@ class PendingMessage:
     content: str
     """Message content."""
 
-    reply_context: Optional[ReplyContext] = None
+    reply_context: ReplyContext | None = None
     """Reply context if replying."""
 
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=_utc_now)
     """When the message was created."""
 
     retry_count: int = 0
     """Number of retry attempts."""
 
-    last_attempt: Optional[datetime] = None
+    last_attempt: datetime | None = None
     """Last attempt time."""
 
     status: PendingStatus = PendingStatus.PENDING
     """Current status."""
 
-    last_error: Optional[str] = None
+    last_error: str | None = None
     """Last error message."""
 
     @classmethod
@@ -268,7 +272,7 @@ class PendingMessage:
         cls,
         recipient: str,
         content: str,
-        reply_context: Optional[ReplyContext] = None,
+        reply_context: ReplyContext | None = None,
     ) -> "PendingMessage":
         """Creates a new pending message."""
         return cls(
@@ -281,7 +285,7 @@ class PendingMessage:
     def mark_sending(self) -> None:
         """Mark as currently sending."""
         self.status = PendingStatus.SENDING
-        self.last_attempt = datetime.now()
+        self.last_attempt = _utc_now()
 
     def mark_failed(self, error: str) -> None:
         """Mark as failed with an error."""

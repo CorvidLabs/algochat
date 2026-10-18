@@ -22,7 +22,7 @@ Message caches and encryption-key storage SHALL remain replaceable through their
 
 ### REQ-client-005 — PSK contact state
 
-PSK send and receive operations SHALL synchronize contact counters and SHALL validate replay state before returning received plaintext.
+PSK send and receive operations SHALL synchronize contact counters and SHALL validate replay state before returning received plaintext. `receive_psk` SHALL hold one lock across validation, decryption, and recording so two synchronized receives of one valid ciphertext succeed once. Failed authentication SHALL NOT consume a counter.
 
 ## Acceptance Criteria
 
@@ -68,7 +68,7 @@ Acceptance Criteria
 
 ### REQ-client-005
 
-PSK contact operations SHALL synchronize counters and validate replay state before returning received plaintext.
+PSK contact operations SHALL synchronize counters under one receive lock and validate replay state before returning received plaintext. Failed authentication SHALL NOT consume a counter.
 
 Acceptance Criteria
 - Native PSK contact and replay tests pass.

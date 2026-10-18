@@ -1,17 +1,17 @@
 """Tests for data models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
+
 from algochat.models import (
-    ReplyContext,
-    Message,
-    MessageDirection,
     Conversation,
     DiscoveredKey,
-    SendOptions,
+    Message,
+    MessageDirection,
     PendingMessage,
     PendingStatus,
+    ReplyContext,
+    SendOptions,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -33,7 +33,7 @@ def make_message(
         sender=sender,
         recipient=recipient,
         content=content,
-        timestamp=timestamp or datetime(2026, 3, 5, 12, 0, 0),
+        timestamp=timestamp or datetime(2026, 3, 5, 12, 0, 0, tzinfo=timezone.utc),
         confirmed_round=confirmed_round,
         direction=direction,
         reply_context=reply_context,
@@ -165,8 +165,8 @@ class TestConversation:
 
     def test_append_sorts_chronologically(self):
         conv = Conversation(participant="ALICE")
-        m1 = make_message(id="txid-1", timestamp=datetime(2026, 3, 5, 12, 0, 0))
-        m2 = make_message(id="txid-2", timestamp=datetime(2026, 3, 5, 11, 0, 0))
+        m1 = make_message(id="txid-1", timestamp=datetime(2026, 3, 5, 12, 0, 0, tzinfo=timezone.utc))
+        m2 = make_message(id="txid-2", timestamp=datetime(2026, 3, 5, 11, 0, 0, tzinfo=timezone.utc))
         conv.append(m1)
         conv.append(m2)
         assert conv.messages[0].id == "txid-2"  # earlier first
@@ -175,8 +175,8 @@ class TestConversation:
     def test_merge_messages(self):
         conv = Conversation(participant="ALICE")
         msgs = [
-            make_message(id="txid-1", timestamp=datetime(2026, 3, 5, 12, 0, 0)),
-            make_message(id="txid-2", timestamp=datetime(2026, 3, 5, 13, 0, 0)),
+            make_message(id="txid-1", timestamp=datetime(2026, 3, 5, 12, 0, 0, tzinfo=timezone.utc)),
+            make_message(id="txid-2", timestamp=datetime(2026, 3, 5, 13, 0, 0, tzinfo=timezone.utc)),
         ]
         conv.merge(msgs)
         assert conv.message_count == 2
@@ -195,7 +195,7 @@ class TestConversation:
             make_message(
                 id="txid-2",
                 direction=MessageDirection.RECEIVED,
-                timestamp=datetime(2026, 3, 5, 13, 0, 0),
+                timestamp=datetime(2026, 3, 5, 13, 0, 0, tzinfo=timezone.utc),
             )
         )
         assert conv.last_received.id == "txid-2"
@@ -206,14 +206,14 @@ class TestConversation:
             make_message(
                 id="txid-1",
                 direction=MessageDirection.RECEIVED,
-                timestamp=datetime(2026, 3, 5, 11, 0, 0),
+                timestamp=datetime(2026, 3, 5, 11, 0, 0, tzinfo=timezone.utc),
             )
         )
         conv.append(
             make_message(
                 id="txid-2",
                 direction=MessageDirection.SENT,
-                timestamp=datetime(2026, 3, 5, 12, 0, 0),
+                timestamp=datetime(2026, 3, 5, 12, 0, 0, tzinfo=timezone.utc),
             )
         )
         assert conv.last_sent.id == "txid-2"
@@ -225,7 +225,7 @@ class TestConversation:
             make_message(
                 id="txid-2",
                 direction=MessageDirection.RECEIVED,
-                timestamp=datetime(2026, 3, 5, 13, 0, 0),
+                timestamp=datetime(2026, 3, 5, 13, 0, 0, tzinfo=timezone.utc),
             )
         )
         received = list(conv.received_messages)
@@ -239,7 +239,7 @@ class TestConversation:
             make_message(
                 id="txid-2",
                 direction=MessageDirection.RECEIVED,
-                timestamp=datetime(2026, 3, 5, 13, 0, 0),
+                timestamp=datetime(2026, 3, 5, 13, 0, 0, tzinfo=timezone.utc),
             )
         )
         sent = list(conv.sent_messages)

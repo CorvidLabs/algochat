@@ -1,15 +1,14 @@
 """Type definitions for AlgoChat."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class DecryptedContent:
     """Decrypted message content."""
     text: str
-    reply_to_id: Optional[str] = None
-    reply_to_preview: Optional[str] = None
+    reply_to_id: str | None = None
+    reply_to_preview: str | None = None
 
 
 # Protocol constants
@@ -74,94 +73,75 @@ def payment_fee(note_size: int, min_fee: int) -> int:
 # Exception types
 class AlgoChatError(Exception):
     """Base exception for AlgoChat errors."""
-    pass
 
 
 class InvalidPublicKeyError(AlgoChatError):
     """Invalid public key format or length."""
-    pass
 
 
 class KeyDerivationError(AlgoChatError):
     """Key derivation failed."""
-    pass
 
 
 class InvalidSignatureError(AlgoChatError):
     """Invalid signature format or verification failed."""
-    pass
 
 
 class EncryptionError(AlgoChatError):
     """Encryption failed."""
-    pass
 
 
 class DecryptionError(AlgoChatError):
     """Decryption failed."""
-    pass
 
 
 class InvalidEnvelopeError(AlgoChatError):
     """Invalid envelope format."""
-    pass
 
 
 class IndexerNotConfiguredError(AlgoChatError):
     """Indexer not configured."""
-    pass
 
 
 class PublicKeyNotFoundError(AlgoChatError):
     """Public key not found for address."""
-    pass
 
 
 class UnverifiedKeyError(AlgoChatError):
     """An encryption key failed Ed25519 verification and may not be trusted."""
-    pass
 
 
 class InvalidRecipientError(AlgoChatError):
     """Invalid recipient address."""
-    pass
 
 
 class TransactionError(AlgoChatError):
     """Transaction failed."""
-    pass
 
 
 class InsufficientBalanceError(AlgoChatError):
     """Insufficient balance."""
-    pass
 
 
 class KeyNotFoundError(AlgoChatError):
     """Key not found in storage."""
-    pass
 
 
 class StorageError(AlgoChatError):
     """Storage operation failed."""
-    pass
 
 
 class MessageNotFoundError(AlgoChatError):
     """Message not found."""
-    pass
 
 
 class PSKEncryptionError(EncryptionError):
     """PSK encryption failed."""
-    pass
 
 
 class PSKDecryptionError(DecryptionError):
     """PSK decryption failed."""
-    pass
 
 
 class PQError(AlgoChatError):
     """Hybrid X25519 + ML-KEM handshake or message failed."""
-    pass

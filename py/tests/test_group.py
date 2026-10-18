@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from algochat import (
     GROUP_MAX_PAYLOAD_SIZE,
     GROUP_MEMBERSHIP_NOTE_SIZE,
@@ -16,7 +15,6 @@ from algochat import (
     GroupMembership,
     PQError,
     PQSession,
-    __all__ as PACKAGE_EXPORTS,
     derive_group_message_key,
     is_group_membership,
     is_group_message,
@@ -26,6 +24,9 @@ from algochat import (
     open_group_message,
     seal_group_membership,
     seal_group_message,
+)
+from algochat import (
+    __all__ as PACKAGE_EXPORTS,
 )
 
 _VECTOR_PATH = Path(__file__).resolve().parents[2] / "vectors" / "group-v1.json"

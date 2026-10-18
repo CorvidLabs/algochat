@@ -1,15 +1,17 @@
 """Key derivation and management for AlgoChat."""
 
-from typing import Tuple
 
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.asymmetric.x25519 import (
+    X25519PrivateKey,
+    X25519PublicKey,
+)
 from cryptography.hazmat.primitives.hashes import SHA256
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from .types import KEY_DERIVATION_SALT, KEY_DERIVATION_INFO
+from .types import KEY_DERIVATION_INFO, KEY_DERIVATION_SALT
 
 
-def derive_keys_from_seed(seed: bytes) -> Tuple[X25519PrivateKey, X25519PublicKey]:
+def derive_keys_from_seed(seed: bytes) -> tuple[X25519PrivateKey, X25519PublicKey]:
     """
     Derive X25519 key pair from a 32-byte seed using HKDF-SHA256.
 
@@ -38,7 +40,7 @@ def derive_keys_from_seed(seed: bytes) -> Tuple[X25519PrivateKey, X25519PublicKe
     return private_key, public_key
 
 
-def generate_ephemeral_keypair() -> Tuple[X25519PrivateKey, X25519PublicKey]:
+def generate_ephemeral_keypair() -> tuple[X25519PrivateKey, X25519PublicKey]:
     """
     Generate a random ephemeral X25519 key pair for message encryption.
 

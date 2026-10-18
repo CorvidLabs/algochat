@@ -2,28 +2,32 @@
 
 import os
 
+from cryptography.hazmat.primitives.asymmetric.x25519 import (
+    X25519PrivateKey,
+    X25519PublicKey,
+)
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
 
-from .psk_types import (
-    PSKEnvelope,
-    PSK_HEADER_SIZE,
-    PSK_MAX_PAYLOAD_SIZE,
-    PSK_PROTOCOL_ID,
-    PSK_VERSION,
-    _PSK_VERSION_AAD,
+from .keys import (
+    generate_ephemeral_keypair,
+    public_key_from_bytes,
+    public_key_to_bytes,
+    x25519_ecdh,
 )
 from .psk_ratchet import (
     derive_hybrid_symmetric_key,
     derive_sender_key,
 )
-from .keys import (
-    generate_ephemeral_keypair,
-    x25519_ecdh,
-    public_key_to_bytes,
-    public_key_from_bytes,
+from .psk_types import (
+    _PSK_VERSION_AAD,
+    PSK_HEADER_SIZE,
+    PSK_MAX_PAYLOAD_SIZE,
+    PSK_PROTOCOL_ID,
+    PSK_VERSION,
+    PSKEnvelope,
+    _require_u32_counter,
 )
-from .types import NONCE_SIZE, PSKEncryptionError, PSKDecryptionError
+from .types import MAX_NOTE_SIZE, NONCE_SIZE, PSKDecryptionError, PSKEncryptionError
 
 
 def _payload_aad(envelope: PSKEnvelope) -> bytes | None:
@@ -35,9 +39,10 @@ def _payload_aad(envelope: PSKEnvelope) -> bytes | None:
     """
     if envelope.version < _PSK_VERSION_AAD:
         return None
+    counter = _require_u32_counter(envelope.ratchet_counter)
     header = (
         bytes([envelope.version, PSK_PROTOCOL_ID])
-        + envelope.ratchet_counter.to_bytes(4, byteorder="big")
+        + counter.to_bytes(4, byteorder="big")
         + envelope.sender_public_key
         + envelope.ephemeral_public_key
         + envelope.nonce
@@ -72,6 +77,7 @@ def encrypt_psk_message(
     Raises:
         PSKEncryptionError: If encryption fails.
     """
+    ratchet_counter = _require_u32_counter(ratchet_counter)
     message_bytes = plaintext.encode("utf-8")
 
     if len(message_bytes) > PSK_MAX_PAYLOAD_SIZE:
@@ -152,6 +158,11 @@ def decrypt_psk_message(
     Raises:
         PSKDecryptionError: If decryption fails.
     """
+    note_len = PSK_HEADER_SIZE + len(envelope.ciphertext)
+    if note_len > MAX_NOTE_SIZE:
+        raise PSKDecryptionError(
+            f"Note is {note_len} bytes; the maximum is {MAX_NOTE_SIZE}"
+        )
     my_pub_bytes = public_key_to_bytes(recipient_public_key)
     we_are_sender = my_pub_bytes == envelope.sender_public_key
 

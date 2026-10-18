@@ -25,7 +25,7 @@ Acceptance Criteria
 
 ### REQ-algochat-003
 
-PSK ratchet state SHALL derive deterministic per-counter keys, reject replayed counters, accept configured out-of-order delivery, and prune counters outside the receive window.
+PSK ratchet state SHALL derive deterministic per-counter keys, reject replayed counters, accept a 200-counter window in both directions, reject counter 1000000 on a fresh state, and prune counters outside the receive window. Send exhaustion SHALL persist on the state object and through pickle, and the stored counter SHALL NOT become 0. Negative, fractional, non-integer, and greater-than-4294967295 counters SHALL be rejected before 4-byte encoding.
 
 Acceptance Criteria
 
@@ -49,7 +49,7 @@ Acceptance Criteria
 
 ### REQ-algochat-006
 
-AlgoChat notes SHALL be at most 4096 bytes. A standard plaintext of 3954 bytes and a PSK plaintext of 3950 bytes SHALL encode to exactly 4096 bytes. Plaintexts of 882 and 878 bytes SHALL still encrypt, and those notes SHALL be at most 1024 bytes. One byte past either maximum SHALL fail before a transaction is built. A note payment fee at a minimum fee of 1000 microAlgos SHALL be 1000, 1098, and 1308 for notes of 1024, 2000, and 4096 bytes.
+AlgoChat notes SHALL be at most 4096 bytes. A standard plaintext of 3954 bytes and a PSK plaintext of 3950 bytes SHALL encode to exactly 4096 bytes. Plaintexts of 882 and 878 bytes SHALL still encrypt, and those notes SHALL be at most 1024 bytes. One byte past either maximum SHALL fail before a transaction is built. Standard decode SHALL reject fewer than 142 bytes and PSK decode SHALL reject fewer than 146. Note-facing standard, PSK, and PQ opens SHALL reject input longer than 4096 bytes before returning plaintext. A note payment fee at a minimum fee of 1000 microAlgos SHALL be 1000, 1098, and 1308 for notes of 1024, 2000, and 4096 bytes.
 
 Acceptance Criteria
 

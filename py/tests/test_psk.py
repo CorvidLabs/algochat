@@ -2,42 +2,42 @@
 
 import pytest
 from algochat.keys import derive_keys_from_seed
-from algochat.psk_types import (
-    PSK_VERSION,
-    PSK_PROTOCOL_ID,
-    PSK_HEADER_SIZE,
-    PSK_TAG_SIZE,
-    PSK_MAX_PAYLOAD_SIZE,
-    PSKEnvelope,
-)
-from algochat.types import MAX_NOTE_SIZE, PSKEncryptionError
-from algochat.psk_ratchet import (
-    derive_session_psk,
-    derive_position_psk,
-    derive_psk_at_counter,
+from algochat.psk_crypto import (
+    decrypt_psk_message,
+    encrypt_psk_message,
 )
 from algochat.psk_envelope import (
-    encode_psk_envelope,
-    decode_psk_envelope,
-    is_psk_message,
     PSKEnvelopeError,
-)
-from algochat.psk_crypto import (
-    encrypt_psk_message,
-    decrypt_psk_message,
-)
-from algochat.psk_state import (
-    PSKState,
-    validate_counter,
-    record_receive,
-    advance_send_counter,
+    decode_psk_envelope,
+    encode_psk_envelope,
+    is_psk_message,
 )
 from algochat.psk_exchange import (
     create_psk_exchange_uri,
     parse_psk_exchange_uri,
 )
-from .test_vectors import ALICE_SEED_HEX, BOB_SEED_HEX
+from algochat.psk_ratchet import (
+    derive_position_psk,
+    derive_psk_at_counter,
+    derive_session_psk,
+)
+from algochat.psk_state import (
+    PSKState,
+    advance_send_counter,
+    record_receive,
+    validate_counter,
+)
+from algochat.psk_types import (
+    PSK_HEADER_SIZE,
+    PSK_MAX_PAYLOAD_SIZE,
+    PSK_PROTOCOL_ID,
+    PSK_TAG_SIZE,
+    PSK_VERSION,
+    PSKEnvelope,
+)
+from algochat.types import MAX_NOTE_SIZE, PSKDecryptionError, PSKEncryptionError
 
+from .test_vectors import ALICE_SEED_HEX, BOB_SEED_HEX
 
 # Test PSK: 0xAA repeated 32 times
 TEST_PSK = bytes([0xAA] * 32)
@@ -92,7 +92,7 @@ class TestPSKEnvelopeEncodeDecode:
             ephemeral_public_key=bytes(range(32, 64)),
             nonce=bytes(range(12)),
             encrypted_sender_key=bytes(range(48)),
-            ciphertext=b"hello encrypted",
+            ciphertext=b"hello encrypted!",
         )
 
         encoded = encode_psk_envelope(original)
@@ -149,15 +149,46 @@ class TestPSKEnvelopeEncodeDecode:
 
     def test_decode_wrong_version(self) -> None:
         """Decoding wrong version raises error."""
-        data = bytes([0x99, PSK_PROTOCOL_ID]) + bytes(128)
+        data = bytes([0x99, PSK_PROTOCOL_ID]) + bytes(PSK_HEADER_SIZE + PSK_TAG_SIZE - 2)
         with pytest.raises(PSKEnvelopeError, match="version"):
             decode_psk_envelope(data)
 
     def test_decode_wrong_protocol(self) -> None:
         """Decoding wrong protocol ID raises error."""
-        data = bytes([PSK_VERSION, 0x99]) + bytes(128)
+        data = bytes([PSK_VERSION, 0x99]) + bytes(PSK_HEADER_SIZE + PSK_TAG_SIZE - 2)
         with pytest.raises(PSKEnvelopeError, match="protocol"):
             decode_psk_envelope(data)
+
+    def test_decode_requires_header_plus_tag(self) -> None:
+        """145 bytes are rejected. Exactly 146 bytes is a complete frame."""
+        short = bytes([PSK_VERSION, PSK_PROTOCOL_ID]) + bytes(143)
+        assert len(short) == 145
+        with pytest.raises(PSKEnvelopeError, match="too short"):
+            decode_psk_envelope(short)
+        exact = bytes([PSK_VERSION, PSK_PROTOCOL_ID]) + bytes(144)
+        assert len(exact) == 146
+        decoded = decode_psk_envelope(exact)
+        assert decoded.ratchet_counter == 0
+
+    def test_decode_rejects_note_over_4096(self) -> None:
+        """A 4097-byte PSK structure is not a legal note."""
+        data = bytes([PSK_VERSION, PSK_PROTOCOL_ID]) + bytes(4095)
+        assert len(data) == 4097
+        with pytest.raises(PSKEnvelopeError, match="maximum"):
+            decode_psk_envelope(data)
+
+    def test_encode_rejects_bad_counters_before_four_byte_encoding(self) -> None:
+        """Negative, fractional, bool, and oversized counters are not encoded as 0."""
+        base = {
+            "sender_public_key": bytes(32),
+            "ephemeral_public_key": bytes(32),
+            "nonce": bytes(12),
+            "encrypted_sender_key": bytes(48),
+            "ciphertext": bytes(16),
+        }
+        for bad in (-1, 1.5, True, 4294967296, "0"):
+            with pytest.raises(ValueError, match="4294967295"):
+                encode_psk_envelope(PSKEnvelope(ratchet_counter=bad, **base))
 
 
 class TestPSKEncryptDecrypt:
@@ -255,7 +286,7 @@ class TestPSKEncryptDecrypt:
         assert result == "Counter 0 message"
 
         # Should fail with wrong PSK
-        with pytest.raises(Exception):
+        with pytest.raises(PSKDecryptionError):
             decrypt_psk_message(envelope, bob_private, bob_public, psk1)
 
     def test_unicode_message(self, alice_keys, bob_keys) -> None:
@@ -364,6 +395,31 @@ class TestPSKEncryptDecrypt:
                 0,
             )
 
+    def test_open_rejects_authenticated_oversize_note(self, alice_keys, bob_keys) -> None:
+        """A valid tag on a 4097-byte PSK note does not return plaintext."""
+        from algochat import psk_crypto
+
+        alice_private, alice_public = alice_keys
+        bob_private, bob_public = bob_keys
+        psk = derive_psk_at_counter(TEST_PSK, 0)
+        plaintext = "A" * (PSK_MAX_PAYLOAD_SIZE + 1)
+        saved = psk_crypto.PSK_MAX_PAYLOAD_SIZE
+        psk_crypto.PSK_MAX_PAYLOAD_SIZE = len(plaintext.encode())
+        try:
+            envelope = encrypt_psk_message(
+                plaintext,
+                alice_private,
+                alice_public,
+                bob_public,
+                psk,
+                0,
+            )
+        finally:
+            psk_crypto.PSK_MAX_PAYLOAD_SIZE = saved
+        assert PSK_HEADER_SIZE + len(envelope.ciphertext) == MAX_NOTE_SIZE + 1
+        with pytest.raises(PSKDecryptionError, match="maximum"):
+            decrypt_psk_message(envelope, bob_private, bob_public, psk)
+
 
 class TestPSKState:
     """Test PSK counter state management."""
@@ -416,9 +472,47 @@ class TestPSKState:
         assert validate_counter(state, 200)
         assert validate_counter(state, 299)
 
-        # Outside window
+        # Outside window, including one past the forward edge.
         assert not validate_counter(state, 99)
         assert not validate_counter(state, 0)
+        assert validate_counter(state, 500)
+        assert not validate_counter(state, 501)
+
+    def test_fresh_state_rejects_far_future_counter(self) -> None:
+        """A fresh receive window is 0 through 200. 1000000 is rejected."""
+        state = PSKState()
+        assert validate_counter(state, 0)
+        assert validate_counter(state, 200)
+        assert not validate_counter(state, 201)
+        assert not validate_counter(state, 1000000)
+        assert not validate_counter(state, 1.5)
+        assert not validate_counter(state, True)
+        assert not validate_counter(state, 4294967296)
+
+    def test_uint32_max_receive_does_not_accept_zero(self) -> None:
+        """Accepting 4294967295 does not make counter 0 acceptable."""
+        state = record_receive(PSKState(), 4294967295)
+        assert state.peer_last_counter == 4294967295
+        assert not validate_counter(state, 0)
+        assert validate_counter(state, 4294967295 - 200)
+        assert not validate_counter(state, 4294967295 - 201)
+
+    def test_send_exhaustion_persists_across_pickle(self) -> None:
+        """The last uint32 counter is issued once and does not wrap to 0."""
+        import pickle
+
+        state = PSKState(send_counter=4294967295)
+        counter, state = advance_send_counter(state)
+        assert counter == 4294967295
+        assert state.send_counter == 4294967295
+        assert state.send_exhausted
+        restored = pickle.loads(pickle.dumps(state))
+        assert restored.send_exhausted
+        assert restored.send_counter == 4294967295
+        with pytest.raises(PSKEncryptionError, match="exhausted"):
+            advance_send_counter(restored)
+        assert restored.send_counter == 4294967295
+        assert restored.send_exhausted
 
     def test_record_receive(self) -> None:
         """Recording a receive updates state correctly."""

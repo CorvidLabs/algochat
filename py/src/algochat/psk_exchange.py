@@ -1,13 +1,13 @@
 """PSK exchange URI handling for sharing pre-shared keys."""
 
 import base64
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import parse_qs, urlencode, urlparse
 
 
 def create_psk_exchange_uri(
     address: str,
     psk: bytes,
-    label: str = None,
+    label: str | None = None,
 ) -> str:
     """Create a PSK exchange URI for sharing a pre-shared key.
 

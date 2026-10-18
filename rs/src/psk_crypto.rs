@@ -13,8 +13,10 @@ use zeroize::Zeroizing;
 
 use crate::keys::{generate_ephemeral_keypair, x25519_ecdh};
 use crate::psk_ratchet::{derive_hybrid_symmetric_key, derive_psk_at_counter, derive_sender_key};
-use crate::psk_types::{PSKEnvelope, PSK_MAX_PAYLOAD_SIZE, PSK_VERSION, PSK_VERSION_V2};
-use crate::types::{AlgoChatError, Result, NONCE_SIZE};
+use crate::psk_types::{
+    PSKEnvelope, PSK_HEADER_SIZE, PSK_MAX_PAYLOAD_SIZE, PSK_VERSION, PSK_VERSION_V2,
+};
+use crate::types::{AlgoChatError, Result, MAX_NOTE_SIZE, NONCE_SIZE};
 
 /// Wraps a message and AAD into the `chacha20poly1305::Payload` form.
 fn payload<'a>(msg: &'a [u8], aad: &'a [u8]) -> Payload<'a, 'a> {
@@ -49,6 +51,7 @@ pub fn encrypt_psk_message(
         initial_psk,
         ratchet_counter,
         PSK_VERSION,
+        true,
     )
 }
 
@@ -75,6 +78,7 @@ pub fn encrypt_psk_message_v2(
         initial_psk,
         ratchet_counter,
         PSK_VERSION_V2,
+        true,
     )
 }
 
@@ -88,10 +92,11 @@ fn encrypt_psk_message_versioned(
     initial_psk: &[u8],
     ratchet_counter: u32,
     version: u8,
+    enforce_limit: bool,
 ) -> Result<PSKEnvelope> {
     let message_bytes = plaintext.as_bytes();
 
-    if message_bytes.len() > PSK_MAX_PAYLOAD_SIZE {
+    if enforce_limit && message_bytes.len() > PSK_MAX_PAYLOAD_SIZE {
         return Err(AlgoChatError::MessageTooLarge(message_bytes.len()));
     }
 
@@ -182,6 +187,10 @@ pub fn decrypt_psk_message(
     my_public_key: &PublicKey,
     initial_psk: &[u8],
 ) -> Result<String> {
+    let note_len = PSK_HEADER_SIZE + envelope.ciphertext.len();
+    if note_len > MAX_NOTE_SIZE {
+        return Err(AlgoChatError::NoteTooLarge(note_len));
+    }
     let my_pub_bytes = my_public_key.as_bytes();
     let we_are_sender = my_pub_bytes == &envelope.sender_public_key;
 
@@ -497,6 +506,31 @@ mod tests {
     }
 
     #[test]
+    fn test_open_rejects_authenticated_oversize_note() {
+        let (alice_private, alice_public) = alice_keys();
+        let (bob_private, bob_public) = bob_keys();
+        let psk = test_psk();
+        let message = "A".repeat(PSK_MAX_PAYLOAD_SIZE + 1);
+        let envelope = encrypt_psk_message_versioned(
+            &message,
+            &alice_private,
+            &alice_public,
+            &bob_public,
+            &psk,
+            0,
+            PSK_VERSION,
+            false,
+        )
+        .unwrap();
+        let note_len = PSK_HEADER_SIZE + envelope.ciphertext.len();
+        assert_eq!(note_len, crate::types::MAX_NOTE_SIZE + 1);
+        assert!(matches!(
+            decrypt_psk_message(&envelope, &bob_private, &bob_public, &psk),
+            Err(AlgoChatError::NoteTooLarge(n)) if n == note_len
+        ));
+    }
+
+    #[test]
     fn test_empty_message() {
         let (alice_private, alice_public) = alice_keys();
         let (bob_private, bob_public) = bob_keys();
@@ -568,12 +602,12 @@ mod tests {
             ChaCha20Poly1305, Nonce,
         };
 
-        // Published test-vector bytes. The copy is not a constant expression.
-        let sender_seed: [u8; 32] = std::array::from_fn(|index| [0x01u8; 32][index] ^ 0);
-        let recipient_seed: [u8; 32] = std::array::from_fn(|index| [0x02u8; 32][index] ^ 0);
-        let ephemeral_seed: [u8; 32] = std::array::from_fn(|index| [0x03u8; 32][index] ^ 0);
-        let initial_psk: [u8; 32] = std::array::from_fn(|index| [0xAAu8; 32][index] ^ 0);
-        let nonce_bytes: [u8; 12] = std::array::from_fn(|index| [0x04u8; 12][index] ^ 0);
+        // Published test-vector bytes.
+        let sender_seed = [0x01u8; 32];
+        let recipient_seed = [0x02u8; 32];
+        let ephemeral_seed = [0x03u8; 32];
+        let initial_psk = [0xAAu8; 32];
+        let nonce_bytes = [0x04u8; 12];
         let ratchet_counter: u32 = 0;
 
         let (_, sender_public) = derive_keys_from_seed(&sender_seed).unwrap();

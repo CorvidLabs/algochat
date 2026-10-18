@@ -5,10 +5,10 @@ Two-level ratchet:
     - Position PSK: derived per position within a session
 """
 
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from .psk_types import PSK_SESSION_SIZE
+from .psk_types import PSK_SESSION_SIZE, _require_u32_counter
 
 
 def derive_session_psk(initial_psk: bytes, session_index: int) -> bytes:
@@ -21,6 +21,7 @@ def derive_session_psk(initial_psk: bytes, session_index: int) -> bytes:
     Returns:
         32-byte session PSK.
     """
+    session_index = _require_u32_counter(session_index)
     hkdf = HKDF(
         algorithm=SHA256(),
         length=32,
@@ -40,6 +41,7 @@ def derive_position_psk(session_psk: bytes, position: int) -> bytes:
     Returns:
         32-byte position PSK.
     """
+    position = _require_u32_counter(position)
     hkdf = HKDF(
         algorithm=SHA256(),
         length=32,
@@ -63,6 +65,7 @@ def derive_psk_at_counter(initial_psk: bytes, counter: int) -> bytes:
     Returns:
         32-byte derived PSK for this counter.
     """
+    counter = _require_u32_counter(counter)
     session_index = counter // PSK_SESSION_SIZE
     position = counter % PSK_SESSION_SIZE
 

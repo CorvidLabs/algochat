@@ -14,18 +14,19 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 - Crate: `algochat` **0.3.0**, implementing protocol **1.3.0**.
 - [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
+- `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
 - Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. The source version does not establish crates.io availability. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Installation
 
-Use the monorepo release source for the current 0.3.0 crate:
+The crate version in `Cargo.toml` is **0.3.0**. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`. Until 0.3.0 is published, depend on a checkout path:
 
 ```toml
 [dependencies]
-algochat = { git = "https://github.com/CorvidLabs/algochat.git", tag = "v1.3.0" }
+algochat = { path = "/path/to/algochat/rs" }
 ```
 
-Cargo locates the crate in `rs/Cargo.toml`. The protocol tag does not publish it to crates.io. The registry currently has the older 0.2.1 crate; use `algochat = "0.3.0"` only after that version is separately published. See the [dated publication evidence](../docs/RELEASE.md).
+The protocol tag does not publish the crate. crates.io still has 0.2.1; use `algochat = "0.3.0"` only after that version is separately published. See the [dated publication evidence](../docs/RELEASE.md).
 
 ## Usage
 
@@ -96,7 +97,7 @@ The PSK (Pre-Shared Key) protocol extends AlgoChat with an additional layer of s
 
 ### PSK Contacts
 
-After constructing a generic `AlgoChat` with your adapters, parse a received URI with `PSKExchangeURI::parse(uri_text)?` and register it with `client.add_psk_contact(&uri.address, &uri.psk, uri.label).await?`. `send_psk(address, text)` returns encoded bytes and a counter; submit the bytes using your transaction integration. `receive_psk(bytes, sender_address)` decrypts and records the counter. Serialize receives per peer: the current client validates and records under separate locks, so concurrent receives of the same envelope are an [implementation gap](../docs/ACCURACY.md).
+After constructing a generic `AlgoChat` with your adapters, parse a received URI with `PSKExchangeURI::parse(uri_text)?` and register it with `client.add_psk_contact(&uri.address, &uri.psk, uri.label).await?`. `send_psk(address, text)` returns encoded bytes and a counter; submit the bytes using your transaction integration. `receive_psk(bytes, sender_address)` holds one write lock across validation, decryption, and recording. Two synchronized receives of the same valid ciphertext accept it once. A failed authentication tag does not consume the counter or move the window.
 
 ### Low-Level PSK API
 
@@ -113,7 +114,7 @@ fn main() -> algochat::Result<()> {
     let initial_psk = [0xAA; 32];
     let mut send_state = PSKState::new();
     let mut receive_state = PSKState::new();
-    let counter = send_state.advance_send_counter();
+    let counter = send_state.advance_send_counter()?;
     let envelope = encrypt_psk_message(
         "Hello with PSK!", &sender_private, &sender_public, &recipient_public,
         &initial_psk, counter,
@@ -130,7 +131,7 @@ fn main() -> algochat::Result<()> {
 }
 ```
 
-The current send counter wraps at `u32::MAX`; stop and replace the PSK before exhaustion. The receive window rejects old/repeated counters and accepts future counters without an upper bound. Applications must persist state and serialize the validate/decrypt/record sequence.
+Issuing `u32::MAX` marks send state exhausted. The stored counter stays at `u32::MAX` and does not become 0, including after serde. A later advance fails and leaves that state unchanged. Before any receive, only unseen counters 0 through 200 are accepted. After the highest accepted counter `N`, the window is `max(0, N-200)` through `min(u32::MAX, N+200)`. Accepting `u32::MAX` does not make 0 acceptable. Applications must persist the state object, including `send_exhausted`.
 
 ## Hybrid ML-KEM sessions
 

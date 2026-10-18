@@ -5,20 +5,18 @@ This module provides abstract base classes and implementations for storing messa
 caching public keys, and persisting encryption keys.
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Optional
 import asyncio
 import os
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from .models import Message
-
 
 # ============================================================================
 # Message Cache
@@ -31,39 +29,32 @@ class MessageCache(ABC):
     @abstractmethod
     async def store(self, messages: list[Message], participant: str) -> None:
         """Store messages for a conversation."""
-        pass
 
     @abstractmethod
     async def retrieve(
-        self, participant: str, after_round: Optional[int] = None
+        self, participant: str, after_round: int | None = None
     ) -> list[Message]:
         """Retrieve cached messages for a conversation."""
-        pass
 
     @abstractmethod
-    async def get_last_sync_round(self, participant: str) -> Optional[int]:
+    async def get_last_sync_round(self, participant: str) -> int | None:
         """Get the last synced round for a conversation."""
-        pass
 
     @abstractmethod
     async def set_last_sync_round(self, round: int, participant: str) -> None:
         """Set the last synced round for a conversation."""
-        pass
 
     @abstractmethod
     async def get_cached_conversations(self) -> list[str]:
         """Get all cached conversation participants."""
-        pass
 
     @abstractmethod
     async def clear(self) -> None:
         """Clear all cached data."""
-        pass
 
     @abstractmethod
     async def clear_for(self, participant: str) -> None:
         """Clear cached data for a specific conversation."""
-        pass
 
 
 class InMemoryMessageCache(MessageCache):
@@ -88,7 +79,7 @@ class InMemoryMessageCache(MessageCache):
             self._messages[participant].sort(key=lambda m: m.timestamp)
 
     async def retrieve(
-        self, participant: str, after_round: Optional[int] = None
+        self, participant: str, after_round: int | None = None
     ) -> list[Message]:
         async with self._lock:
             messages = self._messages.get(participant, []).copy()
@@ -98,7 +89,7 @@ class InMemoryMessageCache(MessageCache):
 
             return messages
 
-    async def get_last_sync_round(self, participant: str) -> Optional[int]:
+    async def get_last_sync_round(self, participant: str) -> int | None:
         async with self._lock:
             return self._sync_rounds.get(participant)
 
@@ -146,16 +137,16 @@ class PublicKeyCache:
         """Store a public key for an address."""
         async with self._lock:
             self._cache[address] = _CacheEntry(
-                key=key, expires_at=datetime.now() + self._ttl
+                key=key, expires_at=datetime.now(timezone.utc) + self._ttl
             )
 
-    async def retrieve(self, address: str) -> Optional[bytes]:
+    async def retrieve(self, address: str) -> bytes | None:
         """Retrieve a public key for an address (returns None if expired)."""
         async with self._lock:
             entry = self._cache.get(address)
             if entry is None:
                 return None
-            if entry.expires_at <= datetime.now():
+            if entry.expires_at <= datetime.now(timezone.utc):
                 return None
             return entry.key
 
@@ -172,7 +163,7 @@ class PublicKeyCache:
     async def prune_expired(self) -> None:
         """Remove all expired entries."""
         async with self._lock:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             expired = [addr for addr, entry in self._cache.items() if entry.expires_at <= now]
             for addr in expired:
                 del self._cache[addr]
@@ -191,27 +182,22 @@ class EncryptionKeyStorage(ABC):
         self, private_key: bytes, address: str, require_biometric: bool = False
     ) -> None:
         """Store a private key for an address."""
-        pass
 
     @abstractmethod
     async def retrieve(self, address: str) -> bytes:
         """Retrieve a private key for an address."""
-        pass
 
     @abstractmethod
     async def has_key(self, address: str) -> bool:
         """Check if a key exists for an address."""
-        pass
 
     @abstractmethod
     async def delete(self, address: str) -> None:
         """Delete a key for an address."""
-        pass
 
     @abstractmethod
     async def list_stored_addresses(self) -> list[str]:
         """List all stored addresses."""
-        pass
 
 
 class InMemoryKeyStorage(EncryptionKeyStorage):
@@ -288,7 +274,7 @@ class FileKeyStorage(EncryptionKeyStorage):
         output of a single ``AESGCM.encrypt`` call.
     """
 
-    def __init__(self, password: str, base_dir: Optional[Path] = None) -> None:
+    def __init__(self, password: str, base_dir: Path | None = None) -> None:
         """Creates a file-backed key storage.
 
         Args:

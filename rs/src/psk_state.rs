@@ -24,6 +24,10 @@ pub struct PSKState {
     pub peer_last_counter: u32,
     /// Set of recently seen counter values (for replay detection).
     pub seen_counters: HashSet<u32>,
+    /// True after counter `u32::MAX` has been issued. The next counter stays
+    /// at `u32::MAX` and does not become 0. Older saved state omits this field.
+    #[serde(default)]
+    pub send_exhausted: bool,
 }
 
 impl PSKState {
@@ -33,14 +37,15 @@ impl PSKState {
             send_counter: 0,
             peer_last_counter: 0,
             seen_counters: HashSet::new(),
+            send_exhausted: false,
         }
     }
 
     /// Validates a received counter value.
     ///
-    /// A counter is valid if:
-    /// 1. It has not been seen before (replay protection)
-    /// 2. It is within the acceptable window of the last known counter
+    /// A fresh state accepts unseen counters `0..=200`. After the highest
+    /// accepted counter `N`, unseen counters from `max(0, N-200)` through
+    /// `min(u32::MAX, N+200)` are accepted. This does not change state.
     ///
     /// # Arguments
     /// * `counter` - The counter value from the received message
@@ -55,14 +60,14 @@ impl PSKState {
             )));
         }
 
-        if counter < self.peer_last_counter {
-            let gap = self.peer_last_counter - counter;
-            if gap > PSK_COUNTER_WINDOW {
-                return Err(AlgoChatError::DecryptionError(format!(
-                    "Counter {} is outside the acceptable window (last: {}, window: {})",
-                    counter, self.peer_last_counter, PSK_COUNTER_WINDOW
-                )));
-            }
+        let upper = self.peer_last_counter.saturating_add(PSK_COUNTER_WINDOW);
+        let below_window = self.peer_last_counter > PSK_COUNTER_WINDOW
+            && counter < self.peer_last_counter - PSK_COUNTER_WINDOW;
+        if counter > upper || below_window {
+            return Err(AlgoChatError::DecryptionError(format!(
+                "Counter {} is outside the acceptable window (last: {}, window: {})",
+                counter, self.peer_last_counter, PSK_COUNTER_WINDOW
+            )));
         }
 
         Ok(true)
@@ -87,14 +92,27 @@ impl PSKState {
         }
     }
 
-    /// Advances and returns the next send counter.
+    /// Returns the counter for this message.
     ///
-    /// # Returns
-    /// The counter value to use for the next outgoing message
-    pub fn advance_send_counter(&mut self) -> u32 {
+    /// When the current counter is `u32::MAX`, that value is returned and the
+    /// state is marked exhausted. The stored counter does not become 0. A
+    /// later call fails and leaves the state unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AlgoChatError::SendCounterExhausted`] when the counter was
+    /// already issued.
+    pub fn advance_send_counter(&mut self) -> Result<u32> {
+        if self.send_exhausted {
+            return Err(AlgoChatError::SendCounterExhausted);
+        }
         let counter = self.send_counter;
-        self.send_counter = self.send_counter.wrapping_add(1);
-        counter
+        if counter == u32::MAX {
+            self.send_exhausted = true;
+        } else {
+            self.send_counter = counter + 1;
+        }
+        Ok(counter)
     }
 }
 
@@ -119,9 +137,9 @@ mod tests {
     #[test]
     fn test_advance_send_counter() {
         let mut state = PSKState::new();
-        assert_eq!(state.advance_send_counter(), 0);
-        assert_eq!(state.advance_send_counter(), 1);
-        assert_eq!(state.advance_send_counter(), 2);
+        assert_eq!(state.advance_send_counter().unwrap(), 0);
+        assert_eq!(state.advance_send_counter().unwrap(), 1);
+        assert_eq!(state.advance_send_counter().unwrap(), 2);
         assert_eq!(state.send_counter, 3);
     }
 
@@ -157,9 +175,35 @@ mod tests {
         assert_eq!(state.peer_last_counter, 300);
 
         assert!(state.validate_counter(200).unwrap());
+        assert!(state.validate_counter(500).unwrap());
+        assert!(state.validate_counter(501).is_err());
 
         let result = state.validate_counter(50);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_fresh_state_rejects_far_future_counter() {
+        let state = PSKState::new();
+        assert!(state.validate_counter(0).unwrap());
+        assert!(state.validate_counter(200).unwrap());
+        assert!(state.validate_counter(201).is_err());
+        assert!(state.validate_counter(1_000_000).is_err());
+    }
+
+    #[test]
+    fn test_uint32_max_receive_does_not_accept_zero() {
+        let mut state = PSKState::new();
+        state.record_receive(u32::MAX);
+        assert_eq!(state.peer_last_counter, u32::MAX);
+        assert!(state.validate_counter(0).is_err());
+        assert!(state.validate_counter(u32::MAX).is_err());
+        assert!(state
+            .validate_counter(u32::MAX - PSK_COUNTER_WINDOW)
+            .unwrap());
+        assert!(state
+            .validate_counter(u32::MAX - PSK_COUNTER_WINDOW - 1)
+            .is_err());
     }
 
     #[test]
@@ -189,19 +233,37 @@ mod tests {
     }
 
     #[test]
-    fn test_wrapping_send_counter() {
+    fn test_send_counter_does_not_wrap() {
         let mut state = PSKState::new();
         state.send_counter = u32::MAX;
-        let counter = state.advance_send_counter();
+        let counter = state.advance_send_counter().unwrap();
         assert_eq!(counter, u32::MAX);
-        assert_eq!(state.send_counter, 0);
+        assert_eq!(state.send_counter, u32::MAX);
+        assert!(state.send_exhausted);
+        assert_ne!(state.send_counter, 0);
+        assert!(state.advance_send_counter().is_err());
+        assert_eq!(state.send_counter, u32::MAX);
+        assert!(state.send_exhausted);
+
+        let json = serde_json::to_string(&state).unwrap();
+        let mut restored: PSKState = serde_json::from_str(&json).unwrap();
+        assert!(restored.send_exhausted);
+        assert_eq!(restored.send_counter, u32::MAX);
+        assert!(restored.advance_send_counter().is_err());
+        assert_eq!(restored.send_counter, u32::MAX);
+
+        let legacy = r#"{"send_counter":4,"peer_last_counter":0,"seen_counters":[]}"#;
+        let mut legacy_state: PSKState = serde_json::from_str(legacy).unwrap();
+        assert!(!legacy_state.send_exhausted);
+        assert_eq!(legacy_state.advance_send_counter().unwrap(), 4);
+        assert_eq!(legacy_state.send_counter, 5);
     }
 
     #[test]
     fn test_serialize_deserialize_roundtrip() {
         let mut state = PSKState::new();
-        state.advance_send_counter();
-        state.advance_send_counter();
+        state.advance_send_counter().unwrap();
+        state.advance_send_counter().unwrap();
         state.record_receive(5);
         state.record_receive(3);
         state.record_receive(7);

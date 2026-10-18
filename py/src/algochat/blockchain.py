@@ -5,16 +5,13 @@ This module provides abstract base classes for interacting with Algorand nodes (
 and indexers. Implementations can use any Algorand SDK.
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Optional
-
 import base64
 import hashlib
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 from .models import DiscoveredKey
 from .signature import verify_encryption_key_bytes
-
 
 # Length in bytes of a decoded Algorand address: 32-byte public key + 4-byte checksum.
 _ADDRESS_DECODED_SIZE = 36
@@ -74,10 +71,10 @@ class AlgorandConfig:
     algod_token: str
     """Algod API token."""
 
-    indexer_url: Optional[str] = None
+    indexer_url: str | None = None
     """Indexer URL (optional)."""
 
-    indexer_token: Optional[str] = None
+    indexer_token: str | None = None
     """Indexer API token (optional)."""
 
     @classmethod
@@ -127,7 +124,7 @@ class TransactionInfo:
     txid: str
     """Transaction ID."""
 
-    confirmed_round: Optional[int] = None
+    confirmed_round: int | None = None
     """Round in which the transaction was confirmed (if confirmed)."""
 
 
@@ -197,27 +194,22 @@ class AlgodClient(ABC):
     @abstractmethod
     async def get_suggested_params(self) -> SuggestedParams:
         """Get the current network parameters."""
-        pass
 
     @abstractmethod
     async def get_account_info(self, address: str) -> AccountInfo:
         """Get account information."""
-        pass
 
     @abstractmethod
     async def submit_transaction(self, signed_txn: bytes) -> str:
         """Submit a signed transaction."""
-        pass
 
     @abstractmethod
     async def wait_for_confirmation(self, txid: str, rounds: int) -> TransactionInfo:
         """Wait for a transaction to be confirmed."""
-        pass
 
     @abstractmethod
     async def get_current_round(self) -> int:
         """Get the current round."""
-        pass
 
 
 class IndexerClient(ABC):
@@ -227,38 +219,34 @@ class IndexerClient(ABC):
     async def search_transactions(
         self,
         address: str,
-        after_round: Optional[int] = None,
-        limit: Optional[int] = None,
+        after_round: int | None = None,
+        limit: int | None = None,
     ) -> list[NoteTransaction]:
         """Search for transactions with notes sent to/from an address."""
-        pass
 
     @abstractmethod
     async def search_transactions_between(
         self,
         address1: str,
         address2: str,
-        after_round: Optional[int] = None,
-        limit: Optional[int] = None,
+        after_round: int | None = None,
+        limit: int | None = None,
     ) -> list[NoteTransaction]:
         """Search for transactions between two addresses."""
-        pass
 
     @abstractmethod
     async def get_transaction(self, txid: str) -> NoteTransaction:
         """Get a specific transaction by ID."""
-        pass
 
     @abstractmethod
     async def wait_for_indexer(self, txid: str, timeout_secs: int) -> NoteTransaction:
         """Wait for a transaction to be indexed."""
-        pass
 
 
 async def discover_encryption_key(
     indexer: IndexerClient,
     address: str,
-) -> Optional[DiscoveredKey]:
+) -> DiscoveredKey | None:
     """
     Discovers the encryption public key for an Algorand address.
 
@@ -285,7 +273,7 @@ async def discover_encryption_key(
     return None
 
 
-def _parse_key_announcement(note: bytes, address: str) -> Optional[DiscoveredKey]:
+def _parse_key_announcement(note: bytes, address: str) -> DiscoveredKey | None:
     """Parses a key announcement from a transaction note."""
     # Key announcement format:
     # - 32 bytes: X25519 public key
@@ -308,7 +296,7 @@ def _parse_key_announcement(note: bytes, address: str) -> Optional[DiscoveredKey
             # Decode the Algorand address to get the Ed25519 public key
             ed25519_public_key = _decode_algorand_address(address)
             is_verified = verify_encryption_key_bytes(public_key, ed25519_public_key, signature)
-        except Exception:
+        except ValueError:
             is_verified = False
 
     return DiscoveredKey(public_key=public_key, is_verified=is_verified)

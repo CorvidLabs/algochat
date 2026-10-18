@@ -14,7 +14,7 @@ Version 2 SHALL authenticate the exact 126-byte header so version, protocol, key
 
 ### REQ-protocol-003 — Payload and key bounds
 
-The implementation SHALL enforce the 3954-byte payload maximum and exact seed, key, nonce, signature, and fixed-field lengths. A plaintext of 882 bytes SHALL still encrypt. One byte past 3954 SHALL fail before a transaction is built. A note payment fee at a minimum fee of 1000 microAlgos SHALL be 1000, 1098, and 1308 for notes of 1024, 2000, and 4096 bytes.
+The implementation SHALL enforce the 3954-byte payload maximum and exact seed, key, nonce, signature, and fixed-field lengths. A plaintext of 882 bytes SHALL still encrypt. One byte past 3954 SHALL fail before a transaction is built. Standard decode SHALL reject fewer than 142 bytes and SHALL reject a note longer than 4096 bytes before returning plaintext, including an authenticated oversized note. Exactly 142 bytes remains long enough to parse. A note payment fee at a minimum fee of 1000 microAlgos SHALL be 1000, 1098, and 1308 for notes of 1024, 2000, and 4096 bytes.
 
 ### REQ-protocol-004 — Bidirectional decryption
 

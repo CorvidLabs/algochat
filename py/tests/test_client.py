@@ -1,29 +1,28 @@
 """Tests for the AlgoChat client."""
 
-import pytest
-from typing import Optional
 
+import pytest
 from algochat.blockchain import (
-    AlgorandConfig,
+    AccountInfo,
     AlgodClient,
+    AlgorandConfig,
     IndexerClient,
     NoteTransaction,
     SuggestedParams,
-    AccountInfo,
     TransactionInfo,
 )
 from algochat.client import AlgoChat, AlgoChatConfig
+from algochat.envelope import decode_envelope
 from algochat.keys import public_key_to_bytes
 from algochat.models import MessageDirection
-from algochat.envelope import decode_envelope
 from algochat.storage import InMemoryKeyStorage
 from algochat.types import (
     InvalidEnvelopeError,
     PSKDecryptionError,
+    PSKEncryptionError,
     PublicKeyNotFoundError,
     UnverifiedKeyError,
 )
-
 
 # ============================================================================
 # Mock Blockchain Clients
@@ -62,7 +61,7 @@ class MockIndexerClient(IndexerClient):
         self._transactions.append(tx)
 
     async def search_transactions(
-        self, address: str, after_round: Optional[int] = None, limit: Optional[int] = None,
+        self, address: str, after_round: int | None = None, limit: int | None = None,
     ) -> list[NoteTransaction]:
         results = [tx for tx in self._transactions
                    if tx.sender == address or tx.receiver == address]
@@ -74,7 +73,7 @@ class MockIndexerClient(IndexerClient):
 
     async def search_transactions_between(
         self, address1: str, address2: str,
-        after_round: Optional[int] = None, limit: Optional[int] = None,
+        after_round: int | None = None, limit: int | None = None,
     ) -> list[NoteTransaction]:
         results = [tx for tx in self._transactions
                    if (tx.sender == address1 and tx.receiver == address2)
@@ -112,8 +111,8 @@ def make_config() -> AlgoChatConfig:
 async def make_client(
     seed: bytes = ALICE_SEED,
     address: str = ALICE_ADDRESS,
-    config: Optional[AlgoChatConfig] = None,
-    indexer: Optional[MockIndexerClient] = None,
+    config: AlgoChatConfig | None = None,
+    indexer: MockIndexerClient | None = None,
 ) -> AlgoChat:
     return await AlgoChat.from_seed(
         seed=seed,
@@ -915,6 +914,39 @@ class TestPSKEncryptDecryptClient:
 
         with pytest.raises(PSKDecryptionError, match="replay"):
             bob.decrypt(encrypted, alice_pub, psk=TEST_PSK)
+
+    @pytest.mark.asyncio
+    async def test_failed_psk_auth_does_not_consume_counter(self, alice, bob):
+        """A bad tag records nothing, so the same counter still opens."""
+        bob_pub = public_key_to_bytes(bob._encryption_public_key)
+        alice_pub = public_key_to_bytes(alice._encryption_public_key)
+        encrypted = alice.encrypt("still good", bob_pub, psk=TEST_PSK)
+        tampered = bytearray(encrypted)
+        tampered[-1] ^= 0x01
+        with pytest.raises(PSKDecryptionError):
+            bob.decrypt(bytes(tampered), alice_pub, psk=TEST_PSK)
+        assert bob.get_psk_state(alice_pub.hex()) is None
+        assert bob.decrypt(encrypted, alice_pub, psk=TEST_PSK) == "still good"
+
+    @pytest.mark.asyncio
+    async def test_send_counter_exhaustion_persists_on_saved_state(self, alice, bob):
+        """The stored state object cannot send 0 after the last counter."""
+        bob_pub = public_key_to_bytes(bob._encryption_public_key)
+        alice.add_psk_channel(bob_pub.hex(), TEST_PSK)
+        stored = alice.get_psk_state(bob_pub.hex())
+        assert stored is not None
+        stored.send_counter = 4294967295
+        alice.encrypt("last", bob_pub, psk=TEST_PSK)
+        stored = alice.get_psk_state(bob_pub.hex())
+        assert stored is not None
+        assert stored.send_counter == 4294967295
+        assert stored.send_exhausted
+        with pytest.raises(PSKEncryptionError, match="exhausted"):
+            alice.encrypt("again", bob_pub, psk=TEST_PSK)
+        stored = alice.get_psk_state(bob_pub.hex())
+        assert stored is not None
+        assert stored.send_counter == 4294967295
+        assert stored.send_exhausted
 
     @pytest.mark.asyncio
     async def test_psk_without_key_raises(self, alice, bob):

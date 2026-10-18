@@ -104,6 +104,10 @@ pub enum AlgoChatError {
     #[error("Encryption failed: {0}")]
     EncryptionError(String),
 
+    /// The uint32 send counter was already issued and must not wrap to 0.
+    #[error("Send counter is exhausted")]
+    SendCounterExhausted,
+
     /// Decryption failed.
     #[error("Decryption failed: {0}")]
     DecryptionError(String),

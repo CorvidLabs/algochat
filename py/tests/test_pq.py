@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
 from algochat.blockchain import _parse_key_announcement
 from algochat.envelope import is_chat_message
 from algochat.keys import derive_keys_from_seed
@@ -19,8 +17,8 @@ from algochat.pq import (
     PQ_VERSION,
     PQError,
     accept_pq_session,
-    decrypt_pq_message,
     decapsulate,
+    decrypt_pq_message,
     derive_hybrid_pq_key,
     derive_mlkem_keypair,
     encode_pq_key_announcement,
@@ -34,6 +32,7 @@ from algochat.pq import (
 )
 from algochat.psk_envelope import is_psk_message
 from algochat.types import MAX_NOTE_SIZE
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 _VECTOR_PATH = Path(__file__).resolve().parents[2] / "vectors" / "pq-mlkem768.json"
 _COMBINER = "9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734"
@@ -157,6 +156,34 @@ class TestPQParityFixture:
         assert decrypt_pq_message(note, session) == full
         with pytest.raises(PQError, match="too large"):
             encrypt_pq_message("x" * (PQ_MAX_PAYLOAD_SIZE + 1), session)
+
+    def test_authenticated_oversize_note_is_rejected(self):
+        """A valid tag on a 4097-byte PQ note does not return plaintext."""
+        from algochat.pq import PQ_VERSION
+        from algochat.types import NONCE_SIZE
+        from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
+        _, alice_public = _keys(_ALICE_SEED)
+        _, bob_public = _keys(_BOB_SEED)
+        bob_kem = derive_mlkem_keypair(_BOB_SEED)
+        alice_kem = derive_mlkem_keypair(_ALICE_SEED)
+        _, session = initiate_pq_session(
+            alice_public, bob_public, bob_kem.encaps_key, alice_kem.encaps_key
+        )
+        plaintext = b"A" * (PQ_MAX_PAYLOAD_SIZE + 1)
+        nonce = bytes(NONCE_SIZE)
+        header = (
+            bytes([PQ_VERSION, PQ_DATA_ID])
+            + session.sender_public_key
+            + session.handshake_id
+            + nonce
+        )
+        ciphertext = ChaCha20Poly1305(session.session_key).encrypt(nonce, plaintext, header)
+        note = header + ciphertext
+        assert len(note) == MAX_NOTE_SIZE + 1
+        with pytest.raises(PQError, match="maximum"):
+            opened = decrypt_pq_message(note, session)
+            assert opened != plaintext.decode()
 
     def test_acpq_announcement_is_not_an_x25519_key(self):
         kem = derive_mlkem_keypair(_BOB_SEED)

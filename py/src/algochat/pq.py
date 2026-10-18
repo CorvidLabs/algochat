@@ -13,9 +13,8 @@ cannot.
 import hashlib
 import os
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
-from cryptography.exceptions import InvalidTag
+from cryptography.exceptions import InvalidSignature, InvalidTag
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
     Ed25519PublicKey,
@@ -24,14 +23,21 @@ from cryptography.hazmat.primitives.asymmetric.mlkem import (
     MLKEM768PrivateKey,
     MLKEM768PublicKey,
 )
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.x25519 import (
+    X25519PrivateKey,
+    X25519PublicKey,
+)
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from .keys import generate_ephemeral_keypair, public_key_from_bytes, public_key_to_bytes, x25519_ecdh
+from .keys import (
+    generate_ephemeral_keypair,
+    public_key_from_bytes,
+    public_key_to_bytes,
+    x25519_ecdh,
+)
 from .types import MAX_NOTE_SIZE, NONCE_SIZE, TAG_SIZE, PQError
-
 
 PQ_VERSION = 0x02
 PQ_HANDSHAKE_ID = 0x04
@@ -126,7 +132,7 @@ def derive_mlkem_keypair(seed: bytes) -> MLKEMKeyPair:
     return MLKEMKeyPair(encaps_key=encaps_key, decaps_key=decaps_key)
 
 
-def encapsulate(recipient_encaps_key: bytes) -> Tuple[bytes, bytes]:
+def encapsulate(recipient_encaps_key: bytes) -> tuple[bytes, bytes]:
     """Encapsulate to an ML-KEM-768 public key.
 
     Returns:
@@ -208,7 +214,7 @@ def initiate_pq_session(
     recipient_public_key: X25519PublicKey,
     recipient_encaps_key: bytes,
     sender_encaps_key: bytes,
-) -> Tuple[bytes, PQSession]:
+) -> tuple[bytes, PQSession]:
     """Build a 0x04 handshake note and the sender's session.
 
     The sender copy is sealed under X25519 and an ML-KEM ciphertext to the sender.
@@ -337,6 +343,8 @@ def encrypt_pq_message(plaintext: str, session: PQSession) -> bytes:
 
 def decrypt_pq_message(note: bytes, session: PQSession) -> str:
     """Open a 0x05 note with the handshake session."""
+    if len(note) > MAX_NOTE_SIZE:
+        raise PQError(f"Note is {len(note)} bytes; the maximum is {MAX_NOTE_SIZE}")
     if not is_pq_message(note):
         raise PQError("Not a PQ message")
     sender_public_key = note[2:34]
@@ -368,7 +376,7 @@ def pq_announcement_signing_input(encaps_key: bytes) -> bytes:
 
 def encode_pq_key_announcement(
     encaps_key: bytes,
-    signing_key: Optional[Ed25519PrivateKey] = None,
+    signing_key: Ed25519PrivateKey | None = None,
 ) -> bytes:
     """Encode an ACPQ encapsulation-key note. A signing key adds 64 bytes."""
     _require_len("encapsulation key", encaps_key, MLKEM_EK_SIZE)
@@ -381,8 +389,8 @@ def encode_pq_key_announcement(
 
 def parse_pq_key_announcement(
     note: bytes,
-    ed25519_public_key: Optional[Ed25519PublicKey] = None,
-) -> Optional[PQAnnouncement]:
+    ed25519_public_key: Ed25519PublicKey | None = None,
+) -> PQAnnouncement | None:
     """Parse an ACPQ note.
 
     An unsigned note is unverified. A signature that is missing its verifying
@@ -402,7 +410,7 @@ def parse_pq_key_announcement(
     signature = note[_ANNOUNCE_UNSIGNED_SIZE:]
     try:
         ed25519_public_key.verify(signature, pq_announcement_signing_input(encaps_key))
-    except Exception:
+    except InvalidSignature:
         return None
     return PQAnnouncement(encaps_key=encaps_key, is_verified=True)
 

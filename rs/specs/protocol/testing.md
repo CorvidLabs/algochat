@@ -25,6 +25,9 @@ No manual cryptographic acceptance substitutes for deterministic native and cros
 | 3955-byte plaintext | Reject with MessageTooLarge before a transaction is built. |
 | Notes of 1024, 2000, and 4096 bytes at min fee 1000 | Fees are 1000, 1098, and 1308. |
 | Unknown version or protocol | Reject with typed protocol error. |
+| Standard frame of 141 bytes | Reject as too short. |
+| Standard frame of 142 bytes | Framing is complete. |
+| Authenticated standard note of 4097 bytes | Reject before returning plaintext. |
 | Mutated v2 header | Fail AEAD authentication. |
 | Wrong recipient key | Fail without plaintext. |
 | Invalid signature length | Return typed signature error. |

@@ -1,21 +1,22 @@
 """PSK envelope encoding and decoding for the v1.1 protocol."""
 
 from .psk_types import (
-    PSK_VERSION,
     _PSK_VERSION_AAD,
-    PSK_PROTOCOL_ID,
-    PSK_HEADER_SIZE,
     PSK_ENCRYPTED_SENDER_KEY_SIZE,
+    PSK_HEADER_SIZE,
+    PSK_PROTOCOL_ID,
+    PSK_TAG_SIZE,
+    PSK_VERSION,
     PSKEnvelope,
+    _require_u32_counter,
 )
-from .types import PUBLIC_KEY_SIZE, NONCE_SIZE
+from .types import MAX_NOTE_SIZE, NONCE_SIZE, PUBLIC_KEY_SIZE
 
 _ACCEPTED_VERSIONS = (PSK_VERSION, _PSK_VERSION_AAD)
 
 
 class PSKEnvelopeError(Exception):
     """Raised when PSK envelope encoding/decoding fails."""
-    pass
 
 
 def encode_psk_envelope(envelope: PSKEnvelope) -> bytes:
@@ -37,9 +38,10 @@ def encode_psk_envelope(envelope: PSKEnvelope) -> bytes:
     Returns:
         Encoded bytes.
     """
+    counter = _require_u32_counter(envelope.ratchet_counter)
     return (
         bytes([envelope.version, PSK_PROTOCOL_ID])
-        + envelope.ratchet_counter.to_bytes(4, byteorder="big")
+        + counter.to_bytes(4, byteorder="big")
         + envelope.sender_public_key
         + envelope.ephemeral_public_key
         + envelope.nonce
@@ -60,9 +62,14 @@ def decode_psk_envelope(data: bytes) -> PSKEnvelope:
     Raises:
         PSKEnvelopeError: If data is invalid.
     """
-    if len(data) < PSK_HEADER_SIZE:
+    minimum = PSK_HEADER_SIZE + PSK_TAG_SIZE
+    if len(data) < minimum:
         raise PSKEnvelopeError(
-            f"Data too short: {len(data)} bytes (minimum {PSK_HEADER_SIZE})"
+            f"Data too short: {len(data)} bytes (minimum {minimum})"
+        )
+    if len(data) > MAX_NOTE_SIZE:
+        raise PSKEnvelopeError(
+            f"Note is {len(data)} bytes; the maximum is {MAX_NOTE_SIZE}"
         )
 
     version = data[0]

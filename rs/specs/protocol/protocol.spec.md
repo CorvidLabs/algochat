@@ -36,7 +36,7 @@ remaining able to decode version 1 messages.
 | `encrypt_message_v2` | Encrypts a standard v2 payload while authenticating the 126-byte full header. |
 | `decrypt_message` | Decrypts v1 or v2 for sender or recipient and decodes reply JSON when present. |
 | `encode` | Serializes a standard envelope with fixed-width header fields. |
-| `decode` | Parses and validates a standard v1/v2 envelope. |
+| `decode` | Parses a standard v1/v2 envelope of 142 to 4096 bytes. Shorter input is rejected before authentication. |
 | `v2_aad` | Reconstructs the canonical full 126-byte v2 standard header. |
 | `is_chat_message` | Recognizes supported standard envelope version and protocol bytes at minimum length. |
 | `sign_encryption_key` | Signs a 32-byte X25519 public key with Ed25519. |

@@ -5,10 +5,9 @@ This module provides a queue for managing pending outgoing messages,
 supporting offline message composition and automatic retry.
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Optional
 import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 
 from .models import PendingMessage, PendingStatus
 
@@ -30,7 +29,7 @@ class QueueConfig:
 class SendQueue:
     """A queue for managing pending outgoing messages."""
 
-    def __init__(self, config: Optional[QueueConfig] = None) -> None:
+    def __init__(self, config: QueueConfig | None = None) -> None:
         self._queue: list[PendingMessage] = []
         self._config = config or QueueConfig()
         self._lock = asyncio.Lock()
@@ -55,7 +54,7 @@ class SendQueue:
 
             self._queue.append(message)
 
-    async def next_pending(self) -> Optional[PendingMessage]:
+    async def next_pending(self) -> PendingMessage | None:
         """Returns the next message ready for sending."""
         async with self._lock:
             for msg in self._queue:
@@ -71,16 +70,14 @@ class SendQueue:
     async def ready_for_retry(self) -> list[PendingMessage]:
         """Returns messages ready for retry."""
         async with self._lock:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             result = []
 
             for msg in self._queue:
                 if not msg.can_retry(self._config.max_retries):
                     continue
 
-                if msg.last_attempt is None:
-                    result.append(msg)
-                elif now - msg.last_attempt >= self._config.retry_delay:
+                if msg.last_attempt is None or now - msg.last_attempt >= self._config.retry_delay:
                     result.append(msg)
 
             return result
@@ -112,7 +109,7 @@ class SendQueue:
                     return
             raise KeyError(f"Message not found: {message_id}")
 
-    async def remove(self, message_id: str) -> Optional[PendingMessage]:
+    async def remove(self, message_id: str) -> PendingMessage | None:
         """Removes a message from the queue."""
         async with self._lock:
             for i, msg in enumerate(self._queue):

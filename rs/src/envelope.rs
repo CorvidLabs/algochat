@@ -1,8 +1,9 @@
 //! Envelope encoding and decoding for AlgoChat protocol.
 
 use crate::types::{
-    AlgoChatError, Result, ENCRYPTED_SENDER_KEY_SIZE, HEADER_SIZE, NONCE_SIZE, PROTOCOL_ID,
-    PROTOCOL_VERSION, PROTOCOL_VERSION_V2, PUBLIC_KEY_SIZE, STANDARD_V2_AAD_LEN,
+    AlgoChatError, Result, ENCRYPTED_SENDER_KEY_SIZE, HEADER_SIZE, MAX_NOTE_SIZE, NONCE_SIZE,
+    PROTOCOL_ID, PROTOCOL_VERSION, PROTOCOL_VERSION_V2, PUBLIC_KEY_SIZE, STANDARD_V2_AAD_LEN,
+    TAG_SIZE,
 };
 
 /// AlgoChat message envelope.
@@ -65,12 +66,16 @@ impl ChatEnvelope {
 
     /// Decode bytes into an envelope.
     pub fn decode(data: &[u8]) -> Result<Self> {
-        if data.len() < HEADER_SIZE {
+        let minimum = HEADER_SIZE + TAG_SIZE;
+        if data.len() < minimum {
             return Err(AlgoChatError::InvalidEnvelope(format!(
                 "Data too short: {} bytes (minimum {})",
                 data.len(),
-                HEADER_SIZE
+                minimum
             )));
+        }
+        if data.len() > MAX_NOTE_SIZE {
+            return Err(AlgoChatError::NoteTooLarge(data.len()));
         }
 
         let version = data[0];
@@ -168,7 +173,7 @@ mod tests {
 
     #[test]
     fn test_decode_wrong_version() {
-        let mut data = vec![0u8; HEADER_SIZE];
+        let mut data = vec![0u8; HEADER_SIZE + TAG_SIZE];
         data[0] = 0x03;
         data[1] = PROTOCOL_ID;
         let result = ChatEnvelope::decode(&data);
@@ -176,8 +181,34 @@ mod tests {
     }
 
     #[test]
+    fn test_decode_requires_header_plus_tag() {
+        let mut short = vec![0u8; HEADER_SIZE + TAG_SIZE - 1];
+        short[0] = PROTOCOL_VERSION;
+        short[1] = PROTOCOL_ID;
+        assert!(matches!(
+            ChatEnvelope::decode(&short),
+            Err(AlgoChatError::InvalidEnvelope(_))
+        ));
+        let mut exact = vec![0u8; HEADER_SIZE + TAG_SIZE];
+        exact[0] = PROTOCOL_VERSION;
+        exact[1] = PROTOCOL_ID;
+        assert!(ChatEnvelope::decode(&exact).is_ok());
+    }
+
+    #[test]
+    fn test_decode_rejects_note_over_4096() {
+        let mut data = vec![0u8; MAX_NOTE_SIZE + 1];
+        data[0] = PROTOCOL_VERSION;
+        data[1] = PROTOCOL_ID;
+        assert!(matches!(
+            ChatEnvelope::decode(&data),
+            Err(AlgoChatError::NoteTooLarge(n)) if n == MAX_NOTE_SIZE + 1
+        ));
+    }
+
+    #[test]
     fn test_decode_v2_version_accepted() {
-        let mut data = vec![0u8; HEADER_SIZE];
+        let mut data = vec![0u8; HEADER_SIZE + TAG_SIZE];
         data[0] = PROTOCOL_VERSION_V2;
         data[1] = PROTOCOL_ID;
         let decoded = ChatEnvelope::decode(&data).unwrap();

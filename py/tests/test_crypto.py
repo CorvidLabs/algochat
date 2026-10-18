@@ -3,14 +3,20 @@
 import os
 
 import pytest
-from cryptography.exceptions import InvalidTag
-from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-from cryptography.hazmat.primitives.hashes import SHA256
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-
-from algochat.envelope import ChatEnvelope, decode_envelope, encode_envelope, is_chat_message
-from algochat.keys import derive_keys_from_seed, generate_ephemeral_keypair, public_key_to_bytes, x25519_ecdh
 from algochat.crypto import decrypt_message, encrypt_message
+from algochat.envelope import (
+    ChatEnvelope,
+    EnvelopeError,
+    decode_envelope,
+    encode_envelope,
+    is_chat_message,
+)
+from algochat.keys import (
+    derive_keys_from_seed,
+    generate_ephemeral_keypair,
+    public_key_to_bytes,
+    x25519_ecdh,
+)
 from algochat.types import (
     ENCRYPTION_INFO_PREFIX,
     HEADER_SIZE,
@@ -19,9 +25,15 @@ from algochat.types import (
     NONCE_SIZE,
     SENDER_KEY_INFO_PREFIX,
     TAG_SIZE,
+    DecryptionError,
     EncryptionError,
     payment_fee,
 )
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
 from .test_vectors import (
     ALICE_SEED_HEX,
     BOB_SEED_HEX,
@@ -47,7 +59,7 @@ class TestEncryption:
     def test_encrypt_simple_message(self, alice_keys, bob_keys) -> None:
         """Encrypt a simple message from Alice to Bob."""
         alice_private, alice_public = alice_keys
-        bob_private, bob_public = bob_keys
+        _, bob_public = bob_keys
 
         envelope = encrypt_message(
             "Hello, Bob!",
@@ -243,6 +255,44 @@ class TestNoteCapacity:
         """Bob's key pair."""
         seed = bytes.fromhex(BOB_SEED_HEX)
         return derive_keys_from_seed(seed)
+
+    def test_decode_requires_header_plus_tag(self) -> None:
+        """141 bytes are rejected. Exactly 142 bytes is a complete frame."""
+        short = bytes([0x01, 0x01]) + bytes(139)
+        assert len(short) == 141
+        with pytest.raises(EnvelopeError, match="too short"):
+            decode_envelope(short)
+        exact = bytes([0x01, 0x01]) + bytes(140)
+        assert len(exact) == 142
+        assert decode_envelope(exact).version == 0x01
+
+    def test_decode_rejects_note_over_4096(self) -> None:
+        """A 4097-byte standard structure is not a legal note."""
+        data = bytes([0x01, 0x01]) + bytes(4095)
+        assert len(data) == 4097
+        with pytest.raises(EnvelopeError, match="maximum"):
+            decode_envelope(data)
+
+    def test_open_rejects_authenticated_oversize_note(self, alice_keys, bob_keys) -> None:
+        """A valid tag on a 4097-byte note does not return plaintext."""
+        import algochat.crypto as crypto_mod
+
+        alice_private, alice_public = alice_keys
+        bob_private, bob_public = bob_keys
+        plaintext = "A" * (MAX_PAYLOAD_SIZE + 1)
+        saved = crypto_mod.MAX_PAYLOAD_SIZE
+        crypto_mod.MAX_PAYLOAD_SIZE = len(plaintext.encode())
+        try:
+            envelope = encrypt_message(plaintext, alice_private, alice_public, bob_public)
+        finally:
+            crypto_mod.MAX_PAYLOAD_SIZE = saved
+        assert HEADER_SIZE + len(envelope.ciphertext) == MAX_NOTE_SIZE + 1
+        with pytest.raises(DecryptionError, match="maximum"):
+            decrypt_message(envelope, bob_private, bob_public)
+        encoded = encode_envelope(envelope)
+        assert len(encoded) == MAX_NOTE_SIZE + 1
+        with pytest.raises(EnvelopeError, match="maximum"):
+            decode_envelope(encoded)
 
     def test_layout_constants(self) -> None:
         """Standard header stays 126 and the tag stays 16."""
