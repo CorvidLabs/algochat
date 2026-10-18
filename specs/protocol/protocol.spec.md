@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 9
+version: 10
 status: stable
 files:
   - PROTOCOL.md
@@ -48,3 +48,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-18 | number-the-pq-level-of-every-protocol-from-0-through-5: Number the PQ level of every protocol from 0 through 5 |
 | 2026-10-18 | Merge main: keep levels 0 through 5 and assign group protocols 0x06 and 0x07 to level 3 |
 | 2026-10-18 | Assign protocol 0x03 as the public room administration record. Legacy 0x06 actions 1–4 stay 195 bytes. Action 5 is the 227-byte key delivery. Section 5.8.4 stays the historical membership run. |
+| 2026-10-18 | public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language: Public room administration on the group mailbox, with the same rules in every language |

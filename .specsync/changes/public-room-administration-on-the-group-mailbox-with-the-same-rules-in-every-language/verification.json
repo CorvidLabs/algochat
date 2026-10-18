@@ -1,0 +1,18 @@
+{
+  "timestamp": 1792357554,
+  "commit": "11d87000fb2c8ec13d41c3f21004a2def3988611",
+  "contract_digest": "57969b95c1dd0abbdb7d3e8e0cf9ceecef7290fbd54e4e37b1baa3596fde5e61",
+  "execution_digest": "06c3b72929693dfa37b99a481d2688cfe5e9c52ee1b8991442c7a185c438b78d",
+  "workspace_digest": "b76a6ea6eec4a83f2ac5e5cb41db0a6914200a961d6fa6ad5f3c754b217b6c31",
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-protocol-6"
+  ]
+}

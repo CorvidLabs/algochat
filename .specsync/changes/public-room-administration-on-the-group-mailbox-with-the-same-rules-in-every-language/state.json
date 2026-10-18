@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language",
+  "slug": "public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language",
+  "title": "Public room administration on the group mailbox, with the same rules in every language",
+  "description": "Public room administration on the group mailbox, with the same rules in every language",
+  "kind": "feature",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "d71341d1cc6e2f43fd49ddb47d902a0741048d11",
+  "created_at": 1792356915,
+  "updated_at": 1792357556,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "TEST-VECTORS.md",
+    "vectors/group-admin-v1.json"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "Every library reduces vectors/group-admin-v1.json to the same accepted and rejected room states, seals the same 227-byte action-5 delivery, and still opens vectors/group-v1.json. A LocalNet invite-only room and an ask-to-join room each post one 0x07 payment. Tag v1.3.0 still does not include 0x03, 0x06, or 0x07."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}
