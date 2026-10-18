@@ -6,9 +6,11 @@ Go implementation of the AlgoChat protocol. The source lives in this repository.
 
 The envelope, handshake, and announcement primitives are here. A high-level client is not.
 
-## Requirements
+## Version and requirements
 
-- Go 1.25+
+- Module: `github.com/CorvidLabs/algochat/go` **0.2.0**, implementing protocol **1.3.0**.
+- Module release tag: **`go/v0.2.0`**; consumers request **`v0.2.0`**. The root **`v1.3.0`** tag selects the protocol/Swift release, not this nested module.
+- [Declared toolchain](go.mod): Go **1.25.0+**. Qualification is configured for **Go 1.25**, with the exact patch version recorded in receipts. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Cryptography
 

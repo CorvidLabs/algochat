@@ -1,16 +1,22 @@
 # kt-algochat
 
-[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/kt-algochat/ci.yml?label=CI&branch=main)](https://github.com/CorvidLabs/kt-algochat/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/CorvidLabs/kt-algochat)](https://github.com/CorvidLabs/kt-algochat/blob/main/LICENSE)
-[![Version](https://img.shields.io/github/v/release/CorvidLabs/kt-algochat?display_name=tag)](https://github.com/CorvidLabs/kt-algochat/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/kt.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/kt.yml)
+[![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
+[![Source version](https://img.shields.io/badge/source-0.2.0-blue)](build.gradle.kts)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
 Kotlin implementation of the AlgoChat protocol for encrypted messaging on Algorand.
 
+## Version and requirements
+
+- Artifact: `com.corvidlabs:kt-algochat` **0.2.0**, implementing protocol **1.3.0**.
+- [Build configuration](build.gradle.kts): Kotlin JVM/serialization plugins **2.1.20** and a **JDK 17** toolchain.
+- [Gradle wrapper 8.11](gradle/wrapper/gradle-wrapper.properties) builds/tests the library. Qualification uses **JDK 17** and **Gradle 8.14** for the external consumer; Android is unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
+
 ## Installation
 
-Releases are published to GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages). The coordinate is `com.corvidlabs:kt-algochat:0.2.0`. The archived kt-algochat repository is not the source.
+The release destination is GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages), with coordinate `com.corvidlabs:kt-algochat:0.2.0`. The source version does not by itself confirm publication. The archived kt-algochat repository is not the source.
 GitHub Packages requires authentication even for public packages, so you must
 configure a GitHub username and a personal access token (with the `read:packages`
 scope) and reference the CorvidLabs Maven repository.

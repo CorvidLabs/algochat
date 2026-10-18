@@ -1,28 +1,31 @@
 # py-algochat
 
-[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/py-algochat/ci.yml?label=CI&branch=main)](https://github.com/CorvidLabs/py-algochat/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/py-algochat)](https://pypi.org/project/py-algochat/)
-[![License](https://img.shields.io/github/license/CorvidLabs/py-algochat)](https://github.com/CorvidLabs/py-algochat/blob/main/LICENSE)
-[![Version](https://img.shields.io/github/v/release/CorvidLabs/py-algochat?display_name=tag)](https://github.com/CorvidLabs/py-algochat/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/py.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/py.yml)
+[![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
+[![Source version](https://img.shields.io/badge/source-0.2.0-blue)](pyproject.toml)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
 Python implementation of the AlgoChat protocol for encrypted messaging on Algorand.
 
+## Version and requirements
+
+- Package: `py-algochat` **0.2.0**, implementing protocol **1.3.0**.
+- [Declared runtime](pyproject.toml): Python **3.10+**.
+- Qualification is configured for **Python 3.12**; Python 3.10 remains unqualified. The repository's qualification scripts separately require Python **3.11+**. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
+
 ## Installation
 
-> **Note**: `py-algochat` is not yet published to PyPI. The first tagged release
-> will publish automatically via GitHub Actions (PyPI Trusted Publishing). Until
-> then, install from source:
+The source version is **0.2.0**. PyPI publication requires separate release authorization and publisher configuration; a root protocol tag does not automatically publish this library. Install from the monorepo source:
 
 ```bash
-pip install git+https://github.com/CorvidLabs/py-algochat.git
+pip install "git+https://github.com/CorvidLabs/algochat.git#subdirectory=py"
 ```
 
 Once published, install from PyPI:
 
 ```bash
-pip install py-algochat
+pip install py-algochat==0.2.0
 ```
 
 ## Usage
