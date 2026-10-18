@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "record-the-localnet-run-where-all-six-libraries-joined-one-group-and-each-posted-a-message",
+  "implementation_commit": "75b7c6c6368a1bc7270f861a5b1e5026953ea3bb",
+  "implementation_tree": "6637701daa8d1960ce3fadfd40de966bcc660c87",
+  "contract_digest": "0476f873ff25465a78c159b5aa0bdaa22140f7020a54ca5d90851cba7969bda3",
+  "workspace_digest": "0abe2bad8f554aaadd8f906789451e497a04e77346e35b1e66020774dbbeaa54",
+  "closing_digest": "3da63b1530d17eed344832d0793ee38db8da49ce8b39ba9ddaad30eed29489c3",
+  "review_digest": "bbdf91786e60ea83641039506bfc3f989c4f49ad0e2762c27d3ab56fc81f4a35",
+  "finalization_digest": "4f0e0aa1dd2df6e506d8611b67853d3aaefc1ddc022e92438c488d5040d8d5e7",
+  "timestamp": 1792338133
+}

@@ -32,11 +32,31 @@ An implementation SHALL accept envelope version `0x01` with empty associated dat
 
 ### REQ-protocol-3
 
-PROTOCOL.md section 5.4.2 SHALL be the post-quantum level of every assigned protocol, as an integer from 0 to 5. Levels 1 through 5 SHALL mean the NIST categories. Level 0 SHALL mean that Shor's algorithm breaks the key exchange and no category 1 through 5 primitive is required. Everyday `0x01` SHALL be level 0. Extra lock `0x02` SHALL be level 1 while the 32-byte pre-shared key stays secret, and level 0 if that secret is lost or low entropy. Hybrid `0x04` and `0x05` SHALL be level 3. Identifier `0x03` SHALL NOT be assigned. Levels 2, 4, and 5 SHALL NOT be claimed for a message protocol in this version. A future group key wrap SHALL be level 3 when hybrid keys are available, and at least level 1 otherwise. Level 0 does not meet that bar.
+PROTOCOL.md section 5.4.2 SHALL be the post-quantum level of every assigned protocol, as an integer from 0 to 5. Levels 1 through 5 SHALL mean the NIST categories. Level 0 SHALL mean that Shor's algorithm breaks the key exchange and no category 1 through 5 primitive is required. Everyday `0x01` SHALL be level 0. Extra lock `0x02` SHALL be level 1 while the 32-byte pre-shared key stays secret, and level 0 if that secret is lost or low entropy. Hybrid `0x04` and `0x05` SHALL be level 3. Group membership `0x06` and group message `0x07` SHALL be level 3, because the group key is wrapped under the hybrid session. Identifier `0x03` SHALL NOT be assigned. Levels 2, 4, and 5 SHALL NOT be claimed for a message protocol in this version. Level 0 does not meet the bar for a group key wrap.
 
 #### Acceptance Criteria
 
-- Section 5.4.2 defines levels 0 through 5 and assigns `0x01` to 0, `0x02` to 1, and `0x04` and `0x05` to 3.
+- Section 5.4.2 defines levels 0 through 5 and assigns `0x01` to 0, `0x02` to 1, `0x04` and `0x05` to 3, and `0x06` and `0x07` to 3.
 - SECURITY.md and the repository README use those integers.
 - No assigned protocol is given a second, conflicting level.
+
+### REQ-protocol-4
+
+PROTOCOL.md section 5.8 SHALL specify group membership as protocol `0x06` and a group message as protocol `0x07`. A `0x06` note SHALL use the 78-byte hybrid header with the protocol byte set to `0x06`, SHALL be sealed under an established hybrid session key, and SHALL carry a 101-byte plaintext of action, epoch, group id, mailbox public key, and group key. A `0x07` note SHALL be a payment to the mailbox with a 54-byte header of version, protocol, group id, epoch, per-sender counter, and nonce, and SHALL derive its message key with HKDF-SHA256 info `AlgoChat-group-v1`. The group key wrap SHALL be PQ level 3. An everyday `0x01` wrap SHALL NOT deliver a group key. Identifier `0x03` SHALL NOT be assigned. Parity for `0x06` and `0x07` SHALL be claimed only after section 5.8.4 records a passing LocalNet run.
+
+#### Acceptance Criteria
+
+- Section 5.8 states both headers and the 101-byte membership plaintext.
+- The identifier table lists `0x06` and `0x07` as implemented only after section 5.8.4 records the run.
+- Section 5.8.4 requires a removed member's open to fail, and names the rounds after the run passes.
+
+### REQ-protocol-5
+
+Each library SHALL seal and open protocol `0x06` and protocol `0x07` as section 5.8 specifies. vectors/group-v1.json SHALL be the shared membership note, message key, and message note. A repeated sender, epoch, and counter SHALL be rejected. On LocalNet, the libraries SHALL create a group of three, add a fourth member, remove one member, and post one `0x07` note to that mailbox. Every library SHALL open that note. Opening it with the removed member's previous group key SHALL fail.
+
+#### Acceptance Criteria
+
+- All six libraries match vectors/group-v1.json.
+- A repeated counter is rejected in each library.
+- The LocalNet script records one mailbox, one posted message, six successful opens, and a failed open with the previous group key.
 

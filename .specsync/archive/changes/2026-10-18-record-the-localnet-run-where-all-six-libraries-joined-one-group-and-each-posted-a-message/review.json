@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "record-the-localnet-run-where-all-six-libraries-joined-one-group-and-each-posted-a-message",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "75b7c6c6368a1bc7270f861a5b1e5026953ea3bb",
+  "contract_digest": "0476f873ff25465a78c159b5aa0bdaa22140f7020a54ca5d90851cba7969bda3",
+  "execution_digest": "cdc53b082a3b9e063a189ab151b216d2c4c51e9f658103f2374abeb86667ede1",
+  "workspace_digest": "0abe2bad8f554aaadd8f906789451e497a04e77346e35b1e66020774dbbeaa54",
+  "timestamp": 1792338122
+}

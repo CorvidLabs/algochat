@@ -496,3 +496,27 @@ session_key = 9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734
 ```
 
 A real handshake with account seeds `0x11` and `0x22` MUST produce one 2366-byte `0x04` note, and both parties MUST derive the same session key. The sender copy is sealed under X25519 and ML-KEM to the sender. That session key is not this vector. This vector pins the combiner only. The recorded 1278-byte handshake in `vectors/pq-mlkem768.json` is the withdrawn layout.
+
+## Group mailbox
+
+`vectors/group-v1.json` is the shared `0x06` and `0x07` vector. The session key is an input, not a handshake output. Every field below is a repeated fill byte except the two notes and the message key, which the file records in full.
+
+```
+session_key       = 0x42 repeated 32 times
+sender_x25519     = 0x11 repeated 32 times
+handshake_id      = 0x43 repeated 32 times
+membership_nonce  = 0x55 repeated 12 times
+action            = 1
+epoch             = 1
+group_id          = 0x77 repeated 32 times
+mailbox           = 0x88 repeated 32 times
+group_key         = 0x99 repeated 32 times
+message_nonce     = 0x66 repeated 12 times
+counter           = 0
+sender_address    = 0xAA repeated 32 times
+plaintext         = UTF-8 "group-v1"
+
+message_key = aa2036c95c79e0d8c7ce0aebcc3b2918292c3beea0b22b510dcd2315140ec905
+```
+
+The membership note is 195 bytes and starts with `0x0206`. The message note starts with `0x0207`. A repeated epoch and counter MUST fail. The previous group key MUST fail authentication. Identifier `0x03` is not used.

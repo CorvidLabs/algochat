@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "specify-the-group-mailbox-membership-wrap-and-one-message-note",
+  "implementation_commit": "c4049446659755ab3dcd82325f93937f03a36da9",
+  "implementation_tree": "bcfee4338b921fe5bb2477576c016bcf6874d775",
+  "contract_digest": "a463e247dc5e6ef17753e837e5b889f6653736cdedb2c5a2bcae9e2433b49629",
+  "workspace_digest": "ccc84adaf6af138fb723e52049e21d69c68c03e589c94369b80cbd17903fd1bc",
+  "closing_digest": "b55e610caa5a8791b8e6774b7908ad2e0507ab70877024b79450b14cd0ab233b",
+  "review_digest": "e0bb66486998d701317dda1429bf825badf34e477066cff95e05fc20e31829fc",
+  "finalization_digest": "9634d583cde9b4496adf335986b4099b89e6b7791019fd2ae3d5f3699d7501a5",
+  "timestamp": 1792335979
+}

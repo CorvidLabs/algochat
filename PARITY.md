@@ -57,6 +57,14 @@ The test vector decides whether the bytes match. A library that misses the vecto
 
 Release qualification must rerun the required checks on the exact candidate commit. This historical table alone does not establish that a tag or registry package is qualified.
 
+## Group mailbox
+
+Protocols `0x06` and `0x07` are not part of tag v1.3.0. Section 5.8 is normative for them. `vectors/group-v1.json` is the frozen membership note, message key, and message note. The session key in that file is an input.
+
+On 2026-10-18, `ts/scripts/group-matrix-localnet.ts` funded one mailbox in round 46313, confirmed create notes in rounds 46315 and 46316, add notes in rounds 46317 through 46319, remove notes in rounds 46320 and 46321, and one mailbox message in round 46322. TypeScript, Go, Rust, Python, Kotlin, and Swift produced the same bytes for each posted note. All six opened the message. All six failed to open it with the previous group key, and all six rejected the repeated counter. Identifier `0x03` was not used.
+
+The same day, `ts/scripts/group-talk-localnet.ts` put all six libraries in one group. TypeScript created each hybrid session. Go, Rust, Python, Kotlin, and Swift accepted theirs and opened their own membership notes in rounds 46376 through 46380. The mailbox was funded in round 46375. Each library posted its own line: TypeScript 46381, Go 46382, Rust 46383, Python 46384, Kotlin 46385, Swift 46386. Every library opened every line.
+
 ## Limits that stay in every port
 
 The session is not forward secret. The recipient's long-term ML-KEM key decapsulates the ML-KEM half of every handshake addressed to it; session recovery also requires the recipient's X25519 secret. The sender copy on the note stays closed unless both the sender's X25519 secret and the sender's ML-KEM secret are available. Falcon authorizes a payment and does not sign the encapsulation key. An unsigned announcement is unverified, the same rule as an unsigned X25519 key. Extra lock (`0x02`) stays its own mode.

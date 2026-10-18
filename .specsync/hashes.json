@@ -2,18 +2,18 @@
   "format_version": 1,
   "hashes": {
     ".specsync/config.toml": "893fd4e16d8de5f357c9f1c28303c76fa92fc4c0c09a73b6fe7ead0000798853",
-    "PROTOCOL.md": "58bf1a3a2afd656f706c799ccb7f535f251593f2332e82f2715c733d9b8b5dcb",
-    "TEST-VECTORS.md": "33e788f1ed6f6e8790fc24e64c3e1166778165518f20efb14e39e15fbedf0e2f",
+    "PROTOCOL.md": "d7442dba12faf20e5bc9acd2431c2c5a560f514d8441c5461a70b4a94b6684da",
+    "TEST-VECTORS.md": "47b5b71db66d19b50ce291033329ffb73b2b3dd34dc39fbe17b429037e2a49b3",
     "scripts/release/evidence.py": "b28cdd457ae4a30fd7c0417e7aa376cdcf9980d4d8ff90034f61fcba14d02c67",
-    "scripts/release/packages.py": "b7b095429a9e2fc29813d87ae7afde93f741c3b8c69a1ec196aedc667e2bd40c",
+    "scripts/release/packages.py": "de14c88e87c8ae667519bc3b160bf4f1602ff7dd41ae51bf2e19298ac6545d70",
     "scripts/release/provenance.py": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
-    "scripts/release/qualify.py": "c5f49204b97645d4ff4cef7d8cb39dfed1c68fdbcf3377ce6553157d8faa59ff",
-    "scripts/release/test_release.py": "be6d1d8edabcbf3ec6c44f2097e82d0b8fcafd1124abda84492656eff8db112d",
-    "specs/protocol/protocol.spec.md": "8fcf9f636a9b741ba596f00435db8706879b05ff76026dacde6e33bb3816edda",
-    "specs/protocol/requirements.md": "ee2d881caa36d0080d01e7d54e9157b2825f20044862c8e514a60434e9e052ef",
+    "scripts/release/qualify.py": "6893cec04fccfdfed4203c5f7235dfff6dd3181232487849dc14daafedd4dc47",
+    "scripts/release/test_release.py": "206cdccb8c045d91254d765dc81d604b5f774825b8816363b6b6f2b748b81819",
+    "specs/protocol/protocol.spec.md": "cf5ec57c974da20de16d9befcb059a7e2377d879e9618e39c0c8c713a0fee73b",
+    "specs/protocol/requirements.md": "ec4e7d8adead416a1383341d7a869966a798fc818dfa2ed04f12a7b2a338b641",
     "specs/release/context.md": "9df5b419b94532a784e2e7c7d741c0a2c4dc5ad9fe57a53efb07aa2a45d6470b",
-    "specs/release/release.spec.md": "7fad33e4dd3abec96359ff87c51e5458771c4c168b8114d289525e7ec5c6aa6c",
-    "specs/release/requirements.md": "5ae515cdb2a18e2c0df19ba0f27ef2f0b2104a9e9a007c98601281e246529025",
+    "specs/release/release.spec.md": "676a27d1bf832abe922ffe29d1fe41ad791b6a187202e9de2e33264e161266bc",
+    "specs/release/requirements.md": "68852c4df4878a654b6961cc6b7281a7d43cace8fa7426cb36e1d126df3bd958",
     "specs/release/testing.md": "49736139edee376dcc2d738dfb5ef216ba809f6b41026fe5b70a92dbf0dfde7e"
   },
   "snapshots": {
@@ -23,8 +23,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "88c5f3c20546562e5d840c00ce9a8736c458b66df9271e0ff11100f07b7c9fcf",
-      "snapshot_digest": "217bbffcecc86bf75e694ce961c730b48b3fecd31c8b631d18e510c00b0c4682"
+      "input_digest": "a66d493275e0324c557135b91c068952bcbf7b4fb3aca9609625d76775516767",
+      "snapshot_digest": "0e7b21ad2c0ca5321b18a8d3a29cb92c14f0cd442c86b323957a22b2351568ee"
     },
     "specs/release/release.spec.md": {
       "snapshot_version": 1,
@@ -32,8 +32,8 @@
       "errors": [],
       "warnings": [],
       "notices": [],
-      "input_digest": "88f5081e3c668ac286e86a230187c7744f03c5afad9d2c94f6a4fba125ced7a6",
-      "snapshot_digest": "703b4110888a62122b13189608c253d89b9dc95fb32febef5d6c89d9f6746cde"
+      "input_digest": "6973ddd032c4a34f3647cb6d8e971a283059682da10983c458507cf2f9d87708",
+      "snapshot_digest": "d74610d99fd9dd2ee9c3227f7b0fac03a473f1ae9e7b005d5432fd4f47fbec14"
     }
   }
 }

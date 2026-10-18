@@ -12,7 +12,17 @@ from algochat.crypto import decrypt_message, encrypt_message
 from algochat.envelope import decode_envelope, encode_envelope
 from algochat.keys import derive_keys_from_seed, public_key_to_bytes
 from algochat.types import DecryptedContent
+from algochat.group import (
+    GroupCounter,
+    GroupMembership,
+    derive_group_message_key,
+    open_group_membership,
+    open_group_message,
+    seal_group_membership,
+    seal_group_message,
+)
 from algochat.pq import (
+    PQSession,
     accept_pq_session,
     decrypt_pq_message,
     derive_mlkem_keypair,
@@ -141,6 +151,100 @@ def read_note(alice_hex: str, bob_hex: str, handshake_hex: str, message_hex: str
     }
 
 
+def _group_session(req: dict) -> PQSession:
+    return PQSession(
+        session_key=_hex_bytes(req["sessionKey"]),
+        sender_public_key=_hex_bytes(req["senderPublicKey"]),
+        recipient_public_key=bytes(32),
+        handshake_id=_hex_bytes(req["handshakeId"]),
+    )
+
+
+def _optional_nonce(req: dict) -> bytes | None:
+    if "nonce" not in req or req["nonce"] is None:
+        return None
+    return _hex_bytes(req["nonce"])
+
+
+def group_seal(req: dict) -> dict:
+    note = seal_group_membership(
+        _group_session(req),
+        GroupMembership(
+            action=int(req["action"]),
+            epoch=int(req["epoch"]),
+            group_id=_hex_bytes(req["groupId"]),
+            mailbox=_hex_bytes(req["mailbox"]),
+            group_key=_hex_bytes(req["groupKey"]),
+        ),
+        _optional_nonce(req),
+    )
+    return {"note": note.hex()}
+
+
+def group_open(req: dict) -> dict:
+    opened = open_group_membership(_hex_bytes(req["note"]), _group_session(req))
+    return {
+        "action": opened.action,
+        "epoch": opened.epoch,
+        "groupId": opened.group_id.hex(),
+        "mailbox": opened.mailbox.hex(),
+        "groupKey": opened.group_key.hex(),
+    }
+
+
+def group_write(req: dict) -> dict:
+    group_key = _hex_bytes(req["groupKey"])
+    group_id = _hex_bytes(req["groupId"])
+    epoch = int(req["epoch"])
+    counter = int(req["counter"])
+    sender = _hex_bytes(req["senderAddress"])
+    text = req["text"]
+    if not isinstance(text, str):
+        raise RuntimeError("text must be a string")
+    note = seal_group_message(
+        text.encode("utf-8"),
+        group_key,
+        group_id,
+        epoch,
+        counter,
+        sender,
+        _optional_nonce(req),
+    )
+    message_key = derive_group_message_key(group_key, epoch, counter, group_id, sender)
+    return {"note": note.hex(), "messageKey": message_key.hex()}
+
+
+def group_read(req: dict) -> dict:
+    if "text" not in req or not isinstance(req["text"], str):
+        raise RuntimeError("text must be a string")
+    seen = req.get("seen") or []
+    if not isinstance(seen, list):
+        raise RuntimeError("seen must be an array")
+    accepted: list[GroupCounter] = []
+    for item in seen:
+        if not isinstance(item, dict):
+            raise RuntimeError("seen entries need epoch and counter")
+        accepted.append(GroupCounter(epoch=int(item["epoch"]), counter=int(item["counter"])))
+    opened = open_group_message(
+        _hex_bytes(req["note"]),
+        _hex_bytes(req["groupKey"]),
+        _hex_bytes(req["senderAddress"]),
+        accepted,
+    )
+    try:
+        text = opened.plaintext.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise RuntimeError("group message is not UTF-8") from exc
+    if text != req["text"]:
+        raise RuntimeError(f"plaintext {text}")
+    return {
+        "text": text,
+        "epoch": opened.epoch,
+        "counter": opened.counter,
+        "groupId": opened.group_id.hex(),
+    }
+
+
 def handle(line: str) -> None:
     try:
         req = json.loads(line)
@@ -181,6 +285,14 @@ def handle(line: str) -> None:
             if not isinstance(texts, list):
                 raise RuntimeError("texts must be an array")
             body = write05s(req["aliceSeed"], req["bobSeed"], texts)
+        elif op == "groupSeal":
+            body = group_seal(req)
+        elif op == "groupOpen":
+            body = group_open(req)
+        elif op == "groupWrite":
+            body = group_write(req)
+        elif op == "groupRead":
+            body = group_read(req)
         else:
             raise RuntimeError(f"unknown op {op}")
         print(json.dumps({"id": req.get("id", 0), "ok": True, **body}), flush=True)

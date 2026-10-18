@@ -6,6 +6,13 @@
 import { decodeEnvelope, encodeEnvelope } from "../src/crypto/envelope.js";
 import { decryptMessage, encryptMessage } from "../src/crypto/encryption.js";
 import { deriveEncryptionKeys } from "../src/crypto/keys.js";
+import {
+    deriveGroupMessageKey,
+    openGroupMembership,
+    openGroupMessage,
+    sealGroupMembership,
+    sealGroupMessage,
+} from "../src/pq/group.js";
 import { deriveMLKEMKeyPair } from "../src/pq/kem.js";
 import {
     acceptPQSession,
@@ -14,6 +21,7 @@ import {
     initiatePQSession,
     openPQSessionAsSender,
 } from "../src/pq/session.js";
+import type { PQSession } from "../src/pq/types.js";
 import { decodePSKEnvelope, encodePSKEnvelope } from "../src/psk/envelope.js";
 import { decryptPSKMessage, encryptPSKMessage } from "../src/psk/encryption.js";
 import { derivePSKAtCounter } from "../src/psk/ratchet.js";
@@ -31,6 +39,17 @@ interface Request {
     note?: string;
     psk?: string;
     counter?: number;
+    sessionKey?: string;
+    senderPublicKey?: string;
+    handshakeId?: string;
+    action?: number;
+    epoch?: number;
+    groupId?: string;
+    mailbox?: string;
+    groupKey?: string;
+    nonce?: string;
+    senderAddress?: string;
+    seen?: Array<{ epoch: number; counter: number }>;
 }
 
 function fromHex(hex: string): Uint8Array {
@@ -162,6 +181,77 @@ function read(aliceHex: string, bobHex: string, handshakeHex: string, messageHex
     return { sessionKey: toHex(session.sessionKey), recipient: opened, sender: senderPlain };
 }
 
+function groupSession(req: Request): PQSession {
+    return {
+        sessionKey: fromHex(req.sessionKey ?? ""),
+        senderPublicKey: fromHex(req.senderPublicKey ?? ""),
+        recipientPublicKey: new Uint8Array(32),
+        handshakeId: fromHex(req.handshakeId ?? ""),
+    };
+}
+
+function groupSeal(req: Request): Record<string, unknown> {
+    const note = sealGroupMembership(
+        groupSession(req),
+        {
+            action: Number(req.action ?? 0),
+            epoch: Number(req.epoch ?? 0),
+            groupId: fromHex(req.groupId ?? ""),
+            mailbox: fromHex(req.mailbox ?? ""),
+            groupKey: fromHex(req.groupKey ?? ""),
+        },
+        req.nonce ? fromHex(req.nonce) : undefined
+    );
+    return { note: toHex(note) };
+}
+
+function groupOpen(req: Request): Record<string, unknown> {
+    const opened = openGroupMembership(fromHex(req.note ?? ""), groupSession(req));
+    return {
+        action: opened.action,
+        epoch: opened.epoch,
+        groupId: toHex(opened.groupId),
+        mailbox: toHex(opened.mailbox),
+        groupKey: toHex(opened.groupKey),
+    };
+}
+
+function groupWrite(req: Request): Record<string, unknown> {
+    const note = sealGroupMessage(
+        new TextEncoder().encode(req.text ?? ""),
+        fromHex(req.groupKey ?? ""),
+        fromHex(req.groupId ?? ""),
+        Number(req.epoch ?? 0),
+        Number(req.counter ?? 0),
+        fromHex(req.senderAddress ?? ""),
+        req.nonce ? fromHex(req.nonce) : undefined
+    );
+    return {
+        note: toHex(note),
+        messageKey: toHex(
+            deriveGroupMessageKey(
+                fromHex(req.groupKey ?? ""),
+                Number(req.epoch ?? 0),
+                Number(req.counter ?? 0),
+                fromHex(req.groupId ?? ""),
+                fromHex(req.senderAddress ?? "")
+            )
+        ),
+    };
+}
+
+function groupRead(req: Request): Record<string, unknown> {
+    const opened = openGroupMessage(
+        fromHex(req.note ?? ""),
+        fromHex(req.groupKey ?? ""),
+        fromHex(req.senderAddress ?? ""),
+        req.seen ?? []
+    );
+    const text = new TextDecoder().decode(opened.plaintext);
+    if ((req.text ?? "") !== "" && text !== req.text) throw new Error(`plaintext ${text}`);
+    return { text, epoch: opened.epoch, counter: opened.counter, groupId: toHex(opened.groupId) };
+}
+
 function handle(line: string): void {
     let req: Request;
     try {
@@ -190,6 +280,10 @@ function handle(line: string): void {
                 Number(req.counter ?? 0)
             );
         } else if (req.op === "write05s") body = write05s(req.aliceSeed ?? "", req.bobSeed ?? "", req.texts ?? []);
+        else if (req.op === "groupSeal") body = groupSeal(req);
+        else if (req.op === "groupOpen") body = groupOpen(req);
+        else if (req.op === "groupWrite") body = groupWrite(req);
+        else if (req.op === "groupRead") body = groupRead(req);
         else throw new Error(`unknown op ${req.op}`);
         reply({ id: req.id, ok: true, ...body });
     } catch (error) {

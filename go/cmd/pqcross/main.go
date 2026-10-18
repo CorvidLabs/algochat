@@ -12,18 +12,34 @@ import (
 )
 
 type request struct {
-	ID        int      `json:"id"`
-	Op        string   `json:"op"`
-	Seed      string   `json:"seed"`
-	AliceSeed string   `json:"aliceSeed"`
-	BobSeed   string   `json:"bobSeed"`
-	Text      string   `json:"text"`
-	Handshake string   `json:"handshake"`
-	Message   string   `json:"message"`
-	Note      string   `json:"note"`
-	PSK       string   `json:"psk"`
-	Counter   uint32   `json:"counter"`
-	Texts     []string `json:"texts"`
+	ID              int           `json:"id"`
+	Op              string        `json:"op"`
+	Seed            string        `json:"seed"`
+	AliceSeed       string        `json:"aliceSeed"`
+	BobSeed         string        `json:"bobSeed"`
+	Text            string        `json:"text"`
+	Handshake       string        `json:"handshake"`
+	Message         string        `json:"message"`
+	Note            string        `json:"note"`
+	PSK             string        `json:"psk"`
+	Counter         uint32        `json:"counter"`
+	Texts           []string      `json:"texts"`
+	SessionKey      string        `json:"sessionKey"`
+	SenderPublicKey string        `json:"senderPublicKey"`
+	HandshakeID     string        `json:"handshakeId"`
+	Action          int           `json:"action"`
+	Epoch           uint32        `json:"epoch"`
+	GroupID         string        `json:"groupId"`
+	Mailbox         string        `json:"mailbox"`
+	GroupKey        string        `json:"groupKey"`
+	Nonce           string        `json:"nonce"`
+	SenderAddress   string        `json:"senderAddress"`
+	Seen            []seenCounter `json:"seen"`
+}
+
+type seenCounter struct {
+	Epoch   uint32 `json:"epoch"`
+	Counter uint32 `json:"counter"`
 }
 
 func main() {
@@ -104,6 +120,14 @@ func dispatch(req request) (map[string]any, error) {
 			return nil, err
 		}
 		return writeMany(alice, bob, req.Texts)
+	case "groupSeal":
+		return groupSeal(req)
+	case "groupOpen":
+		return groupOpen(req)
+	case "groupWrite":
+		return groupWrite(req)
+	case "groupRead":
+		return groupRead(req)
 	default:
 		return nil, fmt.Errorf("unknown op %s", req.Op)
 	}
@@ -330,6 +354,164 @@ func writeMany(aliceSeed, bobSeed [32]byte, texts []string) (map[string]any, err
 		"messages":   messages,
 		"sessionKey": hex.EncodeToString(session.SessionKey),
 	}, nil
+}
+
+func groupSeal(req request) (map[string]any, error) {
+	session, membership, nonce, err := groupMembershipInputs(req)
+	if err != nil {
+		return nil, err
+	}
+	note, err := algochat.SealGroupMembership(session, membership, nonce)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"note": hex.EncodeToString(note)}, nil
+}
+
+func groupOpen(req request) (map[string]any, error) {
+	session, _, _, err := groupMembershipInputs(req)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := hex.DecodeString(req.Note)
+	if err != nil {
+		return nil, err
+	}
+	opened, err := algochat.OpenGroupMembership(raw, session)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"action":   int(opened.Action),
+		"epoch":    opened.Epoch,
+		"groupId":  hex.EncodeToString(opened.GroupID[:]),
+		"mailbox":  hex.EncodeToString(opened.Mailbox[:]),
+		"groupKey": hex.EncodeToString(opened.GroupKey[:]),
+	}, nil
+}
+
+func groupWrite(req request) (map[string]any, error) {
+	groupKey, err := hexN("group key", req.GroupKey, 32)
+	if err != nil {
+		return nil, err
+	}
+	groupID, err := hexN("group id", req.GroupID, 32)
+	if err != nil {
+		return nil, err
+	}
+	sender, err := hexN("sender address", req.SenderAddress, 32)
+	if err != nil {
+		return nil, err
+	}
+	nonce, err := hexN("nonce", req.Nonce, algochat.NonceSize)
+	if err != nil {
+		return nil, err
+	}
+	note, err := algochat.SealGroupMessage([]byte(req.Text), groupKey, groupID, req.Epoch, req.Counter, sender, nonce)
+	if err != nil {
+		return nil, err
+	}
+	messageKey, err := algochat.DeriveGroupMessageKey(groupKey, req.Epoch, req.Counter, groupID, sender)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"note":       hex.EncodeToString(note),
+		"messageKey": hex.EncodeToString(messageKey),
+	}, nil
+}
+
+func groupRead(req request) (map[string]any, error) {
+	raw, err := hex.DecodeString(req.Note)
+	if err != nil {
+		return nil, err
+	}
+	groupKey, err := hexN("group key", req.GroupKey, 32)
+	if err != nil {
+		return nil, err
+	}
+	sender, err := hexN("sender address", req.SenderAddress, 32)
+	if err != nil {
+		return nil, err
+	}
+	seen := make([]algochat.GroupCounter, len(req.Seen))
+	for i, item := range req.Seen {
+		seen[i] = algochat.GroupCounter{Epoch: item.Epoch, Counter: item.Counter}
+	}
+	opened, err := algochat.OpenGroupMessage(raw, groupKey, sender, seen)
+	if err != nil {
+		return nil, err
+	}
+	text := string(opened.Plaintext)
+	if req.Text != "" && text != req.Text {
+		return nil, fmt.Errorf("plaintext %q", text)
+	}
+	return map[string]any{
+		"text":    text,
+		"epoch":   opened.Epoch,
+		"counter": opened.Counter,
+		"groupId": hex.EncodeToString(opened.GroupID[:]),
+	}, nil
+}
+
+func groupMembershipInputs(req request) (algochat.PQSession, algochat.GroupMembership, []byte, error) {
+	sessionKey, err := hexN("session key", req.SessionKey, 32)
+	if err != nil {
+		return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+	}
+	sender, err := hexN("sender public key", req.SenderPublicKey, 32)
+	if err != nil {
+		return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+	}
+	hid, err := hexN("handshake id", req.HandshakeID, 32)
+	if err != nil {
+		return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+	}
+	var nonce []byte
+	if req.Op == "groupSeal" {
+		nonce, err = hexN("nonce", req.Nonce, algochat.NonceSize)
+		if err != nil {
+			return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+		}
+	}
+	var membership algochat.GroupMembership
+	if req.Op == "groupSeal" {
+		groupID, err := hexN("group id", req.GroupID, 32)
+		if err != nil {
+			return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+		}
+		mailbox, err := hexN("mailbox", req.Mailbox, 32)
+		if err != nil {
+			return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+		}
+		groupKey, err := hexN("group key", req.GroupKey, 32)
+		if err != nil {
+			return algochat.PQSession{}, algochat.GroupMembership{}, nil, err
+		}
+		if req.Action < 1 || req.Action > 4 {
+			return algochat.PQSession{}, algochat.GroupMembership{}, nil, fmt.Errorf("group action is not create, add, remove, or rekey")
+		}
+		membership.Action = byte(req.Action)
+		membership.Epoch = req.Epoch
+		copy(membership.GroupID[:], groupID)
+		copy(membership.Mailbox[:], mailbox)
+		copy(membership.GroupKey[:], groupKey)
+	}
+	session := algochat.PQSession{SessionKey: sessionKey}
+	copy(session.SenderPublicKey[:], sender)
+	copy(session.HandshakeID[:], hid)
+	return session, membership, nonce, nil
+}
+
+func hexN(label, hexText string, n int) ([]byte, error) {
+	raw, err := hex.DecodeString(hexText)
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) != n {
+		return nil, fmt.Errorf("%s is %d bytes", label, len(raw))
+	}
+	return raw, nil
 }
 
 func seed32(hexText string) ([32]byte, error) {

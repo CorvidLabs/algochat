@@ -12,16 +12,18 @@ This is the public specification and the language implementations. It is not a c
 
 | Path | Language | Protocols | Test |
 | --- | --- | --- | --- |
-| [`ts/`](ts/) | TypeScript | `0x01`, `0x02`, `0x04`, `0x05` | `bun test` |
-| [`swift/`](swift/) | Swift | `0x01`, `0x02`, `0x04`, `0x05` | `swift test` |
-| [`py/`](py/) | Python | `0x01`, `0x02`, `0x04`, `0x05` | `pytest` |
-| [`rs/`](rs/) | Rust | `0x01`, `0x02`, `0x04`, `0x05` | `cargo test` |
-| [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05` | `./gradlew test` |
-| [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05` | `go test ./...` |
+| [`ts/`](ts/) | TypeScript | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `bun test` |
+| [`swift/`](swift/) | Swift | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `swift test` |
+| [`py/`](py/) | Python | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `pytest` |
+| [`rs/`](rs/) | Rust | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `cargo test` |
+| [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `./gradlew test` |
+| [`go/`](go/) | Go | `0x01`, `0x02`, `0x04`, `0x05`, `0x06`, `0x07` | `go test ./...` |
 
-PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0. Extra lock `0x02` is level 1 while the 32-byte pre-shared key stays secret. Hybrid `0x04` and `0x05` are level 3. `0x03` is not assigned. Levels 2, 4, and 5 are not used by a message protocol. A future group wrap has to be level 3 when a hybrid key exists, and at least level 1 otherwise.
+PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0. Extra lock `0x02` is level 1 while the 32-byte pre-shared key stays secret. Hybrid `0x04` and `0x05` are level 3. Group membership `0x06` and group message `0x07` are level 3. `0x03` is not assigned. Levels 2, 4, and 5 are not used by a message protocol.
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
+
+Group mailbox notes `0x06` and `0x07` are implemented and are not in tag v1.3.0. PROTOCOL.md section 5.8.4 records two LocalNet runs. One creates a group of three, adds a member, removes one, and posts one message. The other puts all six libraries in one group, and each library posts its own line. Every library opened every line.
 
 ```mermaid
 flowchart LR
@@ -33,7 +35,7 @@ flowchart LR
         KT[Kotlin]
         GO[Go]
     end
-    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x04 handshake<br/>0x05 session message"]
+    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x04 handshake<br/>0x05 session message<br/>0x06 group key<br/>0x07 group message"]
     TS --> NOTE
     SW --> NOTE
     PY --> NOTE

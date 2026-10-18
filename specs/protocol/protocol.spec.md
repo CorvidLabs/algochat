@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 8
+version: 9
 status: stable
 files:
   - PROTOCOL.md
@@ -11,15 +11,15 @@ files:
 
 ## Purpose
 
-The public wire format lives in PROTOCOL.md. Version 1.3.0 adds optional protocols `0x04` and `0x05`. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Identifier `0x03` is not assigned.
+The public wire format lives in PROTOCOL.md. Version 1.3.0 adds optional protocols `0x04` and `0x05`. PQ levels are the integers 0 through 5 in section 5.4.2. Group mailbox protocols `0x06` and `0x07` are implemented at PQ level 3 and are not in tag v1.3.0. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Identifier `0x03` is not assigned.
 
 ## Public API
 
-PROTOCOL.md section 5.7 is the contract. TEST-VECTORS.md pins the hybrid session key.
+PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json.
 
 ## Invariants
 
-A handshake note is 2366 bytes. A `0x05` header is 78 bytes. The recipient session key uses both shared secrets. The sender copy also uses both the sender's X25519 secret and the sender's ML-KEM secret.
+A handshake note is 2366 bytes. A `0x05` header is 78 bytes. The recipient session key uses both shared secrets. The sender copy also uses both the sender's X25519 secret and the sender's ML-KEM secret. A `0x06` note is 195 bytes. A `0x07` header is 54 bytes and the plaintext maximum is 4026 bytes. `0x06` and `0x07` are PQ level 3.
 
 ## Behavioral Examples
 
@@ -42,5 +42,8 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-17 | state-the-hybrid-sender-wrap-and-announcement-rules-exactly-and-make-rust-and-go-follow-them: State the hybrid sender wrap and announcement rules exactly, and make Rust and Go follow them |
 | 2026-10-17 | record-the-2366-byte-localnet-matrix-and-say-that-0x05-reuses-the-handshake-session-key: Record the 2366-byte LocalNet matrix and say that 0x05 reuses the handshake session key |
 | 2026-10-17 | say-that-envelope-version-0x02-is-accepted-and-stop-treating-the-withdrawn-handshake-note-as-an-acceptance-test: Say that envelope version 0x02 is accepted, and stop treating the withdrawn handshake note as an acceptance test |
+| 2026-10-18 | specify-the-group-mailbox-membership-wrap-and-one-message-note: Specify the group mailbox, membership wrap, and one message note |
+| 2026-10-18 | implement-protocols-0x06-and-0x07-in-all-six-libraries-and-prove-the-localnet-group-mailbox: Implement 0x06 and 0x07 in all six libraries and record LocalNet rounds 46313 through 46322 |
 | 2026-10-18 | state-the-pq-level-of-every-assigned-protocol-in-one-table: State the PQ level of every assigned protocol in one table |
 | 2026-10-18 | number-the-pq-level-of-every-protocol-from-0-through-5: Number the PQ level of every protocol from 0 through 5 |
+| 2026-10-18 | Merge main: keep levels 0 through 5 and assign group protocols 0x06 and 0x07 to level 3 |

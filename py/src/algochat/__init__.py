@@ -145,6 +145,20 @@ from .pq import (
     is_pq_key_announcement,
     pq_announcement_signing_input,
 )
+from .group import (
+    GROUP_MAX_PAYLOAD_SIZE,
+    GROUP_MEMBERSHIP_NOTE_SIZE,
+    GroupCounter,
+    GroupMembership,
+    OpenedGroupMessage,
+    derive_group_message_key,
+    is_group_membership,
+    is_group_message,
+    open_group_membership,
+    open_group_message,
+    seal_group_membership,
+    seal_group_message,
+)
 
 __version__ = "0.2.0"
 
@@ -286,4 +300,17 @@ __all__ = [
     "parse_pq_key_announcement",
     "is_pq_key_announcement",
     "pq_announcement_signing_input",
+    # Group mailbox (protocols 0x06 and 0x07)
+    "GROUP_MEMBERSHIP_NOTE_SIZE",
+    "GROUP_MAX_PAYLOAD_SIZE",
+    "GroupMembership",
+    "GroupCounter",
+    "OpenedGroupMessage",
+    "is_group_membership",
+    "is_group_message",
+    "seal_group_membership",
+    "open_group_membership",
+    "derive_group_message_key",
+    "seal_group_message",
+    "open_group_message",
 ]

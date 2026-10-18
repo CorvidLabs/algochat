@@ -1,0 +1,46 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792335944,
+      "digest": "a463e247dc5e6ef17753e837e5b889f6653736cdedb2c5a2bcae9e2433b49629",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "specify-the-group-mailbox-membership-wrap-and-one-message-note",
+        "title": "Specify the group mailbox, membership wrap, and one message note",
+        "description": "Specify the group mailbox, membership wrap, and one message note",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PROTOCOL.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "PROTOCOL.md section 5.8 specifies 0x06 and 0x07. A 0x06 note uses the 78-byte hybrid header and carries a 101-byte membership record on an established hybrid session. A 0x07 note is 54 bytes of header plus ciphertext, paid to the mailbox. The group key wrap is PQ level 3. Everyday 0x01 is not a legal wrap. Parity is not claimed until the six-library LocalNet run in section 5.8.4."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "4596ae8975bb6c03a403b173cef213c266238469f57601ab83cee5c55466dd72"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792335979,
+      "digest": "b55e610caa5a8791b8e6774b7908ad2e0507ab70877024b79450b14cd0ab233b",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

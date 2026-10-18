@@ -1,0 +1,45 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792338071,
+      "digest": "0476f873ff25465a78c159b5aa0bdaa22140f7020a54ca5d90851cba7969bda3",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "record-the-localnet-run-where-all-six-libraries-joined-one-group-and-each-posted-a-message",
+        "title": "Record the LocalNet run where all six libraries joined one group and each posted a message",
+        "description": "Record the LocalNet run where all six libraries joined one group and each posted a message",
+        "kind": "documentation",
+        "affected_specs": [],
+        "affected_paths": [
+          "PARITY.md",
+          "PROTOCOL.md",
+          "README.md",
+          "ts"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The wire and REQ-protocol-4 and REQ-protocol-5 stay as recorded. This adds the six-speaker LocalNet transcript to section 5.8.4 and checks in that driver.",
+        "acceptance_criteria": [
+          "ts/scripts/group-talk-localnet.ts is in the tree. PROTOCOL.md section 5.8.4 and PARITY.md name mailbox round 46375, membership rounds 46376 through 46380, and message rounds 46381 through 46386. Each library posted its own line and every library opened every line. The record says TypeScript created the handshakes and the other five accepted them."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792338133,
+      "digest": "3da63b1530d17eed344832d0793ee38db8da49ce8b39ba9ddaad30eed29489c3",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}
