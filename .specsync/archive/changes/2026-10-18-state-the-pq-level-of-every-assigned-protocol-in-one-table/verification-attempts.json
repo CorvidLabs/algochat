@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1792335355,
+      "commit": "297a56a211b8f6a87cacb92af3a35fa97b42e269",
+      "contract_digest": "f41738b25ff4976c901f5b2c3def87887c41cfec89fd4c6226f7cef7fd44ff5e",
+      "execution_digest": "a864fba23ecfe8d1f8d11a51ffdee5171f95ccd4ab540340eb03efee50902d1f",
+      "workspace_digest": "1ca96d85be06e9bd5c74d2609fca5dc50e95ddb8c1c959f8c79714a688e29b5b",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-3"
+      ]
+    },
+    {
+      "timestamp": 1792335361,
+      "commit": "c22a2ab5a4f9500d9b8f4d302a4d30d882c076bb",
+      "contract_digest": "f41738b25ff4976c901f5b2c3def87887c41cfec89fd4c6226f7cef7fd44ff5e",
+      "execution_digest": "a864fba23ecfe8d1f8d11a51ffdee5171f95ccd4ab540340eb03efee50902d1f",
+      "workspace_digest": "4ff4f3a3578491cbb487a7b0e641c363aa67852374cf8bf5e2cf09a142ec3b7b",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-3"
+      ]
+    },
+    {
+      "timestamp": 1792335361,
+      "commit": "789e7acd8144d4c60402aa1ca06e8afdd9ebc412",
+      "contract_digest": "f41738b25ff4976c901f5b2c3def87887c41cfec89fd4c6226f7cef7fd44ff5e",
+      "execution_digest": "a864fba23ecfe8d1f8d11a51ffdee5171f95ccd4ab540340eb03efee50902d1f",
+      "workspace_digest": "4ff4f3a3578491cbb487a7b0e641c363aa67852374cf8bf5e2cf09a142ec3b7b",
+      "acceptance_input_digest": "3a794954b3a45e24e2a6be1089717d4ac0ffdbfdc0aa884509ef2d8b47d1cf5c",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "PROTOCOL.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "96c1a791c212c17567938bf80a59935ae5246454a1229224c2c5711e006ebd90",
+            "entry_digest": "a6c46ef075803f394f95e42100f6e0e3a3da3807614c2aad06fa280a47f8e3b4",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "SECURITY.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ea1b608d206815df1628113582a47ba1547db2c34c5d777e504276a051aaf415",
+            "entry_digest": "c13495e1ca6bb234d929c979503d548b1984e88e7c394f0928172afaa5ed3dbc",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/protocol/protocol.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "63ad17da1f7a6a55641c3df058749e5cc17c914f2ada6d35096946ecded62f90",
+            "entry_digest": "3c7e6fa1f6abb9306b5ed477457c927b7a05b958848176fd5bc505b2881aca1c",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "specs/protocol/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c48a005716b3239a7c560e626765f110d3752ad095d869c9a8f704c58f06ed1f",
+            "entry_digest": "31133951c4f6ebfabfa858472c8ad2878881011c0480e38efe430ecfc0427360",
+            "owners": [
+              "protocol"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-3"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "state-the-pq-level-of-every-assigned-protocol-in-one-table",
+  "implementation_commit": "789e7acd8144d4c60402aa1ca06e8afdd9ebc412",
+  "implementation_tree": "c6ac84a0da1c85ad5b1a49968fd0f05f59124e9f",
+  "contract_digest": "f41738b25ff4976c901f5b2c3def87887c41cfec89fd4c6226f7cef7fd44ff5e",
+  "workspace_digest": "4ff4f3a3578491cbb487a7b0e641c363aa67852374cf8bf5e2cf09a142ec3b7b",
+  "closing_digest": "fe3c80f6fa098c70ac02c1bc11b62bb595c8073836eb500f9aa16bd3aeb84533",
+  "review_digest": "26ae1a2ea8187f0e2ab7ba2a3d4e44df1aaec50e22f3eea7ae83da4ad1db854e",
+  "finalization_digest": "33d654dff4178c1c69c03530d2b0470d4ea5e7b24ebf7ffea4dd6da2001c704f",
+  "timestamp": 1792335384
+}

@@ -1,0 +1,47 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792335585,
+      "digest": "15559297b2037f0aa61e136942f7f406a17ee0f8c623fad1b60d88b95815b3d3",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "number-the-pq-level-of-every-protocol-from-0-through-5",
+        "title": "Number the PQ level of every protocol from 0 through 5",
+        "description": "Number the PQ level of every protocol from 0 through 5",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "PROTOCOL.md",
+          "SECURITY.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Section 5.4.2 defines PQ levels 0 through 5. Everyday is 0. Extra lock is 1 while the 32-byte PSK stays secret. Hybrid handshake and message are 3. Levels 2, 4, and 5 are unused by a message protocol. 0x03 stays unassigned. README and SECURITY.md use those integers."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "b1644ef744b411a4e828513ede3fe381c4a564e110ef8bac67dcf33ade309893"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792335626,
+      "digest": "691770811222393c7c10ef4b4075311819d727dff55dc7a403c0c3fee809468b",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

@@ -141,6 +141,29 @@ Everyday (`0x01`) and Extra lock (`0x02`) notes use version byte `0x01` or `0x02
 
 A reader MUST accept both versions. Changing the version byte of a version `0x02` note MUST fail decryption. Protocols `0x04` and `0x05` use version byte `0x02` with the layouts in section 5.7. That is a different header from an everyday version `0x02` note. The protocol byte tells them apart.
 
+### 5.4.2 PQ levels
+
+PQ level is an integer from 0 to 5. Other documents in this repository MUST use these numbers and MUST NOT invent a second scale. Levels 1 through 5 are the NIST post-quantum security categories: 1 matches AES-128 key search, 2 matches SHA-256 collision search, 3 matches AES-192 key search, 4 matches SHA-384 collision search, and 5 matches AES-256 key search. Level 0 means a quantum computer breaks the key exchange with Shor's algorithm and no category 1 through 5 primitive is required. Every mode uses ChaCha20-Poly1305 with a 256-bit key for the message body. That symmetric layer is category 1 under Grover's algorithm and is the same for all of them. The level in the table is the key exchange. None of these modes provide forward secrecy. See section 11.1.
+
+| PQ level | NIST meaning | Used by |
+| --- | --- | --- |
+| 0 | No PQC primitive. Shor breaks the key exchange. | Everyday `0x01` |
+| 1 | Category 1. At least as hard as AES-128 key search. | Extra lock `0x02`, only while the 32-byte pre-shared key stays secret |
+| 2 | Category 2. At least as hard as SHA-256 collision search. | No assigned protocol |
+| 3 | Category 3. At least as hard as AES-192 key search. | Hybrid handshake `0x04` and hybrid message `0x05` |
+| 4 | Category 4. At least as hard as SHA-384 collision search. | No assigned protocol |
+| 5 | Category 5. At least as hard as AES-256 key search. | No message protocol. A Falcon-1024 account signature is category 5 for payment authorization only and does not raise the note. |
+
+| Protocol | Name | PQ level |
+| --- | --- | --- |
+| `0x01` | Everyday | 0. X25519 only. |
+| `0x02` | Extra lock | 1 while the 32-byte pre-shared key stays secret. A lost or low-entropy secret drops the note to level 0. |
+| `0x03` | Not assigned | No level. This byte is not a protocol and not an envelope version. |
+| `0x04` | Hybrid handshake | 3. ML-KEM-768 is FIPS 203 category 3, and the session key also requires the X25519 shared secret. Breaking only one does not open the handshake. Both long-term keys together do. |
+| `0x05` | Hybrid message | 3, the same as its `0x04` handshake. The session key opens every `0x05` note in that handshake. A leaked session key opens those notes without a new attack on ML-KEM. |
+
+A future group protocol is not assigned in this version. A wrap of the group key MUST be PQ level 3 when the members have hybrid keys, and MUST be at least PQ level 1 otherwise. PQ level 0 does not meet the bar. After that wrap, the group message uses the same ChaCha20-Poly1305 body as the other modes.
+
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
 ```
