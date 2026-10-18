@@ -1,14 +1,15 @@
 """Tests for blockchain interfaces and key discovery."""
 
-import pytest
-from typing import Optional
+import base64
+import hashlib
 
+import pytest
 from algochat.blockchain import (
+    AccountInfo,
     AlgorandConfig,
     IndexerClient,
     NoteTransaction,
     SuggestedParams,
-    AccountInfo,
     TransactionInfo,
     _decode_algorand_address,
     _parse_key_announcement,
@@ -17,9 +18,6 @@ from algochat.blockchain import (
 from algochat.keys import derive_keys_from_seed, public_key_to_bytes
 from algochat.signature import sign_encryption_key
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
-import base64
-import hashlib
 
 
 def _encode_algorand_address(public_key: bytes) -> str:
@@ -43,7 +41,7 @@ class MockIndexerClient(IndexerClient):
         self._transactions.append(tx)
 
     async def search_transactions(
-        self, address: str, after_round: Optional[int] = None, limit: Optional[int] = None,
+        self, address: str, after_round: int | None = None, limit: int | None = None,
     ) -> list[NoteTransaction]:
         results = [tx for tx in self._transactions
                    if tx.sender == address or tx.receiver == address]
@@ -53,7 +51,7 @@ class MockIndexerClient(IndexerClient):
 
     async def search_transactions_between(
         self, address1: str, address2: str,
-        after_round: Optional[int] = None, limit: Optional[int] = None,
+        after_round: int | None = None, limit: int | None = None,
     ) -> list[NoteTransaction]:
         return []
 
@@ -122,8 +120,9 @@ class TestDecodeAlgorandAddress:
         assert result == key
 
     def test_rejects_invalid_checksum(self):
-        from algochat.blockchain import InvalidAddressError
         import base64
+
+        from algochat.blockchain import InvalidAddressError
         public_key = b"\x01" * 32
         bad_checksum = b"\x00" * 4  # Not the real SHA-512/256 checksum
         address = base64.b32encode(public_key + bad_checksum).decode().rstrip("=")
@@ -132,8 +131,9 @@ class TestDecodeAlgorandAddress:
             _decode_algorand_address(address)
 
     def test_rejects_wrong_length(self):
-        from algochat.blockchain import InvalidAddressError
         import base64
+
+        from algochat.blockchain import InvalidAddressError
         # Only 32 bytes (no checksum)
         address = base64.b32encode(b"\x01" * 32).decode().rstrip("=")
         with pytest.raises(InvalidAddressError):

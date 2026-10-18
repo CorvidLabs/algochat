@@ -1,21 +1,20 @@
 """Tests for the AlgoChat client."""
 
-import pytest
-from typing import Optional
 
+import pytest
 from algochat.blockchain import (
-    AlgorandConfig,
+    AccountInfo,
     AlgodClient,
+    AlgorandConfig,
     IndexerClient,
     NoteTransaction,
     SuggestedParams,
-    AccountInfo,
     TransactionInfo,
 )
 from algochat.client import AlgoChat, AlgoChatConfig
+from algochat.envelope import decode_envelope
 from algochat.keys import public_key_to_bytes
 from algochat.models import MessageDirection
-from algochat.envelope import decode_envelope
 from algochat.storage import InMemoryKeyStorage
 from algochat.types import (
     InvalidEnvelopeError,
@@ -23,7 +22,6 @@ from algochat.types import (
     PublicKeyNotFoundError,
     UnverifiedKeyError,
 )
-
 
 # ============================================================================
 # Mock Blockchain Clients
@@ -62,7 +60,7 @@ class MockIndexerClient(IndexerClient):
         self._transactions.append(tx)
 
     async def search_transactions(
-        self, address: str, after_round: Optional[int] = None, limit: Optional[int] = None,
+        self, address: str, after_round: int | None = None, limit: int | None = None,
     ) -> list[NoteTransaction]:
         results = [tx for tx in self._transactions
                    if tx.sender == address or tx.receiver == address]
@@ -74,7 +72,7 @@ class MockIndexerClient(IndexerClient):
 
     async def search_transactions_between(
         self, address1: str, address2: str,
-        after_round: Optional[int] = None, limit: Optional[int] = None,
+        after_round: int | None = None, limit: int | None = None,
     ) -> list[NoteTransaction]:
         results = [tx for tx in self._transactions
                    if (tx.sender == address1 and tx.receiver == address2)
@@ -112,8 +110,8 @@ def make_config() -> AlgoChatConfig:
 async def make_client(
     seed: bytes = ALICE_SEED,
     address: str = ALICE_ADDRESS,
-    config: Optional[AlgoChatConfig] = None,
-    indexer: Optional[MockIndexerClient] = None,
+    config: AlgoChatConfig | None = None,
+    indexer: MockIndexerClient | None = None,
 ) -> AlgoChat:
     return await AlgoChat.from_seed(
         seed=seed,

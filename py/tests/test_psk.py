@@ -2,42 +2,42 @@
 
 import pytest
 from algochat.keys import derive_keys_from_seed
-from algochat.psk_types import (
-    PSK_VERSION,
-    PSK_PROTOCOL_ID,
-    PSK_HEADER_SIZE,
-    PSK_TAG_SIZE,
-    PSK_MAX_PAYLOAD_SIZE,
-    PSKEnvelope,
-)
-from algochat.types import MAX_NOTE_SIZE, PSKEncryptionError
-from algochat.psk_ratchet import (
-    derive_session_psk,
-    derive_position_psk,
-    derive_psk_at_counter,
+from algochat.psk_crypto import (
+    decrypt_psk_message,
+    encrypt_psk_message,
 )
 from algochat.psk_envelope import (
-    encode_psk_envelope,
-    decode_psk_envelope,
-    is_psk_message,
     PSKEnvelopeError,
-)
-from algochat.psk_crypto import (
-    encrypt_psk_message,
-    decrypt_psk_message,
-)
-from algochat.psk_state import (
-    PSKState,
-    validate_counter,
-    record_receive,
-    advance_send_counter,
+    decode_psk_envelope,
+    encode_psk_envelope,
+    is_psk_message,
 )
 from algochat.psk_exchange import (
     create_psk_exchange_uri,
     parse_psk_exchange_uri,
 )
-from .test_vectors import ALICE_SEED_HEX, BOB_SEED_HEX
+from algochat.psk_ratchet import (
+    derive_position_psk,
+    derive_psk_at_counter,
+    derive_session_psk,
+)
+from algochat.psk_state import (
+    PSKState,
+    advance_send_counter,
+    record_receive,
+    validate_counter,
+)
+from algochat.psk_types import (
+    PSK_HEADER_SIZE,
+    PSK_MAX_PAYLOAD_SIZE,
+    PSK_PROTOCOL_ID,
+    PSK_TAG_SIZE,
+    PSK_VERSION,
+    PSKEnvelope,
+)
+from algochat.types import MAX_NOTE_SIZE, PSKDecryptionError, PSKEncryptionError
 
+from .test_vectors import ALICE_SEED_HEX, BOB_SEED_HEX
 
 # Test PSK: 0xAA repeated 32 times
 TEST_PSK = bytes([0xAA] * 32)
@@ -255,7 +255,7 @@ class TestPSKEncryptDecrypt:
         assert result == "Counter 0 message"
 
         # Should fail with wrong PSK
-        with pytest.raises(Exception):
+        with pytest.raises(PSKDecryptionError):
             decrypt_psk_message(envelope, bob_private, bob_public, psk1)
 
     def test_unicode_message(self, alice_keys, bob_keys) -> None:

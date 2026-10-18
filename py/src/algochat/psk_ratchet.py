@@ -5,8 +5,8 @@ Two-level ratchet:
     - Position PSK: derived per position within a session
 """
 
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from .psk_types import PSK_SESSION_SIZE
 

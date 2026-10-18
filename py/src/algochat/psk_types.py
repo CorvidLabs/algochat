@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from .types import MAX_NOTE_SIZE
 
-
 # Protocol constants
 PSK_VERSION = 0x01
 # Decrypt-only. Payload ChaCha associated data is the 130-byte header.

@@ -5,28 +5,30 @@ This module provides the primary interface for sending and receiving
 encrypted messages using the AlgoChat protocol.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime, timezone
 
-from .blockchain import (
-    AlgorandConfig,
-    AlgodClient,
-    IndexerClient,
-    NoteTransaction,
-    discover_encryption_key,
-)
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey, X25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.x25519 import (
+    X25519PrivateKey,
+    X25519PublicKey,
+)
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     NoEncryption,
     PrivateFormat,
 )
 
-from .crypto import encrypt_message, decrypt_message
-from .envelope import encode_envelope, decode_envelope, is_chat_message
+from .blockchain import (
+    AlgodClient,
+    AlgorandConfig,
+    IndexerClient,
+    NoteTransaction,
+    discover_encryption_key,
+)
+from .crypto import decrypt_message, encrypt_message
+from .envelope import decode_envelope, encode_envelope, is_chat_message
 from .keys import derive_keys_from_seed, public_key_from_bytes
 from .models import (
     Conversation,
@@ -34,16 +36,16 @@ from .models import (
     Message,
     MessageDirection,
 )
-from .psk_crypto import encrypt_psk_message, decrypt_psk_message
-from .psk_envelope import encode_psk_envelope, decode_psk_envelope, is_psk_message
+from .psk_crypto import decrypt_psk_message, encrypt_psk_message
+from .psk_envelope import decode_psk_envelope, encode_psk_envelope, is_psk_message
 from .psk_ratchet import derive_psk_at_counter
-from .psk_state import PSKState, validate_counter, record_receive, advance_send_counter
+from .psk_state import PSKState, advance_send_counter, record_receive, validate_counter
 from .queue import SendQueue
 from .storage import (
     EncryptionKeyStorage,
     InMemoryKeyStorage,
-    MessageCache,
     InMemoryMessageCache,
+    MessageCache,
     PublicKeyCache,
 )
 from .types import (
@@ -142,8 +144,8 @@ class AlgoChat:
         config: AlgoChatConfig,
         algod: AlgodClient,
         indexer: IndexerClient,
-        key_storage: Optional[EncryptionKeyStorage] = None,
-        message_cache: Optional[MessageCache] = None,
+        key_storage: EncryptionKeyStorage | None = None,
+        message_cache: MessageCache | None = None,
     ) -> "AlgoChat":
         """
         Creates a new AlgoChat client from an Algorand account seed.
@@ -212,7 +214,7 @@ class AlgoChat:
         async with self._lock:
             return list(self._conversations)
 
-    async def discover_key(self, address: str) -> Optional[DiscoveredKey]:
+    async def discover_key(self, address: str) -> DiscoveredKey | None:
         """Discovers the encryption public key for an address.
 
         Never assumes a cached key is verified: the verification status is the
@@ -261,7 +263,7 @@ class AlgoChat:
         self,
         message: str,
         recipient_public_key: bytes,
-        psk: Optional[bytes] = None,
+        psk: bytes | None = None,
     ) -> bytes:
         """Encrypts a message for a recipient.
 
@@ -307,7 +309,7 @@ class AlgoChat:
         self,
         envelope_bytes: bytes,
         sender_public_key: bytes = b"",
-        psk: Optional[bytes] = None,
+        psk: bytes | None = None,
     ) -> str:
         """Decrypts a message.
 
@@ -341,7 +343,7 @@ class AlgoChat:
 
         return result.text
 
-    def _decrypt_psk(self, envelope_bytes: bytes, psk: Optional[bytes] = None) -> str:
+    def _decrypt_psk(self, envelope_bytes: bytes, psk: bytes | None = None) -> str:
         """Decrypt a PSK v1.1 envelope."""
         decoded = decode_psk_envelope(envelope_bytes)
         sender_address = self._address_for_key(decoded.sender_public_key)
@@ -378,7 +380,7 @@ class AlgoChat:
 
     # --- PSK channel management ---
 
-    def add_psk_channel(self, address: str, psk: bytes, public_key: Optional[bytes] = None) -> None:
+    def add_psk_channel(self, address: str, psk: bytes, public_key: bytes | None = None) -> None:
         """Register a PSK channel for a participant.
 
         Args:
@@ -400,7 +402,7 @@ class AlgoChat:
         """Check if a PSK channel exists for an address."""
         return address in self._psk_channels
 
-    def get_psk_state(self, address: str) -> Optional[PSKState]:
+    def get_psk_state(self, address: str) -> PSKState | None:
         """Get the PSK state for a channel (for inspection/persistence)."""
         channel = self._psk_channels.get(address)
         if channel is not None:
@@ -433,7 +435,7 @@ class AlgoChat:
         """Look up address for a public key, or use key hex as fallback."""
         return self._pubkey_to_address.get(public_key.hex(), public_key.hex())
 
-    async def process_transaction(self, tx: NoteTransaction) -> Optional[Message]:
+    async def process_transaction(self, tx: NoteTransaction) -> Message | None:
         """Processes a transaction and extracts any chat message."""
         # Check if this is a chat message (standard or PSK)
         is_standard = is_chat_message(tx.note)
@@ -478,7 +480,7 @@ class AlgoChat:
         content = self.decrypt(tx.note, other_key, psk=psk)
 
         # Create message
-        timestamp = datetime.fromtimestamp(tx.round_time)
+        timestamp = datetime.fromtimestamp(tx.round_time, tz=timezone.utc)
 
         message = Message(
             id=tx.txid,

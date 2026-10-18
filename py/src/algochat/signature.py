@@ -7,6 +7,7 @@ key substitution attacks by proving key ownership.
 
 import hashlib
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
     Ed25519PublicKey,
@@ -74,7 +75,7 @@ def verify_encryption_key(
     try:
         verifying_key.verify(signature, encryption_public_key)
         return True
-    except Exception:
+    except InvalidSignature:
         return False
 
 

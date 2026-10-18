@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
 from algochat.blockchain import _parse_key_announcement
 from algochat.envelope import is_chat_message
 from algochat.keys import derive_keys_from_seed
@@ -19,8 +17,8 @@ from algochat.pq import (
     PQ_VERSION,
     PQError,
     accept_pq_session,
-    decrypt_pq_message,
     decapsulate,
+    decrypt_pq_message,
     derive_hybrid_pq_key,
     derive_mlkem_keypair,
     encode_pq_key_announcement,
@@ -34,6 +32,7 @@ from algochat.pq import (
 )
 from algochat.psk_envelope import is_psk_message
 from algochat.types import MAX_NOTE_SIZE
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 _VECTOR_PATH = Path(__file__).resolve().parents[2] / "vectors" / "pq-mlkem768.json"
 _COMBINER = "9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734"

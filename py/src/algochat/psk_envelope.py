@@ -1,21 +1,20 @@
 """PSK envelope encoding and decoding for the v1.1 protocol."""
 
 from .psk_types import (
-    PSK_VERSION,
     _PSK_VERSION_AAD,
-    PSK_PROTOCOL_ID,
-    PSK_HEADER_SIZE,
     PSK_ENCRYPTED_SENDER_KEY_SIZE,
+    PSK_HEADER_SIZE,
+    PSK_PROTOCOL_ID,
+    PSK_VERSION,
     PSKEnvelope,
 )
-from .types import PUBLIC_KEY_SIZE, NONCE_SIZE
+from .types import NONCE_SIZE, PUBLIC_KEY_SIZE
 
 _ACCEPTED_VERSIONS = (PSK_VERSION, _PSK_VERSION_AAD)
 
 
 class PSKEnvelopeError(Exception):
     """Raised when PSK envelope encoding/decoding fails."""
-    pass
 
 
 def encode_psk_envelope(envelope: PSKEnvelope) -> bytes:

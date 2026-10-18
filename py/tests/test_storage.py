@@ -1,16 +1,17 @@
 """Tests for storage interfaces and implementations."""
 
-import pytest
 import stat
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
+from algochat.models import Message, MessageDirection
 from algochat.storage import (
+    FileKeyStorage,
+    InMemoryKeyStorage,
     InMemoryMessageCache,
     PublicKeyCache,
-    InMemoryKeyStorage,
-    FileKeyStorage,
 )
-from algochat.models import Message, MessageDirection
-
+from cryptography.exceptions import InvalidTag
 
 # ============================================================================
 # Fixtures
@@ -27,7 +28,7 @@ def make_message(
         sender="ALICE",
         recipient="BOB",
         content=f"msg-{id}",
-        timestamp=timestamp or datetime(2026, 3, 5, 12, 0, 0),
+        timestamp=timestamp or datetime(2026, 3, 5, 12, 0, 0, tzinfo=timezone.utc),
         confirmed_round=confirmed_round,
         direction=MessageDirection.SENT,
     )
@@ -73,8 +74,8 @@ class TestInMemoryMessageCache:
 
     @pytest.mark.asyncio
     async def test_store_sorts_by_timestamp(self, cache):
-        m1 = make_message(id="txid-1", timestamp=datetime(2026, 3, 5, 14, 0, 0))
-        m2 = make_message(id="txid-2", timestamp=datetime(2026, 3, 5, 12, 0, 0))
+        m1 = make_message(id="txid-1", timestamp=datetime(2026, 3, 5, 14, 0, 0, tzinfo=timezone.utc))
+        m2 = make_message(id="txid-2", timestamp=datetime(2026, 3, 5, 12, 0, 0, tzinfo=timezone.utc))
         await cache.store([m1, m2], "BOB")
         result = await cache.retrieve("BOB")
         assert result[0].id == "txid-2"
@@ -304,7 +305,7 @@ class TestFileKeyStorage:
         await good.store(b"\x07" * 32, "ALICE")
 
         bad = FileKeyStorage(password="wrong-password", base_dir=tmp_path)
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidTag):
             await bad.retrieve("ALICE")
 
     @pytest.mark.asyncio

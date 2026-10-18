@@ -3,14 +3,19 @@
 import os
 
 import pytest
-from cryptography.exceptions import InvalidTag
-from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
-from cryptography.hazmat.primitives.hashes import SHA256
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-
-from algochat.envelope import ChatEnvelope, decode_envelope, encode_envelope, is_chat_message
-from algochat.keys import derive_keys_from_seed, generate_ephemeral_keypair, public_key_to_bytes, x25519_ecdh
 from algochat.crypto import decrypt_message, encrypt_message
+from algochat.envelope import (
+    ChatEnvelope,
+    decode_envelope,
+    encode_envelope,
+    is_chat_message,
+)
+from algochat.keys import (
+    derive_keys_from_seed,
+    generate_ephemeral_keypair,
+    public_key_to_bytes,
+    x25519_ecdh,
+)
 from algochat.types import (
     ENCRYPTION_INFO_PREFIX,
     HEADER_SIZE,
@@ -22,6 +27,11 @@ from algochat.types import (
     EncryptionError,
     payment_fee,
 )
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
 from .test_vectors import (
     ALICE_SEED_HEX,
     BOB_SEED_HEX,
@@ -47,7 +57,7 @@ class TestEncryption:
     def test_encrypt_simple_message(self, alice_keys, bob_keys) -> None:
         """Encrypt a simple message from Alice to Bob."""
         alice_private, alice_public = alice_keys
-        bob_private, bob_public = bob_keys
+        _, bob_public = bob_keys
 
         envelope = encrypt_message(
             "Hello, Bob!",

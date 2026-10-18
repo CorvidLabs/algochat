@@ -3,12 +3,12 @@
 from dataclasses import dataclass
 
 from .types import (
-    PROTOCOL_VERSION,
-    PROTOCOL_ID,
-    HEADER_SIZE,
-    PUBLIC_KEY_SIZE,
-    NONCE_SIZE,
     ENCRYPTED_SENDER_KEY_SIZE,
+    HEADER_SIZE,
+    NONCE_SIZE,
+    PROTOCOL_ID,
+    PROTOCOL_VERSION,
+    PUBLIC_KEY_SIZE,
 )
 
 # Decrypt-only. Payload ChaCha associated data is the 126-byte header.
@@ -30,7 +30,6 @@ class ChatEnvelope:
 
 class EnvelopeError(Exception):
     """Raised when envelope encoding/decoding fails."""
-    pass
 
 
 def encode_envelope(envelope: ChatEnvelope) -> bytes:
