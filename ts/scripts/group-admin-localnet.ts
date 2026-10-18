@@ -34,7 +34,7 @@ import {
     type RoomState,
 } from "../src/pq/group-admin.js";
 import { openGroupMessage, sealGroupMessage } from "../src/pq/group.js";
-import { initiatePQSession } from "../src/pq/session.js";
+import { acceptPQSession, initiatePQSession, openPQSessionAsSender } from "../src/pq/session.js";
 import type { PQSession } from "../src/pq/types.js";
 
 const TOKEN = "a".repeat(64);
@@ -235,7 +235,7 @@ async function submit(
     note: Uint8Array | undefined,
     phase: Receipt["phase"],
     kind: string,
-): Promise<{ receipt: Receipt; rawId: Uint8Array }> {
+): Promise<{ receipt: Receipt; rawId: Uint8Array; confirmedNote: Uint8Array | null }> {
     const params = await algod.getTransactionParams().do();
     const minFee = Number(params.minFee ?? 1000);
     const over = Math.max(0, (note?.length ?? 0) - 1024);
@@ -252,10 +252,10 @@ async function submit(
     const fee = Number(txn.fee ?? minFee + extra);
     await algod.sendRawTransaction(txn.signTxn(from.sk)).do();
     const confirmed = await algosdk.waitForConfirmation(algod, txid, 40);
+    let confirmedNote: Uint8Array | null = null;
     if (note) {
         const pending = await algod.pendingTransactionInformation(txid).do();
         const raw = pending.txn?.txn?.note ?? pending.txn?.note;
-        let confirmedNote: Uint8Array | null = null;
         if (raw instanceof Uint8Array) confirmedNote = raw;
         else if (typeof raw === "string") confirmedNote = Buffer.from(raw, "base64");
         if (!confirmedNote || !Buffer.from(confirmedNote).equals(Buffer.from(note))) {
@@ -264,6 +264,7 @@ async function submit(
     }
     return {
         rawId,
+        confirmedNote,
         receipt: {
             phase,
             kind,
@@ -376,19 +377,35 @@ async function rejectOpen(tools: Tool[], note: Uint8Array, session: PQSession, l
     }));
 }
 
+function acceptPostedHandshake(memberSeed: Uint8Array, note: Uint8Array): PQSession {
+    const recipient = deriveEncryptionKeys(memberSeed);
+    const kem = deriveMLKEMKeyPair(memberSeed);
+    return acceptPQSession(note, recipient, kem.encapsKey, kem.decapsKey);
+}
+
 function localRecipientOpen(): void {
-    const session: PQSession = {
-        sessionKey: randomBytes(32),
-        senderPublicKey: randomBytes(32),
-        recipientPublicKey: randomBytes(32),
-        handshakeId: randomBytes(32),
-    };
+    const ownerSeed = randomBytes(32);
+    const memberSeed = randomBytes(32);
+    const ownerKeys = deriveEncryptionKeys(ownerSeed);
+    const ownerKem = deriveMLKEMKeyPair(ownerSeed);
+    const memberKeys = deriveEncryptionKeys(memberSeed);
+    const handshake = initiatePQSession({
+        sender: ownerKeys,
+        senderEncapsKey: ownerKem.encapsKey,
+        recipientPublicKey: memberKeys.publicKey,
+        recipientEncapsKey: deriveMLKEMKeyPair(memberSeed).encapsKey,
+    });
+    const senderSession = openPQSessionAsSender(handshake.note, ownerKeys, ownerKem.decapsKey);
+    const session = acceptPostedHandshake(memberSeed, handshake.note);
+    if (!Buffer.from(session.sessionKey).equals(Buffer.from(senderSession.sessionKey))) {
+        throw new Error("recipient did not derive the posted handshake");
+    }
     const groupId = randomBytes(32);
     const mailbox = randomBytes(32);
     const groupKey = randomBytes(32);
     const adminTxId = randomBytes(32);
     const recipient = randomBytes(32);
-    const note = sealGroupKeyDelivery(session, 1, groupId, mailbox, groupKey, adminTxId, randomBytes(12));
+    const note = sealGroupKeyDelivery(senderSession, 1, groupId, mailbox, groupKey, adminTxId, randomBytes(12));
     const opened = openGroupKeyDelivery(note, session);
     if (hex(opened.adminTxId) !== hex(adminTxId) || hex(opened.groupId) !== hex(groupId)) {
         throw new Error("opened delivery did not cite the administration transaction");
@@ -509,11 +526,19 @@ async function main(): Promise<void> {
         const generalKey = randomBytes(32);
 
         console.error("opening hybrid sessions");
+        const ownerKeys = deriveEncryptionKeys(seedOf(owner));
+        const ownerKem = deriveMLKEMKeyPair(seedOf(owner));
         for (const member of [...teamInvite, ...generalOnly]) {
             const opened = await handshake(owner, member);
-            sessions.set(member.addr.toString(), opened.session);
             const paid = await submit(algod, owner, member.addr.toString(), 0, opened.note, "channel", "handshake");
             receipts.push(paid.receipt);
+            if (!paid.confirmedNote) throw new Error("posted handshake note missing");
+            const recipientSession = acceptPostedHandshake(seedOf(member), paid.confirmedNote);
+            const senderSession = openPQSessionAsSender(paid.confirmedNote, ownerKeys, ownerKem.decapsKey);
+            if (!Buffer.from(recipientSession.sessionKey).equals(Buffer.from(senderSession.sessionKey))) {
+                throw new Error("recipient did not derive the posted handshake");
+            }
+            sessions.set(member.addr.toString(), recipientSession);
         }
 
         const postAdmin = async (
@@ -600,14 +625,25 @@ async function main(): Promise<void> {
         receipts.push(teamFund.receipt);
         await postAdmin(team, owner, "setup", "create", { op: ADMIN_OP.CREATE, name: "team", policy: JOINING.INVITE }, true);
         let recoveredTeamKey = "";
+        let friendDelivery: Uint8Array | undefined;
         for (const [index, member] of teamInvite.entries()) {
             const adminTxId = await postAdmin(team, owner, "membership", "add", {
                 op: ADMIN_OP.ADD_MEMBER,
                 subject: pub(member),
             }, index === 0);
             const delivered = await deliver(team, member, 1, teamKey, adminTxId, "membership", index === 0);
-            if (index === 0) recoveredTeamKey = delivered.recoveredKey;
+            if (index === 0) {
+                recoveredTeamKey = delivered.recoveredKey;
+                friendDelivery = delivered.note;
+            }
         }
+        if (!friendDelivery) throw new Error("missing recipient delivery");
+        const tampered = Uint8Array.from(friendDelivery);
+        tampered[tampered.length - 1] ^= 1;
+        await rejectOpen(tools, tampered, sessions.get(friend.addr.toString())!, "tampered delivery opened");
+        const stranger = sessions.get(teamOnly[0]!.addr.toString());
+        if (!stranger) throw new Error("missing other member session");
+        await rejectOpen(tools, friendDelivery, stranger, "wrong recipient opened the delivery");
         if (team.state().members.length !== 5 || team.state().epoch !== 1) throw new Error("team roster");
 
         console.error("general room");
@@ -784,7 +820,7 @@ async function main(): Promise<void> {
                 policy: team.state().policy,
                 epoch_after_removal: team.state().epoch,
                 message: teamMessage.receipt,
-                recipient_open: "the recipient session opened action 5 and that key read the mailbox note",
+                recipient_open: "the recipient reopened the posted handshake with its own keys, opened action 5, and that key read the mailbox note",
             },
             general: {
                 members: general.state().members.length,
