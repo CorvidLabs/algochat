@@ -50,6 +50,8 @@ flowchart LR
 - **Other implementations** ([swift-algochat](https://github.com/CorvidLabs/algochat/tree/main/swift), [rs-algochat](https://github.com/CorvidLabs/algochat/tree/main/rs), [py-algochat](https://github.com/CorvidLabs/algochat/tree/main/py), [kt-algochat](https://github.com/CorvidLabs/algochat/tree/main/kt), [Go](https://github.com/CorvidLabs/algochat/tree/main/go)) interoperate through the same bytes. The [conformance vectors](../conformance/README.md) pin those bytes.
 - **The file system** is used only by the Node-only storage classes ([`FileKeyStorage`](../src/storage/file-key-storage.ts), [`FileSendQueueStorage`](../src/queue/file-send-queue-storage.ts)).
 
+For hybrid and room flows, see the [shared protocol guide](../../docs/PROTOCOL-FLOWS.md): discovery, `0x04` recovery, `0x05`, public administration, authorized `0x06` delivery and `0x07` acceptance. The classical client/PSK sequence diagrams here do not imply automatic hybrid or room negotiation.
+
 ## 3. Components
 
 ```mermaid
@@ -59,6 +61,7 @@ flowchart LR
     subgraph api["src/index.ts re-exports from each module"]
         queue["queue/<br/>SendQueue, SyncManager"]
         services["services/<br/>AlgorandService, MessageIndexer,<br/>account creation"]
+        pq["pq/<br/>hybrid sessions, group codecs,<br/>administration reducer"]
         psk["psk/<br/>ratchet, PSK envelope,<br/>replay state, exchange URI"]
         crypto["crypto/<br/>keys, encryption, envelope,<br/>header AAD, signatures"]
         blockchain["blockchain/<br/>client interfaces, network configs,<br/>key discovery, tx builder"]
@@ -66,6 +69,8 @@ flowchart LR
         storage["storage/ and cache/<br/>key storage, caches"]
         errors["errors/<br/>ChatError, ChatErrorCode"]
     end
+    app -.->|"explicit integration"| pq
+    pq --> noble
     queue --> services
     queue --> models
     services --> crypto
@@ -83,7 +88,7 @@ flowchart LR
 | `services/` | The high-level API. `AlgorandService` sends, replies, fetches messages and conversations, publishes and discovers keys, and waits for confirmation or indexing. `MessageIndexer` offers paginated history reads. `mnemonic.service` creates `ChatAccount`s. | [`algorand.service.ts`](../src/services/algorand.service.ts), [`MessageIndexer.ts`](../src/services/MessageIndexer.ts), [`mnemonic.service.ts`](../src/services/mnemonic.service.ts) |
 | `crypto/` | Standard protocol cryptography: X25519 key derivation, ChaCha20-Poly1305 envelope encryption with bidirectional decryption, the 126-byte envelope codec, header AAD, Ed25519 key-announcement signatures and fingerprints. | [`keys.ts`](../src/crypto/keys.ts), [`encryption.ts`](../src/crypto/encryption.ts), [`envelope.ts`](../src/crypto/envelope.ts), [`aad.ts`](../src/crypto/aad.ts), [`signature.ts`](../src/crypto/signature.ts) |
 | `psk/` | PSK v1.1: the two-level ratchet, hybrid key derivation, the 130-byte PSK envelope, replay-window state and `algochat-psk://` exchange URIs. Pure functions; no network. | [`ratchet.ts`](../src/psk/ratchet.ts), [`encryption.ts`](../src/psk/encryption.ts), [`envelope.ts`](../src/psk/envelope.ts), [`state.ts`](../src/psk/state.ts), [`exchange.ts`](../src/psk/exchange.ts) |
-| `pq/` | Low-level X25519 + ML-KEM-768 handshakes, session data, the transcript-bound hybrid KDF and `ACPQ` key announcements. Not wired into the high-level service/indexers. | [`session.ts`](../src/pq/session.ts), [`kem.ts`](../src/pq/kem.ts), [`kdf.ts`](../src/pq/kdf.ts), [`announce.ts`](../src/pq/announce.ts) |
+| `pq/` | Low-level X25519 + ML-KEM-768 handshakes, session data, the transcript-bound hybrid KDF, `ACPQ` key announcements, group codecs and public administration reducer. Not wired into the high-level service/indexers. | [`session.ts`](../src/pq/session.ts), [`kem.ts`](../src/pq/kem.ts), [`kdf.ts`](../src/pq/kdf.ts), [`announce.ts`](../src/pq/announce.ts) |
 | `blockchain/` | SDK-agnostic `AlgodClient` / `IndexerClient` interfaces, network presets, standalone key discovery (`discoverEncryptionKey`, `parseKeyAnnouncement`), plus an unsigned-transaction builder and an interface-based message indexer. | [`interfaces.ts`](../src/blockchain/interfaces.ts), [`types.ts`](../src/blockchain/types.ts), [`discovery.ts`](../src/blockchain/discovery.ts), [`message-transaction.ts`](../src/blockchain/message-transaction.ts), [`message-indexer.ts`](../src/blockchain/message-indexer.ts) |
 | `queue/` | Offline delivery. `SendQueue` holds pending messages with bounded retries. `SyncManager` drains the queue and polls known conversations on a timer. | [`SendQueue.ts`](../src/queue/SendQueue.ts), [`SyncManager.ts`](../src/queue/SyncManager.ts), [`file-send-queue-storage.ts`](../src/queue/file-send-queue-storage.ts) |
 | `models/` | Shared types (`ChatEnvelope`, `Message`, `DiscoveredKey`, `PendingMessage`, `SendOptions`), the `PROTOCOL` constants and the `Conversation` class. | [`types.ts`](../src/models/types.ts), [`Conversation.ts`](../src/models/Conversation.ts) |

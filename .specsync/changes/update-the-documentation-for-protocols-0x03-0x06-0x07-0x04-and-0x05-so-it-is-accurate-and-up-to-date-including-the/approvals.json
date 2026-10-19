@@ -1,0 +1,50 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user",
+      "timestamp": 1792367786,
+      "digest": "427993fc29d4b1e42f1cd37aff24866d92f95ccff2f55cfcdc787dd0dfadacd0",
+      "note": "User approved this exact definition with yes in message Sentinel_ceca19d115788191a33b21adccfd3784 at 23:55:07, responding to scope/digest in Sentinel_41afe361d3e08191abc12f1a4fe9066d. Relayed by authorized parent thread 01a118b4-4fe7-70fc-9f2d-dbbe961ba009. Scope approval only; finished implementation acceptance remains separate. Missing protocol delta completed within approved documentation scope; definition digest unchanged.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the",
+        "title": "Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams",
+        "description": "Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "IMPLEMENTATION.md",
+          "PARITY.md",
+          "PROTOCOL.md",
+          "README.md",
+          "SECURITY.md",
+          "TEST-VECTORS.md",
+          "docs/",
+          "specs/protocol/",
+          "swift/README.md",
+          "swift/docs/HLD.md",
+          "ts/README.md",
+          "ts/docs/HLD.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Document the merged behavior of protocols 0x03, 0x04, 0x05, 0x06 and 0x07 accurately across six libraries, including wire fields and offsets, AAD, derivation and wrapping, discovery, administration and membership, epochs, counters, replay responsibilities, limits, security claims and release boundaries. Update relevant Mermaid diagrams and canonical references. Preserve classical 0x01/0x02 behavior and all implementation code. Validate documentation, links and diagrams where tooling is available, obtain independent review, and open a documentation-only draft PR with evidence and remaining uncertainty."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "aa8dc204c902970e2fc8a470923b9ac9ecf178c66d92607f4aca48872bba5581"
+      }
+    }
+  ],
+  "reopenings": []
+}

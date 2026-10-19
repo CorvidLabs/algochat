@@ -524,3 +524,14 @@ The membership note is 195 bytes and starts with `0x0206`. The message note star
 ## Room administration
 
 `vectors/group-admin-v1.json` is the shared `0x03` record and the `0x06` action-5 key delivery. Legacy actions 1 through 4 stay in `vectors/group-v1.json`. A create record starts with `0x0203`. Action 5 is a 227-byte note: the 78-byte hybrid header, a 133-byte plaintext, and a 16-byte tag. The session key in the delivery object is an input, not a handshake output. Fill-byte addresses in that file are test ids. A transaction id is 32 bytes of one fill value.
+
+## Coverage boundaries
+
+| Evidence | Establishes | Does not establish alone |
+| --- | --- | --- |
+| Hybrid combiner above and valid component fields in `vectors/pq-mlkem768.json` | Deterministic ML-KEM components and KDF bytes | A valid current handshake from the withdrawn `handshake_note` field |
+| `vectors/group-v1.json` | Legacy 195-byte delivery, group KDF and message bytes | Discovery or derivation of its supplied session key |
+| `vectors/group-admin-v1.json` | Public admin encoding/reduction and 227-byte action-5 delivery with supplied inputs | Authenticated blockchain context, actual recipient handshake recovery, persistent replay handling |
+| Historical LocalNet reports in [PARITY.md](PARITY.md) | The author's reported run at its stated rounds | Independent current-head or release-package qualification |
+
+Use the exact [wire tables](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) and [flow guide](docs/PROTOCOL-FLOWS.md) alongside the fixtures. This documentation update does not change frozen vector bytes or claim a new LocalNet run.

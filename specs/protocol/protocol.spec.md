@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 10
+version: 11
 status: stable
 files:
   - PROTOCOL.md
@@ -12,6 +12,8 @@ files:
 ## Purpose
 
 The public wire format lives in PROTOCOL.md. Version 1.3.0 adds optional protocols `0x04` and `0x05`. PQ levels are the integers 0 through 5 in section 5.4.2. Group mailbox protocols `0x06` and `0x07` are implemented at PQ level 3 and are not in tag v1.3.0. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`.
+
+Documentation of current source adds offset tables and [application flow diagrams](../../docs/PROTOCOL-FLOWS.md), including separate cryptographic and authorization checks. The flow guide records port-specific limitations without relaxing normative requirements or qualifying a release.
 
 ## Public API
 
@@ -49,3 +51,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-18 | Merge main: keep levels 0 through 5 and assign group protocols 0x06 and 0x07 to level 3 |
 | 2026-10-18 | Assign protocol 0x03 as the public room administration record. Legacy 0x06 actions 1–4 stay 195 bytes. Action 5 is the 227-byte key delivery. Section 5.8.4 stays the historical membership run. |
 | 2026-10-18 | public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language: Public room administration on the group mailbox, with the same rules in every language |
+| 2026-10-19 | Clarify existing 0x03–0x07 layouts and application responsibilities; add source-grounded flow diagrams and explicit implementation/evidence limits. |
