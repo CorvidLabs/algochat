@@ -2,6 +2,8 @@
 
 This document explains how AlgoChat works end to end: the keys, the envelope on the wire, how a message is encrypted and read, how peers find each other's keys, and how the envelope rides on an Algorand payment. It also covers the machinery in this repository (validation, the status dashboard, the trust gate, GitHub Pages).
 
+For current main, [Hybrid sessions and administered rooms](PROTOCOL-FLOWS.md) adds complete discovery, sender/recipient recovery, public `0x03` administration, `0x06` delivery and `0x07` acceptance diagrams, plus source-linked port limitations. The classical send/receive/PSK diagrams below retain their stated scope; they are not automatic routing for every protocol. The group ids are outside tag v1.3.0.
+
 This narrative covers protocol 1.3.0: standard (`0x01`), Extra lock (`0x02`), and the separate optional hybrid session (`0x04`/`0x05`). All six libraries contain low-level helpers for these modes. Their normal high-level conversation send paths do not automatically negotiate hybrid sessions; applications must integrate key discovery, mode selection, handshake transport, and session recovery explicitly. The reported LocalNet matrix from 2026-10-17 is historical interoperability evidence in [PARITY.md](../PARITY.md), which distinguishes the current 2366-byte handshake from the withdrawn 1278-byte layout. Current implementation and qualification gaps are tracked in [ACCURACY.md](ACCURACY.md). The normative text is PROTOCOL.md. If this document and PROTOCOL.md ever disagree, PROTOCOL.md wins. Pseudocode lives in [IMPLEMENTATION.md](../IMPLEMENTATION.md), byte-exact examples in [TEST-VECTORS.md](../TEST-VECTORS.md), and the threat model in [SECURITY.md](../SECURITY.md).
 
 Notation: `‖` means byte concatenation (PROTOCOL.md writes it `||`). `HKDF(ikm, salt, info)` is HKDF-SHA256 with a 32-byte output. `seal` and `open` are ChaCha20-Poly1305 encrypt and decrypt.
@@ -49,11 +51,13 @@ flowchart LR
     A -- "signed payment<br/>note = envelope" --> ALGOD
     ALGOD --> LEDGER
     LEDGER --> IDX
-    IDX -- "prefixes 0x0101, 0x0201,<br/>0x0102, 0x0202, 0x0204, 0x0205" --> B
+    IDX -- "prefixes 0x0101, 0x0201,<br/>0x0102, 0x0202, 0x0203 through 0x0207" --> B
     IDX -- "own sent notes,<br/>re-decrypted as sender" --> A
     A <-. "algochat-psk URI<br/>(mode 0x02 only)" .-> OOB
     OOB <-.-> B
 ```
+
+These prefixes describe application dispatch; the classical high-level indexers do not automatically query or integrate every mode. The room reducer and authorization checks are separate from opening an encrypted note.
 
 Sources: [PROTOCOL.md §10](../PROTOCOL.md#10-transport-layer), [§8.6](../PROTOCOL.md#86-psk-exchange), [IMPLEMENTATION.md](../IMPLEMENTATION.md) (Transaction Creation, Key Discovery).
 
@@ -95,7 +99,7 @@ The protocol has four layers. Protocol 1.2 added Falcon-1024 at the account laye
 
 ```mermaid
 flowchart TB
-    subgraph L1["Identity and keys: on the device, never on chain"]
+    subgraph L1["Identity and keys: private material stays on device"]
         MN["25-word mnemonic<br/>32-byte entropy"]
         XK["X25519 key pair<br/>HKDF from entropy"]
         ED["Ed25519 account<br/>signs with sig"]
@@ -111,10 +115,13 @@ flowchart TB
         E2["0x02 PSK<br/>130-byte header"]
         E4["0x04 hybrid handshake<br/>2366 bytes"]
         E5["0x05 hybrid message<br/>78-byte header"]
+        E3["0x03 public room administration"]
+        E6["0x06 group key delivery<br/>195 or 227 bytes"]
+        E7["0x07 group message<br/>54-byte header"]
     end
     subgraph L4["Transport and discovery: public chain"]
         TX["Payment transaction<br/>note up to 4096 bytes"]
-        DISC["Indexer dispatch<br/>0x0101, 0x0201, 0x0102, 0x0202,<br/>0x0204, 0x0205; ACPQ announcements"]
+        DISC["Indexer dispatch<br/>0x0101, 0x0201, 0x0102, 0x0202,<br/>0x0203 through 0x0207; ACPQ announcements"]
     end
     MN --> XK
     MN --> ED
@@ -133,6 +140,11 @@ flowchart TB
     PL --> E5
     E4 --> TX
     E5 --> TX
+    E3 --> TX
+    E4 -- "session key seals delivery" --> E6
+    E6 -- "delivers epoch key" --> E7
+    E6 --> TX
+    E7 --> TX
     ED -- "authorizes" --> TX
     FA -- "authorizes" --> TX
     TX --> DISC
@@ -190,7 +202,7 @@ Rules that matter (all from [PROTOCOL.md §4](../PROTOCOL.md#4-key-derivation)):
 
 ### 4.1 Find a peer's encryption key
 
-To write to someone you need their X25519 public key. Every AlgoChat envelope carries its sender's key in clear, in the header, so any AlgoChat payment someone has sent reveals it, with no decryption needed. The pseudocode in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (Key Discovery) scans both accepted envelope versions of standard and PSK notes. The current TypeScript discovery also searches self-payment key announcements with pagination and prefers verified signed announcements. Hybrid ML-KEM announcements require separate parsing and application integration.
+To write to someone you need their X25519 public key. Standard/PSK, hybrid and group-delivery headers carry a sender X25519 key in clear. Public room administration and group-message notes do not: do not extract a sender encryption key from `0x03` or `0x07`. The pseudocode in [IMPLEMENTATION.md](../IMPLEMENTATION.md) (Key Discovery) scans both accepted envelope versions of standard and PSK notes. The current TypeScript discovery also searches self-payment key announcements with pagination and prefers verified signed announcements. Hybrid ML-KEM announcements require separate parsing and application integration.
 
 ```mermaid
 sequenceDiagram
@@ -617,8 +629,8 @@ The big choices, and where they are recorded:
 
 | Decision | Why | Record |
 | --- | --- | --- |
-| The message is the note of a normal payment; no mailbox, contract or router | Delivery is the payment itself | [hi/send.md](../hi/send.md) `SEND-1`, [PROTOCOL.md §10.1](../PROTOCOL.md#101-algorand-transaction) |
-| X25519 + HKDF-SHA256 + ChaCha20-Poly1305 | Widely audited primitives, the same family as Signal, WireGuard and TLS 1.3 | [PROTOCOL.md §3](../PROTOCOL.md#3-cryptographic-primitives), [README.md](../README.md#cryptographic-primitives) |
+| The message is the note of a normal payment; no router contract | Direct messages go to the peer; group messages go to a mailbox address | [hi/send.md](../hi/send.md) `SEND-1`, [PROTOCOL.md §10.1](../PROTOCOL.md#101-algorand-transaction) |
+| X25519 + HKDF-SHA256 + ChaCha20-Poly1305 | Widely audited primitives, the same family as Signal, WireGuard and TLS 1.3 | [PROTOCOL.md §3](../PROTOCOL.md#3-cryptographic-primitives) |
 | A fresh ephemeral key for each standard/PSK message, plus a sender key wrap | Per-message key separation, and senders can re-read history from the chain on any device; hybrid messages reuse their handshake session key | [PROTOCOL.md §2](../PROTOCOL.md#2-design-goals), [§6.2](../PROTOCOL.md#62-sender-key-encryption-self-decryption) |
 | Encryption keys derived from mnemonic entropy | Recoverable from the 25 words alone, and independent of the signing scheme | [PROTOCOL.md §4.1](../PROTOCOL.md#41-encryption-key-pair) |
 | PSK as a new protocol byte `0x02`, purely additive | Old envelopes and vectors stay valid | [PROTOCOL.md §5.4](../PROTOCOL.md#54-protocol-identifiers), [§8](../PROTOCOL.md#8-psk-ratcheting-mode-protocol-0x02), [hi/psk.md](../hi/psk.md) |

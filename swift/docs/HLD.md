@@ -2,13 +2,15 @@
 
 This document explains how the Swift package `algochat` works end to end: the package targets, the AlgoChat protocol as this
 package implements it, the send, receive, key-discovery and PSK flows, local storage, how the package is built and
-released, the trust model, and the known limits. It describes `main` as of September 2026. Every statement is
+released, the trust model, and the known limits. Its classical architecture is supplemented by the [current hybrid and room flow guide](../../docs/PROTOCOL-FLOWS.md), source-reviewed at `1400279`. Every statement is
 traceable to a file in this repository, or to the public protocol specification where that is named. Where the code
 did not answer a question, the text says **Unknown**.
 
 The normative protocol lives in [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat)
 ([`PROTOCOL.md`](https://github.com/CorvidLabs/algochat/blob/main/PROTOCOL.md)). This document describes
 what the Swift code does; if the two disagree, that is a bug in one of them.
+
+The client/PSK sequence diagrams below retain their classical scope. `PQSession`, `GroupAdmin` and `GroupMailbox` expose separate low-level primitives: callers supply discovery, transaction identity, authorization and persistent replay state. ML-KEM establishment/recovery requires Apple OS 26 and is unavailable on Linux. The shared guide diagrams those flows and distinguishes remaining Swift/Kotlin limitations from the protocol contract.
 
 ## Contents
 
@@ -22,7 +24,7 @@ what the Swift code does; if the two disagree, that is a bug in one of them.
 8. [Security and trust boundaries](#8-security-and-trust-boundaries)
 9. [Failure modes and limits](#9-failure-modes-and-limits)
 10. [Decisions](#10-decisions)
-11. [Where the docs and the code disagree](#11-where-the-docs-and-the-code-disagree)
+11. [Where the docs and the code disagree](#11-accepted-requirements-and-implementation-gaps)
 12. [Glossary](#12-glossary)
 
 ## 1. Purpose
@@ -33,7 +35,7 @@ terminal client, `algochat`. There is no AlgoChat server. The Algorand ledger is
 record, an Algorand indexer is the read and discovery path, and the encryption key is derived from the Algorand
 account itself, so an account with a small ALGO balance is all a user needs. Swift developers use it to add
 encrypted, on-chain messaging to an app. The wire format is shared with the other AlgoChat implementations
-(ts-, rs-, py- and kt-algochat, per the [README](../README.md)). The current source release is 1.3.0 and has not been
+(TypeScript, Rust, Python, Kotlin and Go, per the [README](../README.md)). The current source release is 1.3.0 and has not been
 independently audited ([README](../README.md), [SECURITY.md](../SECURITY.md)).
 
 ## 2. Context
@@ -52,7 +54,7 @@ flowchart LR
         indexer["Indexer API"]
         ledger[("Ledger<br/>payment transaction notes")]
     end
-    peers["Other AlgoChat clients<br/>ts, rs, py, kt"]
+    peers["Other AlgoChat clients<br/>ts, rs, py, kt, go"]
     oob["Out-of-band channel<br/>for a PSK exchange URI"]
     localnet["AlgoKit localnet in Docker<br/>CLI funding only"]
 

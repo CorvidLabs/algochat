@@ -229,6 +229,8 @@ interface Conversation {
 
 ## Architecture
 
+The diagram below shows the classical high-level client path. Current source also exposes low-level `0x03` administration, `0x04`/`0x05` hybrid sessions, `0x06` key delivery and `0x07` group messages. Applications integrate those primitives explicitly; see the [complete protocol flows](../docs/PROTOCOL-FLOWS.md). The group protocols are outside tag v1.3.0.
+
 Messages travel as encrypted notes on ordinary Algorand payments. The library encrypts and signs locally, submits through algod, and rebuilds conversations from the indexer. There is no server or contract in between.
 
 ```mermaid
@@ -240,6 +242,7 @@ flowchart LR
     chain --> indexer["Indexer"]
     indexer -->|"history and<br/>key discovery"| sdk
     sdk -.->|"optional"| queue["SendQueue +<br/>SyncManager"]
+    app -.->|"explicit integration"| pq["pq primitives<br/>hybrid sessions and administered rooms"]
 ```
 
 The [high-level design](docs/HLD.md) covers the modules, wire formats, send, receive, key-discovery, sync and PSK flows, trust boundaries and limits. The former standalone repository's documentation site is historical; current build and release configuration lives in this monorepo.

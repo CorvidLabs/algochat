@@ -23,7 +23,7 @@ PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-lev
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
 
-Group mailbox notes `0x06` and `0x07` are implemented and are not in tag v1.3.0. PROTOCOL.md section 5.8.4 records two LocalNet runs. One creates a group of three, adds a member, removes one, and posts one message. The other puts all six libraries in one group, and each library posts its own line. Every library opened every line.
+Public room administration `0x03` and group mailbox notes `0x06` and `0x07` are implemented and are not in tag v1.3.0. [Protocol flows](docs/PROTOCOL-FLOWS.md) explains their integration and known port differences. PROTOCOL.md section 5.8.4 records two LocalNet runs. One creates a group of three, adds a member, removes one, and posts one message. The other puts all six libraries in one group, and each library posts its own line. Those historical reports say every library opened every line; they are not fresh verification of this checkout.
 
 ```mermaid
 flowchart LR
@@ -35,7 +35,7 @@ flowchart LR
         KT[Kotlin]
         GO[Go]
     end
-    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x04 handshake<br/>0x05 session message<br/>0x06 group key<br/>0x07 group message"]
+    NOTE["Algorand note<br/>0x01 everyday<br/>0x02 Extra lock<br/>0x03 public administration<br/>0x04 handshake<br/>0x05 session message<br/>0x06 group key<br/>0x07 group message"]
     TS --> NOTE
     SW --> NOTE
     PY --> NOTE

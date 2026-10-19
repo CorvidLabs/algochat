@@ -215,6 +215,8 @@ try await chat.send("Hello!", to: conversation, options: .indexed)
 
 ## Architecture
 
+The diagram below shows the classical high-level client path. Current source also exposes low-level `0x03` administration, `0x04`/`0x05` hybrid sessions, `0x06` key delivery and `0x07` group messages. Applications integrate those primitives explicitly; see the [complete protocol flows](../docs/PROTOCOL-FLOWS.md). The group protocols are outside tag v1.3.0.
+
 There is no AlgoChat server. The library encrypts on your device, carries the envelope in the note of an Algorand payment, and reads it back through an indexer.
 
 ```mermaid
@@ -225,6 +227,7 @@ flowchart LR
     ledger --> indexer["Indexer"]
     indexer -- "search transactions, decrypt" --> lib
     lib <--> keys[("Keychain or ~/.algochat")]
+    app -.->|"explicit integration"| pq["PQSession, GroupAdmin,<br/>GroupMailbox primitives"]
 ```
 
 The [high-level design](docs/HLD.md) covers the package targets, the protocol and wire formats, the send, receive, key-discovery and PSK flows as sequence diagrams, local storage, CI and releases, the trust model, and known limits.

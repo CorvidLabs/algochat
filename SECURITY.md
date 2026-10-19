@@ -4,7 +4,7 @@
 
 ### What AlgoChat Protects Against
 
-1. **Message Content Disclosure** - Only sender and recipient can decrypt messages
+1. **Message Content Disclosure** - Direct-message content is encrypted for its participants; group-message content is available to holders of the epoch key. Public `0x03` administration records are not encrypted.
 2. **Message Tampering** - Authenticated encryption detects modifications
 3. **Duplicate Signed Transactions** - Blockchain transaction uniqueness rejects resubmitting the same signed transaction. Copying its note into a new transaction is a separate replay concern; PSK mode requires counter tracking, and applications must retain transaction/session context.
 
@@ -236,3 +236,13 @@ Include:
 - Your contact information for follow-up
 
 We aim to acknowledge reports within 48 hours and provide an initial assessment within 7 days. We will coordinate disclosure timing with you.
+
+## Administered room boundaries
+
+The [room flow diagrams](docs/PROTOCOL-FLOWS.md) separate cryptographic opening from authorization. Protocol `0x03` relies on the authenticated payment sender and deterministic administration reducer, with public names, roles, membership and join requests. A mailbox spending key grants no room role.
+
+A `0x06` action-5 opener authenticates the 78-byte header and decrypts the key delivery; the application must separately bind the group/mailbox and authorize the cited event, sender and recipient. `0x07` authenticates its 54-byte header under a key derived from the epoch key, group, sender account, epoch and counter. Every epoch-key holder can derive keys for other sender addresses; use the actual payment sender and membership state, not AEAD success alone, as the identity/authorization boundary.
+
+Adding a member shares the existing epoch key, exposing earlier retrievable messages in that epoch. Removal, rekey and ownership transfer require fresh key generation and authorized distribution by the application. They cannot revoke retained older keys or ciphertext. Keep historical keys/state for intentional history access and maintain separate atomic replay acceptance state. A supplied accepted-counter list is not durable replay protection by itself.
+
+Never reuse a nonce under a shared hybrid session key across `0x05` and `0x06`. Changing AAD does not make reuse safe. Group counters must not wrap or be reused within a sender/epoch. These requirements do not claim automatic lifecycle management by the low-level helpers, independent security audit, or forward secrecy.
