@@ -7,8 +7,8 @@ artifact: tasks
 
 - [x] Audit source, release boundaries and all Mermaid diagrams.
 - [x] Update canonical protocol tables, responsibilities and aligned documentation.
-- [ ] Render/parse diagrams and validate links and repository governance checks.
+- [x] Render/parse diagrams and validate links and repository governance checks.
 - [x] Obtain independent review and resolve concrete findings.
 - [x] Push a documentation-only branch and open a draft PR with evidence and limitations.
 
-Rendering is pending isolated validation-tool authorization; balanced fences and local links passed. Draft PR #25 is published. Rendering is not recorded as complete.
+PR #25 merged as 14b346d. The user subsequently authorized isolated rendering tools. All 48 diagrams now parse and render after two syntax fixes; the detailed follow-up is in docs/verification/2026-10-19-protocol-docs.md. Human closing acceptance and archival remain pending.

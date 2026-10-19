@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the",
+  "reviewer": "user",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "d906cbaa9c39906695b2fc3526bdfaf398e7c411",
+  "contract_digest": "427993fc29d4b1e42f1cd37aff24866d92f95ccff2f55cfcdc787dd0dfadacd0",
+  "execution_digest": "9b6b6c9bea27f3f787a9739addd89e8e4dd1493751dd7e3fbdeb2a1dd2ab34fd",
+  "workspace_digest": "1440495b0574f3b660a631549a2893f179a615ce69df5e588a85705326c0672d",
+  "timestamp": 1792369617
+}

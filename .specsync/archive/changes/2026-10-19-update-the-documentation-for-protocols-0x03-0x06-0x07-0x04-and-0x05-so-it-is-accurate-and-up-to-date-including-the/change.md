@@ -1,6 +1,6 @@
 ---
 id: update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the
-state: implementing
+state: archived
 type: documentation
 base_commit: f8a73126518c96b506b642075069e6ccc5b6c28e
 ---
