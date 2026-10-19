@@ -1,0 +1,43 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "leif",
+      "timestamp": 1792369191,
+      "digest": "c67191665357de0b03f3f336c281f7c7ff4af6dd3e3883391631976c53c958e5",
+      "note": "The owner asked to release protocol 1.4.0 and the library versions.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "release-protocol-1-4-0-and-the-library-versions",
+        "title": "Release protocol 1.4.0 and the library versions",
+        "description": "Release protocol 1.4.0 and the library versions",
+        "kind": "operations",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          "scripts/release/packages.py",
+          "scripts/release/qualify.py",
+          "scripts/release/test_release.py",
+          "specs/release/requirements.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Protocol tag v1.4.0, Swift 1.4.0, TypeScript 0.10.0, Python 0.3.0, Rust 0.4.0, Kotlin 0.3.0, and Go tag go/v0.3.0 are the source versions."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "constraints": "none",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "release": "f70f844085b9771a211f4afe713fc6cef6c356463a11c02915bc4fb6878bb738"
+      }
+    }
+  ],
+  "reopenings": []
+}

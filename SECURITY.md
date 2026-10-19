@@ -187,7 +187,7 @@ Using FIPS 203 algorithms is not a claim that any AlgoChat library is FIPS valid
 
 ### Group Messaging
 
-Protocols `0x06` and `0x07` are the group mailbox. The group key is delivered only inside a `0x06` note sealed with an established hybrid session, so that wrap is PQ level 3. An everyday `0x01` wrap is not a legal delivery. A `0x07` note is one payment to the group's mailbox. Its message key is HKDF-SHA256 over the group key, bound to the sender address, the epoch, and the counter. A leaked message key opens that one note. A leaked group key opens every `0x07` note in that epoch. A removed member is not sent the new group key. These notes are not forward secret: later theft of a member's long-term X25519 key and ML-KEM key can open that member's `0x06` wraps. Tag v1.3.0 does not include these protocols. The LocalNet record is PROTOCOL.md section 5.8.4.
+Protocols `0x06` and `0x07` are the group mailbox. The group key is delivered only inside a `0x06` note sealed with an established hybrid session, so that wrap is PQ level 3. An everyday `0x01` wrap is not a legal delivery. A `0x07` note is one payment to the group's mailbox. Its message key is HKDF-SHA256 over the group key, bound to the sender address, the epoch, and the counter. A leaked message key opens that one note. A leaked group key opens every `0x07` note in that epoch. A removed member is not sent the new group key. These notes are not forward secret: later theft of a member's long-term X25519 key and ML-KEM key can open that member's `0x06` wraps. Tag v1.4.0 includes these protocols. Tag v1.3.0 does not. The LocalNet record is PROTOCOL.md section 5.8.4.
 
 ## Recommendations
 

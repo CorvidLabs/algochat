@@ -1,6 +1,6 @@
 # AlgoChat Protocol Specification
 
-**Version**: 1.3.0
+**Version**: 1.4.0
 **Status**: Stable
 
 ## 1. Overview
@@ -129,11 +129,11 @@ A plaintext of 882 bytes still encrypts. That envelope is 1024 bytes. It remains
 | `0x02` | Ratcheting PSK | Stable (v1.1) | Hybrid X25519 + ratcheting pre-shared key. Provides defense-in-depth against quantum key exchange attacks. |
 | `0x04` | PQ handshake | Stable (v1.3) | One note. X25519 plus ML-KEM-768. Establishes a session key. |
 | `0x05` | PQ message | Stable (v1.3) | One note under the `0x04` session key. |
-| `0x03` | Room administration | Implemented | Public room record: owner, admins, members, joining rule, and name. Not in tag v1.3.0. |
-| `0x06` | Group membership | Implemented | One hybrid-session note that delivers a group key to one member. Not in tag v1.3.0. |
-| `0x07` | Group message | Implemented | One note on the group mailbox under the current group key. Not in tag v1.3.0. |
+| `0x03` | Room administration | Implemented | Public room record: owner, admins, members, joining rule, and name. Included in tag v1.4.0. Not in tag v1.3.0. |
+| `0x06` | Group membership | Implemented | One hybrid-session note that delivers a group key to one member. Included in tag v1.4.0. Not in tag v1.3.0. |
+| `0x07` | Group message | Implemented | One note on the group mailbox under the current group key. Included in tag v1.4.0. Not in tag v1.3.0. |
 
-`0x03`, `0x06`, and `0x07` are specified in section 5.8. Section 5.8.4 records the earlier LocalNet run, which did not use `0x03`. Tag v1.3.0 does not include these ids.
+`0x03`, `0x06`, and `0x07` are specified in section 5.8. Section 5.8.4 records the earlier LocalNet run, which did not use `0x03`. Tag v1.4.0 includes these ids. Tag v1.3.0 does not.
 
 ### 5.4.1 Envelope version
 
@@ -961,7 +961,7 @@ PQ_HANDSHAKE_SIZE      = 2366
 PQ_DATA_HEADER_SIZE    = 78
 PQ_MAX_PAYLOAD_SIZE    = 4002
 
-// Group mailbox (envelope version 0x02, not in tag v1.3.0)
+// Group mailbox (envelope version 0x02, tag v1.4.0)
 PROTOCOL_GROUP_MEMBERSHIP = 0x06
 PROTOCOL_GROUP_MESSAGE    = 0x07
 GROUP_MEMBERSHIP_NOTE_SIZE = 195
@@ -1000,4 +1000,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.2 | Account agility: payments MAY be Falcon-1024 `pqsig` as well as Ed25519 `sig`. Encryption seed is mnemonic entropy, not a signing-key prefix. Falcon min fee is 3×. Envelope bytes and 1.1 test vectors are unchanged. |
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
 | 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |
-| unreleased | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Protocol `0x03` is the public room administration record. Tag v1.3.0 does not include these ids. |
+| 1.4.0 | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Protocol `0x03` is the public room administration record. These ids were not in tag v1.3.0. |

@@ -1,6 +1,6 @@
 # AlgoChat Test Vectors
 
-**Version**: 1.3.0
+**Version**: 1.4.0
 **Purpose**: Cross-implementation verification
 
 These test vectors enable implementations to verify correctness by using deterministic inputs and checking outputs match exactly.

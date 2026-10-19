@@ -8,8 +8,8 @@ The envelope, handshake, and announcement primitives are here. A high-level clie
 
 ## Version and requirements
 
-- Module: `github.com/CorvidLabs/algochat/go` **0.2.0**, implementing protocol **1.3.0**.
-- Module release tag: **`go/v0.2.0`**; consumers request **`v0.2.0`**. The root **`v1.3.0`** tag selects the protocol/Swift release, not this nested module.
+- Module: `github.com/CorvidLabs/algochat/go` **0.3.0**, implementing protocol **1.4.0**.
+- Module release tag: **`go/v0.3.0`**; consumers request **`v0.3.0`**. The root **`v1.4.0`** tag selects the protocol/Swift release, not this nested module.
 - [Declared toolchain](go.mod): Go **1.25.0+**. Qualification is configured for **Go 1.25**, with the exact patch version recorded in receipts. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Cryptography
@@ -30,7 +30,7 @@ See the [canonical specification](specs/algochat/algochat.spec.md), [shared prot
 ## Install
 
 ```sh
-go get github.com/CorvidLabs/algochat/go@v0.2.0
+go get github.com/CorvidLabs/algochat/go@v0.3.0
 ```
 
 ## License
