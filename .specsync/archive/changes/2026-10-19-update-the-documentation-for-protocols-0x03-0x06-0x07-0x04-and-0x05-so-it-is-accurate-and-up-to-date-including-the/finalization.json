@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the",
+  "implementation_commit": "d906cbaa9c39906695b2fc3526bdfaf398e7c411",
+  "implementation_tree": "0965c6142ab8b4edc207181daceec4abd556038c",
+  "contract_digest": "427993fc29d4b1e42f1cd37aff24866d92f95ccff2f55cfcdc787dd0dfadacd0",
+  "workspace_digest": "1440495b0574f3b660a631549a2893f179a615ce69df5e588a85705326c0672d",
+  "closing_digest": "ce4bef9ee7e2d9357b4707439f129cde85e2d7213c5cd1cf804e0ac01f900aac",
+  "review_digest": "ed30ebc23dda8c795d9c6e653da1f761fc26d02095e85141f5c39031579e4099",
+  "finalization_digest": "f91ce375108f3a3cd0eed5e6da974e74a87c955f5bcd831fedaa0ac0e5035f67",
+  "timestamp": 1792369631
+}

@@ -7,11 +7,11 @@
   "title": "Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams",
   "description": "Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "f8a73126518c96b506b642075069e6ccc5b6c28e",
   "created_at": 1792367380,
-  "updated_at": 1792369422,
+  "updated_at": 1792369637,
   "affected_specs": [
     "protocol"
   ],
