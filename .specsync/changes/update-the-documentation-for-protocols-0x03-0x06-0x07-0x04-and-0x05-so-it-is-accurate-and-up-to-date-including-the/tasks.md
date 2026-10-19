@@ -9,6 +9,6 @@ artifact: tasks
 - [x] Update canonical protocol tables, responsibilities and aligned documentation.
 - [ ] Render/parse diagrams and validate links and repository governance checks.
 - [x] Obtain independent review and resolve concrete findings.
-- [ ] Push a documentation-only branch and open a draft PR with evidence and limitations.
+- [x] Push a documentation-only branch and open a draft PR with evidence and limitations.
 
-Rendering is pending isolated validation-tool authorization; balanced fences and local links passed. Publication is pending. Neither is recorded as complete.
+Rendering is pending isolated validation-tool authorization; balanced fences and local links passed. Draft PR #25 is published. Rendering is not recorded as complete.
