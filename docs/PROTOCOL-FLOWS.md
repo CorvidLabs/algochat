@@ -109,7 +109,7 @@ sequenceDiagram
     A->>A: Select current or freshly rotated epoch key
     A->>C: 227-byte 0x06 action 5, sealed under recipient hybrid session
     C->>R: Delivery payment with authenticated sender and receiver
-    R->>R: Recover actual 0x04 session; check sender and handshake id
+    R->>R: Recover actual 0x04 session and check sender and handshake id
     R->>R: Open delivery and authenticate 78-byte header
     R->>R: Match decoded group id and mailbox to intended room
     R->>R: Authorize cited accepted event, sender, recipient and epoch

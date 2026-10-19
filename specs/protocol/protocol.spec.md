@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 11
+version: 12
 status: stable
 files:
   - PROTOCOL.md
@@ -52,3 +52,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-18 | Assign protocol 0x03 as the public room administration record. Legacy 0x06 actions 1–4 stay 195 bytes. Action 5 is the 227-byte key delivery. Section 5.8.4 stays the historical membership run. |
 | 2026-10-18 | public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language: Public room administration on the group mailbox, with the same rules in every language |
 | 2026-10-19 | Clarify existing 0x03–0x07 layouts and application responsibilities; add source-grounded flow diagrams and explicit implementation/evidence limits. |
+| 2026-10-19 | update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the: Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams |

@@ -75,7 +75,7 @@ flowchart TB
     end
     LIBS["Libraries in this repo<br/>ts, swift, py, rs, kt, go"]
     HARNESS["test-algochat<br/>conformance harness"]
-    CLIENTS["Clients<br/>algochat-web (archived), Raven"]
+    CLIENTS["Clients<br/>Raven and integrating applications"]
     PAGES["GitHub Pages<br/>landing page + status dashboard"]
     SPEC --> LIBS
     GUIDE --> LIBS
@@ -88,7 +88,7 @@ flowchart TB
     STATUS --> PAGES
 ```
 
-The [README](../README.md) links the app separately; [implementations.json](../implementations.json) lists the six monorepo libraries, including Go, for the status renderer. The archived web client in this diagram is retained only by the legacy status workflow/history, not the library registry.
+The [README](../README.md) links the app separately; [implementations.json](../implementations.json) lists the six monorepo libraries, including Go, for the status renderer. The archived web client is historical; the current status workflow tests the six monorepo libraries.
 
 
 ## 3. Components
@@ -355,26 +355,26 @@ This is the configured dashboard flow, separate from release qualification. It r
 sequenceDiagram
     autonumber
     participant GA as status.yml test jobs
-    participant R as Monorepo and archived web repo
+    participant R as Six monorepo libraries
     participant G as generate-status job
     participant D as deploy job
     participant P as GitHub Pages
     Note over GA: daily at 06:00 UTC or manual dispatch
     par one job per configured implementation
-        GA->>R: check out this monorepo for Swift, TypeScript, Python, Rust, Kotlin; separately check out algochat-web
-        R-->>GA: run configured tests, upload ID.json with passing or failing
+        GA->>R: Check out the candidate for Swift, TypeScript, Python, Rust, Kotlin and Go
+        R-->>GA: Test, record exit status and candidate SHA, upload result JSON
     end
     GA->>G: download every result into test-results
-    Note over G: bun scripts/generate-status.ts writes status.html and badges
-    alt not a pull request
+    Note over G: Validate candidate SHA and freshness before any PASS cell<br/>generate-status.ts writes status.html and badges
+    alt generation succeeded and not a pull request
         G->>D: status page artifact
         D->>P: check out, overlay the fresh status page, Jekyll build, deploy
-    else pull request
-        Note over G: stop after generating, nothing deployed
+    else generation failed or pull request
+        Note over G: nothing deployed
     end
 ```
 
-The workflow is intended to record test failures as data, and generation/deploy can continue after test failures. It currently omits Go, includes the archived web client, and contains result-artifact path mismatches for several subdirectory jobs. Its Swift pass detection can accept a passing marker despite a later failing exit. Treat missing or passing dashboard data as a limited signal, not proof that every library passed. The committed `status.html` and `badges/` are snapshots; see [ACCURACY.md](ACCURACY.md) for workflow gaps.
+The current workflow tests all six monorepo libraries. Jobs record their actual exit status and candidate SHA and upload results even on failure. Generation runs after those jobs; the renderer checks the candidate SHA and a 36-hour freshness window before showing PASS, and rejects malformed or mismatched evidence. Missing results remain pending. Deployment requires successful generation and a non-PR event. These dashboard results remain separate from release qualification; the committed `status.html` and `badges/` are snapshots. See [ACCURACY.md](ACCURACY.md) for evidence boundaries.
 
 ### 4.7 Open a hybrid session (`0x04`, then `0x05`)
 
