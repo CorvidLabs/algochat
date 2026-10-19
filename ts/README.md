@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/ts.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/ts.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
-[![Source version](https://img.shields.io/badge/source-0.9.0-blue)](package.json)
+[![Source version](https://img.shields.io/badge/source-0.10.0-blue)](package.json)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -12,7 +12,7 @@ TypeScript implementation of the AlgoChat protocol for encrypted messaging on Al
 
 ## Version and requirements
 
-- Package: `@corvidlabs/ts-algochat` **0.9.0**, implementing protocol **1.3.0**.
+- Package: `@corvidlabs/ts-algochat` **0.10.0**, implementing protocol **1.4.0**.
 - [Declared runtime](package.json): Node.js **18.0.0+**. Development uses TypeScript **`^5.7.0`**, resolved by the Bun lockfile.
 - Qualification is configured for **Node.js 22** and **Bun 1.3.6**; Node.js 18 remains unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
@@ -58,13 +58,13 @@ The package's configured registry is GitHub Packages. Set `@corvidlabs:registry=
 
 ```bash
 # npm
-npm install @corvidlabs/ts-algochat@0.9.0
+npm install @corvidlabs/ts-algochat@0.10.0
 
 # bun
-bun add @corvidlabs/ts-algochat@0.9.0
+bun add @corvidlabs/ts-algochat@0.10.0
 
 # pnpm
-pnpm add @corvidlabs/ts-algochat@0.9.0
+pnpm add @corvidlabs/ts-algochat@0.10.0
 ```
 
 ## Quick Start
@@ -229,7 +229,7 @@ interface Conversation {
 
 ## Architecture
 
-The diagram below shows the classical high-level client path. Current source also exposes low-level `0x03` administration, `0x04`/`0x05` hybrid sessions, `0x06` key delivery and `0x07` group messages. Applications integrate those primitives explicitly; see the [complete protocol flows](../docs/PROTOCOL-FLOWS.md). The group protocols are outside tag v1.3.0.
+The diagram below shows the classical high-level client path. Current source also exposes low-level `0x03` administration, `0x04`/`0x05` hybrid sessions, `0x06` key delivery and `0x07` group messages. Applications integrate those primitives explicitly; see the [complete protocol flows](../docs/PROTOCOL-FLOWS.md). The group protocols are in tag v1.4.0. They were not in tag v1.3.0.
 
 Messages travel as encrypted notes on ordinary Algorand payments. The library encrypts and signs locally, submits through algod, and rebuilds conversations from the indexer. There is no server or contract in between.
 

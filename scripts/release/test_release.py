@@ -21,7 +21,7 @@ def make_package(lane, path, wrong_identity=False, missing_member=False):
     if path.name == 'Cargo.lock':
         path.write_text('version = 4\n'); return
     if path.suffix == '.xml':
-        path.write_text('<project xmlns="http://maven.apache.org/POM/4.0.0"><groupId>com.corvidlabs</groupId><artifactId>' + (name or 'kt-algochat') + '</artifactId><version>0.2.0</version></project>'); return
+        path.write_text('<project xmlns="http://maven.apache.org/POM/4.0.0"><groupId>com.corvidlabs</groupId><artifactId>' + (name or 'kt-algochat') + '</artifactId><version>0.3.0</version></project>'); return
     if lane == 'ts':
         files={'package/package.json':json.dumps({'name':name or '@corvidlabs/ts-algochat'}).encode(), 'package/dist/index.js':b'export {};', 'package/dist/index.d.ts':b'export {};'}
     elif lane == 'py' and path.suffix == '.whl':

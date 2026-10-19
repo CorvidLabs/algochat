@@ -8,7 +8,7 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 
 ## Version and requirements
 
-- Package: `algochat`, product `AlgoChat`, **1.3.0** via repository tag **`v1.3.0`**, implementing protocol **1.3.0**. The archived repository's **0.4.0** tag belongs to the previous distribution.
+- Package: `algochat`, product `AlgoChat`, **1.4.0** via repository tag **`v1.4.0`**, implementing protocol **1.4.0**. The archived repository's **0.4.0** tag belongs to the previous distribution.
 - [Root manifest](../Package.swift): Swift tools **6.0+**; iOS **15+**, macOS **12+**, tvOS **15+**, watchOS **8+**, and visionOS **1+**.
 - Hybrid ML-KEM methods require Apple OS **26** APIs. Qualification covers **macOS 26** and a separate Linux build without ML-KEM; exact runner compiler versions are recorded in receipts. Older platform minima are unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
@@ -36,7 +36,7 @@ The package manifest is at the root of [CorvidLabs/algochat](https://github.com/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.3.0")
+    .package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.4.0")
 ]
 ```
 
@@ -215,7 +215,7 @@ try await chat.send("Hello!", to: conversation, options: .indexed)
 
 ## Architecture
 
-The diagram below shows the classical high-level client path. Current source also exposes low-level `0x03` administration, `0x04`/`0x05` hybrid sessions, `0x06` key delivery and `0x07` group messages. Applications integrate those primitives explicitly; see the [complete protocol flows](../docs/PROTOCOL-FLOWS.md). The group protocols are outside tag v1.3.0.
+The diagram below shows the classical high-level client path. Current source also exposes low-level `0x03` administration, `0x04`/`0x05` hybrid sessions, `0x06` key delivery and `0x07` group messages. Applications integrate those primitives explicitly; see the [complete protocol flows](../docs/PROTOCOL-FLOWS.md). The group protocols are in tag v1.4.0. They were not in tag v1.3.0.
 
 There is no AlgoChat server. The library encrypts on your device, carries the envelope in the note of an Algorand payment, and reads it back through an indexer.
 

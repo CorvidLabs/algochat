@@ -11,7 +11,7 @@ files:
 
 ## Purpose
 
-The public wire format lives in PROTOCOL.md. Version 1.3.0 adds optional protocols `0x04` and `0x05`. PQ levels are the integers 0 through 5 in section 5.4.2. Group mailbox protocols `0x06` and `0x07` are implemented at PQ level 3 and are not in tag v1.3.0. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`.
+The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. PQ levels are the integers 0 through 5 in section 5.4.2. Group mailbox protocols `0x06` and `0x07` are PQ level 3. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does.
 
 Documentation of current source adds offset tables and [application flow diagrams](../../docs/PROTOCOL-FLOWS.md), including separate cryptographic and authorization checks. The flow guide records port-specific limitations without relaxing normative requirements or qualifying a release.
 

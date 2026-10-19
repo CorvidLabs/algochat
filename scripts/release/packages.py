@@ -56,7 +56,7 @@ def validate_package(lane, path):
             root = ElementTree.parse(path).getroot()
             ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
             actual = [root.findtext('m:' + key, namespaces=ns) for key in ('groupId', 'artifactId', 'version')]
-            if actual != ['com.corvidlabs', 'kt-algochat', '0.2.0']:
+            if actual != ['com.corvidlabs', 'kt-algochat', '0.3.0']:
                 raise ValueError('unexpected Kotlin POM coordinates')
             return
         if not path.name.endswith(('.tgz', '.whl', '.tar.gz', '.crate', '.jar', '.tar')):

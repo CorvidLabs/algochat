@@ -1,6 +1,6 @@
 ---
 module: release
-version: 5
+version: 6
 status: active
 files:
   - scripts/release/packages.py
@@ -108,3 +108,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-18 | record-this-repository-as-the-source-for-every-algochat-library: Record this repository as the source for every AlgoChat library |
 | 2026-10-18 | preserve-the-verified-six-language-parity-audit-with-portable-replay-scripts-and-explicit-rust-replay-and-swift-history: Preserve the verified six-language parity audit with portable replay scripts and explicit Rust replay and Swift history regression probes |
 | 2026-10-18 | Resolve the TypeScript tarball from the file npm wrote when the JSON filename differs. |
+| 2026-10-19 | release-protocol-1-4-0-and-the-library-versions: Release protocol 1.4.0 and the library versions |
