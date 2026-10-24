@@ -7,12 +7,12 @@ artifact: requirements
 
 ### REQ-godot-1
 
-The Godot example SHALL let two players in one scene exchange an everyday AlgoChat note without leaving the game.
+The Godot example SHALL let a player send an everyday AlgoChat note from a loaded account without leaving the game.
 
 #### Acceptance Criteria
 
-- Alice's send appears in Bob's transcript, and Bob's send appears in Alice's transcript.
-- The exchange uses sealed notes, not plain text copied between the two panes.
+- The scene shows the account address, a recipient address, and a message field.
+- Send seals the message in the extension before a LocalNet payment is posted.
 
 ### REQ-godot-2
 

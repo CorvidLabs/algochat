@@ -34,11 +34,11 @@ Rust functions in `godot/extension/src/lib.rs`. The GDExtension class `AlgoChat`
 
 ## Behavioral Examples
 
-### Scenario: Two players in one window
+### Scenario: One account sends
 
-- **Given** Alice's demo seed `0x11` repeated for 32 bytes and Bob's demo seed `0x22` repeated for 32 bytes
-- **When** Alice sends "hello from godot"
-- **Then** Bob's transcript shows that text, and the note bytes open in all six libraries
+- **Given** a loaded 32-byte account seed and another player's encryption key
+- **When** the scene sends "hello from godot"
+- **Then** the sealed note opens in all six libraries to that text
 
 ### Scenario: A foreign everyday note
 

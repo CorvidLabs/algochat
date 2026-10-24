@@ -5,13 +5,13 @@ spec: godot.spec.md
 ## Tasks
 
 - [x] Wrap Rust everyday seal and open in a GDExtension.
-- [x] Add the two-player scene and the public-metadata notice.
+- [x] Add the send scene and the public-metadata notice.
 - [x] Add the headless parity script and the six-language driver.
 - [x] Run the parity driver and record a passing local result.
 
 ## Gaps
 
-Chain submission, extra lock, hybrid sessions, and group mail are intentionally absent until a later intent says a game needs them.
+GODOT-6, GODOT-7, and GODOT-8 stay open. The extension does not create a wallet, and it does not speak extra lock, hybrid sessions, or group mail. The LocalNet bridge can fund an account and post an everyday note.
 
 ## Review Sign-offs
 

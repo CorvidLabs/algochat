@@ -22,5 +22,5 @@ spec: godot.spec.md
 
 ## Notes
 
-- Human Intent ids are GODOT-1 through GODOT-5.
+- Human Intent ids are GODOT-1 through GODOT-9. GODOT-6, GODOT-7, and GODOT-8 stay open.
 - Installed engine for the local check is Godot 4.7.2.

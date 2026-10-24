@@ -4,6 +4,8 @@ var chat: AlgoChat
 var wallet_address := ""
 var wallet_mnemonic := ""
 var wallet_seed := PackedByteArray()
+var quoted_note := PackedByteArray()
+var quoted_to := ""
 
 @onready var address_field: LineEdit = $Center/Card/Address
 @onready var to_field: LineEdit = $Center/Card/To
@@ -69,12 +71,30 @@ func _send() -> void:
 	if not bool(sealed.get("ok", false)):
 		status.text = str(sealed.get("error", "Could not seal the message."))
 		return
+	var note_hex := _bytes_to_hex(sealed["note"])
+	var quote: Dictionary = _bridge("quote", {
+		"mnemonic": wallet_mnemonic,
+		"to": recipient_address,
+		"note": note_hex,
+		"amount": 1000,
+	})
+	if not bool(quote.get("ok", false)):
+		status.text = str(quote.get("error", "Could not price the payment."))
+		return
+	var fee := int(quote.get("fee", 0))
+	if fee > 1000 and quoted_note != sealed["note"]:
+		quoted_note = sealed["note"]
+		quoted_to = recipient_address
+		status.text = "This note costs %s microALGO, plus 1000 microALGO delivered. Press Send again to pay." % fee
+		return
 	var sent: Dictionary = _bridge("send", {
 		"mnemonic": wallet_mnemonic,
 		"to": recipient_address,
-		"note": _bytes_to_hex(sealed["note"]),
+		"note": note_hex,
 		"amount": 1000,
 	})
+	quoted_note = PackedByteArray()
+	quoted_to = ""
 	if not bool(sent.get("ok", false)):
 		status.text = str(sent.get("error", "Send failed."))
 		return
@@ -90,14 +110,17 @@ func _bridge(op: String, body: Dictionary) -> Dictionary:
 	request.store_string(JSON.stringify(body))
 	request.close()
 	var output: PackedStringArray = []
-	OS.execute(_bun(), [
+	var result_global := ProjectSettings.globalize_path(result_path)
+	DirAccess.remove_absolute(result_global)
+	var code := OS.execute(_bun(), [
 		_repo().path_join("ts/scripts/godot-raven.ts"),
 		op,
 		ProjectSettings.globalize_path(request_path),
-		ProjectSettings.globalize_path(result_path),
+		result_global,
 	], output, true)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(request_path))
 	if not FileAccess.file_exists(result_path):
-		return {"ok": false, "error": "LocalNet did not answer."}
+		return {"ok": false, "error": "LocalNet did not answer (exit %s)." % code}
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(result_path))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {"ok": false, "error": "LocalNet returned an unreadable result."}

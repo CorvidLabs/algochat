@@ -2,7 +2,7 @@
 
 A Godot 4 scene that exchanges everyday AlgoChat notes by calling the Rust library. This is not a seventh protocol implementation. The note is protocol `0x01`, envelope version `0x02`.
 
-The window shows the loaded account address, a recipient, and a message. Send seals an everyday note in the extension, then `ts/scripts/godot-raven.ts` posts it on AlgoKit LocalNet. The fee line says a short note spends 0.001 ALGO and delivers 0.001 ALGO. The notice says that addresses, timing, and amounts are public.
+The window shows the loaded account address, a recipient, and a message. Send seals an everyday note in the extension, then `ts/scripts/godot-raven.ts` posts it on AlgoKit LocalNet. The fee line says a short note spends 0.001 ALGO and delivers 0.001 ALGO. A longer note asks before it spends the higher fee. The notice says that addresses, timing, and amounts are public.
 
 The account file is `user://localnet-wallet.json`, created outside this repository. The bridge reads the LocalNet dispenser from kmd. It does not contain a key. Set `BUN` if `bun` is not on the path Godot uses.
 

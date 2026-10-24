@@ -74,7 +74,7 @@ text = "Send"
 [node name="Fee" type="Label" parent="Center/Card"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.639216, 0.596078, 0.52549, 1)
-text = "Sending spends a 0.001 ALGO fee and delivers 0.001 ALGO."
+text = "A short note spends 0.001 ALGO and delivers 0.001 ALGO. A longer note asks before it spends more."
 
 [node name="Status" type="Label" parent="Center/Card"]
 layout_mode = 2

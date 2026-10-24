@@ -11,7 +11,7 @@ spec: godot.spec.md
 
 ## Manual Testing
 
-- [ ] Open `godot/example` in Godot 4.7, send from Alice, and confirm Bob's pane shows the text.
+- [ ] Open `godot/example` in Godot 4.7 with a LocalNet wallet file and confirm the address field loads.
 - [ ] Confirm the notice "Addresses, timing, and amounts are public." stays visible.
 
 ## Edge Cases & Boundary Conditions

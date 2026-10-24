@@ -14,12 +14,12 @@ spec: godot.spec.md
 
 ### REQ-godot-1
 
-The Godot example SHALL let two players in one scene exchange an everyday AlgoChat note without leaving the game.
+The Godot example SHALL let a player send an everyday AlgoChat note from a loaded account without leaving the game.
 
 #### Acceptance Criteria
 
-- Alice's send appears in Bob's transcript, and Bob's send appears in Alice's transcript.
-- The exchange uses sealed notes, not plain text copied between the two panes.
+- The scene shows the account address, a recipient address, and a message field.
+- Send seals the message in the extension before a LocalNet payment is posted.
 
 ### REQ-godot-2
 
@@ -57,13 +57,13 @@ The scene SHALL show, in plain words, that addresses, timing, and amounts are pu
 
 ## Constraints
 
-- Demo seeds in the scene are test keys, not a wallet.
+- The parity harness uses demo seeds. The scene loads `user://localnet-wallet.json` when that file exists.
 - The parity run is local evidence. It does not submit a transaction.
 - The extension binary is built for the host platform and is not committed.
 
 ## Out of Scope
 
-- Algorand payments, indexer reads, and fees.
+- Mainnet payments. The scene can post on AlgoKit LocalNet through `ts/scripts/godot-raven.ts`.
 - Extra lock, hybrid sessions, group mail, and room administration.
 - A seventh row in `implementations.json`.
 - HTML5 export.

@@ -5,8 +5,9 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import algosdk from "algosdk";
+import { notePaymentFee } from "../src/blockchain/message-transaction.js";
 import { parseKeyAnnouncement } from "../src/blockchain/discovery.js";
-import { decodeEnvelope, encodeEnvelope } from "../src/crypto/envelope.js";
+import { decodeEnvelope, isChatMessage } from "../src/crypto/envelope.js";
 import { deriveEncryptionKeys } from "../src/crypto/keys.js";
 import { signEncryptionKey } from "../src/crypto/signature.js";
 import { createChatAccountFromMnemonic, createRandomChatAccount } from "../src/services/mnemonic.service.js";
@@ -84,9 +85,10 @@ async function submit(
 ) {
     const client = algod();
     const suggested = await client.getTransactionParams().do();
-    // Consensus fee is minFee for each 1000 bytes of the encoded transaction, and at least minFee.
+    const minFee = Number(suggested.minFee);
+    // Same surcharge as the libraries: one minimum fee, plus ceil(bytes past 1024 / 10).
     suggested.flatFee = true;
-    suggested.fee = suggested.minFee;
+    suggested.fee = notePaymentFee(note.length, minFee, "ed25519");
     const txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender,
         receiver,
@@ -94,9 +96,6 @@ async function submit(
         note,
         suggestedParams: suggested,
     });
-    const minFee = Number(suggested.minFee);
-    const needed = Math.max(minFee, Math.ceil((txn.estimateSize() * minFee) / 1000));
-    if (Number(txn.fee) < needed) txn.fee = BigInt(needed);
     const fee = Number(txn.fee);
     if (!send) return { fee, amount, network: "localnet" };
     const signed = txn.signTxn(sk);
@@ -117,23 +116,42 @@ async function submitMnemonic(mnemonic: string, receiver: string, amount: number
     return submit(chat.address, chat.account!.sk, receiver, amount, note, send);
 }
 
+function paymentReceiver(tx: { paymentTransaction?: { receiver?: string }; "payment-transaction"?: { receiver?: string } }): string {
+    return tx.paymentTransaction?.receiver ?? tx["payment-transaction"]?.receiver ?? "";
+}
+
 async function discover(address: string): Promise<Uint8Array | null> {
     const client = indexer();
     const verifying = algosdk.Address.fromString(address).publicKey;
-    const response = await client.searchForTransactions().address(address).txType("pay").limit(40).do();
-    for (const tx of response.transactions ?? []) {
-        if (tx.sender !== address) continue;
-        const note = noteBytes(tx.note);
-        if (note.length === 0) continue;
-        const announced = parseKeyAnnouncement(note, verifying);
-        if (announced) return announced.publicKey;
-        try {
-            return decodeEnvelope(note).senderPublicKey;
-        } catch {
-            continue;
+    let tofu: Uint8Array | null = null;
+    let nextToken: string | undefined;
+    let seen = 0;
+    while (seen < 200) {
+        let query = client.searchForTransactions().address(address).txType("pay").limit(50);
+        if (nextToken) query = query.nextToken(nextToken);
+        const response = await query.do();
+        for (const tx of response.transactions ?? []) {
+            seen += 1;
+            if (tx.sender !== address) continue;
+            const note = noteBytes(tx.note);
+            if (paymentReceiver(tx) === address && (note.length === 32 || note.length === 96)) {
+                const announced = parseKeyAnnouncement(note, verifying);
+                if (announced?.isVerified) return announced.publicKey;
+                if (note.length === 96) continue;
+                if (announced && !tofu) tofu = announced.publicKey;
+                continue;
+            }
+            if (!isChatMessage(note)) continue;
+            try {
+                if (!tofu) tofu = decodeEnvelope(note).senderPublicKey;
+            } catch {
+                continue;
+            }
         }
+        nextToken = response["next-token"];
+        if (!nextToken) break;
     }
-    return null;
+    return tofu;
 }
 
 async function run(op: string, body: RequestBody): Promise<Record<string, unknown>> {
@@ -212,8 +230,8 @@ async function main(): Promise<void> {
     const requestPath = process.argv[3];
     const resultPath = process.argv[4];
     if (!op || !requestPath || !resultPath) fail("usage: godot-raven.ts <op> <request.json> <result.json>");
-    const body = JSON.parse(readFileSync(requestPath, "utf8")) as RequestBody;
     try {
+        const body = JSON.parse(readFileSync(requestPath, "utf8")) as RequestBody;
         const result = await run(op, body);
         writeFileSync(resultPath, JSON.stringify({ ok: true, ...result }));
     } catch (error) {
