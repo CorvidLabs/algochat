@@ -11,7 +11,7 @@ files:
 
 ## Purpose
 
-The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. PQ levels are the integers 0 through 5 in section 5.4.2. Group mailbox protocols `0x06` and `0x07` are PQ level 3. Everyday and Extra lock accept envelope versions `0x01` and `0x02`. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does.
+The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. PQ levels are the integers 0 through 5 in section 5.4.2. A new conversation should start at hybrid `0x04` and `0x05`, which is PQ level 3. Group mailbox protocols `0x06` and `0x07` use that same session. Everyday and Extra lock stay assigned and are not the default. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does. This wording does not change the wire format.
 
 Documentation of current source adds offset tables and [application flow diagrams](../../docs/PROTOCOL-FLOWS.md), including separate cryptographic and authorization checks. The flow guide records port-specific limitations without relaxing normative requirements or qualifying a release.
 
@@ -53,3 +53,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-18 | public-room-administration-on-the-group-mailbox-with-the-same-rules-in-every-language: Public room administration on the group mailbox, with the same rules in every language |
 | 2026-10-19 | Clarify existing 0x03–0x07 layouts and application responsibilities; add source-grounded flow diagrams and explicit implementation/evidence limits. |
 | 2026-10-19 | update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the: Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams |
+| 2026-10-24 | Name hybrid `0x04` and `0x05` as the base for a new conversation. Groups use that session. Everyday and extra lock stay assigned and are not the default. No stacked extra-lock mode. |

@@ -169,6 +169,16 @@ PQ level is an integer from 0 to 5. Other documents in this repository MUST use 
 
 Group membership `0x06` and group message `0x07` are assigned in section 5.8. The wrap is the hybrid session, so it is PQ level 3. Level 0 does not meet the bar. This version does not define an Extra lock wrap for the group key. The group message uses the same ChaCha20-Poly1305 body as the other modes. Room administration `0x03` carries no key, so it has no PQ level.
 
+### 5.4.3 Default
+
+A new conversation SHOULD start with a hybrid handshake `0x04` and continue with hybrid messages `0x05`. That is the base. PQ level 3 is the base level of security for a chat and for a room.
+
+A room uses that same hybrid session. Protocol `0x06` delivers the room key. Protocol `0x07` carries the room speech. Protocol `0x03` stays the public administration record and has no PQ level.
+
+Everyday `0x01` stays assigned. A sender MAY use it when the message does not need post-quantum protection, such as a true or false, a blank, or another low-stakes value. Readers MUST still open it.
+
+Extra lock `0x02` stays assigned. A sender MAY use it when the parties share a 32-byte secret outside the chain. It is not the default. This version does not define a mode that stacks extra lock on a hybrid session, and it does not claim PQ level 2, 4, or 5 for a message protocol.
+
 ### 5.5 PSK Wire Format (Protocol `0x02`)
 
 ```
