@@ -36,6 +36,24 @@
       "requirement_ids": [
         "REQ-protocol-7"
       ]
+    },
+    {
+      "timestamp": 1792880931,
+      "commit": "30e7898e42928036b514feb9ecc7415421afc918",
+      "contract_digest": "84d3527e3d5e77f3044782cc08baa6717f10ab3d09d478c7a94c71cf656cde19",
+      "execution_digest": "abe3f2deceb992de0c3b492b7f7cdff4bd64562b4a919acc3b6381168dd1c6d4",
+      "workspace_digest": "23edb47a9d7d7d305ca74466b9dfba8b61dc5c2d1ad6a09da265932b6256c1a6",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-7"
+      ]
     }
   ]
 }
