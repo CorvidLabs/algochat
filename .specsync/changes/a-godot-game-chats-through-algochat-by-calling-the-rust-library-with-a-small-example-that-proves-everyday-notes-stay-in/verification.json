@@ -1,0 +1,22 @@
+{
+  "timestamp": 1792876129,
+  "commit": "b3908952e72ba6a3d4f44d99c5e9a7824c948733",
+  "contract_digest": "c9268058de2480fb63f40f79313d1a6a43743ab1b3e4feaac45600a6edd110d2",
+  "execution_digest": "88c21039766bf81dd071bc24e9d3ba3ae9acc5cd0e35d922abe596749b51cd29",
+  "workspace_digest": "a8b06b702f32113894035bf432b3eb3398a5cc8f8f646e77a376cd0d78f3501c",
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec godot",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-godot-1",
+    "REQ-godot-2",
+    "REQ-godot-3",
+    "REQ-godot-4",
+    "REQ-godot-5"
+  ]
+}

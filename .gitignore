@@ -25,3 +25,8 @@ __pycache__/
 
 # SpecSync regenerates this cache. CI rebuilds it with --force.
 **/.specsync/hashes.json
+
+# Godot extension build. The example copies the library into bin/ at test time.
+godot/extension/target/
+godot/example/bin/
+godot/example/.godot/
