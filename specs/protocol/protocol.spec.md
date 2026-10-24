@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 12
+version: 13
 status: stable
 files:
   - PROTOCOL.md
@@ -54,3 +54,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-19 | Clarify existing 0x03–0x07 layouts and application responsibilities; add source-grounded flow diagrams and explicit implementation/evidence limits. |
 | 2026-10-19 | update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the: Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams |
 | 2026-10-24 | Name hybrid `0x04` and `0x05` as the base for a new conversation. Groups use that session. Everyday and extra lock stay assigned and are not the default. No stacked extra-lock mode. |
+| 2026-10-24 | a-new-conversation-starts-as-a-hybrid-session-everyday-notes-and-extra-lock-stay-available-and-are-not-the-default: A new conversation starts as a hybrid session. Everyday notes and extra lock stay available and are not the default. |
