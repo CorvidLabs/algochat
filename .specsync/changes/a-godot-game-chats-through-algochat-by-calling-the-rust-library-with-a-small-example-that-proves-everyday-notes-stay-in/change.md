@@ -1,6 +1,6 @@
 ---
 id: a-godot-game-chats-through-algochat-by-calling-the-rust-library-with-a-small-example-that-proves-everyday-notes-stay-in
-state: implementing
+state: verifying
 type: feature
 base_commit: b3908952e72ba6a3d4f44d99c5e9a7824c948733
 ---
