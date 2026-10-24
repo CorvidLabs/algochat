@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "a-new-conversation-starts-as-a-hybrid-session-everyday-notes-and-extra-lock-stay-available-and-are-not-the-default",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "b5e3df6d7c5f4f23b3995018e102bbb9aaefbc6b",
+  "contract_digest": "84d3527e3d5e77f3044782cc08baa6717f10ab3d09d478c7a94c71cf656cde19",
+  "execution_digest": "abe3f2deceb992de0c3b492b7f7cdff4bd64562b4a919acc3b6381168dd1c6d4",
+  "workspace_digest": "23edb47a9d7d7d305ca74466b9dfba8b61dc5c2d1ad6a09da265932b6256c1a6",
+  "timestamp": 1792880985
+}

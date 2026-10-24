@@ -7,11 +7,11 @@
   "title": "A new conversation starts as a hybrid session. Everyday notes and extra lock stay available and are not the default.",
   "description": "A new conversation starts as a hybrid session. Everyday notes and extra lock stay available and are not the default.",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "0066fd38457314f7b740d208229815d74a8411ab",
   "created_at": 1792880260,
-  "updated_at": 1792880972,
+  "updated_at": 1792881028,
   "affected_specs": [
     "protocol"
   ],

@@ -1,6 +1,6 @@
 ---
 id: a-new-conversation-starts-as-a-hybrid-session-everyday-notes-and-extra-lock-stay-available-and-are-not-the-default
-state: implementing
+state: archived
 type: documentation
 base_commit: 0066fd38457314f7b740d208229815d74a8411ab
 ---
