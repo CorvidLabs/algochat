@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "release-protocol-1-4-0-and-the-library-versions",
+  "slug": "release-protocol-1-4-0-and-the-library-versions",
+  "title": "Release protocol 1.4.0 and the library versions",
+  "description": "Release protocol 1.4.0 and the library versions",
+  "kind": "operations",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "14b346d140d3122b077b362f882f45c534f3299b",
+  "created_at": 1792369123,
+  "updated_at": 1792881289,
+  "affected_specs": [
+    "release"
+  ],
+  "affected_paths": [
+    "scripts/release/packages.py",
+    "scripts/release/qualify.py",
+    "scripts/release/test_release.py",
+    "specs/release/requirements.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "Protocol tag v1.4.0, Swift 1.4.0, TypeScript 0.10.0, Python 0.3.0, Rust 0.4.0, Kotlin 0.3.0, and Go tag go/v0.3.0 are the source versions."
+  ],
+  "selected_artifacts": [
+    "context",
+    "plan",
+    "testing",
+    "requirements",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "none",
+    "public_contract": "yes"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "timestamp": 1792881243,
+  "commit": "b0be1f4d133796df94a7c3e1039fe6ba48d632cf",
+  "contract_digest": "c67191665357de0b03f3f336c281f7c7ff4af6dd3e3883391631976c53c958e5",
+  "execution_digest": "2fda964e36ecb451ca75a9fdab45f3f9af6586d122f00e5bc4b54c25dccce244",
+  "workspace_digest": "23edb47a9d7d7d305ca74466b9dfba8b61dc5c2d1ad6a09da265932b6256c1a6",
+  "acceptance_input_digest": "fffb8fbbb377f9f245ce486683eb2e81c405aa54f224e43db303c25d35817b84",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "scripts/release/packages.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9a11ee402c199ad69fe3505050be7bb0d8c938afac734a16772297a5768858b6",
+        "entry_digest": "a4c0dd67a6bcff3ed09ccd9fd9dee9204befe35483321e66e4a862988b778211",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "scripts/release/qualify.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2bdb4d1ed2c9aae927c9d55eeaaea1c823682f1ec5af933426c77ce13cd81bb0",
+        "entry_digest": "167d531b4c736ac2ef8217fc1b9ffb81d252ec4d281a8d82db879df5d511001e",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "scripts/release/test_release.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1735b4dbc2e7d2ddc4ed8ab20df4215f11f838869272369f0116a60bffe86241",
+        "entry_digest": "3b06d98bf3a8630a16f352e5062309f17b545ec6b780bc53d634ac9ef846f70e",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a65a7e77dc3b33739fdb248aeff89e6e9ac79ca0e7cb583da54b75254087d9ec",
+        "entry_digest": "408040983931c857066f9fac1024f9f79f589c48175f6403b49ef8cd901de2d3",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/release.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8867e170ecf8cde8ea0063ca1cf7f49d7160c75f77708bc2e19a0cd775780d11",
+        "entry_digest": "f9576b04409c8ecde5d7a8177f330ff11a105a66554eb5b5d86b7852e669c777",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4967a73e6fabebbb17dbb94e01f9df1264416a4b1ed9d83a256d3703edbe2d64",
+        "entry_digest": "fa00ca793276961abf18b9dc34e3d26a2b3826c3668d3f8babbad411801da4b5",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d18081fcbbf495a44ef0be06f8a77ff0b995c63246b361b760c271171c4913b3",
+        "entry_digest": "5f154ab38dc3fbcb30bc0571f3b99ed174054cd9a41c8e788d0fd596c4024ae4",
+        "owners": [
+          "release"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec release",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-release-5"
+  ]
+}
