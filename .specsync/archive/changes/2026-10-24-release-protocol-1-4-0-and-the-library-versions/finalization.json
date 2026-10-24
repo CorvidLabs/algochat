@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "release-protocol-1-4-0-and-the-library-versions",
+  "implementation_commit": "b0be1f4d133796df94a7c3e1039fe6ba48d632cf",
+  "implementation_tree": "6fa05d5c12fb7d6ba66387f4631fe60a4730f5f9",
+  "contract_digest": "c67191665357de0b03f3f336c281f7c7ff4af6dd3e3883391631976c53c958e5",
+  "workspace_digest": "23edb47a9d7d7d305ca74466b9dfba8b61dc5c2d1ad6a09da265932b6256c1a6",
+  "closing_digest": "3c732afc973c96483bbfd60dffe15ac453ee5f363dc99bd448ff36279614ed9e",
+  "review_digest": "0806aa7325d9e72f10b9539bd17e1e39b388a0336346ad7cd3e355a5e10c1a18",
+  "finalization_digest": "b09cfb446c5d9d77b24d79732207098b7ea828563b3dff06fd437ff20410c6d5",
+  "timestamp": 1792881289
+}

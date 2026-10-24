@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "release-protocol-1-4-0-and-the-library-versions",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "b0be1f4d133796df94a7c3e1039fe6ba48d632cf",
+      "contract_digest": "c67191665357de0b03f3f336c281f7c7ff4af6dd3e3883391631976c53c958e5",
+      "execution_digest": "2fda964e36ecb451ca75a9fdab45f3f9af6586d122f00e5bc4b54c25dccce244",
+      "workspace_digest": "23edb47a9d7d7d305ca74466b9dfba8b61dc5c2d1ad6a09da265932b6256c1a6",
+      "timestamp": 1792881256
+    }
+  ]
+}

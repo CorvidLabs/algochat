@@ -7,11 +7,11 @@
   "title": "Release protocol 1.4.0 and the library versions",
   "description": "Release protocol 1.4.0 and the library versions",
   "kind": "operations",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "14b346d140d3122b077b362f882f45c534f3299b",
   "created_at": 1792369123,
-  "updated_at": 1792880453,
+  "updated_at": 1792881338,
   "affected_specs": [
     "release"
   ],

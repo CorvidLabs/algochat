@@ -1,6 +1,6 @@
 ---
 id: release-protocol-1-4-0-and-the-library-versions
-state: implementing
+state: archived
 type: operations
 base_commit: 14b346d140d3122b077b362f882f45c534f3299b
 ---

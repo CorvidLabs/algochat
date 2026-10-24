@@ -19,7 +19,7 @@ This is the public specification and the language implementations. It is not a c
 | [`kt/`](kt/) | Kotlin | `0x01`, `0x02`, `0x03`, `0x04`, `0x05`, `0x06`, `0x07` | `./gradlew test` |
 | [`go/`](go/) | Go | `0x01`, `0x02`, `0x03`, `0x04`, `0x05`, `0x06`, `0x07` | `go test ./...` |
 
-PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0. Extra lock `0x02` is level 1 while the 32-byte pre-shared key stays secret. Hybrid `0x04` and `0x05` are level 3. Group membership `0x06` and group message `0x07` are level 3. Room administration `0x03` is public and has no PQ level. Levels 2, 4, and 5 are not used by a message protocol.
+PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-levels). Everyday `0x01` is level 0. Extra lock `0x02` is level 1 while the 32-byte pre-shared key stays secret. Hybrid `0x04` and `0x05` are level 3. Group membership `0x06` and group message `0x07` are level 3. Room administration `0x03` is public and has no PQ level. Levels 2, 4, and 5 are not used by a message protocol. A new conversation should start at hybrid `0x04` and `0x05`. That is the base. A room uses that same hybrid session. Everyday and extra lock stay available when the sender chooses them. This version does not stack extra lock on hybrid.
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
 
