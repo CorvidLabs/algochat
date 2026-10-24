@@ -1,0 +1,228 @@
+{
+  "timestamp": 1792879691,
+  "commit": "f28bc9fa45bb0f94c1938262b13172f6dcae1b44",
+  "contract_digest": "c9268058de2480fb63f40f79313d1a6a43743ab1b3e4feaac45600a6edd110d2",
+  "execution_digest": "16eb8f59c8692474f07b29bd929ed416b28fcbc368608ea2ecab4cb2b65c28ee",
+  "workspace_digest": "153eaaebbfd7c775dd9e85ec3eb8ca1cd976e9ee923bd7087841db2b8375def3",
+  "acceptance_input_digest": "76812c2e2cfe0cf052bb399fe276ad4c099e56f990aee097ff259ddb417dfce1",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "godot",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "bf127b5db2907c6b250f914fce7e3e34a3e88a292a0d191cf04603debdae7857",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/README.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bb267ca504daa99080913061b81b831f2f04ca1352c0f26fb639c1b8438984f8",
+        "entry_digest": "050f26635b17db7917f1f8410769eaafb51a64ca8c7f1f466e7f97308f0527a1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/algochat.gdextension",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8725237f912310107632bb48a530f0c2193bb5d40d78b8b021e02a1decb448e2",
+        "entry_digest": "bd8c3529db68cf463ad9206bb67806e6f9757af5c7aa97c0ad6f69ba671383d4",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/algochat.gdextension.uid",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e714ed620feba38a07487f3db864f36478c0156cf6ebecb56fd8e4243fb38fa6",
+        "entry_digest": "f7da5a863b7a240f664f9c39e3a41f5a3c6d39c16302202d9002bdc774676d81",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/chat.gd",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0f3737a125550441e64b79e39a4a15d720f0a650133b6ad1e8e07771242a6826",
+        "entry_digest": "25677d838bd1ab6b953b5c4153f6fa6fc4db33f1a5dff425d491ee224d10068e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/chat.gd.uid",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1be27b74138960b5381a39a4a061d02d822b54e19ab3ed1577e6cfb3b0957cf8",
+        "entry_digest": "580f0d4f269b1cf1f8e0867006b94372f9efd8202ef86a39c83c32fd22efe05e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/chat.tscn",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "58e8fe5e4b91c996b2c83d1d1fc4330c12e49c83324829ef2df5a92f3dd5f5f9",
+        "entry_digest": "a2b400148aedc6c0c0924421971fa08b45634376bf65a5065949cbb9a1160889",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/parity_check.gd",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d98d1168fdbe3d00eb125b9504767cd7ffa8c427d5e76337f57fb0e8525e6095",
+        "entry_digest": "36704792b0302986b02e4076ea52880f12e3fce8c2d413d1b2796f8a672e629c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/parity_check.gd.uid",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "14ea0c68464eb5104ddd6a2dd73c7eb7b90deb3c2a603711b6bb619a2401f8e6",
+        "entry_digest": "8d6b5714026d07f4015d319be1dd3b0ee98da9f15fedba0f88f201ce96adc5dc",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/example/project.godot",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "815075826d8608c5e085088c920ceeb82d4e17e10e6213fbdaf84c2a79be1ae0",
+        "entry_digest": "daa4d29e84a41cc707dab0c4b28bd1dda6c28b44fdbb120006070f3a2e414748",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/extension/Cargo.lock",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "10782496a5611feb3e65e49c51d312768fbff2c73472b133be736126dd72331b",
+        "entry_digest": "1838e0d3018f93a78f9aff42b37145da0b9756f2636bb4ea700e008c59f10835",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/extension/Cargo.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "682da9e31a1a86279c563bd577ed79a7892e2725d90a502d501529a9d261cd1e",
+        "entry_digest": "b0b829745a72e58f23a31cd7aceccb82894741ab3f8d9bdc0b3df59868033214",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "godot/extension/src/lib.rs",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4d54a7906f7ff7b9d1ebc6e6b1883c3bed4cd551c85b1c122abad49f72e35f0c",
+        "entry_digest": "adad57e892ce1e2d543243284d93284d5ef7965d614a286dba4b5453d5f70e9b",
+        "owners": [
+          "godot"
+        ]
+      },
+      {
+        "path": "godot/parity/everyday.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "afa2faf78cb2e32a6a59dab0df9e3dc4f71bff45a7e68509e447b46bfabb4b0d",
+        "entry_digest": "23cd6df73fef97ee63dbef41ee6d44586c86aecd24e6ffffa839542bff9904ba",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "hi/godot.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5e113e231ee5513b0c41631336a11e03986aef93aef7666f64272702d7bd55ea",
+        "entry_digest": "cb2688be5196e32bbc55eaf013972b471f9993ec89a4c4f52231e39f0f6b9d5a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/godot/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2b1efb5570089b05c2b6aed24b8c0e3e16c58df37d602579e7392bf507cf6fda",
+        "entry_digest": "3223fb18c643396249bfcb833c1204a1df6ead6bbabaf02e7e0808f3538df2ce",
+        "owners": [
+          "godot"
+        ]
+      },
+      {
+        "path": "specs/godot/godot.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b51c12b1b5554c4a5c3f190c138f89eb3c09f3ad3c9686ca39fe3695346c082c",
+        "entry_digest": "ccf1ee2b312dbf066ec3deecbabd469e46bab2ffaa084575806864465a1ef121",
+        "owners": [
+          "godot"
+        ]
+      },
+      {
+        "path": "specs/godot/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "adbf1443b0e3f5eb0b7d9392f248c4b310f22759d923a7c6f3c11eae1ea3699e",
+        "entry_digest": "0ea8b03687dfe6f4eb77cfeb2f91a87ac86e677d12428b4cb17865e8398fd726",
+        "owners": [
+          "godot"
+        ]
+      },
+      {
+        "path": "specs/godot/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "fc64a78294f229e4263c533742df2b8131ed73c1c7928e170aa585d02632b67b",
+        "entry_digest": "38dce25c27143bc2a4c46ff65c381b43256c2a8af540bcd49c6da643f7365456",
+        "owners": [
+          "godot"
+        ]
+      },
+      {
+        "path": "specs/godot/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4a4304a696c6917e2d1f0dd31ec549b42606ff3b45cc193f20680aaef7b3be01",
+        "entry_digest": "5d4a22771e46bddc00c5474d711c8e4f65f0c1cd042cf7f3df55e3a8e50c1a7f",
+        "owners": [
+          "godot"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec godot",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-godot-1",
+    "REQ-godot-2",
+    "REQ-godot-3",
+    "REQ-godot-4",
+    "REQ-godot-5"
+  ]
+}

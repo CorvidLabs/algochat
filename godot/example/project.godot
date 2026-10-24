@@ -1,0 +1,19 @@
+; Engine configuration file.
+
+config_version=5
+
+[application]
+
+config/name="AlgoChat Godot"
+config/description="Everyday AlgoChat notes inside a Godot scene, calling the Rust library."
+run/main_scene="res://chat.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=560
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"

@@ -1,0 +1,84 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792875451,
+      "digest": "c9268058de2480fb63f40f79313d1a6a43743ab1b3e4feaac45600a6edd110d2",
+      "note": "Approved in session: I approve everything. Capture the Godot Human Intent, run the spec-sync 6.1 lifecycle, and build the parity example.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "a-godot-game-chats-through-algochat-by-calling-the-rust-library-with-a-small-example-that-proves-everyday-notes-stay-in",
+        "title": "A Godot game chats through AlgoChat by calling the Rust library, with a small example that proves everyday notes stay in parity with TypeScript, Swift, Python, Rust, Kotlin, and Go.",
+        "description": "A Godot game chats through AlgoChat by calling the Rust library, with a small example that proves everyday notes stay in parity with TypeScript, Swift, Python, Rust, Kotlin, and Go.",
+        "kind": "feature",
+        "affected_specs": [
+          "godot"
+        ],
+        "affected_paths": [
+          "godot",
+          "hi/godot.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "A headless Godot example seals one everyday version 0x02 note and opens it as sender and recipient. TypeScript, Swift, Python, Rust, Kotlin, and Go each open that note to the same text. The example opens one everyday note written by each of those six. The example shows that addresses, timing, and amounts are public. The binding calls the Rust algochat crate. Extra lock, hybrid sessions, and group mail stay out of this example."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "constraints": "GODOT-3 keeps cryptography in the Rust library. GODOT-4 limits this example to everyday notes. SEND-5 requires a note from one implementation to open in the others. HONEST-1 requires the scene to say that addresses, timing, and amounts are public.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "godot": "6ea99bc04cd73381eb274b3ff837d9e7b40c8d9c2a2a16d87ed64b61533ba4ed"
+      }
+    },
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1792879675,
+      "digest": "c9268058de2480fb63f40f79313d1a6a43743ab1b3e4feaac45600a6edd110d2",
+      "note": "Re-approved after the send-scene wording replaced the two-player scene. Leif asked to finish the spec-sync lifecycle and archive it.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "a-godot-game-chats-through-algochat-by-calling-the-rust-library-with-a-small-example-that-proves-everyday-notes-stay-in",
+        "title": "A Godot game chats through AlgoChat by calling the Rust library, with a small example that proves everyday notes stay in parity with TypeScript, Swift, Python, Rust, Kotlin, and Go.",
+        "description": "A Godot game chats through AlgoChat by calling the Rust library, with a small example that proves everyday notes stay in parity with TypeScript, Swift, Python, Rust, Kotlin, and Go.",
+        "kind": "feature",
+        "affected_specs": [
+          "godot"
+        ],
+        "affected_paths": [
+          "godot",
+          "hi/godot.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "A headless Godot example seals one everyday version 0x02 note and opens it as sender and recipient. TypeScript, Swift, Python, Rust, Kotlin, and Go each open that note to the same text. The example opens one everyday note written by each of those six. The example shows that addresses, timing, and amounts are public. The binding calls the Rust algochat crate. Extra lock, hybrid sessions, and group mail stay out of this example."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "constraints": "GODOT-3 keeps cryptography in the Rust library. GODOT-4 limits this example to everyday notes. SEND-5 requires a note from one implementation to open in the others. HONEST-1 requires the scene to say that addresses, timing, and amounts are public.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "godot": "c2327bee29d168dc8674acc3ca262e7d4462c8923bfcce1f312c886bb22fc799"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792879760,
+      "digest": "d2f8e343e412e5901cd9f40b30891d3450b1f20360024184b48953431a43ed06",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "a-godot-game-chats-through-algochat-by-calling-the-rust-library-with-a-small-example-that-proves-everyday-notes-stay-in",
+  "slug": "a-godot-game-chats-through-algochat-by-calling-the-rust-library-with-a-small-example-that-proves-everyday-notes-stay-in",
+  "title": "A Godot game chats through AlgoChat by calling the Rust library, with a small example that proves everyday notes stay in parity with TypeScript, Swift, Python, Rust, Kotlin, and Go.",
+  "description": "A Godot game chats through AlgoChat by calling the Rust library, with a small example that proves everyday notes stay in parity with TypeScript, Swift, Python, Rust, Kotlin, and Go.",
+  "kind": "feature",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "b3908952e72ba6a3d4f44d99c5e9a7824c948733",
+  "created_at": 1792875046,
+  "updated_at": 1792879760,
+  "affected_specs": [
+    "godot"
+  ],
+  "affected_paths": [
+    "godot",
+    "hi/godot.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "A headless Godot example seals one everyday version 0x02 note and opens it as sender and recipient. TypeScript, Swift, Python, Rust, Kotlin, and Go each open that note to the same text. The example opens one everyday note written by each of those six. The example shows that addresses, timing, and amounts are public. The binding calls the Rust algochat crate. Extra lock, hybrid sessions, and group mail stay out of this example."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "constraints": "GODOT-3 keeps cryptography in the Rust library. GODOT-4 limits this example to everyday notes. SEND-5 requires a note from one implementation to open in the others. HONEST-1 requires the scene to say that addresses, timing, and amounts are public.",
+    "public_contract": "yes"
+  }
+}

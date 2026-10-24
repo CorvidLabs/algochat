@@ -1,0 +1,16 @@
+[package]
+name = "algochat-godot"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Godot 4 extension that calls the AlgoChat Rust library for everyday notes"
+
+[lib]
+crate-type = ["cdylib"]
+name = "algochat_godot"
+
+[dependencies]
+algochat = { path = "../../rs" }
+godot = { version = "0.5.5", features = ["api-4-7"] }
+x25519-dalek = { version = "2.0", features = ["static_secrets"] }

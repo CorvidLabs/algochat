@@ -109,6 +109,16 @@ The full wire format, fees, and test vectors:
 
 A note of 1024 bytes or fewer pays one minimum fee, 0.001 ALGO for an Ed25519 signature or 0.003 ALGO for Falcon-1024. Bytes past 1024 add a surcharge. A full 4096-byte Ed25519 note is 1,308 microAlgos. The formula is in [PROTOCOL.md](PROTOCOL.md).
 
+## Godot example
+
+[`godot/`](godot/) is a Godot 4 example that calls the Rust library. It is not a seventh protocol implementation. The extension seals and opens everyday notes. A LocalNet bridge can fund an account and post one of those notes. The scene says that addresses, timing, and amounts are public. Extra lock, hybrid sessions, and group mail stay out of this example.
+
+```sh
+python3 godot/parity/everyday.py --output /tmp/algochat-godot-parity
+```
+
+That command needs a new directory outside this checkout. It seals one version `0x02` everyday note in headless Godot and opens it with TypeScript, Swift, Python, Rust, Kotlin, and Go. Godot then opens one everyday note from each of those six.
+
 ## What this does not do
 
 | Limit | What it means |
