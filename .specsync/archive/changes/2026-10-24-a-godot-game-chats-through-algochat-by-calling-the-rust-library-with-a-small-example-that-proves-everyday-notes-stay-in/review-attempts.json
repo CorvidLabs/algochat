@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "a-godot-game-chats-through-algochat-by-calling-the-rust-library-with-a-small-example-that-proves-everyday-notes-stay-in",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "f28bc9fa45bb0f94c1938262b13172f6dcae1b44",
+      "contract_digest": "c9268058de2480fb63f40f79313d1a6a43743ab1b3e4feaac45600a6edd110d2",
+      "execution_digest": "16eb8f59c8692474f07b29bd929ed416b28fcbc368608ea2ecab4cb2b65c28ee",
+      "workspace_digest": "153eaaebbfd7c775dd9e85ec3eb8ca1cd976e9ee923bd7087841db2b8375def3",
+      "timestamp": 1792879719
+    }
+  ]
+}

@@ -71,6 +71,13 @@
       "approved_delta_digests": {
         "godot": "c2327bee29d168dc8674acc3ca262e7d4462c8923bfcce1f312c886bb22fc799"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1792879760,
+      "digest": "d2f8e343e412e5901cd9f40b30891d3450b1f20360024184b48953431a43ed06",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []
