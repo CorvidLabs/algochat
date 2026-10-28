@@ -1,4 +1,4 @@
-# Lesson bundle — prepare-protocol-1-5-0-and-the-library-versions
+# Lesson bundle: prepare-protocol-1-5-0-and-the-library-versions
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
