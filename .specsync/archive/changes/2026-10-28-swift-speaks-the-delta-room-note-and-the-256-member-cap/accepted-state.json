@@ -7,11 +7,11 @@
   "title": "Swift speaks the delta room note and the 256 member cap",
   "description": "Swift speaks the delta room note and the 256 member cap",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "d95c89887c2f5129371d642ae9bf05cc5c724555",
   "created_at": 1793203822,
-  "updated_at": 1793203840,
+  "updated_at": 1793203862,
   "affected_specs": [],
   "affected_paths": [
     "swift/specs/algochat/algochat.spec.md",

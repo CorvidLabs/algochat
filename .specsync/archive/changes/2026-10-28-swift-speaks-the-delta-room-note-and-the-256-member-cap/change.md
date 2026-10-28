@@ -1,6 +1,6 @@
 ---
 id: swift-speaks-the-delta-room-note-and-the-256-member-cap
-state: implementing
+state: archived
 type: feature
 base_commit: d95c89887c2f5129371d642ae9bf05cc5c724555
 ---
