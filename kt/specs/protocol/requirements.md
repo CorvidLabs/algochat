@@ -16,6 +16,7 @@ spec: protocol.spec.md
 5. **REQ-protocol-005**: Encryption-key signatures verify only for the correct key and signer, and fingerprints are deterministic; `SignatureTest` covers valid and invalid signatures and fingerprint formatting.
 6. **REQ-protocol-006**: The note ceiling is 4096 bytes. A 882-byte plaintext still encrypts into at most 1024 bytes. A 3954-byte plaintext encodes to exactly 4096 bytes. One extra byte fails before a transaction is built. At minFee 1000, notes of 1024, 2000, and 4096 bytes cost 1000, 1098, and 1308. `AlgoChatTest` covers these cases.
 7. **REQ-protocol-007**: A hybrid session uses ML-KEM-768 with X25519. The handshake is one 2366-byte note. A later message uses a 78-byte header. `PQTest` round-trips and rejects a flipped ciphertext byte. The sender copy needs the sender ML-KEM key.
+8. **REQ-protocol-008**: A new room note omits the member list and can name a parent group. `MEMBER_MAX` is 256. A full-list note still opens. A full list of 256 members is too large. A channel is a separate room the group owner creates. Parent membership does not copy people into it. Key deliveries are separate payments of at most 16. `GroupAdminTest` covers the delta vector and the old full-list vector.
 
 ## Constraints
 
@@ -76,4 +77,12 @@ Hybrid session key derivation SHALL use HKDF-SHA256 over the X25519 secret follo
 Acceptance Criteria
 - `PQTest` matches the TypeScript encapsulation key, shared secret, pinned combiner, and handshake session key.
 - The same test round-trips a message and rejects one flipped ciphertext byte.
+
+### REQ-protocol-008
+
+Kotlin room administration SHALL draft delta protocol 0x03 notes that omit the member list and SHALL still reduce a full-list note. `MEMBER_MAX` SHALL be 256. A full-list note of 256 members SHALL be rejected as too large. A channel SHALL be a separate room whose notes name the parent room. The group owner creates and owns that channel. Parent membership SHALL NOT copy people into the channel. Key deliveries SHALL be separate payments of at most 16, and a landed payment SHALL stay landed.
+
+Acceptance Criteria
+- `GroupAdminTest` rejects a 256-member full list as too large and folds a delta room from 1 member through 256.
+- `GroupAdminTest` matches `vectors/group-admin-delta-v1.json` and still reduces `vectors/group-admin-v1.json`.
 
