@@ -7,11 +7,11 @@
   "title": "Go speaks the delta room note and the 256 member cap",
   "description": "Go speaks the delta room note and the 256 member cap",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "2ed2718d632cbaee654ef7c86fd975e510606b8c",
   "created_at": 1793203540,
-  "updated_at": 1793203599,
+  "updated_at": 1793203666,
   "affected_specs": [],
   "affected_paths": [
     "go/specs/algochat/algochat.spec.md",

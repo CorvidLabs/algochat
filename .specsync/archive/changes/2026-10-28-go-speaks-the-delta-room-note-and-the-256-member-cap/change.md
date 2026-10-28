@@ -1,6 +1,6 @@
 ---
 id: go-speaks-the-delta-room-note-and-the-256-member-cap
-state: implementing
+state: archived
 type: feature
 base_commit: 2ed2718d632cbaee654ef7c86fd975e510606b8c
 ---
