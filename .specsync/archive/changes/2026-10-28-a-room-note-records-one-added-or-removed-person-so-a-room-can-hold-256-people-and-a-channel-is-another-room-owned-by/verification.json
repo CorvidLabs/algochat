@@ -1,0 +1,74 @@
+{
+  "timestamp": 1793199659,
+  "commit": "ac6351e8f890e3d45deebc630dcc4bacc781f8da",
+  "contract_digest": "85b096806269e0c37fd47bbf381948f03a82409b4c49654cb974d91bf4718e57",
+  "execution_digest": "917dc2338bba8acc0091b53874944e7f1594d30d4d1235d71d20bb66d1317c9f",
+  "workspace_digest": "567cf78fcc218930841193abc4d600acc06a7912f6ca491cf97af10e4640850e",
+  "acceptance_input_digest": "4d1cce7fa5ed28a559c390d1c9e02d24ae97ba3fe512c43df75f546cb9c09664",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "PROTOCOL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "024ccd1ed5fa6c3af6656aec3aa30eefea15a30613fb8469d1ba7e63ff02c828",
+        "entry_digest": "eb1e1532c72dc5619d392d3e8b088a6d8ea0afded5c1124eb09201f18623aa0e",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "TEST-VECTORS.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d541c3282f9316d15b4e5e84413015b70b46a17803ab7317c558422b3ac42813",
+        "entry_digest": "cb266f88ca52c9aaeb869718a0756612cf4be4393646660fc6b34437afe92267",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "hi/group.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "da00cd80be893d0970ec5b1c5f63c5697e4c8819a7ef3dc41eb268c5acd936d2",
+        "entry_digest": "782d26ed7e6a74bde31e08570e671cdbaa7cd9fe93899c23bd1a2c401d41787f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/protocol/protocol.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3b30de645cdb435a4ae858b68ee86954588465603e61596d6231ec81e1f98a95",
+        "entry_digest": "282ef7f6f659dbd5264bf85b008277bdb6580e1114353bbf9dbe8d92bac46568",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f4b3873aa3b29bced8d7d684585a7c0da60418c78f4035de2d95c35b0c54d047",
+        "entry_digest": "8710f49611791867e6c99360234dcc44abe499687937f34f2109e0043f8bd2cb",
+        "owners": [
+          "protocol"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-protocol-8"
+  ]
+}
