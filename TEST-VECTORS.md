@@ -525,7 +525,7 @@ The membership note is 195 bytes and starts with `0x0206`. The message note star
 
 `vectors/group-admin-v1.json` is the shared full-list `0x03` record and the `0x06` action-5 key delivery. Those notes still open. Legacy actions 1 through 4 stay in `vectors/group-v1.json`. A create record starts with `0x0203`. Action 5 is a 227-byte note: the 78-byte hybrid header, a 133-byte plaintext, and a 16-byte tag. The session key in the delivery object is an input, not a handshake output. Fill-byte addresses in that file are test ids. A transaction id is 32 bytes of one fill value.
 
-`vectors/group-admin-delta-v1.json` is the delta `0x03` note. The member count is `0xFFFF`, the member keys are absent, and the last 32 bytes are the parent group id (32 zero bytes when the room is not a channel). A create named `team` is 209 bytes. TypeScript drafts and reduces that file. Go, Rust, Python, Kotlin, and Swift still match only `vectors/group-admin-v1.json`. They must not invent a different delta layout.
+`vectors/group-admin-delta-v1.json` is the delta `0x03` note. The member count is `0xFFFF`, the member keys are absent, and the last 32 bytes are the parent group id (32 zero bytes when the room is not a channel). A create named `team` is 209 bytes. TypeScript, Go, Rust, Python, Kotlin, and Swift draft and reduce that file, and each walks its draft_errors. Those cases reject a 257th member and forged channel actions: a stranger creating a channel, a channel that reuses the parent mailbox, an add of someone who is not in the parent room, a channel ownership transfer, and a channel action with no parent room. A channel-create note posted by someone other than the parent owner is rejected. No language invents a different delta layout.
 
 ## Coverage boundaries
 
@@ -534,7 +534,7 @@ The membership note is 195 bytes and starts with `0x0206`. The message note star
 | Hybrid combiner above and valid component fields in `vectors/pq-mlkem768.json` | Deterministic ML-KEM components and KDF bytes | A valid current handshake from the withdrawn `handshake_note` field |
 | `vectors/group-v1.json` | Legacy 195-byte delivery, group KDF and message bytes | Discovery or derivation of its supplied session key |
 | `vectors/group-admin-v1.json` | Public full-list admin encoding/reduction and 227-byte action-5 delivery with supplied inputs | Authenticated blockchain context, actual recipient handshake recovery, persistent replay handling |
-| `vectors/group-admin-delta-v1.json` | Delta `0x03` bytes, including a channel parent group id, reduced by TypeScript | The same bytes in Go, Rust, Python, Kotlin, or Swift |
+| `vectors/group-admin-delta-v1.json` | Delta `0x03` bytes, a channel parent group id, the 256-member cap, and forged channel rejects in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context |
 | Historical LocalNet reports in [PARITY.md](PARITY.md) | The author's reported run at its stated rounds | Independent current-head or release-package qualification |
 
 Use the exact [wire tables](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) and [flow guide](docs/PROTOCOL-FLOWS.md) alongside the fixtures. `vectors/group-admin-v1.json` is unchanged. `vectors/group-admin-delta-v1.json` is the delta note. The LocalNet record for that note is PROTOCOL.md.

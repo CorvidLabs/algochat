@@ -669,6 +669,19 @@ describe('room administration', () => {
                 mailbox: string | null;
                 note: string;
             }[];
+            draft_errors: {
+                name: string;
+                basis_state: Parameters<typeof revive>[0];
+                parent_room?: Parameters<typeof revive>[0];
+                op: number;
+                sender: string;
+                subject: string;
+                name_utf8: string | null;
+                policy: number | null;
+                group_id?: string | null;
+                mailbox?: string | null;
+                error_includes: string;
+            }[];
             reductions: Record<string, {
                 parent_events?: { note: string; sender: string; tx_id: string; round: number; offset: number }[];
                 events: { note: string; sender: string; tx_id: string; round: number; offset: number }[];
@@ -692,6 +705,18 @@ describe('room administration', () => {
                 parentRoom: revive(draft.parent_room),
             });
             expect(toHex(note)).toBe(draft.note);
+        }
+        for (const item of vector.draft_errors) {
+            expect(() => draftAdmin(revive(item.basis_state), {
+                op: item.op,
+                sender: hex(item.sender),
+                subject: hex(item.subject),
+                name: item.name_utf8 === null ? undefined : bytes(item.name_utf8),
+                policy: item.policy ?? undefined,
+                groupId: item.group_id ? hex(item.group_id) : undefined,
+                mailbox: item.mailbox ? hex(item.mailbox) : undefined,
+                parentRoom: revive(item.parent_room ?? null),
+            })).toThrow(new RegExp(item.error_includes, 'i'));
         }
         for (const reduction of Object.values(vector.reductions)) {
             const result = reduceAdmin(
