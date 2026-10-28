@@ -416,6 +416,7 @@ private fun stateJson(state: RoomState): JsonObject {
         put("name_hex", bytesToHex(state.name))
         put("epoch", unsignedEpoch(state.epoch))
         put("head_tx_id", bytesToHex(state.headTxId))
+        put("parent_group_id", bytesToHex(state.parentGroupId))
     }
 }
 
