@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "swift-speaks-the-delta-room-note-and-the-256-member-cap",
+  "slug": "swift-speaks-the-delta-room-note-and-the-256-member-cap",
+  "title": "Swift speaks the delta room note and the 256 member cap",
+  "description": "Swift speaks the delta room note and the 256 member cap",
+  "kind": "feature",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "d95c89887c2f5129371d642ae9bf05cc5c724555",
+  "created_at": 1793203822,
+  "updated_at": 1793203836,
+  "affected_specs": [],
+  "affected_paths": [
+    "swift/specs/algochat/algochat.spec.md",
+    "swift/specs/algochat/context.md",
+    "swift/specs/algochat/tasks.md",
+    "swift/specs/algochat/testing.md",
+    "swift/Sources/AlgoChat/Crypto/GroupAdmin.swift",
+    "swift/Tests/AlgoChatTests/GroupAdminTests.swift"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and the frozen vectors already record the delta room note, the 256 member cap, and the channel parent id. This change is the swift implementation and the swift module notes. It does not change a canonical spec.",
+  "acceptance_criteria": [
+    "Swift drafts and reduces the same delta room note as TypeScript. A full-list note of 256 members is rejected. A delta note folds through 256. Old full-list notes still open. A channel keeps its own roster. A missed key payment can be resumed."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}
