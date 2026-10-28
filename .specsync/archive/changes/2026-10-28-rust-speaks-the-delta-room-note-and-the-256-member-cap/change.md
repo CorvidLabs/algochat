@@ -1,6 +1,6 @@
 ---
 id: rust-speaks-the-delta-room-note-and-the-256-member-cap
-state: implementing
+state: archived
 type: feature
 base_commit: eab9653b1c23ef9cb0d55a3e1fed58d0a5f9a8a9
 ---

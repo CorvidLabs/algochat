@@ -7,11 +7,11 @@
   "title": "Rust speaks the delta room note and the 256 member cap",
   "description": "Rust speaks the delta room note and the 256 member cap",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "eab9653b1c23ef9cb0d55a3e1fed58d0a5f9a8a9",
   "created_at": 1793203822,
-  "updated_at": 1793203840,
+  "updated_at": 1793203862,
   "affected_specs": [],
   "affected_paths": [
     "rs/specs/crate/context.md",
