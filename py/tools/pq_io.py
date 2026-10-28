@@ -198,6 +198,7 @@ def _room_state(value: object) -> RoomState | None:
         return None
     if not isinstance(value, dict):
         raise RuntimeError("basis_state must be an object or null")
+    parent_group_id = value.get("parent_group_id")
     return RoomState(
         group_id=_hex_bytes(value["group_id"]),
         mailbox=_hex_bytes(value["mailbox"]),
@@ -209,6 +210,7 @@ def _room_state(value: object) -> RoomState | None:
         name=_hex_bytes(value["name_hex"]),
         epoch=int(value["epoch"]),
         head_tx_id=_hex_bytes(value["head_tx_id"]),
+        parent_group_id=_hex_bytes(parent_group_id) if isinstance(parent_group_id, str) else bytes(32),
     )
 
 
@@ -226,6 +228,7 @@ def _room_state_json(state: RoomState | None) -> dict | None:
         "name_hex": state.name.hex(),
         "epoch": state.epoch,
         "head_tx_id": state.head_tx_id.hex(),
+        "parent_group_id": state.parent_group_id.hex(),
     }
 
 
@@ -260,6 +263,7 @@ def admin_draft(req: dict) -> dict:
         policy=None if policy is None else int(policy),
         group_id=_optional_hex_field(req, "group_id"),
         mailbox=_optional_hex_field(req, "mailbox"),
+        parent_room=_room_state(req.get("parent_room")),
     )
     return {"note": note.hex()}
 
@@ -278,7 +282,20 @@ def admin_reduce(req: dict) -> dict:
         )
         for item in raw_events
     ]
-    result = reduce_admin(events)
+    parent_raw = req.get("parent_events")
+    parent_events = None
+    if isinstance(parent_raw, list):
+        parent_events = [
+            AdminEvent(
+                note=_hex_bytes(item["note"]),
+                sender=_hex_bytes(item["sender"]),
+                tx_id=_hex_bytes(item["tx_id"]),
+                round=int(item["round"]),
+                offset=int(item["offset"]),
+            )
+            for item in parent_raw
+        ]
+    result = reduce_admin(events, parent_events)
     return {
         "state": _room_state_json(result.state),
         "accepted": [

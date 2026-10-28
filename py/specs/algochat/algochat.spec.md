@@ -55,7 +55,9 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `GROUP_DELIVER_ACTION` | Room administration symbol. |
 | `GROUP_NAME_MAX` | Room administration symbol. |
 | `GROUP_ADMIN_MAX` | Room administration symbol. |
-| `GROUP_MEMBER_MAX` | Room administration symbol. |
+| `GROUP_MEMBER_MAX` | Maximum members, 256. A full-list note that does not fit in 4096 bytes is rejected. New notes omit the member list. |
+| `GROUP_DELIVER_BATCH` | Separate key-delivery payments in one pass, at most 16. Not an atomic group. |
+| `GROUP_MEMBERS_OMITTED` | Member-count sentinel 65535. The note names one subject and omits the roster. |
 | `GROUP_DELIVER_PLAINTEXT_SIZE` | Room administration symbol. |
 | `JOINING_INVITE` | Room administration symbol. |
 | `JOINING_ASK` | Room administration symbol. |
@@ -71,10 +73,15 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `OP_DECLINE_JOIN` | Room administration symbol. |
 | `OP_REMOVE_MEMBER` | Room administration symbol. |
 | `OP_REKEY` | Room administration symbol. |
-| `draft_admin` | Drafts an authorized 0x03 room administration note. |
-| `reduce_admin` | Reduces administration transactions into one room. |
+| `draft_admin` | Drafts an authorized 0x03 note that omits the member list. |
+| `reduce_admin` | Reduces administration transactions into one room. Full-list notes still open. |
 | `sender_may_post` | Whether a member may post at an epoch. |
 | `delivery_authorized` | Whether one accepted record authorizes a key delivery. |
+| `encode_admin_record` | Encodes one 0x03 note. |
+| `authorized_recipients` | Members authorized to receive the key for one accepted record. |
+| `channel_departures` | Channel members who are no longer in the parent room. |
+| `pending_key_deliveries` | Recipients still owed a key. A landed payment stays landed. |
+| `next_delivery_batch` | The next separate key payments, at most 16. |
 | `seal_group_key_delivery` | Seals a 227-byte 0x06 action-5 delivery. |
 | `open_group_key_delivery` | Opens a 227-byte 0x06 action-5 delivery. |
 | `RoomState` | Accepted room roster. |

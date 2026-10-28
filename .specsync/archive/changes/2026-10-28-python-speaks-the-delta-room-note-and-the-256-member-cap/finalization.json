@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-speaks-the-delta-room-note-and-the-256-member-cap",
+  "implementation_commit": "cecc427b020c284f904a236ccfaf85862ed9ca5a",
+  "implementation_tree": "ece6dc1c61661cdc12a4aef67aa645d63429d4e7",
+  "contract_digest": "d1fc40e56c5f5f89014f78c6093d1d73616ae6fee5b6d8c531ec87775f308c83",
+  "workspace_digest": "d831730451524c19b9a82a6b98636e1ea7df82c0f958e8b112f7f1d6f051ab9e",
+  "closing_digest": "b7564e2f2e40d38cf0a218568fb589a5bfd1acb5b2f24f429e7cbfd224fac94e",
+  "review_digest": "f4fa1a85e991c8e645911d03da5383009f6da50c54ce1e725f9c64f8553dce4e",
+  "finalization_digest": "364e563dced221168485d38d3d860f301f722f6007952871f6d95293d80a80a4",
+  "timestamp": 1793203862
+}

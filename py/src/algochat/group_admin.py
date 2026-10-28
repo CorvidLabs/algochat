@@ -2,6 +2,7 @@
 
 Legacy 0x06 actions 1–4 stay in group.py and do not create an owner.
 Pending join requests are derived by the reducer and are not written in the note.
+A new note omits the member list. A full-list note still decodes.
 """
 
 from __future__ import annotations
@@ -21,7 +22,11 @@ GROUP_ADMIN_PROTOCOL = 0x03
 GROUP_DELIVER_ACTION = 5
 GROUP_NAME_MAX = 64
 GROUP_ADMIN_MAX = 16
-GROUP_MEMBER_MAX = 100
+GROUP_MEMBER_MAX = 256
+# Separate key-delivery payments in one pass. Not an atomic transaction group.
+GROUP_DELIVER_BATCH = 16
+# Member count sentinel: the note names one subject and omits the roster.
+GROUP_MEMBERS_OMITTED = 0xFFFF
 GROUP_DELIVER_PLAINTEXT_SIZE = 133
 JOINING_INVITE = 1
 JOINING_ASK = 2
@@ -73,6 +78,8 @@ class RoomState:
     name: bytes
     epoch: int
     head_tx_id: bytes
+    # 32 zero bytes when this room is not a channel.
+    parent_group_id: bytes = _ZERO_ID
 
 
 @dataclass
@@ -139,12 +146,17 @@ class _Decoded:
     admins: list[bytes]
     members: list[bytes]
     subject: bytes
+    # True when the note uses the 0xFFFF sentinel instead of a member list.
+    members_omitted: bool = False
+    # Present on a delta note. Legacy full-list notes leave this as 32 zero bytes.
+    parent_group_id: bytes = _ZERO_ID
 
 
 @dataclass
 class _Public:
     group_id: bytes
     mailbox: bytes
+    parent_group_id: bytes
     owner: bytes
     admins: list[bytes]
     members: list[bytes]
@@ -163,14 +175,29 @@ def draft_admin(
     policy: int | None = None,
     group_id: bytes | None = None,
     mailbox: bytes | None = None,
+    parent_room: RoomState | None = None,
 ) -> bytes:
-    """Encode the only public note that ``op`` may append to ``state``."""
+    """Encode the only public note that ``op`` may append to ``state``.
+
+    The note omits the member list. ``parent_room`` is required when creating
+    a channel and on every later note for that channel.
+    """
     subject_bytes = _ZERO_ID if subject is None else bytes(subject)
+    sender_bytes = bytes(sender)
+    parent_group_id = _channel_parent(
+        state,
+        op,
+        sender_bytes,
+        subject_bytes,
+        group_id,
+        mailbox,
+        parent_room,
+    )
     if state is None:
         parent = _ZERO_ID
         base_name = b""
         base_policy = JOINING_INVITE
-        base_owner = bytes(sender)
+        base_owner = sender_bytes
         base_admins: list[bytes] = []
         base_members: list[bytes] = []
         base_group = _ZERO_ID
@@ -186,49 +213,43 @@ def draft_admin(
         base_group = bytes(state.group_id)
         base_mailbox = bytes(state.mailbox)
         base_epoch = state.epoch
-    decoded = _Decoded(
-        parent=parent,
-        group_id=base_group if group_id is None else bytes(group_id),
-        mailbox=base_mailbox if mailbox is None else bytes(mailbox),
-        epoch=0,
-        op=op,
-        name=base_name if name is None else bytes(name),
-        policy=base_policy if policy is None else policy,
-        owner=base_owner,
-        admins=base_admins,
-        members=base_members,
-        subject=subject_bytes,
-    )
+    chosen_group = base_group if group_id is None else bytes(group_id)
+    chosen_mailbox = base_mailbox if mailbox is None else bytes(mailbox)
+    chosen_name = base_name if name is None else bytes(name)
+    chosen_policy = base_policy if policy is None else policy
     if _op_is(op, OP_CREATE):
         nxt = _Public(
-            group_id=decoded.group_id,
-            mailbox=decoded.mailbox,
-            owner=bytes(sender),
+            group_id=chosen_group,
+            mailbox=chosen_mailbox,
+            parent_group_id=bytes(parent_group_id),
+            owner=sender_bytes,
             admins=[],
-            members=[bytes(sender)],
+            members=[sender_bytes],
             pending=[],
-            policy=decoded.policy,
-            name=decoded.name,
+            policy=chosen_policy,
+            name=chosen_name,
             epoch=1,
         )
     else:
         proposed = _Decoded(
-            parent=decoded.parent,
-            group_id=decoded.group_id,
-            mailbox=decoded.mailbox,
+            parent=parent,
+            group_id=chosen_group,
+            mailbox=chosen_mailbox,
             epoch=base_epoch,
-            op=decoded.op,
-            name=decoded.name,
-            policy=decoded.policy,
+            op=op,
+            name=chosen_name,
+            policy=chosen_policy,
             owner=base_owner,
-            admins=decoded.admins,
-            members=decoded.members,
-            subject=decoded.subject,
+            admins=base_admins,
+            members=base_members,
+            subject=subject_bytes,
+            members_omitted=True,
+            parent_group_id=bytes(parent_group_id),
         )
-        nxt = _expect_next(state, proposed, sender)
+        nxt = _expect_next(state, proposed, sender_bytes)
     return _encode_admin_record(
         _Decoded(
-            parent=decoded.parent,
+            parent=parent,
             group_id=nxt.group_id,
             mailbox=nxt.mailbox,
             epoch=nxt.epoch,
@@ -239,42 +260,27 @@ def draft_admin(
             admins=nxt.admins,
             members=nxt.members,
             subject=subject_bytes,
+            members_omitted=True,
+            parent_group_id=bytes(nxt.parent_group_id),
         )
     )
 
 
-def reduce_admin(events: Iterable[AdminEvent]) -> ReduceAdminResult:
+def reduce_admin(
+    events: Iterable[AdminEvent],
+    parent_events: Iterable[AdminEvent] | None = None,
+) -> ReduceAdminResult:
     """Replay administration notes in confirmed order.
 
     Order is round, then intra-round offset, then transaction id bytes.
     A repeated accepted transaction id is ``replay``. A join request does
     not become the chain head. Its parent must be an accepted administration
     transaction. The 32 zero bytes are create's parent and are not that set.
+    Pass ``parent_events`` when the room is a channel. Parent membership is
+    not copied into the channel.
     """
-    ordered = sorted(events, key=lambda item: (item.round, item.offset, bytes(item.tx_id)))
-    state: RoomState | None = None
-    accepted: list[AcceptedAdmin] = []
-    rejected: list[RejectedAdmin] = []
-    seen: set[str] = set()
-    known: set[str] = set()
-    for event in ordered:
-        tx_id = bytes(event.tx_id)
-        key = tx_id.hex()
-        if key in seen:
-            rejected.append(RejectedAdmin(tx_id=tx_id, reason="replay"))
-            continue
-        try:
-            nxt, record, advance = _apply_admin(state, event, known)
-        except Exception as error:  # noqa: BLE001 - one bad note must not stop the chain
-            message = str(error)
-            rejected.append(RejectedAdmin(tx_id=tx_id, reason=message if message else "rejected"))
-            continue
-        seen.add(key)
-        if advance:
-            known.add(key)
-        state = nxt
-        accepted.append(record)
-    return ReduceAdminResult(state=state, accepted=accepted, rejected=rejected)
+    parent_steps = None if parent_events is None else _fold_admin(parent_events, None).steps
+    return _fold_admin(events, parent_steps).result
 
 
 def sender_may_post(state: RoomState, sender: bytes, epoch: int) -> bool:
@@ -308,6 +314,81 @@ def delivery_authorized(
     if _op_is(record.op, OP_REMOVE_MEMBER):
         return record.subject != recipient
     return _op_is(record.op, OP_REKEY) or _op_is(record.op, OP_TRANSFER_OWNER)
+
+
+def authorized_recipients(
+    accepted: Sequence[AcceptedAdmin],
+    admin_tx_id: bytes,
+    sender: bytes,
+    epoch: int,
+) -> list[bytes]:
+    """Members authorized to receive the key for one accepted record."""
+    record = next((item for item in accepted if item.tx_id == admin_tx_id), None)
+    if record is None:
+        return []
+    return [
+        bytes(member)
+        for member in record.members
+        if delivery_authorized(accepted, admin_tx_id, sender, member, epoch)
+    ]
+
+
+def channel_departures(channel: RoomState, parent: RoomState) -> list[bytes]:
+    """Members of a channel who are no longer members of the parent room."""
+    if _is_zero(channel.parent_group_id) or channel.parent_group_id != parent.group_id:
+        raise PQError("Channel does not point at this parent room")
+    return [bytes(member) for member in channel.members if not _contains(parent.members, member)]
+
+
+def pending_key_deliveries(recipients: Sequence[bytes], landed: Sequence[bytes]) -> list[bytes]:
+    """Recipients still owed a key. A payment already in ``landed`` stays there."""
+    return [bytes(recipient) for recipient in recipients if not _contains(landed, recipient)]
+
+
+def next_delivery_batch(
+    pending: Sequence[bytes],
+    batch_size: int = GROUP_DELIVER_BATCH,
+) -> list[bytes]:
+    """The next separate payments, at most 16. This does not build an atomic group."""
+    if type(batch_size) is not int or batch_size < 1 or batch_size > GROUP_DELIVER_BATCH:
+        raise PQError("A key delivery batch is at most 16 payments")
+    return [bytes(item) for item in list(pending)[:batch_size]]
+
+
+def encode_admin_record(
+    parent: bytes,
+    group_id: bytes,
+    mailbox: bytes,
+    epoch: int,
+    op: int,
+    name: bytes,
+    policy: int,
+    owner: bytes,
+    admins: Sequence[bytes],
+    members: Sequence[bytes],
+    subject: bytes,
+    *,
+    members_omitted: bool = False,
+    parent_group_id: bytes | None = None,
+) -> bytes:
+    """Encode one 0x03 note. Omitted members use the 65535 sentinel."""
+    return _encode_admin_record(
+        _Decoded(
+            parent=bytes(parent),
+            group_id=bytes(group_id),
+            mailbox=bytes(mailbox),
+            epoch=epoch,
+            op=op,
+            name=bytes(name),
+            policy=policy,
+            owner=bytes(owner),
+            admins=[bytes(item) for item in admins],
+            members=[bytes(item) for item in members],
+            subject=bytes(subject),
+            members_omitted=members_omitted,
+            parent_group_id=_ZERO_ID if parent_group_id is None else bytes(parent_group_id),
+        )
+    )
 
 
 def seal_group_key_delivery(
@@ -376,12 +457,14 @@ def _apply_admin(
     state: RoomState | None,
     event: AdminEvent,
     known: set[str],
+    parent_state: RoomState | None,
 ) -> tuple[RoomState, AcceptedAdmin, bool]:
     _require_length("sender", event.sender, 32)
     _require_length("transaction id", event.tx_id, 32)
     decoded = _decode_admin(bytes(event.note))
     if decoded.mailbox == event.sender:
         raise PQError("Mailbox key does not own the room")
+    _bind_channel(decoded, bytes(event.sender), parent_state)
     parent = _ZERO_ID if state is None else bytes(state.head_tx_id)
     request = _op_is(decoded.op, OP_REQUEST_JOIN)
     if request:
@@ -409,6 +492,7 @@ def _apply_admin(
         name=nxt.name,
         epoch=nxt.epoch,
         head_tx_id=head,
+        parent_group_id=bytes(nxt.parent_group_id),
     )
     record = AcceptedAdmin(
         tx_id=bytes(event.tx_id),
@@ -431,10 +515,14 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
             raise PQError("Create sender is not the owner")
         if decoded.epoch != 1 or len(decoded.admins) != 0:
             raise PQError("Create starts at epoch 1 with no admins")
-        if len(decoded.members) != 1 or decoded.members[0] != sender:
+        if decoded.members_omitted:
+            if len(decoded.members) != 0:
+                raise PQError("Create membership is the owner alone")
+        elif len(decoded.members) != 1 or decoded.members[0] != sender:
             raise PQError("Create membership is the owner alone")
-        _reject_mailbox_overlap(decoded.mailbox, decoded.members, decoded.admins, decoded.owner)
-        return _body(decoded, [])
+        members = [bytes(sender)]
+        _reject_mailbox_overlap(decoded.mailbox, members, decoded.admins, decoded.owner)
+        return _body(decoded, [], members)
     if state is None:
         raise PQError("Administration parent is missing")
     if decoded.group_id != state.group_id or decoded.mailbox != state.mailbox:
@@ -514,6 +602,7 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
     return _Public(
         group_id=bytes(state.group_id),
         mailbox=bytes(state.mailbox),
+        parent_group_id=bytes(state.parent_group_id),
         owner=owner,
         admins=admins,
         members=members,
@@ -524,13 +613,14 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
     )
 
 
-def _body(decoded: _Decoded, pending: list[bytes]) -> _Public:
+def _body(decoded: _Decoded, pending: list[bytes], members: list[bytes]) -> _Public:
     return _Public(
         group_id=bytes(decoded.group_id),
         mailbox=bytes(decoded.mailbox),
+        parent_group_id=bytes(decoded.parent_group_id),
         owner=bytes(decoded.owner),
         admins=_copy_list(decoded.admins),
-        members=_copy_list(decoded.members),
+        members=_copy_list(members),
         pending=_copy_list(pending),
         policy=decoded.policy,
         name=bytes(decoded.name),
@@ -544,21 +634,27 @@ def _same_state(decoded: _Decoded, nxt: _Public) -> bool:
         and decoded.epoch == nxt.epoch
         and decoded.policy == nxt.policy
         and decoded.name == nxt.name
+        and decoded.parent_group_id == nxt.parent_group_id
         and _same_list(decoded.admins, nxt.admins)
-        and _same_list(decoded.members, nxt.members)
+        and (decoded.members_omitted or _same_list(decoded.members, nxt.members))
     )
 
 
 def _encode_admin_record(fields: _Decoded) -> bytes:
     name = _canonical_name(fields.name)
     admins = _canonical_set(fields.admins, "admins", GROUP_ADMIN_MAX)
-    members = _canonical_set(fields.members, "members", GROUP_MEMBER_MAX)
+    members_omitted = fields.members_omitted is True
+    parent_group_id = bytes(fields.parent_group_id)
     parent = _require_length("parent", fields.parent, 32)
     group_id = _require_length("group id", fields.group_id, 32)
     mailbox = _require_length("mailbox", fields.mailbox, 32)
     owner = _require_length("owner", fields.owner, 32)
     subject = _require_length("subject", fields.subject, 32)
+    _require_length("parent group", parent_group_id, 32)
     epoch = _require_uint32("epoch", fields.epoch)
+    if not members_omitted and not _is_zero(parent_group_id):
+        raise PQError("A full member list cannot name a parent room")
+    members = [] if members_omitted else _canonical_set(fields.members, "members", GROUP_MEMBER_MAX)
     if type(fields.policy) is not int or fields.policy not in (JOINING_INVITE, JOINING_ASK):
         raise PQError("Joining rule must be invite-only or ask-to-join")
     if type(fields.op) is not int or fields.op not in _KNOWN_OPS:
@@ -577,12 +673,19 @@ def _encode_admin_record(fields: _Decoded) -> bytes:
     out += len(admins).to_bytes(2, "big")
     for admin in admins:
         out += admin
-    out += len(members).to_bytes(2, "big")
-    for member in members:
-        out += member
+    out += (GROUP_MEMBERS_OMITTED if members_omitted else len(members)).to_bytes(2, "big")
+    if not members_omitted:
+        for member in members:
+            out += member
     out += subject
+    if members_omitted:
+        out += parent_group_id
     if len(out) > _NOTE_LIMIT:
-        raise PQError("Administration record exceeds 4096 bytes")
+        raise PQError(
+            "Administration record exceeds 4096 bytes"
+            if members_omitted
+            else "Full member list is too large"
+        )
     return bytes(out)
 
 
@@ -619,16 +722,30 @@ def _decode_admin(note: bytes) -> _Decoded:
         cursor += 32
     member_count = int.from_bytes(_take(note, cursor, 2), "big")
     cursor += 2
+    members_omitted = member_count == GROUP_MEMBERS_OMITTED
     members: list[bytes] = []
-    for _ in range(member_count):
-        members.append(_take(note, cursor, 32))
-        cursor += 32
+    if not members_omitted:
+        for _ in range(member_count):
+            members.append(_take(note, cursor, 32))
+            cursor += 32
     subject = _take(note, cursor, 32)
     cursor += 32
+    if members_omitted:
+        parent_group_id = _take(note, cursor, 32)
+        cursor += 32
+    else:
+        parent_group_id = bytes(32)
     if cursor != len(note):
         raise PQError("Administration record has trailing bytes")
+    if len(note) > _NOTE_LIMIT:
+        raise PQError(
+            "Administration record exceeds 4096 bytes"
+            if members_omitted
+            else "Full member list is too large"
+        )
     _canonical_set(admins, "admins", GROUP_ADMIN_MAX)
-    _canonical_set(members, "members", GROUP_MEMBER_MAX)
+    if not members_omitted:
+        _canonical_set(members, "members", GROUP_MEMBER_MAX)
     if not _strictly_increasing(admins) or not _strictly_increasing(members):
         raise PQError("Administration sets must be strictly sorted")
     if policy not in (JOINING_INVITE, JOINING_ASK):
@@ -645,6 +762,8 @@ def _decode_admin(note: bytes) -> _Decoded:
         admins=admins,
         members=members,
         subject=subject,
+        members_omitted=members_omitted,
+        parent_group_id=parent_group_id,
     )
 
 
@@ -666,6 +785,131 @@ def _encode_delivery(
         + _require_length("group key", group_key, 32)
         + _require_length("administration id", admin_tx_id, 32)
     )
+
+
+@dataclass
+class _Folded:
+    result: ReduceAdminResult
+    steps: list[tuple[AdminEvent, RoomState | None]]
+
+
+def _fold_admin(
+    events: Iterable[AdminEvent],
+    parent_steps: list[tuple[AdminEvent, RoomState | None]] | None,
+) -> _Folded:
+    ordered = sorted(events, key=lambda item: (item.round, item.offset, bytes(item.tx_id)))
+    state: RoomState | None = None
+    accepted: list[AcceptedAdmin] = []
+    rejected: list[RejectedAdmin] = []
+    seen: set[str] = set()
+    known: set[str] = set()
+    steps: list[tuple[AdminEvent, RoomState | None]] = []
+    for event in ordered:
+        tx_id = bytes(event.tx_id)
+        key = tx_id.hex()
+        if key in seen:
+            rejected.append(RejectedAdmin(tx_id=tx_id, reason="replay"))
+            steps.append((event, state))
+            continue
+        try:
+            parent_state = None if parent_steps is None else _parent_before(parent_steps, event)
+            nxt, record, advance = _apply_admin(state, event, known, parent_state)
+        except Exception as error:  # noqa: BLE001 - one bad note must not stop the chain
+            message = str(error)
+            rejected.append(RejectedAdmin(tx_id=tx_id, reason=message if message else "rejected"))
+            steps.append((event, state))
+            continue
+        seen.add(key)
+        if advance:
+            known.add(key)
+        state = nxt
+        accepted.append(record)
+        steps.append((event, state))
+    return _Folded(
+        result=ReduceAdminResult(state=state, accepted=accepted, rejected=rejected),
+        steps=steps,
+    )
+
+
+def _parent_before(
+    steps: list[tuple[AdminEvent, RoomState | None]],
+    event: AdminEvent,
+) -> RoomState | None:
+    state: RoomState | None = None
+    for step_event, step_state in steps:
+        if _compare_events(step_event, event) < 0:
+            state = step_state
+        else:
+            break
+    return state
+
+
+def _compare_events(left: AdminEvent, right: AdminEvent) -> int:
+    if left.round != right.round:
+        return -1 if left.round < right.round else 1
+    if left.offset != right.offset:
+        return -1 if left.offset < right.offset else 1
+    left_id = bytes(left.tx_id)
+    right_id = bytes(right.tx_id)
+    if left_id < right_id:
+        return -1
+    if left_id > right_id:
+        return 1
+    return 0
+
+
+def _channel_parent(
+    state: RoomState | None,
+    op: int,
+    sender: bytes,
+    subject: bytes,
+    group_id: bytes | None,
+    mailbox: bytes | None,
+    parent_room: RoomState | None,
+) -> bytes:
+    if _op_is(op, OP_CREATE):
+        if parent_room is None:
+            return bytes(32)
+        if sender != parent_room.owner:
+            raise PQError("Only the group owner creates a channel")
+        chosen_group = bytes(32) if group_id is None else bytes(group_id)
+        chosen_mailbox = bytes(32) if mailbox is None else bytes(mailbox)
+        if chosen_group == parent_room.group_id or chosen_mailbox == parent_room.mailbox:
+            raise PQError("A channel has its own mailbox and group id")
+        return bytes(parent_room.group_id)
+    current = bytes(32) if state is None else bytes(state.parent_group_id)
+    if _is_zero(current):
+        return bytes(current)
+    if parent_room is None or parent_room.group_id != current:
+        raise PQError("Channel does not point at this parent room")
+    if _op_is(op, OP_TRANSFER_OWNER):
+        raise PQError("The group owner keeps the channel")
+    joining = _op_is(op, OP_ADD_MEMBER) or _op_is(op, OP_ACCEPT_JOIN) or _op_is(op, OP_REQUEST_JOIN)
+    if joining and not _contains(parent_room.members, subject):
+        raise PQError("That person is not in the parent room")
+    return bytes(current)
+
+
+def _bind_channel(decoded: _Decoded, sender: bytes, parent_state: RoomState | None) -> None:
+    parent_group_id = decoded.parent_group_id
+    if _is_zero(parent_group_id):
+        return
+    if parent_state is None or parent_state.group_id != parent_group_id:
+        raise PQError("Channel does not point at this parent room")
+    if _op_is(decoded.op, OP_CREATE):
+        if sender != parent_state.owner:
+            raise PQError("Only the group owner creates a channel")
+        if decoded.group_id == parent_state.group_id or decoded.mailbox == parent_state.mailbox:
+            raise PQError("A channel has its own mailbox and group id")
+    if _op_is(decoded.op, OP_TRANSFER_OWNER):
+        raise PQError("The group owner keeps the channel")
+    joining = (
+        _op_is(decoded.op, OP_ADD_MEMBER)
+        or _op_is(decoded.op, OP_ACCEPT_JOIN)
+        or _op_is(decoded.op, OP_REQUEST_JOIN)
+    )
+    if joining and not _contains(parent_state.members, decoded.subject):
+        raise PQError("That person is not in the parent room")
 
 
 def _reject_mailbox_overlap(
