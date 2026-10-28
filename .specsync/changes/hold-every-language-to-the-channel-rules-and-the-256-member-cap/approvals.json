@@ -1,0 +1,37 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793206432,
+      "digest": "41ef50fefa7f213d50812871b361dc1a0082da4ff1c76a48e35892cba7f4659a",
+      "note": "Leif confirmed the shared reject cases on 28 October 2026.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "hold-every-language-to-the-channel-rules-and-the-256-member-cap",
+        "title": "Hold every language to the channel rules and the 256-member cap",
+        "description": "Hold every language to the channel rules and the 256-member cap",
+        "kind": "feature",
+        "affected_specs": [],
+        "affected_paths": [
+          "TEST-VECTORS.md",
+          "ts/src/pq/group-admin.test.ts",
+          "vectors/group-admin-delta-v1.json"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "GROUP-8.b and GROUP-9 already require the 256-member cap and channel ownership. This change adds shared reject cases and makes every language walk them. Canonical specs do not change.",
+        "acceptance_criteria": [
+          "Every language rejects a 257th member and forged channel actions from the shared delta vector."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}
