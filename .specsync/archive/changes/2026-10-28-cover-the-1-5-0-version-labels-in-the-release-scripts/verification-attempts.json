@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1793217973,
+      "commit": "25a94e4257724b208a25edc8c6cdc1344cab50e1",
+      "contract_digest": "a38a38eb7275bfd4bc98f9d89758d2126c372aac8159b21e742a70e0fa4b2c6a",
+      "execution_digest": "dfcd43ce1c15d7deb0cfbf837c3e7b621c312d912dc94a0bbd968ea54f03a63c",
+      "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793217977,
+      "commit": "d08c928997e0a7896e372a4ceda1310a2c2f7e27",
+      "contract_digest": "a38a38eb7275bfd4bc98f9d89758d2126c372aac8159b21e742a70e0fa4b2c6a",
+      "execution_digest": "dfcd43ce1c15d7deb0cfbf837c3e7b621c312d912dc94a0bbd968ea54f03a63c",
+      "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793217977,
+      "commit": "cf17bdcd5571852dc27c18d966f769f3cd9b1f58",
+      "contract_digest": "a38a38eb7275bfd4bc98f9d89758d2126c372aac8159b21e742a70e0fa4b2c6a",
+      "execution_digest": "dfcd43ce1c15d7deb0cfbf837c3e7b621c312d912dc94a0bbd968ea54f03a63c",
+      "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+      "acceptance_input_digest": "4873e80e48aa7d2641ca505d0cfcdec9046ef6f44a7e33f70ba8a4983916bee1",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "TEST-VECTORS.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "01d8a47909424d1f36a7ed90970fbf15e3f94b4724901629501793fec24bcdd1",
+            "entry_digest": "8b6c9772ea9c3867008704fb2dbf6afc03662166c2091f678c9df127a01a5e47",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "scripts/release/packages.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7d5814e41787d9cc813c169a336f294cd121a6b324dc1a9a90415ae4d0b4ab1d",
+            "entry_digest": "a19aa9144bd0d11b60d62834f2833b1208fc0aca1143c1648cabe75e102cb0a6",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "scripts/release/qualify.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "578c057c531838325fa99dbd456932cc4604edc98ea6360ec0f71f859da365b8",
+            "entry_digest": "c1ab6183c09b3adda633b071ae0751cccb75d1095f4a277304945fb91e1876cb",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "scripts/release/test_release.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2bef579fd5bee363e11eea67dd50426d57daf880aa69a3fa7ca3403a17f87967",
+            "entry_digest": "e6e5b091d709fddc5802914a080c7ccf602fa8fc65099a6c885b3312a9b77cf8",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}
