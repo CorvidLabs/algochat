@@ -41,6 +41,13 @@
         "protocol": "f299533813c2f9923fdc794456fa20428405671dd92f96c69c953d629031a35c",
         "release": "4bbeba6ad065224a351f800dbace27c84f4048129fa5cb36e3d4accec63f22c4"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793214017,
+      "digest": "56aaaa7d4e4ee5fd4df3278534745ccc9f1334c85c892d646309d05637889205",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []

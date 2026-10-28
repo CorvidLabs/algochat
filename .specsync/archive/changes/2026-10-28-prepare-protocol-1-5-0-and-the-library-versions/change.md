@@ -1,6 +1,6 @@
 ---
 id: prepare-protocol-1-5-0-and-the-library-versions
-state: implementing
+state: archived
 type: documentation
 base_commit: cbf50acb463536e3b8ee91e6386badb490c443f9
 ---

@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "prepare-protocol-1-5-0-and-the-library-versions",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "8a7d879500ce8e7c31d4255ae4ae52f051fafe89",
+  "contract_digest": "c1944290f20af9955e2c77c58a9dc1a0b2cf43096a405469e306ec26a449bef1",
+  "execution_digest": "1603c97b0767e0dffc03bde569cf24f4651e57159eb2cd2a90cd66a4ed48a286",
+  "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+  "timestamp": 1793214002
+}
