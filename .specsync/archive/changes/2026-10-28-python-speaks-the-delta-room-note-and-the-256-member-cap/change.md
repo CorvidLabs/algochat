@@ -1,6 +1,6 @@
 ---
 id: python-speaks-the-delta-room-note-and-the-256-member-cap
-state: implementing
+state: archived
 type: feature
 base_commit: 3124ff1e5d1bda5c7328eb29c86f7da8c0f14977
 ---

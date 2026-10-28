@@ -1,0 +1,82 @@
+{
+  "timestamp": 1793203839,
+  "commit": "cecc427b020c284f904a236ccfaf85862ed9ca5a",
+  "contract_digest": "d1fc40e56c5f5f89014f78c6093d1d73616ae6fee5b6d8c531ec87775f308c83",
+  "execution_digest": "3e9e6af68d6791683f493f08bf80674e718a909d2d278f9a2b7e17e8a5c15e8a",
+  "workspace_digest": "d831730451524c19b9a82a6b98636e1ea7df82c0f958e8b112f7f1d6f051ab9e",
+  "acceptance_input_digest": "ef742599fd8ee5c1bfeaf23d32c3a920df1e1fd8ff84556aa5fe3ffe854f695d",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "py/specs/algochat/algochat.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7d00f3a99218037ac55d2d2b64f751ec395ba171bb1042be268d9b3893535484",
+        "entry_digest": "e089af40f2b73adbd172775181e8a883f075d261ab02f34c7237d74c9fd6683b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/specs/algochat/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "72ea7011399cb7e1cc7423ebf8934c5620dba17841739cebe1f8715df166dc1d",
+        "entry_digest": "d7addeddc6828de1fc4a6fd3797c5cbb16121456f71b664e1c7f376a427496f7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/specs/algochat/tasks.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0f2db2d4bdf3aeb9d03d3f3909f2c3908e0f61f67477b17a52b42fba7db2104f",
+        "entry_digest": "049225044ed20ecfd57ac71bf0a03747912c515b4950ec9321810773b6afb6ae",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/specs/algochat/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "23f2cef576397f4852d1a46c9253d9a2e07a27a2007aa7f65ff2c443b25d46b1",
+        "entry_digest": "1c6c297200c7bd53750ccd1db0b15f702ba41be9ba08c26a6a3433dd62c6e407",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/src/algochat/group_admin.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b48d73b32624fd8378ecdb134fb5c4161dedfc17cb1d2617e6db20c2790badcc",
+        "entry_digest": "c4a98c8a4c6519321667cb912dbe6d85d1a4994b60b95483682873a697e752bf",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/tests/test_group_admin.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a94b9082762ed5a419dd80295855eb25ffba2762b14409f413dddc15db85ca8e",
+        "entry_digest": "07ff1ceb167ea6c5fe5684a543e2fcdcdbdc0f3228149cbf39baf66eb8b43c05",
+        "owners": [
+          "@exact:test"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check (no spec in scope)",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}

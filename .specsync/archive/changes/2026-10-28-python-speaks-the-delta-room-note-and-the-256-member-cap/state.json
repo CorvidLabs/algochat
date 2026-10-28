@@ -7,11 +7,11 @@
   "title": "Python speaks the delta room note and the 256 member cap",
   "description": "Python speaks the delta room note and the 256 member cap",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "3124ff1e5d1bda5c7328eb29c86f7da8c0f14977",
   "created_at": 1793203822,
-  "updated_at": 1793203840,
+  "updated_at": 1793203895,
   "affected_specs": [],
   "affected_paths": [
     "py/specs/algochat/algochat.spec.md",
