@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "swift-speaks-the-delta-room-note-and-the-256-member-cap",
+  "implementation_commit": "47697e240992f3bba16b7546805b6c13646c10c1",
+  "implementation_tree": "25984d0e036ff81247a668d345b1d576ebce6e56",
+  "contract_digest": "4201bc6ac1aa85d22c0d074fab8cdf02f4c19de6ce3cf1e5150004037c730806",
+  "workspace_digest": "013caaf136aadea3b882523ecb9b505933e70608c9941e3bc8b73a516b6d817b",
+  "closing_digest": "96b33894ea0545bca43ccb9fce1eca765efadb3e27be229a7c8520e6ccff51ea",
+  "review_digest": "2ff507c1afaa880058ea542a5521b1f0384015bfeb1d418e9a8e2ec152c3f5db",
+  "finalization_digest": "9b5b000ed33fde9affc4df0c7ba055c5ddd24a60b852a5ef0cc7e61c9c029c06",
+  "timestamp": 1793203862
+}

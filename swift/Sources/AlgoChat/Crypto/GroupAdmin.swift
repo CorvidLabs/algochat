@@ -12,6 +12,8 @@ public enum GroupAdmin {
     public struct State: Sendable, Equatable {
         public let groupID: Data
         public let mailbox: Data
+        /// 32 zero bytes when this room is not a channel.
+        public let parentGroupID: Data
         public let owner: Data
         public let admins: [Data]
         public let members: [Data]
@@ -31,10 +33,12 @@ public enum GroupAdmin {
             policy: UInt8,
             name: Data,
             epoch: UInt32,
-            headTxID: Data
+            headTxID: Data,
+            parentGroupID: Data = Data(repeating: 0, count: 32)
         ) {
             self.groupID = groupID
             self.mailbox = mailbox
+            self.parentGroupID = parentGroupID
             self.owner = owner
             self.admins = admins
             self.members = members
@@ -123,13 +127,17 @@ public enum GroupAdmin {
     public static let deliverAction: UInt8 = 5
     public static let nameMax = 64
     public static let adminMax = 16
-    public static let memberMax = 100
+    public static let memberMax = 256
+    /// Member count sentinel. The note names one subject and omits the roster.
+    public static let membersOmitted = 65_535
+    /// Separate key-delivery payments in one pass. Not an atomic transaction group.
+    public static let deliverBatch = 16
     public static let deliverPlaintextSize = 133
     public static let joiningInvite: UInt8 = 1
     public static let joiningAsk: UInt8 = 2
     public static let deliveryNoteSize = GroupMailbox.membershipHeaderSize + deliverPlaintextSize + GroupMailbox.tagSize
 
-    /// Drafts the one legal next record. Pending joins are not written in the note.
+    /// Drafts the one legal next record. The member list is omitted. Pending joins are not written in the note.
     public static func draft(
         state: State?,
         op: UInt8,
@@ -138,7 +146,8 @@ public enum GroupAdmin {
         name: Data? = nil,
         policy: UInt8? = nil,
         groupID: Data? = nil,
-        mailbox: Data? = nil
+        mailbox: Data? = nil,
+        parentRoom: State? = nil
     ) throws -> Data {
         let chosenSubject = subject ?? Data(count: keySize)
         let parent = state?.headTxID ?? Data(count: keySize)
@@ -146,12 +155,21 @@ public enum GroupAdmin {
         let chosenMailbox = mailbox ?? state?.mailbox ?? Data(count: keySize)
         let chosenName = name ?? state?.name ?? Data()
         let chosenPolicy = policy ?? state?.policy ?? joiningInvite
-        let owner = state?.owner ?? sender
+        let parentGroupID = try channelParent(
+            state,
+            op,
+            sender,
+            chosenSubject,
+            groupID,
+            mailbox,
+            parentRoom
+        )
         let next: Body
         if op == Op.create {
             next = Body(
                 groupID: chosenGroupID,
                 mailbox: chosenMailbox,
+                parentGroupID: Data(parentGroupID),
                 owner: Data(sender),
                 admins: [],
                 members: [Data(sender)],
@@ -169,10 +187,12 @@ public enum GroupAdmin {
                 op: op,
                 name: chosenName,
                 policy: chosenPolicy,
-                owner: owner,
+                owner: state?.owner ?? sender,
                 admins: state?.admins ?? [],
                 members: state?.members ?? [],
-                subject: chosenSubject
+                subject: chosenSubject,
+                membersOmitted: true,
+                parentGroupID: parentGroupID
             )
             next = try expectNext(state, decoded, sender)
         }
@@ -188,44 +208,53 @@ public enum GroupAdmin {
                 owner: next.owner,
                 admins: next.admins,
                 members: next.members,
-                subject: chosenSubject
+                subject: chosenSubject,
+                membersOmitted: true,
+                parentGroupID: next.parentGroupID
+            )
+        )
+    }
+
+    /// Encodes one `0x03` note. `membersOmitted` writes the 65535 sentinel instead of the roster.
+    public static func encodeRecord(
+        parent: Data,
+        groupID: Data,
+        mailbox: Data,
+        epoch: UInt32,
+        op: UInt8,
+        name: Data,
+        policy: UInt8,
+        owner: Data,
+        admins: [Data],
+        members: [Data],
+        subject: Data,
+        membersOmitted: Bool = false,
+        parentGroupID: Data = Data(repeating: 0, count: 32)
+    ) throws -> Data {
+        try encode(
+            Decoded(
+                parent: parent,
+                groupID: groupID,
+                mailbox: mailbox,
+                epoch: epoch,
+                op: op,
+                name: name,
+                policy: policy,
+                owner: owner,
+                admins: admins,
+                members: members,
+                subject: subject,
+                membersOmitted: membersOmitted,
+                parentGroupID: parentGroupID
             )
         )
     }
 
     /// Sorts by confirmed round, then offset, then transaction id. A repeated id is `replay`.
-    public static func reduce(_ events: [Event]) -> Reduced {
-        let ordered = events.sorted { lhs, rhs in
-            if lhs.round != rhs.round { return lhs.round < rhs.round }
-            if lhs.offset != rhs.offset { return lhs.offset < rhs.offset }
-            return compareBytes(lhs.txID, rhs.txID) < 0
-        }
-        var state: State?
-        var accepted: [Accepted] = []
-        var rejected: [Rejection] = []
-        var seen = Set<Data>()
-        // 32 zero bytes are create's parent, not an accepted administration id.
-        var known = Set<Data>()
-        for event in ordered {
-            if seen.contains(event.txID) {
-                rejected.append(Rejection(txID: Data(event.txID), reason: "replay"))
-                continue
-            }
-            do {
-                let next = try apply(state, event, known)
-                seen.insert(Data(event.txID))
-                if next.advance {
-                    known.insert(Data(event.txID))
-                }
-                state = next.state
-                accepted.append(next.accepted)
-            } catch let error as RoomFailure {
-                rejected.append(Rejection(txID: Data(event.txID), reason: error.message))
-            } catch {
-                rejected.append(Rejection(txID: Data(event.txID), reason: String(describing: error)))
-            }
-        }
-        return Reduced(state: state, accepted: accepted, rejected: rejected)
+    /// `parentEvents` is the parent room when this room is a channel.
+    public static func reduce(_ events: [Event], parentEvents: [Event]? = nil) -> Reduced {
+        let parent = parentEvents.map { fold($0, nil).steps }
+        return fold(events, parent).reduced
     }
 
     /// True only when `epoch` equals the room epoch and `sender` is a current member.
@@ -259,6 +288,48 @@ public enum GroupAdmin {
             return true
         }
         return false
+    }
+
+    /// Members who may receive the room key for one accepted record.
+    public static func authorizedRecipients(
+        accepted: [Accepted],
+        adminTxID: Data,
+        sender: Data,
+        epoch: UInt32
+    ) -> [Data] {
+        guard let record = accepted.first(where: { $0.txID == adminTxID }) else {
+            return []
+        }
+        return record.members.filter { member in
+            deliveryAuthorized(
+                accepted: accepted,
+                adminTxID: adminTxID,
+                sender: sender,
+                recipient: member,
+                epoch: epoch
+            )
+        }.map { Data($0) }
+    }
+
+    /// Members of a channel who are no longer members of the parent room.
+    public static func channelDepartures(channel: State, parent: State) throws -> [Data] {
+        if isZero(channel.parentGroupID) || channel.parentGroupID != parent.groupID {
+            throw fail("Channel does not point at this parent room")
+        }
+        return channel.members.filter { !contains(parent.members, $0) }.map { Data($0) }
+    }
+
+    /// Recipients still owed a key. A payment already in `landed` stays there.
+    public static func pendingKeyDeliveries(_ recipients: [Data], landed: [Data]) -> [Data] {
+        recipients.filter { !contains(landed, $0) }.map { Data($0) }
+    }
+
+    /// The next separate payments, at most 16. This does not build an atomic group.
+    public static func nextDeliveryBatch(_ pending: [Data], batchSize: Int = deliverBatch) throws -> [Data] {
+        if batchSize < 1 || batchSize > deliverBatch {
+            throw fail("A key delivery batch is at most 16 payments")
+        }
+        return pending.prefix(batchSize).map { Data($0) }
     }
 
     /**
@@ -361,11 +432,16 @@ public enum GroupAdmin {
         var admins: [Data]
         var members: [Data]
         var subject: Data
+        /// True when the note uses the 0xFFFF sentinel instead of a member list.
+        var membersOmitted: Bool = false
+        /// Present on a delta note. Legacy full-list notes leave this as 32 zero bytes.
+        var parentGroupID: Data = Data(count: 32)
     }
 
     private struct Body {
         var groupID: Data
         var mailbox: Data
+        var parentGroupID: Data
         var owner: Data
         var admins: [Data]
         var members: [Data]
@@ -379,6 +455,11 @@ public enum GroupAdmin {
         var state: State
         var accepted: Accepted
         var advance: Bool
+    }
+
+    private struct Step {
+        var event: Event
+        var state: State?
     }
 
     private enum Op {
@@ -400,13 +481,107 @@ public enum GroupAdmin {
         }
     }
 
-    private static func apply(_ state: State?, _ event: Event, _ known: Set<Data>) throws -> Applied {
+    private static func fold(_ events: [Event], _ parent: [Step]?) -> (reduced: Reduced, steps: [Step]) {
+        let ordered = events.sorted { compareEvents($0, $1) < 0 }
+        var state: State?
+        var accepted: [Accepted] = []
+        var rejected: [Rejection] = []
+        var seen = Set<Data>()
+        // 32 zero bytes are create's parent, not an accepted administration id.
+        var known = Set<Data>()
+        var steps: [Step] = []
+        steps.reserveCapacity(ordered.count)
+        for event in ordered {
+            if seen.contains(event.txID) {
+                rejected.append(Rejection(txID: Data(event.txID), reason: "replay"))
+                steps.append(Step(event: event, state: state))
+                continue
+            }
+            do {
+                let parentState = parent == nil ? nil : parentBefore(parent ?? [], event)
+                let next = try apply(state, event, known, parentState)
+                seen.insert(Data(event.txID))
+                if next.advance {
+                    known.insert(Data(event.txID))
+                }
+                state = next.state
+                accepted.append(next.accepted)
+            } catch let error as RoomFailure {
+                rejected.append(Rejection(txID: Data(event.txID), reason: error.message))
+            } catch {
+                rejected.append(Rejection(txID: Data(event.txID), reason: String(describing: error)))
+            }
+            steps.append(Step(event: event, state: state))
+        }
+        return (Reduced(state: state, accepted: accepted, rejected: rejected), steps)
+    }
+
+    private static func parentBefore(_ steps: [Step], _ event: Event) -> State? {
+        var state: State?
+        for step in steps {
+            if compareEvents(step.event, event) < 0 {
+                state = step.state
+            } else {
+                break
+            }
+        }
+        return state
+    }
+
+    private static func channelParent(
+        _ state: State?,
+        _ op: UInt8,
+        _ sender: Data,
+        _ subject: Data,
+        _ groupID: Data?,
+        _ mailbox: Data?,
+        _ parentRoom: State?
+    ) throws -> Data {
+        if op == Op.create {
+            guard let parentRoom else {
+                return Data(count: keySize)
+            }
+            if sender != parentRoom.owner {
+                throw fail("Only the group owner creates a channel")
+            }
+            let chosenGroupID = groupID ?? Data(count: keySize)
+            let chosenMailbox = mailbox ?? Data(count: keySize)
+            if chosenGroupID == parentRoom.groupID || chosenMailbox == parentRoom.mailbox {
+                throw fail("A channel has its own mailbox and group id")
+            }
+            return Data(parentRoom.groupID)
+        }
+        let current = state?.parentGroupID ?? Data(count: keySize)
+        if isZero(current) {
+            return Data(current)
+        }
+        guard let parentRoom, parentRoom.groupID == current else {
+            throw fail("Channel does not point at this parent room")
+        }
+        if op == Op.transferOwner {
+            throw fail("The group owner keeps the channel")
+        }
+        if op == Op.addMember || op == Op.acceptJoin || op == Op.requestJoin {
+            if !contains(parentRoom.members, subject) {
+                throw fail("That person is not in the parent room")
+            }
+        }
+        return Data(current)
+    }
+
+    private static func apply(
+        _ state: State?,
+        _ event: Event,
+        _ known: Set<Data>,
+        _ parentState: State?
+    ) throws -> Applied {
         try requireCount("sender", event.sender, keySize)
         try requireCount("transaction id", event.txID, keySize)
         let decoded = try decode(event.note)
         if decoded.mailbox == event.sender {
             throw fail("Mailbox key does not own the room")
         }
+        try bindChannel(decoded, event.sender, parentState)
         let parent = state?.headTxID ?? Data(count: keySize)
         let request = decoded.op == Op.requestJoin
         if request {
@@ -439,7 +614,8 @@ public enum GroupAdmin {
             policy: next.policy,
             name: next.name,
             epoch: next.epoch,
-            headTxID: head
+            headTxID: head,
+            parentGroupID: next.parentGroupID
         )
         return Applied(
             state: room,
@@ -469,11 +645,16 @@ public enum GroupAdmin {
             if decoded.epoch != 1 || !decoded.admins.isEmpty {
                 throw fail("Create starts at epoch 1 with no admins")
             }
-            if decoded.members.count != 1 || decoded.members[0] != sender {
+            if decoded.membersOmitted {
+                if !decoded.members.isEmpty {
+                    throw fail("Create membership is the owner alone")
+                }
+            } else if decoded.members.count != 1 || decoded.members[0] != sender {
                 throw fail("Create membership is the owner alone")
             }
-            try rejectMailboxOverlap(decoded.mailbox, decoded.members, decoded.admins, decoded.owner)
-            return body(decoded, [])
+            let members = [Data(sender)]
+            try rejectMailboxOverlap(decoded.mailbox, members, decoded.admins, decoded.owner)
+            return body(decoded, [], members)
         }
         guard let state else {
             throw fail("Administration parent is missing")
@@ -565,6 +746,7 @@ public enum GroupAdmin {
         return Body(
             groupID: Data(state.groupID),
             mailbox: Data(state.mailbox),
+            parentGroupID: Data(state.parentGroupID),
             owner: owner,
             admins: admins,
             members: members,
@@ -575,13 +757,39 @@ public enum GroupAdmin {
         )
     }
 
-    private static func body(_ decoded: Decoded, _ pending: [Data]) -> Body {
+    private static func bindChannel(_ decoded: Decoded, _ sender: Data, _ parentState: State?) throws {
+        if isZero(decoded.parentGroupID) {
+            return
+        }
+        guard let parentState, parentState.groupID == decoded.parentGroupID else {
+            throw fail("Channel does not point at this parent room")
+        }
+        if decoded.op == Op.create {
+            if sender != parentState.owner {
+                throw fail("Only the group owner creates a channel")
+            }
+            if decoded.groupID == parentState.groupID || decoded.mailbox == parentState.mailbox {
+                throw fail("A channel has its own mailbox and group id")
+            }
+        }
+        if decoded.op == Op.transferOwner {
+            throw fail("The group owner keeps the channel")
+        }
+        if decoded.op == Op.addMember || decoded.op == Op.acceptJoin || decoded.op == Op.requestJoin {
+            if !contains(parentState.members, decoded.subject) {
+                throw fail("That person is not in the parent room")
+            }
+        }
+    }
+
+    private static func body(_ decoded: Decoded, _ pending: [Data], _ members: [Data]) -> Body {
         Body(
             groupID: Data(decoded.groupID),
             mailbox: Data(decoded.mailbox),
+            parentGroupID: Data(decoded.parentGroupID),
             owner: Data(decoded.owner),
             admins: decoded.admins.map { Data($0) },
-            members: decoded.members.map { Data($0) },
+            members: members.map { Data($0) },
             pending: pending,
             policy: decoded.policy,
             name: Data(decoded.name),
@@ -594,8 +802,9 @@ public enum GroupAdmin {
             && decoded.epoch == next.epoch
             && decoded.policy == next.policy
             && decoded.name == next.name
+            && decoded.parentGroupID == next.parentGroupID
             && sameSet(decoded.admins, next.admins)
-            && sameSet(decoded.members, next.members)
+            && (decoded.membersOmitted || sameSet(decoded.members, next.members))
     }
 
     private static func rejectMailboxOverlap(_ mailbox: Data, _ members: [Data], _ admins: [Data], _ owner: Data) throws {
@@ -609,12 +818,19 @@ public enum GroupAdmin {
     private static func encode(_ fields: Decoded) throws -> Data {
         let name = try canonicalName(fields.name)
         let admins = try canonicalSet(fields.admins, label: "admins", max: adminMax)
-        let members = try canonicalSet(fields.members, label: "members", max: memberMax)
+        let parentGroupID = fields.parentGroupID
         try requireCount("parent", fields.parent, keySize)
         try requireCount("group id", fields.groupID, keySize)
         try requireCount("mailbox", fields.mailbox, keySize)
         try requireCount("owner", fields.owner, keySize)
         try requireCount("subject", fields.subject, keySize)
+        try requireCount("parent group", parentGroupID, keySize)
+        if !fields.membersOmitted && !isZero(parentGroupID) {
+            throw fail("A full member list cannot name a parent room")
+        }
+        let members = fields.membersOmitted
+            ? []
+            : try canonicalSet(fields.members, label: "members", max: memberMax)
         if fields.policy != joiningInvite && fields.policy != joiningAsk {
             throw fail("Joining rule must be invite-only or ask-to-join")
         }
@@ -622,7 +838,7 @@ public enum GroupAdmin {
             throw fail("Unknown room administration operation")
         }
         var out = Data()
-        out.reserveCapacity(173 + name.count + (admins.count + members.count) * keySize)
+        out.reserveCapacity(205 + name.count + admins.count * keySize)
         out.append(version)
         out.append(protocolID)
         out.append(fields.parent)
@@ -638,13 +854,20 @@ public enum GroupAdmin {
         for admin in admins {
             out.append(admin)
         }
-        appendU16(&out, members.count)
-        for member in members {
-            out.append(member)
+        appendU16(&out, fields.membersOmitted ? membersOmitted : members.count)
+        if !fields.membersOmitted {
+            for member in members {
+                out.append(member)
+            }
         }
         out.append(fields.subject)
+        if fields.membersOmitted {
+            out.append(parentGroupID)
+        }
         if out.count > ChatEnvelope.maxNoteSize {
-            throw fail("Administration record exceeds 4096 bytes")
+            throw fail(fields.membersOmitted
+                ? "Administration record exceeds 4096 bytes"
+                : "Full member list is too large")
         }
         return out
     }
@@ -675,17 +898,28 @@ public enum GroupAdmin {
             admins.append(try take(bytes, &cursor, keySize))
         }
         let memberCount = Int(try readU16(bytes, &cursor))
+        let membersOmittedFlag = memberCount == membersOmitted
         var members: [Data] = []
-        members.reserveCapacity(memberCount)
-        for _ in 0..<memberCount {
-            members.append(try take(bytes, &cursor, keySize))
+        if !membersOmittedFlag {
+            members.reserveCapacity(memberCount)
+            for _ in 0..<memberCount {
+                members.append(try take(bytes, &cursor, keySize))
+            }
         }
         let subject = try take(bytes, &cursor, keySize)
+        let parentGroupID = membersOmittedFlag ? try take(bytes, &cursor, keySize) : Data(count: keySize)
         if cursor != bytes.count {
             throw fail("Administration record has trailing bytes")
         }
+        if bytes.count > ChatEnvelope.maxNoteSize {
+            throw fail(membersOmittedFlag
+                ? "Administration record exceeds 4096 bytes"
+                : "Full member list is too large")
+        }
         _ = try canonicalSet(admins, label: "admins", max: adminMax)
-        _ = try canonicalSet(members, label: "members", max: memberMax)
+        if !membersOmittedFlag {
+            _ = try canonicalSet(members, label: "members", max: memberMax)
+        }
         if !strictlyIncreasing(admins) || !strictlyIncreasing(members) {
             throw fail("Administration sets must be strictly sorted")
         }
@@ -703,7 +937,9 @@ public enum GroupAdmin {
             owner: owner,
             admins: admins,
             members: members,
-            subject: subject
+            subject: subject,
+            membersOmitted: membersOmittedFlag,
+            parentGroupID: parentGroupID
         )
     }
 
@@ -822,6 +1058,16 @@ public enum GroupAdmin {
 
     private static func sameSet(_ left: [Data], _ right: [Data]) -> Bool {
         left.count == right.count && zip(left, right).allSatisfy { $0 == $1 }
+    }
+
+    private static func compareEvents(_ left: Event, _ right: Event) -> Int {
+        if left.round != right.round {
+            return left.round - right.round
+        }
+        if left.offset != right.offset {
+            return left.offset - right.offset
+        }
+        return compareBytes(left.txID, right.txID)
     }
 
     private static func compareBytes(_ left: Data, _ right: Data) -> Int {

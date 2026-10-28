@@ -14,7 +14,16 @@ struct GroupAdminTests {
         #expect(GroupAdmin.deliveryNoteSize == 227)
 
         for draft in vector.drafts {
-            let note = try GroupAdmin.draft(
+            let stored = [UInt8](try data(hex: draft.note))
+            #expect(stored[0] == GroupAdmin.version)
+            #expect(stored[1] == GroupAdmin.protocolID)
+            let nameLen = Int(stored[103])
+            let adminCount = (Int(stored[137 + nameLen]) << 8) | Int(stored[138 + nameLen])
+            let memberAt = 139 + nameLen + (32 * adminCount)
+            let memberCount = (Int(stored[memberAt]) << 8) | Int(stored[memberAt + 1])
+            #expect(memberCount != GroupAdmin.membersOmitted)
+            #expect(memberCount <= 100)
+            let delta = try GroupAdmin.draft(
                 state: try roomState(draft.basis_state),
                 op: try uint8(draft.op),
                 sender: try data(hex: draft.sender),
@@ -22,9 +31,16 @@ struct GroupAdminTests {
                 name: utf8Name(draft.name_utf8),
                 policy: try optionalUInt8(draft.policy),
                 groupID: try optionalHex(draft.group_id),
-                mailbox: try optionalHex(draft.mailbox)
+                mailbox: try optionalHex(draft.mailbox),
+                parentRoom: try roomState(draft.parent_room)
             )
-            #expect(hex(note) == draft.note, "draft \(draft.name)")
+            #expect(delta.count <= 4096, "draft \(draft.name)")
+            let deltaBytes = [UInt8](delta)
+            let deltaName = Int(deltaBytes[103])
+            let deltaAdmins = (Int(deltaBytes[137 + deltaName]) << 8) | Int(deltaBytes[138 + deltaName])
+            let deltaAt = 139 + deltaName + (32 * deltaAdmins)
+            let deltaCount = (Int(deltaBytes[deltaAt]) << 8) | Int(deltaBytes[deltaAt + 1])
+            #expect(deltaCount == GroupAdmin.membersOmitted, "draft \(draft.name)")
         }
 
         for item in vector.draft_errors {
@@ -249,14 +265,328 @@ struct GroupAdminTests {
         #expect(accepted.state?.pending == [friend])
         #expect(accepted.state?.headTxID == fill(10))
     }
+
+    @Test("a full-list note of 256 members is too large, and a delta note folds through 256")
+    func foldsDeltaThrough256() throws {
+        let roster = (1...256).map { person($0) }
+        let admins = (0..<GroupAdmin.adminMax).map { person(1000 + $0) }
+        let owner = fill(1)
+        let friend = fill(2)
+        let groupID = fill(7)
+        let mailbox = fill(9)
+        #expect(GroupAdmin.memberMax == 256)
+        #expect(GroupAdmin.nameMax == 64)
+        #expect(GroupAdmin.adminMax == 16)
+        try expectDescription("too large") {
+            _ = try GroupAdmin.encodeRecord(
+                parent: Data(count: 32),
+                groupID: groupID,
+                mailbox: mailbox,
+                epoch: 1,
+                op: 1,
+                name: Data(count: GroupAdmin.nameMax),
+                policy: GroupAdmin.joiningInvite,
+                owner: roster[0],
+                admins: admins,
+                members: roster,
+                subject: Data(count: 32),
+                membersOmitted: false
+            )
+        }
+
+        let legacy = try GroupAdmin.encodeRecord(
+            parent: Data(count: 32),
+            groupID: groupID,
+            mailbox: mailbox,
+            epoch: 1,
+            op: 1,
+            name: Data("team".utf8),
+            policy: GroupAdmin.joiningInvite,
+            owner: owner,
+            admins: [],
+            members: [owner],
+            subject: Data(count: 32),
+            membersOmitted: false
+        )
+        let legacyRoom = GroupAdmin.reduce([
+            GroupAdmin.Event(note: legacy, sender: owner, txID: fill(10), round: 1, offset: 0)
+        ])
+        #expect(legacyRoom.rejected.isEmpty)
+        #expect(legacyRoom.state?.members.count == 1)
+        let legacyAdd = try GroupAdmin.draft(state: legacyRoom.state, op: 7, sender: owner, subject: friend)
+        let legacyGrown = GroupAdmin.reduce([
+            GroupAdmin.Event(note: legacy, sender: owner, txID: fill(10), round: 1, offset: 0),
+            GroupAdmin.Event(note: legacyAdd, sender: owner, txID: fill(11), round: 1, offset: 1),
+        ])
+        #expect(legacyGrown.rejected.isEmpty)
+        #expect(legacyGrown.state?.members.count == 2)
+
+        let hallOwner = person(1)
+        var events: [GroupAdmin.Event] = []
+        let createdNote = try GroupAdmin.draft(
+            state: nil,
+            op: 1,
+            sender: hallOwner,
+            name: Data("hall".utf8),
+            policy: GroupAdmin.joiningInvite,
+            groupID: person(900),
+            mailbox: person(901)
+        )
+        events.append(marked(createdNote, hallOwner, 1))
+        var reduced = GroupAdmin.reduce(events)
+        #expect(reduced.rejected.isEmpty)
+        #expect(reduced.state?.members.count == 1)
+        for count in 2...256 {
+            let note = try GroupAdmin.draft(state: reduced.state, op: 7, sender: hallOwner, subject: person(count))
+            #expect(note.count <= 4096)
+            let bytes = [UInt8](note)
+            let nameLen = Int(bytes[103])
+            let adminCount = (Int(bytes[137 + nameLen]) << 8) | Int(bytes[138 + nameLen])
+            let at = 139 + nameLen + (32 * adminCount)
+            let memberCount = (Int(bytes[at]) << 8) | Int(bytes[at + 1])
+            #expect(memberCount == GroupAdmin.membersOmitted)
+            events.append(marked(note, hallOwner, count))
+            reduced = GroupAdmin.reduce(events)
+            #expect(reduced.rejected.isEmpty)
+            if count == 101 {
+                #expect(reduced.state?.members.count == 101)
+            }
+        }
+        #expect(reduced.state?.members.count == 256)
+        #expect(reduced.state?.epoch == 1)
+    }
+
+    @Test("a channel keeps its own roster, and a missed key payment can resume")
+    func channelKeepsItsOwnRoster() throws {
+        let owner = fill(1)
+        let parentID = person(700)
+        let parentMail = person(701)
+        let channelID = person(702)
+        let channelMail = person(703)
+        let alice = person(2)
+        let bob = person(3)
+        let cara = person(4)
+        let extra = (0..<16).map { person(20 + $0) }
+        let parentCreate = try GroupAdmin.draft(
+            state: nil,
+            op: 1,
+            sender: owner,
+            name: Data("hall".utf8),
+            policy: GroupAdmin.joiningInvite,
+            groupID: parentID,
+            mailbox: parentMail
+        )
+        var parentEvents = [GroupAdmin.Event(note: parentCreate, sender: owner, txID: fill(10), round: 1, offset: 0)]
+        var parent = GroupAdmin.reduce(parentEvents)
+        for (index, member) in ([alice, bob, cara] + extra).enumerated() {
+            let note = try GroupAdmin.draft(state: parent.state, op: 7, sender: owner, subject: member)
+            parentEvents.append(
+                GroupAdmin.Event(note: note, sender: owner, txID: fill(UInt8(11 + index)), round: index + 2, offset: 0)
+            )
+            parent = GroupAdmin.reduce(parentEvents)
+        }
+        #expect(parent.rejected.isEmpty)
+        #expect(parent.state?.members.count == 1 + 3 + extra.count)
+
+        let parentState = try #require(parent.state)
+        try expectDescription("group owner") {
+            _ = try GroupAdmin.draft(
+                state: nil,
+                op: 1,
+                sender: alice,
+                name: Data("ops".utf8),
+                policy: GroupAdmin.joiningInvite,
+                groupID: channelID,
+                mailbox: channelMail,
+                parentRoom: parentState
+            )
+        }
+
+        let channelCreate = try GroupAdmin.draft(
+            state: nil,
+            op: 1,
+            sender: owner,
+            name: Data("ops".utf8),
+            policy: GroupAdmin.joiningInvite,
+            groupID: channelID,
+            mailbox: channelMail,
+            parentRoom: parentState
+        )
+        var channelEvents = [GroupAdmin.Event(note: channelCreate, sender: owner, txID: fill(80), round: 30, offset: 0)]
+        var channel = GroupAdmin.reduce(channelEvents, parentEvents: parentEvents)
+        #expect(channel.rejected.isEmpty)
+        #expect(channel.state?.members.count == 1)
+        #expect(channel.state?.parentGroupID == parentID)
+        #expect(channel.state?.groupID == channelID)
+        #expect(channel.state?.mailbox == channelMail)
+        #expect(channel.state?.groupID != parent.state?.groupID)
+
+        for (index, member) in ([alice, bob] + extra).enumerated() {
+            let note = try GroupAdmin.draft(
+                state: channel.state,
+                op: 7,
+                sender: owner,
+                subject: member,
+                parentRoom: parent.state
+            )
+            channelEvents.append(
+                GroupAdmin.Event(
+                    note: note,
+                    sender: owner,
+                    txID: fill(UInt8(81 + index)),
+                    round: 31 + index,
+                    offset: 0
+                )
+            )
+            channel = GroupAdmin.reduce(channelEvents, parentEvents: parentEvents)
+        }
+        #expect(channel.rejected.isEmpty)
+        #expect(channel.state?.members.contains(cara) == false)
+        #expect(channel.state?.members.contains(alice) == true)
+        try expectDescription("parent room") {
+            _ = try GroupAdmin.draft(
+                state: channel.state,
+                op: 7,
+                sender: owner,
+                subject: person(500),
+                parentRoom: parent.state
+            )
+        }
+        try expectDescription("group owner keeps") {
+            _ = try GroupAdmin.draft(
+                state: channel.state,
+                op: 6,
+                sender: owner,
+                subject: bob,
+                parentRoom: parent.state
+            )
+        }
+
+        let parentRemove = try GroupAdmin.draft(state: parent.state, op: 11, sender: owner, subject: alice)
+        parentEvents.append(
+            GroupAdmin.Event(note: parentRemove, sender: owner, txID: fill(60), round: 80, offset: 0)
+        )
+        parent = GroupAdmin.reduce(parentEvents)
+        let removedParent = try #require(parent.state)
+        #expect(removedParent.epoch == 2)
+        #expect(try GroupAdmin.senderMayPost(state: removedParent, sender: alice, epoch: 2) == false)
+        let stale = GroupAdmin.reduce(channelEvents, parentEvents: parentEvents)
+        let staleState = try #require(stale.state)
+        #expect(staleState.members.contains(alice))
+        let departures = try GroupAdmin.channelDepartures(channel: staleState, parent: removedParent)
+        #expect(departures.map { $0[3] } == [alice[3]])
+
+        let channelRemove = try GroupAdmin.draft(
+            state: stale.state,
+            op: 11,
+            sender: owner,
+            subject: alice,
+            parentRoom: parent.state
+        )
+        channelEvents.append(
+            GroupAdmin.Event(note: channelRemove, sender: owner, txID: fill(120), round: 90, offset: 0)
+        )
+        channel = GroupAdmin.reduce(channelEvents, parentEvents: parentEvents)
+        #expect(channel.rejected.isEmpty)
+        #expect(channel.state?.epoch == 2)
+        #expect(channel.state?.members.contains(alice) == false)
+        let removeTx = try #require(channel.accepted.last)
+        #expect(GroupAdmin.deliveryAuthorized(
+            accepted: channel.accepted,
+            adminTxID: removeTx.txID,
+            sender: owner,
+            recipient: alice,
+            epoch: 2
+        ) == false)
+        #expect(GroupAdmin.deliveryAuthorized(
+            accepted: channel.accepted,
+            adminTxID: removeTx.txID,
+            sender: bob,
+            recipient: bob,
+            epoch: 2
+        ) == false)
+        let recipients = GroupAdmin.authorizedRecipients(
+            accepted: channel.accepted,
+            adminTxID: removeTx.txID,
+            sender: owner,
+            epoch: 2
+        )
+        #expect(recipients.contains(alice) == false)
+        #expect(recipients.contains(bob))
+        #expect(recipients.count > GroupAdmin.deliverBatch)
+        let batch = try GroupAdmin.nextDeliveryBatch(recipients)
+        #expect(batch.count == GroupAdmin.deliverBatch)
+        let missed = batch[batch.count - 1]
+        let landed = Array(batch.dropLast())
+        let pending = GroupAdmin.pendingKeyDeliveries(recipients, landed: landed)
+        #expect(pending.contains(missed))
+        #expect(try GroupAdmin.nextDeliveryBatch(pending).first == missed)
+        let resumed = landed + [missed]
+        let after = GroupAdmin.pendingKeyDeliveries(recipients, landed: resumed)
+        #expect(after.contains(missed) == false)
+        #expect(after.count == recipients.count - resumed.count)
+    }
+
+    @Test("matches vectors/group-admin-delta-v1.json")
+    func matchesDeltaVector() throws {
+        let vector = try loadAdminVector("group-admin-delta-v1.json")
+        #expect(vector.constants.member_max == GroupAdmin.memberMax)
+        #expect(vector.constants.members_omitted == GroupAdmin.membersOmitted)
+        #expect(vector.constants.deliver_batch == GroupAdmin.deliverBatch)
+        for draft in vector.drafts {
+            let note = try GroupAdmin.draft(
+                state: try roomState(draft.basis_state),
+                op: try uint8(draft.op),
+                sender: try data(hex: draft.sender),
+                subject: try data(hex: draft.subject),
+                name: utf8Name(draft.name_utf8),
+                policy: try optionalUInt8(draft.policy),
+                groupID: try optionalHex(draft.group_id),
+                mailbox: try optionalHex(draft.mailbox),
+                parentRoom: try roomState(draft.parent_room)
+            )
+            #expect(hex(note) == draft.note, "draft \(draft.name)")
+        }
+        for item in vector.draft_errors {
+            try expectDescription(item.error_includes) {
+                _ = try GroupAdmin.draft(
+                    state: try roomState(item.basis_state),
+                    op: try uint8(item.op),
+                    sender: try data(hex: item.sender),
+                    subject: try data(hex: item.subject),
+                    name: utf8Name(item.name_utf8),
+                    policy: try optionalUInt8(item.policy),
+                    groupID: try optionalHex(item.group_id),
+                    mailbox: try optionalHex(item.mailbox),
+                    parentRoom: try roomState(item.parent_room)
+                )
+            }
+        }
+        for (name, reduction) in vector.reductions {
+            let result = GroupAdmin.reduce(
+                try events(reduction.events),
+                parentEvents: try optionalEvents(reduction.parent_events)
+            )
+            #expect(result.rejected.map(\.reason) == reduction.rejected.map(\.reason), "\(name) reasons")
+            #expect(result.accepted.map { Int($0.op) } == reduction.accepted.map(\.op), "\(name) ops")
+            try expectState(result.state, reduction.state, name)
+        }
+    }
 }
 
 private struct AdminVector: Decodable {
+    let constants: AdminConstants
     let drafts: [DraftVector]
     let draft_errors: [DraftErrorVector]
     let reductions: [String: ReductionVector]
     let checks: ChecksVector
     let delivery: DeliveryVector
+}
+
+private struct AdminConstants: Decodable {
+    let member_max: Int
+    let members_omitted: Int?
+    let deliver_batch: Int?
 }
 
 private struct DraftVector: Decodable {
@@ -269,6 +599,7 @@ private struct DraftVector: Decodable {
     let policy: Int?
     let group_id: String?
     let mailbox: String?
+    let parent_room: BasisState?
     let note: String
 }
 
@@ -279,6 +610,9 @@ private struct DraftErrorVector: Decodable {
     let subject: String
     let name_utf8: String?
     let policy: Int?
+    let group_id: String?
+    let mailbox: String?
+    let parent_room: BasisState?
     let error_includes: String
 }
 
@@ -293,9 +627,11 @@ private struct BasisState: Decodable {
     let name_hex: String
     let epoch: Int
     let head_tx_id: String
+    let parent_group_id: String?
 }
 
 private struct ReductionVector: Decodable {
+    let parent_events: [EventVector]?
     let events: [EventVector]
     let accepted: [AcceptedVector]
     let rejected: [RejectedVector]
@@ -358,13 +694,13 @@ private struct DeliveryVector: Decodable {
     let note: String
 }
 
-private func loadAdminVector() throws -> AdminVector {
+private func loadAdminVector(_ name: String = "group-admin-v1.json") throws -> AdminVector {
     let url = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .appendingPathComponent("vectors/group-admin-v1.json")
+        .appendingPathComponent("vectors/\(name)")
     let data = try Data(contentsOf: url)
     return try JSONDecoder().decode(AdminVector.self, from: data)
 }
@@ -381,8 +717,19 @@ private func roomState(_ basis: BasisState?) throws -> GroupAdmin.State? {
         policy: try uint8(basis.policy),
         name: try data(hex: basis.name_hex),
         epoch: try uint32(basis.epoch),
-        headTxID: try data(hex: basis.head_tx_id)
+        headTxID: try data(hex: basis.head_tx_id),
+        parentGroupID: try parentGroup(basis.parent_group_id)
     )
+}
+
+private func parentGroup(_ hexID: String?) throws -> Data {
+    guard let hexID else { return Data(count: 32) }
+    return try data(hex: hexID)
+}
+
+private func optionalEvents(_ items: [EventVector]?) throws -> [GroupAdmin.Event]? {
+    guard let items else { return nil }
+    return try events(items)
 }
 
 private func events(_ items: [EventVector]) throws -> [GroupAdmin.Event] {
@@ -426,6 +773,9 @@ private func expectState(_ state: GroupAdmin.State?, _ expected: BasisState?, _ 
     #expect(hex(state.name) == expected.name_hex, "\(label) name_hex")
     #expect(Int(state.epoch) == expected.epoch, "\(label) epoch")
     #expect(hex(state.headTxID) == expected.head_tx_id, "\(label) head_tx_id")
+    if let parent = expected.parent_group_id {
+        #expect(hex(state.parentGroupID) == parent, "\(label) parent_group_id")
+    }
 }
 
 private func expectDescription(_ needle: String, _ body: () throws -> Void) throws {
@@ -490,6 +840,19 @@ private func hex(_ data: Data) -> String {
 
 private func fill(_ byte: UInt8) -> Data {
     Data(repeating: byte, count: 32)
+}
+
+private func person(_ id: Int) -> Data {
+    var out = Data(count: 32)
+    out[0] = UInt8((id >> 24) & 0xff)
+    out[1] = UInt8((id >> 16) & 0xff)
+    out[2] = UInt8((id >> 8) & 0xff)
+    out[3] = UInt8(id & 0xff)
+    return out
+}
+
+private func marked(_ note: Data, _ sender: Data, _ n: Int) -> GroupAdmin.Event {
+    GroupAdmin.Event(note: note, sender: sender, txID: person(10_000 + n), round: n, offset: 0)
 }
 
 private func withPolicy(_ note: Data, _ policy: UInt8) -> Data {

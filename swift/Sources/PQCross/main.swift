@@ -357,13 +357,17 @@ private enum PQCross {
             name: try optionalUTF8(object, "name_utf8"),
             policy: try optionalByte(object, "policy"),
             groupID: try optionalHex(object, "group_id"),
-            mailbox: try optionalHex(object, "mailbox")
+            mailbox: try optionalHex(object, "mailbox"),
+            parentRoom: try roomState(object["parent_room"], name: "parent_room")
         )
         return ["note": hexEncode(note)]
     }
 
     static func adminReduce(_ object: [String: Any]) throws -> [String: Any] {
-        let reduced = GroupAdmin.reduce(try adminEvents(object["events"]))
+        let reduced = GroupAdmin.reduce(
+            try adminEvents(object["events"]),
+            parentEvents: object["parent_events"] == nil ? nil : try adminEvents(object["parent_events"])
+        )
         return [
             "state": try jsonState(reduced.state),
             "accepted": try jsonAccepted(reduced.accepted),
@@ -447,7 +451,8 @@ private enum PQCross {
             policy: try byteValue(fields["policy"], name: "policy"),
             name: try hexDecode(try string(fields, "name_hex")),
             epoch: try uint32Value(fields["epoch"], name: "epoch"),
-            headTxID: try hexDecode(try string(fields, "head_tx_id"))
+            headTxID: try hexDecode(try string(fields, "head_tx_id")),
+            parentGroupID: try optionalHex(fields, "parent_group_id") ?? Data(count: 32)
         )
     }
 
@@ -469,6 +474,7 @@ private enum PQCross {
             "name_hex": hexEncode(state.name),
             "epoch": epoch,
             "head_tx_id": hexEncode(state.headTxID),
+            "parent_group_id": hexEncode(state.parentGroupID),
         ] as [String: Any]
     }
 
