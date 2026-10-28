@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "kotlin-speaks-the-delta-room-note-and-the-256-member-cap",
+  "slug": "kotlin-speaks-the-delta-room-note-and-the-256-member-cap",
+  "title": "Kotlin speaks the delta room note and the 256 member cap",
+  "description": "Kotlin speaks the delta room note and the 256 member cap",
+  "kind": "feature",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "08a848937593d485b52e82726ddc4de7cdcf3138",
+  "created_at": 1793203822,
+  "updated_at": 1793203861,
+  "affected_specs": [],
+  "affected_paths": [
+    "kt/specs/protocol/context.md",
+    "kt/specs/protocol/protocol.spec.md",
+    "kt/specs/protocol/requirements.md",
+    "kt/specs/protocol/tasks.md",
+    "kt/specs/protocol/testing.md",
+    "kt/src/main/kotlin/com/corvidlabs/algochat/GroupAdmin.kt",
+    "kt/src/test/kotlin/com/corvidlabs/algochat/GroupAdminTest.kt"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and the frozen vectors already record the delta room note, the 256 member cap, and the channel parent id. This change is the kotlin implementation and the kotlin module notes. It does not change a canonical spec.",
+  "acceptance_criteria": [
+    "Kotlin drafts and reduces the same delta room note as TypeScript. A full-list note of 256 members is rejected. A delta note folds through 256. Old full-list notes still open. A channel keeps its own roster. A missed key payment can be resumed."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}

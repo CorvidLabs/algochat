@@ -1,6 +1,6 @@
 ---
 id: kotlin-speaks-the-delta-room-note-and-the-256-member-cap
-state: implementing
+state: archived
 type: feature
 base_commit: 08a848937593d485b52e82726ddc4de7cdcf3138
 ---
