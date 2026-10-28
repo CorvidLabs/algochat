@@ -21,17 +21,31 @@ from algochat import (
     sender_may_post,
 )
 from algochat.group_admin import (
+    GROUP_ADMIN_MAX,
+    GROUP_DELIVER_BATCH,
+    GROUP_MEMBER_MAX,
+    GROUP_MEMBERS_OMITTED,
+    GROUP_NAME_MAX,
     JOINING_ASK,
     JOINING_INVITE,
+    OP_ADD_MEMBER,
     OP_CREATE,
+    OP_REMOVE_MEMBER,
     OP_REQUEST_JOIN,
     OP_SET_POLICY,
+    OP_TRANSFER_OWNER,
     AdminEvent,
     RoomState,
+    authorized_recipients,
+    channel_departures,
+    encode_admin_record,
+    next_delivery_batch,
+    pending_key_deliveries,
 )
 from algochat.pq import PQ_DATA_HEADER_SIZE, PQ_VERSION
 
 _VECTOR_PATH = Path(__file__).resolve().parents[2] / "vectors" / "group-admin-v1.json"
+_DELTA_VECTOR_PATH = Path(__file__).resolve().parents[2] / "vectors" / "group-admin-delta-v1.json"
 _PQ_IO_PATH = Path(__file__).resolve().parents[1] / "tools" / "pq_io.py"
 _STATE_FIELDS = (
     "group_id",
@@ -72,6 +86,7 @@ def _maybe_hex(value: str | None) -> bytes | None:
 def _revive(state: dict | None) -> RoomState | None:
     if state is None:
         return None
+    parent = state.get("parent_group_id")
     return RoomState(
         group_id=_hex(state["group_id"]),
         mailbox=_hex(state["mailbox"]),
@@ -83,6 +98,7 @@ def _revive(state: dict | None) -> RoomState | None:
         name=_hex(state["name_hex"]),
         epoch=state["epoch"],
         head_tx_id=_hex(state["head_tx_id"]),
+        parent_group_id=_hex(parent) if isinstance(parent, str) else bytes(32),
     )
 
 
@@ -114,6 +130,7 @@ def _draft_note(item: dict) -> bytes:
         policy=item.get("policy"),
         group_id=_maybe_hex(item.get("group_id")),
         mailbox=_maybe_hex(item.get("mailbox")),
+        parent_room=_revive(item.get("parent_room")),
     )
 
 
@@ -154,7 +171,15 @@ class TestGroupAdmin:
         vector = _vector()
         assert vector["constants"]["deliver_plaintext_size"] == 133
         for item in vector["drafts"]:
-            assert _draft_note(item).hex() == item["note"], item["name"]
+            stored = _hex(item["note"])
+            assert stored[0] == 0x02
+            assert stored[1] == 0x03
+            member_count = _member_count(stored)
+            assert member_count != GROUP_MEMBERS_OMITTED
+            assert member_count <= 100
+            delta = _draft_note(item)
+            assert len(delta) <= 4096
+            assert _member_count(delta) == GROUP_MEMBERS_OMITTED, item["name"]
 
     def test_draft_errors(self):
         for item in _vector()["draft_errors"]:
@@ -252,7 +277,11 @@ class TestGroupAdmin:
         )
         drafted = json.loads(capsys.readouterr().out)
         assert drafted["ok"] is True, drafted
-        assert drafted["note"] == draft["note"]
+        stored = _hex(draft["note"])
+        assert _member_count(stored) != GROUP_MEMBERS_OMITTED
+        drafted_note = _hex(drafted["note"])
+        assert _member_count(drafted_note) == GROUP_MEMBERS_OMITTED
+        assert len(drafted_note) <= 4096
 
         reduction = vector["reductions"]["create_invite"]
         io.handle(json.dumps({"id": 2, "op": "adminReduce", "events": reduction["events"]}))
@@ -413,11 +442,292 @@ class TestGroupAdmin:
         assert accepted.state.pending == [friend]
         assert accepted.state.head_tx_id == bytes([10]) * 32
 
+    def test_full_list_of_256_is_too_large_and_delta_folds_through_256(self):
+        roster = [_person(index + 1) for index in range(256)]
+        admins = [_person(1000 + index) for index in range(GROUP_ADMIN_MAX)]
+        owner = _fill(1)
+        friend = _fill(2)
+        group_id = _fill(7)
+        mailbox = _fill(9)
+        assert GROUP_MEMBER_MAX == 256
+        assert GROUP_NAME_MAX == 64
+        assert GROUP_ADMIN_MAX == 16
+        with pytest.raises(PQError, match="too large"):
+            encode_admin_record(
+                bytes(32),
+                group_id,
+                mailbox,
+                1,
+                OP_CREATE,
+                bytes(GROUP_NAME_MAX),
+                JOINING_INVITE,
+                roster[0],
+                admins,
+                roster,
+                bytes(32),
+                members_omitted=False,
+            )
+        legacy = encode_admin_record(
+            bytes(32),
+            group_id,
+            mailbox,
+            1,
+            OP_CREATE,
+            b"team",
+            JOINING_INVITE,
+            owner,
+            [],
+            [owner],
+            bytes(32),
+            members_omitted=False,
+        )
+        legacy_room = reduce_admin([_event(legacy, owner, 10)])
+        assert legacy_room.rejected == []
+        assert legacy_room.state is not None
+        assert len(legacy_room.state.members) == 1
+        legacy_add = draft_admin(legacy_room.state, OP_ADD_MEMBER, owner, subject=friend)
+        legacy_grown = reduce_admin([
+            _event(legacy, owner, 10),
+            _event(legacy_add, owner, 11, 2),
+        ])
+        assert legacy_grown.rejected == []
+        assert legacy_grown.state is not None
+        assert len(legacy_grown.state.members) == 2
+
+        hall_id = _person(900)
+        hall_mail = _person(901)
+        hall_owner = _person(1)
+        events: list[AdminEvent] = []
+        created_note = draft_admin(
+            None,
+            OP_CREATE,
+            hall_owner,
+            name=b"hall",
+            policy=JOINING_INVITE,
+            group_id=hall_id,
+            mailbox=hall_mail,
+        )
+        events.append(_marked(created_note, hall_owner, 1))
+        reduced = reduce_admin(events)
+        assert reduced.rejected == []
+        assert reduced.state is not None
+        assert len(reduced.state.members) == 1
+        for count in range(2, 257):
+            note = draft_admin(reduced.state, OP_ADD_MEMBER, hall_owner, subject=_person(count))
+            assert len(note) <= 4096
+            assert _member_count(note) == GROUP_MEMBERS_OMITTED
+            events.append(_marked(note, hall_owner, count))
+            reduced = reduce_admin(events)
+            assert reduced.rejected == []
+            if count == 101:
+                assert reduced.state is not None
+                assert len(reduced.state.members) == 101
+        assert reduced.state is not None
+        assert len(reduced.state.members) == 256
+        assert reduced.state.epoch == 1
+
+    def test_channel_keeps_its_own_roster_and_a_missed_key_payment_can_resume(self):
+        owner = _fill(1)
+        parent_id = _person(700)
+        parent_mail = _person(701)
+        channel_id = _person(702)
+        channel_mail = _person(703)
+        alice = _person(2)
+        bob = _person(3)
+        cara = _person(4)
+        extra = [_person(20 + index) for index in range(16)]
+        parent_create = draft_admin(
+            None,
+            OP_CREATE,
+            owner,
+            name=b"hall",
+            policy=JOINING_INVITE,
+            group_id=parent_id,
+            mailbox=parent_mail,
+        )
+        parent_events = [_event(parent_create, owner, 10)]
+        parent = reduce_admin(parent_events)
+        for index, member in enumerate([alice, bob, cara, *extra]):
+            note = draft_admin(parent.state, OP_ADD_MEMBER, owner, subject=member)
+            parent_events.append(_event(note, owner, 11 + index, index + 2))
+            parent = reduce_admin(parent_events)
+        assert parent.rejected == []
+        assert parent.state is not None
+        assert len(parent.state.members) == 1 + 3 + len(extra)
+
+        with pytest.raises(PQError, match="group owner"):
+            draft_admin(
+                None,
+                OP_CREATE,
+                alice,
+                name=b"ops",
+                policy=JOINING_INVITE,
+                group_id=channel_id,
+                mailbox=channel_mail,
+                parent_room=parent.state,
+            )
+        channel_create = draft_admin(
+            None,
+            OP_CREATE,
+            owner,
+            name=b"ops",
+            policy=JOINING_INVITE,
+            group_id=channel_id,
+            mailbox=channel_mail,
+            parent_room=parent.state,
+        )
+        channel_events = [_event(channel_create, owner, 80, 30)]
+        channel = reduce_admin(channel_events, parent_events)
+        assert channel.rejected == []
+        assert channel.state is not None
+        assert len(channel.state.members) == 1
+        assert channel.state.parent_group_id == parent_id
+        assert channel.state.group_id == channel_id
+        assert channel.state.mailbox == channel_mail
+        assert channel.state.group_id != parent.state.group_id
+
+        for index, member in enumerate([alice, bob, *extra]):
+            note = draft_admin(
+                channel.state,
+                OP_ADD_MEMBER,
+                owner,
+                subject=member,
+                parent_room=parent.state,
+            )
+            channel_events.append(_event(note, owner, 81 + index, 31 + index))
+            channel = reduce_admin(channel_events, parent_events)
+        assert channel.rejected == []
+        assert channel.state is not None
+        assert all(item != cara for item in channel.state.members)
+        assert any(item == alice for item in channel.state.members)
+        with pytest.raises(PQError, match="parent room"):
+            draft_admin(
+                channel.state,
+                OP_ADD_MEMBER,
+                owner,
+                subject=_person(500),
+                parent_room=parent.state,
+            )
+        with pytest.raises(PQError, match="group owner keeps"):
+            draft_admin(
+                channel.state,
+                OP_TRANSFER_OWNER,
+                owner,
+                subject=bob,
+                parent_room=parent.state,
+            )
+
+        parent_remove = draft_admin(parent.state, OP_REMOVE_MEMBER, owner, subject=alice)
+        parent_events = [*parent_events, _event(parent_remove, owner, 60, 80)]
+        parent = reduce_admin(parent_events)
+        assert parent.state is not None
+        assert parent.state.epoch == 2
+        assert sender_may_post(parent.state, alice, 2) is False
+        stale = reduce_admin(channel_events, parent_events)
+        assert stale.state is not None
+        assert any(item == alice for item in stale.state.members)
+        assert [item[3] for item in channel_departures(stale.state, parent.state)] == [alice[3]]
+
+        channel_remove = draft_admin(
+            stale.state,
+            OP_REMOVE_MEMBER,
+            owner,
+            subject=alice,
+            parent_room=parent.state,
+        )
+        channel_events = [*channel_events, _event(channel_remove, owner, 120, 90)]
+        channel = reduce_admin(channel_events, parent_events)
+        assert channel.rejected == []
+        assert channel.state is not None
+        assert channel.state.epoch == 2
+        assert all(item != alice for item in channel.state.members)
+        remove_tx = channel.accepted[-1]
+        assert delivery_authorized(channel.accepted, remove_tx.tx_id, owner, alice, 2) is False
+        assert delivery_authorized(channel.accepted, remove_tx.tx_id, bob, bob, 2) is False
+        recipients = authorized_recipients(channel.accepted, remove_tx.tx_id, owner, 2)
+        assert all(item != alice for item in recipients)
+        assert any(item == bob for item in recipients)
+        assert len(recipients) > GROUP_DELIVER_BATCH
+        batch = next_delivery_batch(recipients)
+        assert len(batch) == GROUP_DELIVER_BATCH
+        missed = batch[-1]
+        landed = batch[:-1]
+        pending = pending_key_deliveries(recipients, landed)
+        assert any(item == missed for item in pending)
+        assert next_delivery_batch(pending)[0] == missed
+        resumed = [*landed, missed]
+        assert all(item != missed for item in pending_key_deliveries(recipients, resumed))
+        assert len(pending_key_deliveries(recipients, resumed)) == len(recipients) - len(resumed)
+
+    def test_group_admin_delta_v1_vector_matches_frozen_bytes(self):
+        vector = json.loads(_DELTA_VECTOR_PATH.read_text())
+        assert vector["constants"]["member_max"] == GROUP_MEMBER_MAX
+        assert vector["constants"]["members_omitted"] == GROUP_MEMBERS_OMITTED
+        assert vector["constants"]["deliver_batch"] == GROUP_DELIVER_BATCH
+        for draft in vector["drafts"]:
+            assert _draft_note(draft).hex() == draft["note"], draft["name"]
+        for name, reduction in vector["reductions"].items():
+            parent_events = reduction.get("parent_events")
+            result = reduce_admin(
+                _wire_events(reduction["events"]),
+                None if parent_events is None else _wire_events(parent_events),
+            )
+            assert [item.reason for item in result.rejected] == [
+                item["reason"] for item in reduction["rejected"]
+            ], name
+            assert [item.op for item in result.accepted] == [
+                item["op"] for item in reduction["accepted"]
+            ], name
+            assert _snap_parent(result.state) == reduction["state"], name
+
 
 def _with_policy(note: bytes, policy: int) -> bytes:
     out = bytearray(note)
     out[104 + out[103]] = policy
     return bytes(out)
+
+
+def _fill(byte: int) -> bytes:
+    return bytes([byte]) * 32
+
+
+def _person(identifier: int) -> bytes:
+    return identifier.to_bytes(4, "big") + bytes(28)
+
+
+def _member_count(note: bytes) -> int:
+    name_len = note[103]
+    admin_count = int.from_bytes(note[137 + name_len : 139 + name_len], "big")
+    at = 139 + name_len + (32 * admin_count)
+    return int.from_bytes(note[at : at + 2], "big")
+
+
+def _event(note: bytes, sender: bytes, tx: int, round_number: int = 1, offset: int = 0) -> AdminEvent:
+    return AdminEvent(note, sender, _fill(tx), round_number, offset)
+
+
+def _marked(note: bytes, sender: bytes, number: int) -> AdminEvent:
+    return AdminEvent(note, sender, _person(10_000 + number), number, 0)
+
+
+def _wire_events(items: list[dict]) -> list[AdminEvent]:
+    return [
+        AdminEvent(
+            note=_hex(item["note"]),
+            sender=_hex(item["sender"]),
+            tx_id=_hex(item["tx_id"]),
+            round=item["round"],
+            offset=item["offset"],
+        )
+        for item in items
+    ]
+
+
+def _snap_parent(state: RoomState | None) -> dict | None:
+    snapped = _snap(state)
+    if snapped is None or state is None:
+        return None
+    return {**snapped, "parent_group_id": state.parent_group_id.hex()}
 
 
 def _seal_raw(session: PQSession, plaintext: bytes, version: int, nonce: bytes) -> bytes:

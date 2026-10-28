@@ -198,6 +198,7 @@ def _room_state(value: object) -> RoomState | None:
         return None
     if not isinstance(value, dict):
         raise RuntimeError("basis_state must be an object or null")
+    parent_group_id = value.get("parent_group_id")
     return RoomState(
         group_id=_hex_bytes(value["group_id"]),
         mailbox=_hex_bytes(value["mailbox"]),
@@ -209,6 +210,7 @@ def _room_state(value: object) -> RoomState | None:
         name=_hex_bytes(value["name_hex"]),
         epoch=int(value["epoch"]),
         head_tx_id=_hex_bytes(value["head_tx_id"]),
+        parent_group_id=_hex_bytes(parent_group_id) if isinstance(parent_group_id, str) else bytes(32),
     )
 
 

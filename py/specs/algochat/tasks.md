@@ -10,5 +10,6 @@ spec: algochat.spec.md
 - Keep lifecycle, lint, and deterministic tests blocking in the Trust lane.
 
 - [x] Inventory `pq.py` and document all 29 shipped PQ package exports against source and existing tests.
+- [x] Draft delta room notes, keep full-list notes readable, cap a room at 256 members, and point a channel at its parent room.
 - [x] Correct README PSK usage to import `os` and serialize validate/decrypt/record in the documented order.
 - [ ] Resolve and verify the implementation gaps recorded in the [accuracy ledger](../../../docs/ACCURACY.md) through separately approved implementation work.
