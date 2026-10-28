@@ -12,6 +12,8 @@ spec: algochat.spec.md
 - Inbound tests reject an authenticated standard, PSK, or PQ note of 4097 bytes before plaintext is returned. Outbound max-plus-one rejection stays.
 - PSK state tests cover uint32 bounds, exhaustion without wrapping to 0, the 200-counter window, replay, and failed authentication leaving state unchanged. PSK state is not persisted; the tests call the pure functions.
 - History tests insert equal-timestamp messages newest-first and require round-then-offset order from `Conversation`, the abstract indexer, and the exported indexer, including a pagination boundary.
+- `src/pq/group-admin.test.ts` rejects a full-list note of 256 members as too large, folds delta notes from 1 member to 256, keeps `vectors/group-admin-v1.json` readable, and matches `vectors/group-admin-delta-v1.json`.
+- `ts/scripts/room-scale-localnet.ts` is a manual LocalNet driver. It uses fresh accounts on an already-running node and does not run inside `bun test`.
 
 ### Security and compatibility
 

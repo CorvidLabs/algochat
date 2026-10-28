@@ -359,7 +359,21 @@ For name byte length `N`, admin count `A`, and member count `M`, the exact offse
 
 Total length is `173 + N + 32 × (A + M)`. A minimal valid create with one member and an empty name is 205 bytes. There is no AEAD, nonce, tag or key in this public record. Its authority comes from the transaction context and reducer, not successful binary decoding.
 
-`policy` is 1 for invite-only and 2 for ask-to-join. Admin and member lists are strictly increasing 32-byte public keys, with no duplicates. At most 16 admins and 100 members. The display name is at most 64 UTF-8 bytes. The whole note is at most 4096 bytes. Pending join requests are not stored in the note. Clients derive them.
+`policy` is 1 for invite-only and 2 for ask-to-join. Admin lists, and full member lists, are strictly increasing 32-byte public keys, with no duplicates. At most 16 admins. The display name is at most 64 UTF-8 bytes. The whole note is at most 4096 bytes. Pending join requests are not stored in the note. Clients derive them.
+
+A full member list makes the note `173 + N + 32 × (A + M)` bytes. With a 64-byte name and 16 admins that holds about 104 members. A list of 256 members is too large, and a writer MUST reject it. A note that already carries a full list still opens. That room keeps working and can grow with later notes.
+
+A new note omits the member list. The member count field is the sentinel `0xFFFF` (65535). No member keys follow. The subject is the one person added or removed, or 32 zero bytes when the operation has no subject. The next 32 bytes are the parent group id. They are 32 zero bytes when the room is not a channel. Clients rebuild the member list by folding history. The reducer still requires the note's owner, epoch, policy, name, admins, and parent group id to equal the one next state. A full-list note must also equal that state's members. A delta note has no member list, so the folded members are that state.
+
+For a delta note the fields after the admin keys are:
+
+| Delta `0x03` field | Offset | Bytes |
+| --- | ---: | ---: |
+| Member count sentinel `0xFFFF` | 139 + N + 32 × A | 2 |
+| Subject account public key | 141 + N + 32 × A | 32 |
+| Parent group id | 173 + N + 32 × A | 32 |
+
+Delta length is `205 + N + 32 × A`. A create with an empty name and no admins is 205 bytes. The same create with the UTF-8 name `team` is 209 bytes. One room holds 256 members once this note is what writers emit. `GROUP_MEMBER_MAX` is 256.
 
 | Op | Name | Who may send it | Effect |
 | --- | --- | --- | --- |
@@ -378,13 +392,21 @@ Total length is `173 + N + 32 × (A + M)`. A minimal valid create with one membe
 
 Admins must be members other than the owner. The mailbox must not appear as owner, admin or member. The owner cannot be removed. The owner must remain a member. Epoch starts at 1 and increases only for remove, rekey, and transfer. An increment past 4294967295 fails.
 
-The parent of create is 32 zero bytes. Every op except a join request names the transaction id of the current head. Clients accept a record only when the parent state authorized that sender to make that change, and only when the note's owner, epoch, policy, name, admins, and members equal the one next state that change produces. Applying the same transaction id twice is a replay.
+The parent of create is 32 zero bytes. That parent is the previous administration transaction, not the parent room. Every op except a join request names the transaction id of the current head. Clients accept a record only when the parent state authorized that sender to make that change, and only when the note's owner, epoch, policy, name, admins, and parent group id equal the one next state that change produces. A full-list note's members must equal that next state too. Applying the same transaction id twice is a replay.
 
 Chain order is confirmed round, then intra-round offset, then the transaction id bytes. When two records name the same parent, the earlier one in that order wins. The other stays rejected, even when an admin signed it. Clients recompute from the full set.
 
 A join request does not become the head, so other requests can name the same accepted record. The request must cite an already-accepted **head-advancing** administration transaction of this room, not another request or the all-zero create parent. It is checked against the current roster, name, policy, owner, and epoch, and the note repeats those fields. A request that confirms after a change to those fields is rejected, and the person asks again. A request is legal only while the room is ask-to-join.
 
 Direct add is an invite. It is legal on both joining rules. Request, accept, and decline are the ask-to-join path. A person may belong to more than one room. Membership in one room does not add them to another.
+
+##### Channels
+
+A channel is another room. It has its own group id, its own mailbox, and its own key. It points at a parent room by putting that room's group id in the delta note's parent group field. The chain parent is still the previous administration transaction of the channel itself.
+
+The group owner creates the channel and owns it. The sender has to be the parent room's owner. The channel group id and mailbox are not the parent's. Create starts with the owner alone. Being in the parent room does not add you to the channel. A later add, accept, or join request names one person, and that person has to already be a member of the parent room. Ownership of a channel does not transfer. The group owner keeps the channel.
+
+Leaving the parent room, or being removed from it, removes you from every channel of that room. The group owner posts a remove on each channel. That remove rotates the channel key. The group owner then delivers each channel's new key the same way as any other removal.
 
 #### 5.8.3 Key delivery (`0x06` action 5) and mailbox messages (`0x07`)
 
@@ -400,7 +422,9 @@ Cryptographic opening validates framing, version, protocol, session sender, hand
 
 The cited administration transaction must be an accepted record sent by this same sender. The epoch must match that record. The recipient must be a member after that record. Add and accept authorize delivery only to the subject. Remove authorizes delivery to every remaining member except the subject. Rekey and transfer authorize delivery to every remaining member, including the new owner after a transfer. Create does not authorize a delivery, because the creator generated the key locally. Set name, set policy, appoint, dismiss, request, and decline do not authorize a delivery.
 
-Adding a member sends the current key only to that member and does not rotate the key. Consequently that member can decrypt retrievable earlier messages from the same epoch. The application generates, stores and distributes keys; the reducer does not generate or erase them. Removal, an explicit rekey, and an ownership transfer rotate the key and deliver the new key only to the members who remain. A removed person does not receive that key. Messages they already opened stay readable under the previous key. A later message uses the new epoch and does not open under the old key.
+Adding a member sends the current key only to that member and does not rotate the key. Consequently that member can decrypt retrievable earlier messages from the same epoch. The application generates, stores and distributes keys; the reducer does not generate or erase them. Removal, an explicit rekey, and an ownership transfer rotate the key and deliver the new key only to the members who remain. An owner or an admin may post that remove and pay for the new key. A removed person does not receive that key. Messages they already opened stay readable under the previous key. A later message uses the new epoch and does not open under the old key.
+
+Those deliveries are separate payments. A sender hands out at most 16 at a time. They are not an atomic group. A payment that lands is kept, even when a later payment in the same pass does not. The sender resumes the people who were missed, again at most 16 at a time, and does not repeat a payment that already landed. A message is still one payment to that room's mailbox.
 
 A `0x07` note is one payment to the mailbox. Its wire format is unchanged. The header is 54 bytes:
 
@@ -442,6 +466,16 @@ On 2026-10-18 the driver `ts/scripts/group-matrix-localnet.ts` ran on LocalNet. 
 `vectors/group-v1.json` is the frozen membership note, message key, and message note. The session key in that file is an input, not a handshake output. Tag v1.3.0 does not include this run.
 
 A second run, `ts/scripts/group-talk-localnet.ts`, put all six libraries in one group. TypeScript created a hybrid session with each other library. That library accepted the session and opened its own `0x06` note. The mailbox was funded in round 46375. Membership notes confirmed in rounds 46376 (Go), 46377 (Rust), 46378 (Python), 46379 (Kotlin), and 46380 (Swift). Each library then posted its own `0x07` line to that mailbox: TypeScript round 46381, Go 46382, Rust 46383, Python 46384, Kotlin 46385, and Swift 46386. Every library opened every line, 36 opens, with no failures. Identifier `0x03` was not used.
+
+#### 5.8.5 Delta notes on LocalNet
+
+On 2026-10-28 `ts/scripts/room-scale-localnet.ts` ran against the already-up LocalNet at `http://127.0.0.1:4001`. It did not restart the node and did not wipe the ledger. The node moved from round 225182 to round 225504.
+
+The room used delta notes (member count `0xFFFF`, no member list). Create was 209 bytes. No administration note in the run was larger than 209 bytes. The room held 256 members, then one remove left 255. One `0x07` payment to that mailbox confirmed in round 225482 (79 bytes).
+
+The remove confirmed in round 225484 and moved the room to epoch 2. Seventeen funded members besides the owner still needed the new key. The first pass sent 15 payments from a batch of 16 and left one recipient of that batch unsent. Those 15 confirmed in rounds 225485 through 225499. None had an atomic group. After the later payments, transaction `OV7OX4464NAQXCEJ7PR36KUXPUGWKONNRJLF76JQHQOAIV37KGSA` (round 225485) was still confirmed. The missed recipient and the one person past the batch of 16 confirmed in rounds 225500 and 225501. The removed member was not a recipient. The message from round 225482 still opened under the old key. A note sealed for epoch 2 did not open under that key.
+
+A channel of that room had its own mailbox and group id. Its create note pointed at the parent group id and confirmed in round 225478. The channel started with the owner alone. Three parent members were added. A fourth parent member was not in the channel. After the parent remove, the owner removed that person from the channel in round 225502 (3 members remained). One channel key payment confirmed in round 225503 and was still confirmed after the missed channel recipient was paid in round 225504. The channel message was one payment to the channel mailbox in round 225483.
 
 ## 6. Encryption
 
@@ -921,7 +955,7 @@ The following metadata is visible on-chain:
 - Timestamp (block time)
 - Message size (approximate)
 - Protocol mode (`0x01` through `0x07`) reveals standard, PSK, administration, handshake, session-message, group-key-delivery, or group-message use
-- Public `0x03` records reveal the room name, joining policy, owner, admins, members, subjects and parent links; pending requests are derivable
+- Public `0x03` records reveal the room name, joining policy, owner, admins, the subject of a change, and a channel's parent room. A full-list note also lists every member. A delta note records one person, and folding history rebuilds the member list. Pending requests are derivable
 - `0x07` exposes group id, epoch and sender counter; mailbox payments reveal participation even when the message stays encrypted
 - Hybrid handshakes expose both X25519 keys; session messages expose their handshake hash
 

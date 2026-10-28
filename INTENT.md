@@ -10,7 +10,7 @@ I want two people to send encrypted notes on Algorand payments, readable only by
 - [base](hi/base.md): BASE (5 criteria)
 - [encrypt](hi/encrypt.md): ENCRYPT (3 criteria)
 - [godot](hi/godot.md): GODOT (9 criteria)
-- [group](hi/group.md): GROUP (22 criteria)
+- [group](hi/group.md): GROUP (35 criteria)
 - [honest](hi/honest.md): HONEST (2 criteria)
 - [key](hi/key.md): KEY (11 criteria)
 - [keys](hi/keys.md): KEYS (11 criteria)

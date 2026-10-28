@@ -280,8 +280,10 @@ Provides the TypeScript implementation of the AlgoChat encrypted-messaging proto
 | `GROUP_DELIVER_ACTION` | 0x06 action 5, key delivery. |
 | `GROUP_NAME_MAX` | Maximum room name, 64 bytes. |
 | `GROUP_ADMIN_MAX` | Maximum admins, 16. |
-| `GROUP_MEMBER_MAX` | Maximum members, 100. |
+| `GROUP_MEMBER_MAX` | Maximum members, 256. A full-list note that does not fit in 4096 bytes is rejected. New notes omit the member list. |
 | `GROUP_DELIVER_PLAINTEXT_SIZE` | Action-5 plaintext size, 133 bytes. |
+| `GROUP_DELIVER_BATCH` | Separate key-delivery payments in one pass, 16. Not an atomic group. |
+| `GROUP_MEMBERS_OMITTED` | Member-count sentinel 65535. The note names one subject and omits the roster. |
 | `JOINING` | Invite-only and ask-to-join policy bytes. |
 | `ADMIN_OP` | Room administration operation bytes. |
 | `RoomState` | Accepted room roster. |
@@ -293,6 +295,10 @@ Provides the TypeScript implementation of the AlgoChat encrypted-messaging proto
 | `reduceAdmin` | Reduces administration transactions. |
 | `senderMayPost` | Whether a member may post at an epoch. |
 | `deliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `authorizedRecipients` | Members authorized to receive the key for one accepted record. |
+| `channelDepartures` | Channel members who are no longer in the parent room. |
+| `pendingKeyDeliveries` | Recipients who do not yet have a landed key payment. |
+| `nextDeliveryBatch` | Next separate payments, at most 16. |
 | `sealGroupKeyDelivery` | Seals a 227-byte action-5 delivery. |
 | `openGroupKeyDelivery` | Opens a 227-byte action-5 delivery. |
 
@@ -377,4 +383,4 @@ Then SendQueue processes eligible entries in order, records failures for retry, 
 
 `draftAdmin` builds a public 0x03 note. `reduceAdmin` accepts a record only when the parent state authorized that sender. `senderMayPost` allows a member at the current epoch. `deliveryAuthorized` checks one accepted record. `sealGroupKeyDelivery` and `openGroupKeyDelivery` use the 227-byte action-5 note.
 
-Exports: `GROUP_ADMIN_PROTOCOL`, `GROUP_DELIVER_ACTION`, `GROUP_NAME_MAX`, `GROUP_ADMIN_MAX`, `GROUP_MEMBER_MAX`, `GROUP_DELIVER_PLAINTEXT_SIZE`, `JOINING`, `ADMIN_OP`, `RoomState`, `AdminEvent`, `AcceptedAdmin`, `ReduceAdminResult`, `encodeAdminRecord`, `draftAdmin`, `reduceAdmin`, `senderMayPost`, `deliveryAuthorized`, `sealGroupKeyDelivery`, `openGroupKeyDelivery`, `GROUP_INFO_LABEL`, `GROUP_ACTION`, `GROUP_MEMBERSHIP_PLAINTEXT_SIZE`, `GROUP_MEMBERSHIP_NOTE_SIZE`, `GROUP_MESSAGE_HEADER_SIZE`, `GROUP_MAX_PAYLOAD_SIZE`, `GroupMembership`, `GroupCounter`, `OpenedGroupMessage`, `isGroupMembership`, `isGroupMessage`, `sealGroupMembership`, `openGroupMembership`, `deriveGroupMessageKey`, `sealGroupMessage`, `openGroupMessage`.
+Exports: `GROUP_ADMIN_PROTOCOL`, `GROUP_DELIVER_ACTION`, `GROUP_NAME_MAX`, `GROUP_ADMIN_MAX`, `GROUP_MEMBER_MAX`, `GROUP_DELIVER_BATCH`, `GROUP_MEMBERS_OMITTED`, `GROUP_DELIVER_PLAINTEXT_SIZE`, `JOINING`, `ADMIN_OP`, `RoomState`, `AdminEvent`, `AcceptedAdmin`, `ReduceAdminResult`, `encodeAdminRecord`, `draftAdmin`, `reduceAdmin`, `senderMayPost`, `deliveryAuthorized`, `authorizedRecipients`, `channelDepartures`, `pendingKeyDeliveries`, `nextDeliveryBatch`, `sealGroupKeyDelivery`, `openGroupKeyDelivery`, `GROUP_INFO_LABEL`, `GROUP_ACTION`, `GROUP_MEMBERSHIP_PLAINTEXT_SIZE`, `GROUP_MEMBERSHIP_NOTE_SIZE`, `GROUP_MESSAGE_HEADER_SIZE`, `GROUP_MAX_PAYLOAD_SIZE`, `GroupMembership`, `GroupCounter`, `OpenedGroupMessage`, `isGroupMembership`, `isGroupMessage`, `sealGroupMembership`, `openGroupMembership`, `deriveGroupMessageKey`, `sealGroupMessage`, `openGroupMessage`.

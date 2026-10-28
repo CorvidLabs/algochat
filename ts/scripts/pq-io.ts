@@ -89,6 +89,7 @@ interface BasisState {
     name_hex: string;
     epoch: number;
     head_tx_id: string;
+    parent_group_id?: string;
 }
 
 interface AdminWireEvent {
@@ -301,6 +302,7 @@ function reviveRoom(state: BasisState | null | undefined): RoomState | null {
     return {
         groupId: fromHex(state.group_id),
         mailbox: fromHex(state.mailbox),
+        parentGroupId: state.parent_group_id ? fromHex(state.parent_group_id) : new Uint8Array(32),
         owner: fromHex(state.owner),
         admins: state.admins.map(fromHex),
         members: state.members.map(fromHex),
