@@ -7,9 +7,9 @@ use algochat::{
     delivery_authorized, derive_group_message_key, derive_keys_from_seed, derive_mlkem768,
     draft_admin, encode_psk_envelope, encrypt_message, encrypt_pq_message, encrypt_psk_message,
     initiate_pq_handshake, open_group_key_delivery, open_group_membership, open_group_message,
-    open_pq_handshake_as_sender, reduce_admin, seal_group_key_delivery, seal_group_membership,
-    seal_group_message, sender_may_post, AcceptedAdmin, AdminDraft, AdminEvent, GroupMembership,
-    PqSession, RoomState,
+    open_pq_handshake_as_sender, reduce_admin, reduce_admin_with_parent, seal_group_key_delivery,
+    seal_group_membership, seal_group_message, sender_may_post, AcceptedAdmin, AdminDraft,
+    AdminEvent, GroupMembership, PqSession, RoomState,
 };
 use serde_json::{json, Value};
 
@@ -257,6 +257,10 @@ fn admin_draft(req: &Value) -> Result<Value, String> {
         policy: optional_u8(req, "policy")?,
         group_id: optional_bytes32(req, "group_id")?,
         mailbox: optional_bytes32(req, "mailbox")?,
+        parent_room: match req.get("parent_room") {
+            None | Some(Value::Null) => None,
+            Some(value) => Some(parse_state(value)?),
+        },
     };
     let note = draft_admin(basis.as_ref(), &draft).map_err(|error| error.to_string())?;
     Ok(json!({ "note": hex::encode(note) }))
@@ -277,7 +281,27 @@ fn admin_reduce(req: &Value) -> Result<Value, String> {
             offset: u64_field(item, "offset")?,
         });
     }
-    let reduced = reduce_admin(&events);
+    let parent_events = match req.get("parent_events") {
+        None | Some(Value::Null) => None,
+        Some(value) => {
+            let items = value.as_array().ok_or("parent_events must be an array")?;
+            let mut parent = Vec::with_capacity(items.len());
+            for item in items {
+                parent.push(AdminEvent {
+                    note: hex_bytes(&field(item, "note")?)?,
+                    sender: bytes32(item, "sender")?,
+                    tx_id: bytes32(item, "tx_id")?,
+                    round: u64_field(item, "round")?,
+                    offset: u64_field(item, "offset")?,
+                });
+            }
+            Some(parent)
+        }
+    };
+    let reduced = match parent_events.as_deref() {
+        Some(parent) => reduce_admin_with_parent(&events, parent),
+        None => reduce_admin(&events),
+    };
     let accepted: Vec<Value> = reduced.accepted.iter().map(accepted_json).collect();
     let rejected: Vec<Value> = reduced
         .rejected
@@ -370,6 +394,7 @@ fn parse_state(value: &Value) -> Result<RoomState, String> {
     Ok(RoomState {
         group_id: bytes32(value, "group_id")?,
         mailbox: bytes32(value, "mailbox")?,
+        parent_group_id: optional_bytes32(value, "parent_group_id")?.unwrap_or([0u8; 32]),
         owner: bytes32(value, "owner")?,
         admins: hex_list(value, "admins")?,
         members: hex_list(value, "members")?,
@@ -393,6 +418,7 @@ fn state_json(state: &RoomState) -> Value {
         "name_hex": hex::encode(&state.name),
         "epoch": state.epoch,
         "head_tx_id": hex::encode(state.head_tx_id),
+        "parent_group_id": hex::encode(state.parent_group_id),
     })
 }
 

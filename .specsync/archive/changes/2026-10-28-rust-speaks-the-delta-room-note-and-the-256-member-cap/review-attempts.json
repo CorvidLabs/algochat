@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "rust-speaks-the-delta-room-note-and-the-256-member-cap",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "81e8080ca25454ce52182c17eeb95c8b791d3524",
+      "contract_digest": "feba154c3e1771b708bfcb2c186ced588c2141af2d9ffb9f9e530e9b3e9fa983",
+      "execution_digest": "9dbdf2d60e9a7db4301446cf1190f8dc18873c37fc0aaf414fef277eaac1369e",
+      "workspace_digest": "ea9a2ce07dd2461308de4ff0511ac46153cd1061aebe9402a1a920a193517815",
+      "timestamp": 1793203843
+    }
+  ]
+}

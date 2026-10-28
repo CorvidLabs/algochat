@@ -13,7 +13,7 @@ spec: crate.spec.md
 
 ## Current Status
 
-- The existing crate-root surface is active; this migration changes governance only.
+- The existing crate-root surface is active. Room administration drafts omit the member list so a room can hold 256 people, and a channel names its parent room.
 
 ## Notes
 
