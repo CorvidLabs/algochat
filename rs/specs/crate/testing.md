@@ -19,3 +19,6 @@ No manual flow is needed; Cargo build, test, and example compilation protect thi
 | Scenario | Expected Behavior |
 |----------|-------------------|
 | Root re-export removed | Consumer compilation or SpecSync validation fails. |
+| Full list of 256 members | Encode fails because the note is too large. A delta note still folds through 256. |
+| Channel roster and a missed key payment | The channel does not copy parent members. The next batch is 16 separate payments and can resume the one that did not land. |
+| `vectors/group-admin-delta-v1.json` | Draft bytes and reduced rooms match the frozen delta vector. Older `vectors/group-admin-v1.json` full-list notes still reduce. |

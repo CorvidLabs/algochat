@@ -257,6 +257,7 @@ fn admin_draft(req: &Value) -> Result<Value, String> {
         policy: optional_u8(req, "policy")?,
         group_id: optional_bytes32(req, "group_id")?,
         mailbox: optional_bytes32(req, "mailbox")?,
+        parent_room: None,
     };
     let note = draft_admin(basis.as_ref(), &draft).map_err(|error| error.to_string())?;
     Ok(json!({ "note": hex::encode(note) }))
@@ -370,6 +371,7 @@ fn parse_state(value: &Value) -> Result<RoomState, String> {
     Ok(RoomState {
         group_id: bytes32(value, "group_id")?,
         mailbox: bytes32(value, "mailbox")?,
+        parent_group_id: optional_bytes32(value, "parent_group_id")?.unwrap_or([0u8; 32]),
         owner: bytes32(value, "owner")?,
         admins: hex_list(value, "admins")?,
         members: hex_list(value, "members")?,
