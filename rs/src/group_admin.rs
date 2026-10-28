@@ -1909,6 +1909,18 @@ mod tests {
                 .unwrap_or_else(|error| panic!("{name}: {error}"));
             assert_eq!(hex::encode(note), draft["note"].as_str().unwrap(), "{name}");
         }
+        for item in value["draft_errors"].as_array().unwrap() {
+            let basis = revive(&item["basis_state"]);
+            let name = item["name"].as_str().unwrap();
+            let error = draft_admin(basis.as_ref(), &draft_from(item))
+                .expect_err(name)
+                .to_string();
+            let needle = item["error_includes"].as_str().unwrap();
+            assert!(
+                error.contains(needle),
+                "{name}: {error} does not contain {needle}"
+            );
+        }
         for (name, reduction) in value["reductions"].as_object().unwrap() {
             let events: Vec<AdminEvent> = reduction["events"]
                 .as_array()
