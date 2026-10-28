@@ -74,6 +74,8 @@ interface Request {
     recipient?: string;
     admin_tx_id?: string;
     events?: AdminWireEvent[];
+    parent_events?: AdminWireEvent[];
+    parent_room?: BasisState | null;
     accepted?: AcceptedWire[];
     state?: BasisState | null;
 }
@@ -327,6 +329,7 @@ function snapRoom(state: RoomState | null): BasisState | null {
         name_hex: toHex(state.name),
         epoch: state.epoch,
         head_tx_id: toHex(state.headTxId),
+        parent_group_id: toHex(state.parentGroupId),
     };
 }
 
@@ -350,18 +353,25 @@ function adminDraft(req: Request): Record<string, unknown> {
         policy: req.policy,
         groupId: req.group_id ? fromHex(req.group_id) : undefined,
         mailbox: req.mailbox ? fromHex(req.mailbox) : undefined,
+        parentRoom: req.parent_room ? reviveRoom(req.parent_room) ?? undefined : undefined,
     });
     return { note: toHex(note) };
 }
 
-function adminReduce(req: Request): Record<string, unknown> {
-    const reduced = reduceAdmin((req.events ?? []).map((item) => ({
+function wireEvent(item: { note: string; sender: string; tx_id: string; round: number; offset: number }) {
+    return {
         note: fromHex(item.note),
         sender: fromHex(item.sender),
         txId: fromHex(item.tx_id),
         round: item.round,
         offset: item.offset,
-    })));
+    };
+}
+
+function adminReduce(req: Request): Record<string, unknown> {
+    const events = (req.events ?? []).map(wireEvent);
+    const parent = req.parent_events?.map(wireEvent);
+    const reduced = reduceAdmin(events, parent);
     return {
         state: snapRoom(reduced.state),
         accepted: reduced.accepted.map(snapAccepted),
