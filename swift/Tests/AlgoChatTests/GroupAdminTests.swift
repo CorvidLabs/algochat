@@ -547,6 +547,21 @@ struct GroupAdminTests {
             )
             #expect(hex(note) == draft.note, "draft \(draft.name)")
         }
+        for item in vector.draft_errors {
+            try expectDescription(item.error_includes) {
+                _ = try GroupAdmin.draft(
+                    state: try roomState(item.basis_state),
+                    op: try uint8(item.op),
+                    sender: try data(hex: item.sender),
+                    subject: try data(hex: item.subject),
+                    name: utf8Name(item.name_utf8),
+                    policy: try optionalUInt8(item.policy),
+                    groupID: try optionalHex(item.group_id),
+                    mailbox: try optionalHex(item.mailbox),
+                    parentRoom: try roomState(item.parent_room)
+                )
+            }
+        }
         for (name, reduction) in vector.reductions {
             let result = GroupAdmin.reduce(
                 try events(reduction.events),
@@ -595,6 +610,9 @@ private struct DraftErrorVector: Decodable {
     let subject: String
     let name_utf8: String?
     let policy: Int?
+    let group_id: String?
+    let mailbox: String?
+    let parent_room: BasisState?
     let error_includes: String
 }
 
