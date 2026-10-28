@@ -96,11 +96,19 @@ func TestGroupAdminVector(t *testing.T) {
 	}
 
 	for _, item := range v.Drafts {
+		stored := mustHex(t, item.Note)
+		if stored[0] != protocolVersionAAD || stored[1] != protocolIDGroupAdmin {
+			t.Fatalf("%s is not an administration note", item.Name)
+		}
+		storedCount, ok := noteMemberCount(stored)
+		if !ok || storedCount == groupMembersOmitted || storedCount > 100 {
+			t.Fatalf("%s stored member count %d", item.Name, storedCount)
+		}
 		state, err := basisRoom(item.BasisState)
 		if err != nil {
 			t.Fatal(err)
 		}
-		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, item.GroupID, item.Mailbox)
+		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, item.GroupID, item.Mailbox, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -108,8 +116,12 @@ func TestGroupAdminVector(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", item.Name, err)
 		}
-		if hex.EncodeToString(note) != item.Note {
-			t.Fatalf("%s note mismatch: got %d bytes", item.Name, len(note))
+		if len(note) > MaxNoteSize {
+			t.Fatalf("%s draft is %d bytes", item.Name, len(note))
+		}
+		draftCount, ok := noteMemberCount(note)
+		if !ok || draftCount != groupMembersOmitted {
+			t.Fatalf("%s draft member count %d", item.Name, draftCount)
 		}
 	}
 
@@ -118,7 +130,7 @@ func TestGroupAdminVector(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, nil, nil)
+		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, nil, nil, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -213,16 +225,17 @@ func TestGroupAdminVector(t *testing.T) {
 }
 
 type adminBasis struct {
-	GroupID  string   `json:"group_id"`
-	Mailbox  string   `json:"mailbox"`
-	Owner    string   `json:"owner"`
-	Admins   []string `json:"admins"`
-	Members  []string `json:"members"`
-	Pending  []string `json:"pending"`
-	Policy   int      `json:"policy"`
-	NameHex  string   `json:"name_hex"`
-	Epoch    uint32   `json:"epoch"`
-	HeadTxID string   `json:"head_tx_id"`
+	GroupID       string   `json:"group_id"`
+	Mailbox       string   `json:"mailbox"`
+	Owner         string   `json:"owner"`
+	Admins        []string `json:"admins"`
+	Members       []string `json:"members"`
+	Pending       []string `json:"pending"`
+	Policy        int      `json:"policy"`
+	NameHex       string   `json:"name_hex"`
+	Epoch         uint32   `json:"epoch"`
+	HeadTxID      string   `json:"head_tx_id"`
+	ParentGroupID string   `json:"parent_group_id,omitempty"`
 }
 
 func basisRoom(basis *adminBasis) (*RoomState, error) {
@@ -261,21 +274,29 @@ func basisRoom(basis *adminBasis) (*RoomState, error) {
 	if err != nil {
 		return nil, err
 	}
+	var parentGroup []byte
+	if basis.ParentGroupID != "" {
+		parentGroup, err = hex.DecodeString(basis.ParentGroupID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &RoomState{
-		GroupID:  groupID,
-		Mailbox:  mailbox,
-		Owner:    owner,
-		Admins:   admins,
-		Members:  members,
-		Pending:  pending,
-		Policy:   basis.Policy,
-		Name:     name,
-		Epoch:    basis.Epoch,
-		HeadTxID: head,
+		GroupID:       groupID,
+		Mailbox:       mailbox,
+		ParentGroupID: parentGroup,
+		Owner:         owner,
+		Admins:        admins,
+		Members:       members,
+		Pending:       pending,
+		Policy:        basis.Policy,
+		Name:          name,
+		Epoch:         basis.Epoch,
+		HeadTxID:      head,
 	}, nil
 }
 
-func draftFromVector(op int, sender, subject string, name *string, policy *int, groupID, mailbox *string) (AdminDraft, error) {
+func draftFromVector(op int, sender, subject string, name *string, policy *int, groupID, mailbox *string, parent *adminBasis) (AdminDraft, error) {
 	rawSender, err := hex.DecodeString(sender)
 	if err != nil {
 		return AdminDraft{}, err
@@ -308,7 +329,28 @@ func draftFromVector(op int, sender, subject string, name *string, policy *int, 
 			return AdminDraft{}, err
 		}
 	}
+	draft.ParentRoom, err = basisRoom(parent)
+	if err != nil {
+		return AdminDraft{}, err
+	}
 	return draft, nil
+}
+
+func noteMemberCount(note []byte) (int, bool) {
+	if len(note) < groupAdminNoteMin {
+		return 0, false
+	}
+	nameLen := int(note[103])
+	adminAt := 137 + nameLen
+	if adminAt+1 >= len(note) {
+		return 0, false
+	}
+	adminCount := int(note[adminAt])<<8 | int(note[adminAt+1])
+	memberAt := 139 + nameLen + 32*adminCount
+	if memberAt+1 >= len(note) {
+		return 0, false
+	}
+	return int(note[memberAt])<<8 | int(note[memberAt+1]), true
 }
 
 func sameBasis(state *RoomState, want *adminBasis) error {
@@ -532,4 +574,517 @@ func sealDeliveryRaw(t *testing.T, session PQSession, plain []byte, version byte
 		t.Fatal(err)
 	}
 	return append(header, aead.Seal(nil, nonce, plain, header)...)
+}
+
+func TestFullListOf256IsTooLargeAndDeltaFoldsThrough256(t *testing.T) {
+	owner := bytes.Repeat([]byte{1}, KeySize)
+	friend := bytes.Repeat([]byte{2}, KeySize)
+	groupID := bytes.Repeat([]byte{7}, KeySize)
+	mailbox := bytes.Repeat([]byte{9}, KeySize)
+	roster := make([][]byte, 256)
+	for i := 0; i < len(roster); i++ {
+		roster[i] = personID(i + 1)
+	}
+	admins := make([][]byte, groupAdminMax)
+	for i := 0; i < len(admins); i++ {
+		admins[i] = personID(1000 + i)
+	}
+	if groupMemberMax != 256 || groupNameMax != 64 || groupAdminMax != 16 {
+		t.Fatalf("caps member=%d name=%d admin=%d", groupMemberMax, groupNameMax, groupAdminMax)
+	}
+	_, err := encodeAdminRecord(decodedAdmin{
+		parent:         make([]byte, KeySize),
+		groupID:        groupID,
+		mailbox:        mailbox,
+		epoch:          1,
+		op:             adminOpCreate,
+		name:           make([]byte, groupNameMax),
+		policy:         joiningInvite,
+		owner:          roster[0],
+		admins:         admins,
+		members:        roster,
+		subject:        make([]byte, KeySize),
+		membersOmitted: false,
+	})
+	if err == nil || !strings.Contains(err.Error(), "too large") {
+		t.Fatal(err)
+	}
+
+	legacy, err := encodeAdminRecord(decodedAdmin{
+		parent:         make([]byte, KeySize),
+		groupID:        groupID,
+		mailbox:        mailbox,
+		epoch:          1,
+		op:             adminOpCreate,
+		name:           []byte("team"),
+		policy:         joiningInvite,
+		owner:          owner,
+		admins:         [][]byte{},
+		members:        [][]byte{owner},
+		subject:        make([]byte, KeySize),
+		membersOmitted: false,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyRoom := ReduceAdmin([]AdminEvent{adminEvent(legacy, owner, 10, 1, 0)})
+	if len(legacyRoom.Rejected) != 0 || legacyRoom.State == nil || len(legacyRoom.State.Members) != 1 {
+		t.Fatalf("legacy create %+v", legacyRoom.Rejected)
+	}
+	legacyAdd, err := DraftAdmin(legacyRoom.State, AdminDraft{Op: adminOpAdd, Sender: owner, Subject: friend})
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyGrown := ReduceAdmin([]AdminEvent{
+		adminEvent(legacy, owner, 10, 1, 0),
+		adminEvent(legacyAdd, owner, 11, 2, 0),
+	})
+	if len(legacyGrown.Rejected) != 0 || legacyGrown.State == nil || len(legacyGrown.State.Members) != 2 {
+		t.Fatalf("legacy add %+v members %d", legacyGrown.Rejected, memberLen(legacyGrown.State))
+	}
+
+	hallOwner := personID(1)
+	events := []AdminEvent{}
+	createdNote, err := DraftAdmin(nil, AdminDraft{
+		Op:        adminOpCreate,
+		Sender:    hallOwner,
+		HasName:   true,
+		Name:      []byte("hall"),
+		HasPolicy: true,
+		Policy:    joiningInvite,
+		GroupID:   personID(900),
+		Mailbox:   personID(901),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	events = append(events, markedEvent(createdNote, hallOwner, 1))
+	reduced := ReduceAdmin(events)
+	if len(reduced.Rejected) != 0 || reduced.State == nil || len(reduced.State.Members) != 1 {
+		t.Fatalf("hall create %+v", reduced.Rejected)
+	}
+	for count := 2; count <= 256; count++ {
+		note, err := DraftAdmin(reduced.State, AdminDraft{Op: adminOpAdd, Sender: hallOwner, Subject: personID(count)})
+		if err != nil {
+			t.Fatalf("add %d: %v", count, err)
+		}
+		if len(note) > MaxNoteSize {
+			t.Fatalf("add %d is %d bytes", count, len(note))
+		}
+		got, ok := noteMemberCount(note)
+		if !ok || got != groupMembersOmitted {
+			t.Fatalf("add %d member count %d", count, got)
+		}
+		events = append(events, markedEvent(note, hallOwner, count))
+		reduced = ReduceAdmin(events)
+		if len(reduced.Rejected) != 0 {
+			t.Fatalf("add %d rejected %s", count, reduced.Rejected[0].Reason)
+		}
+		if count == 101 && (reduced.State == nil || len(reduced.State.Members) != 101) {
+			t.Fatalf("count 101 has %d members", memberLen(reduced.State))
+		}
+	}
+	if reduced.State == nil || len(reduced.State.Members) != 256 || reduced.State.Epoch != 1 {
+		t.Fatalf("hall ended with %d members epoch %d", memberLen(reduced.State), epochOf(reduced.State))
+	}
+}
+
+func TestChannelRosterAndMissedKeyResume(t *testing.T) {
+	owner := bytes.Repeat([]byte{1}, KeySize)
+	parentID := personID(700)
+	parentMail := personID(701)
+	channelID := personID(702)
+	channelMail := personID(703)
+	alice := personID(2)
+	bob := personID(3)
+	cara := personID(4)
+	extra := make([][]byte, 16)
+	for i := range extra {
+		extra[i] = personID(20 + i)
+	}
+	parentCreate, err := DraftAdmin(nil, AdminDraft{
+		Op: adminOpCreate, Sender: owner, HasName: true, Name: []byte("hall"), HasPolicy: true, Policy: joiningInvite,
+		GroupID: parentID, Mailbox: parentMail,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	parentEvents := []AdminEvent{adminEvent(parentCreate, owner, 10, 1, 0)}
+	parent := ReduceAdmin(parentEvents)
+	added := append([][]byte{alice, bob, cara}, extra...)
+	for index, member := range added {
+		note, err := DraftAdmin(parent.State, AdminDraft{Op: adminOpAdd, Sender: owner, Subject: member})
+		if err != nil {
+			t.Fatal(err)
+		}
+		parentEvents = append(parentEvents, adminEvent(note, owner, 11+index, index+2, 0))
+		parent = ReduceAdmin(parentEvents)
+	}
+	if len(parent.Rejected) != 0 || parent.State == nil || len(parent.State.Members) != 1+3+len(extra) {
+		t.Fatalf("parent roster %+v len %d", parent.Rejected, memberLen(parent.State))
+	}
+	_, err = DraftAdmin(nil, AdminDraft{
+		Op: adminOpCreate, Sender: alice, HasName: true, Name: []byte("ops"), HasPolicy: true, Policy: joiningInvite,
+		GroupID: channelID, Mailbox: channelMail, ParentRoom: parent.State,
+	})
+	if err == nil || !strings.Contains(err.Error(), "group owner") {
+		t.Fatal(err)
+	}
+	channelCreate, err := DraftAdmin(nil, AdminDraft{
+		Op: adminOpCreate, Sender: owner, HasName: true, Name: []byte("ops"), HasPolicy: true, Policy: joiningInvite,
+		GroupID: channelID, Mailbox: channelMail, ParentRoom: parent.State,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	channelEvents := []AdminEvent{adminEvent(channelCreate, owner, 80, 30, 0)}
+	channel := ReduceAdmin(channelEvents, parentEvents)
+	if len(channel.Rejected) != 0 || channel.State == nil || len(channel.State.Members) != 1 {
+		t.Fatalf("channel create %+v", channel.Rejected)
+	}
+	if !bytes.Equal(channel.State.ParentGroupID, parentID) || !bytes.Equal(channel.State.GroupID, channelID) || !bytes.Equal(channel.State.Mailbox, channelMail) {
+		t.Fatal("channel identity")
+	}
+	if bytes.Equal(channel.State.GroupID, parent.State.GroupID) {
+		t.Fatal("channel reused the parent group id")
+	}
+	channelAdded := append([][]byte{alice, bob}, extra...)
+	for index, member := range channelAdded {
+		note, err := DraftAdmin(channel.State, AdminDraft{
+			Op: adminOpAdd, Sender: owner, Subject: member, ParentRoom: parent.State,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		channelEvents = append(channelEvents, adminEvent(note, owner, 81+index, 31+index, 0))
+		channel = ReduceAdmin(channelEvents, parentEvents)
+	}
+	if len(channel.Rejected) != 0 || channel.State == nil {
+		t.Fatalf("channel adds %+v", channel.Rejected)
+	}
+	if containsKey(channel.State.Members, cara) || !containsKey(channel.State.Members, alice) {
+		t.Fatal("channel roster copied the parent or dropped alice")
+	}
+	_, err = DraftAdmin(channel.State, AdminDraft{
+		Op: adminOpAdd, Sender: owner, Subject: personID(500), ParentRoom: parent.State,
+	})
+	if err == nil || !strings.Contains(err.Error(), "parent room") {
+		t.Fatal(err)
+	}
+	_, err = DraftAdmin(channel.State, AdminDraft{
+		Op: adminOpTransfer, Sender: owner, Subject: bob, ParentRoom: parent.State,
+	})
+	if err == nil || !strings.Contains(err.Error(), "group owner keeps") {
+		t.Fatal(err)
+	}
+	parentRemove, err := DraftAdmin(parent.State, AdminDraft{Op: adminOpRemove, Sender: owner, Subject: alice})
+	if err != nil {
+		t.Fatal(err)
+	}
+	parentEvents = append(parentEvents, adminEvent(parentRemove, owner, 60, 80, 0))
+	parent = ReduceAdmin(parentEvents)
+	if parent.State == nil || parent.State.Epoch != 2 {
+		t.Fatalf("parent remove epoch %+v", parent.Rejected)
+	}
+	may, err := SenderMayPost(*parent.State, alice, 2)
+	if err != nil || may {
+		t.Fatalf("alice may post: %v %v", may, err)
+	}
+	stale := ReduceAdmin(channelEvents, parentEvents)
+	if stale.State == nil || !containsKey(stale.State.Members, alice) {
+		t.Fatal("parent removal copied into the channel")
+	}
+	departed, err := ChannelDepartures(*stale.State, *parent.State)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(departed) != 1 || departed[0][3] != alice[3] {
+		t.Fatalf("departures %d", len(departed))
+	}
+	channelRemove, err := DraftAdmin(stale.State, AdminDraft{
+		Op: adminOpRemove, Sender: owner, Subject: alice, ParentRoom: parent.State,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	channelEvents = append(channelEvents, adminEvent(channelRemove, owner, 120, 90, 0))
+	channel = ReduceAdmin(channelEvents, parentEvents)
+	if len(channel.Rejected) != 0 || channel.State == nil || channel.State.Epoch != 2 || containsKey(channel.State.Members, alice) {
+		t.Fatalf("channel remove %+v", channel.Rejected)
+	}
+	removeTx := channel.Accepted[len(channel.Accepted)-1]
+	if DeliveryAuthorized(channel.Accepted, removeTx.TxID, owner, alice, 2) {
+		t.Fatal("removed member was authorized")
+	}
+	if DeliveryAuthorized(channel.Accepted, removeTx.TxID, bob, bob, 2) {
+		t.Fatal("bob was treated as the sender")
+	}
+	recipients := AuthorizedRecipients(channel.Accepted, removeTx.TxID, owner, 2)
+	if containsKey(recipients, alice) || !containsKey(recipients, bob) || len(recipients) <= groupDeliverBatch {
+		t.Fatalf("recipients %d", len(recipients))
+	}
+	batch, err := NextDeliveryBatch(recipients)
+	if err != nil || len(batch) != groupDeliverBatch {
+		t.Fatalf("batch %d %v", len(batch), err)
+	}
+	missed := batch[len(batch)-1]
+	landed := batch[:len(batch)-1]
+	pending := PendingKeyDeliveries(recipients, landed)
+	if !containsKey(pending, missed) {
+		t.Fatal("missed payment was marked landed")
+	}
+	resumedBatch, err := NextDeliveryBatch(pending)
+	if err != nil || len(resumedBatch) == 0 || !bytes.Equal(resumedBatch[0], missed) {
+		t.Fatal("resume did not start at the missed recipient")
+	}
+	resumed := append(append([][]byte{}, landed...), missed)
+	left := PendingKeyDeliveries(recipients, resumed)
+	if containsKey(left, missed) || len(left) != len(recipients)-len(resumed) {
+		t.Fatalf("left %d want %d", len(left), len(recipients)-len(resumed))
+	}
+}
+
+func TestGroupAdminDeltaVector(t *testing.T) {
+	raw, err := os.ReadFile("../vectors/group-admin-delta-v1.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var v struct {
+		Constants struct {
+			MemberMax      int `json:"member_max"`
+			MembersOmitted int `json:"members_omitted"`
+			DeliverBatch   int `json:"deliver_batch"`
+		} `json:"constants"`
+		Drafts []struct {
+			Name       string      `json:"name"`
+			BasisState *adminBasis `json:"basis_state"`
+			ParentRoom *adminBasis `json:"parent_room"`
+			Op         int         `json:"op"`
+			Sender     string      `json:"sender"`
+			Subject    string      `json:"subject"`
+			NameUTF8   *string     `json:"name_utf8"`
+			Policy     *int        `json:"policy"`
+			GroupID    *string     `json:"group_id"`
+			Mailbox    *string     `json:"mailbox"`
+			Note       string      `json:"note"`
+		} `json:"drafts"`
+		DraftErrors []struct {
+			Name          string      `json:"name"`
+			BasisState    *adminBasis `json:"basis_state"`
+			ParentRoom    *adminBasis `json:"parent_room"`
+			Op            int         `json:"op"`
+			Sender        string      `json:"sender"`
+			Subject       string      `json:"subject"`
+			NameUTF8      *string     `json:"name_utf8"`
+			Policy        *int        `json:"policy"`
+			GroupID       *string     `json:"group_id"`
+			Mailbox       *string     `json:"mailbox"`
+			ErrorIncludes string      `json:"error_includes"`
+		} `json:"draft_errors"`
+		Reductions map[string]struct {
+			ParentEvents []struct {
+				Note   string `json:"note"`
+				Sender string `json:"sender"`
+				TxID   string `json:"tx_id"`
+				Round  int    `json:"round"`
+				Offset int    `json:"offset"`
+			} `json:"parent_events"`
+			Events []struct {
+				Note   string `json:"note"`
+				Sender string `json:"sender"`
+				TxID   string `json:"tx_id"`
+				Round  int    `json:"round"`
+				Offset int    `json:"offset"`
+			} `json:"events"`
+			Accepted []struct {
+				Op int `json:"op"`
+			} `json:"accepted"`
+			Rejected []struct {
+				Reason string `json:"reason"`
+			} `json:"rejected"`
+			State *deltaState `json:"state"`
+		} `json:"reductions"`
+	}
+	if err := json.Unmarshal(raw, &v); err != nil {
+		t.Fatal(err)
+	}
+	if v.Constants.MemberMax != groupMemberMax || v.Constants.MembersOmitted != groupMembersOmitted || v.Constants.DeliverBatch != groupDeliverBatch {
+		t.Fatalf("constants %+v", v.Constants)
+	}
+	for _, item := range v.Drafts {
+		state, err := basisRoom(item.BasisState)
+		if err != nil {
+			t.Fatal(err)
+		}
+		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, item.GroupID, item.Mailbox, item.ParentRoom)
+		if err != nil {
+			t.Fatal(err)
+		}
+		note, err := DraftAdmin(state, draft)
+		if err != nil {
+			t.Fatalf("%s: %v", item.Name, err)
+		}
+		if hex.EncodeToString(note) != item.Note {
+			t.Fatalf("%s note mismatch: got %d bytes", item.Name, len(note))
+		}
+	}
+	for _, item := range v.DraftErrors {
+		state, err := basisRoom(item.BasisState)
+		if err != nil {
+			t.Fatal(err)
+		}
+		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, item.GroupID, item.Mailbox, item.ParentRoom)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = DraftAdmin(state, draft)
+		if err == nil || !strings.Contains(err.Error(), item.ErrorIncludes) {
+			t.Fatalf("%s: %v", item.Name, err)
+		}
+	}
+	for name, item := range v.Reductions {
+		events := make([]AdminEvent, len(item.Events))
+		for i, event := range item.Events {
+			events[i] = AdminEvent{
+				Note:   mustHex(t, event.Note),
+				Sender: mustHex(t, event.Sender),
+				TxID:   mustHex(t, event.TxID),
+				Round:  event.Round,
+				Offset: event.Offset,
+			}
+		}
+		var got ReduceAdminResult
+		if item.ParentEvents != nil {
+			parentEvents := make([]AdminEvent, len(item.ParentEvents))
+			for i, event := range item.ParentEvents {
+				parentEvents[i] = AdminEvent{
+					Note:   mustHex(t, event.Note),
+					Sender: mustHex(t, event.Sender),
+					TxID:   mustHex(t, event.TxID),
+					Round:  event.Round,
+					Offset: event.Offset,
+				}
+			}
+			got = ReduceAdmin(events, parentEvents)
+		} else {
+			got = ReduceAdmin(events)
+		}
+		if len(got.Rejected) != len(item.Rejected) {
+			t.Fatalf("%s rejected %d want %d (%v)", name, len(got.Rejected), len(item.Rejected), got.Rejected)
+		}
+		for i := range item.Rejected {
+			if got.Rejected[i].Reason != item.Rejected[i].Reason {
+				t.Fatalf("%s rejected %d %q", name, i, got.Rejected[i].Reason)
+			}
+		}
+		if len(got.Accepted) != len(item.Accepted) {
+			t.Fatalf("%s accepted %d want %d", name, len(got.Accepted), len(item.Accepted))
+		}
+		for i := range item.Accepted {
+			if got.Accepted[i].Op != item.Accepted[i].Op {
+				t.Fatalf("%s accepted op %d got %d", name, i, got.Accepted[i].Op)
+			}
+		}
+		if err := sameDeltaState(got.State, item.State); err != nil {
+			t.Fatalf("%s state: %v", name, err)
+		}
+	}
+}
+
+type deltaState struct {
+	GroupID       string   `json:"group_id"`
+	Mailbox       string   `json:"mailbox"`
+	Owner         string   `json:"owner"`
+	Admins        []string `json:"admins"`
+	Members       []string `json:"members"`
+	Pending       []string `json:"pending"`
+	Policy        int      `json:"policy"`
+	NameHex       string   `json:"name_hex"`
+	Epoch         uint32   `json:"epoch"`
+	HeadTxID      string   `json:"head_tx_id"`
+	ParentGroupID string   `json:"parent_group_id"`
+}
+
+func sameDeltaState(state *RoomState, want *deltaState) error {
+	got, err := snapDelta(state)
+	if err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(got, want) {
+		gb, _ := json.Marshal(got)
+		wb, _ := json.Marshal(want)
+		return errTextMismatch{got: string(gb), want: string(wb)}
+	}
+	return nil
+}
+
+type errTextMismatch struct {
+	got  string
+	want string
+}
+
+func (e errTextMismatch) Error() string {
+	return "got " + e.got + " want " + e.want
+}
+
+func snapDelta(state *RoomState) (*deltaState, error) {
+	if state == nil {
+		return nil, nil
+	}
+	admins, err := encodeHexList(state.Admins)
+	if err != nil {
+		return nil, err
+	}
+	members, err := encodeHexList(state.Members)
+	if err != nil {
+		return nil, err
+	}
+	pending, err := encodeHexList(state.Pending)
+	if err != nil {
+		return nil, err
+	}
+	return &deltaState{
+		GroupID:       hex.EncodeToString(state.GroupID),
+		Mailbox:       hex.EncodeToString(state.Mailbox),
+		Owner:         hex.EncodeToString(state.Owner),
+		Admins:        admins,
+		Members:       members,
+		Pending:       pending,
+		Policy:        state.Policy,
+		NameHex:       hex.EncodeToString(state.Name),
+		Epoch:         state.Epoch,
+		HeadTxID:      hex.EncodeToString(state.HeadTxID),
+		ParentGroupID: hex.EncodeToString(normalizedParent(state.ParentGroupID)),
+	}, nil
+}
+
+func adminEvent(note, sender []byte, tx, round, offset int) AdminEvent {
+	return AdminEvent{Note: note, Sender: sender, TxID: bytes.Repeat([]byte{byte(tx)}, KeySize), Round: round, Offset: offset}
+}
+
+func markedEvent(note, sender []byte, n int) AdminEvent {
+	return AdminEvent{Note: note, Sender: sender, TxID: personID(10000 + n), Round: n, Offset: 0}
+}
+
+func personID(id int) []byte {
+	out := make([]byte, KeySize)
+	out[0] = byte(id >> 24)
+	out[1] = byte(id >> 16)
+	out[2] = byte(id >> 8)
+	out[3] = byte(id)
+	return out
+}
+
+func memberLen(state *RoomState) int {
+	if state == nil {
+		return -1
+	}
+	return len(state.Members)
+}
+
+func epochOf(state *RoomState) uint32 {
+	if state == nil {
+		return 0
+	}
+	return state.Epoch
 }

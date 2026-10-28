@@ -14,3 +14,4 @@ spec: algochat.spec.md
 - Build, vet, and race-test all packages on Go 1.25 in the Trust lane.
 - The nested standalone Go-version matrix is historical; the active root workflow selects Go 1.25. The earlier accepted matrix requirement remains unreconciled; see the [accuracy ledger](../../../docs/ACCURACY.md).
 - `pq_test.go`, root `vectors/` and `cmd/pqcross` cover hybrid key derivation, handshake/session data and compatibility fixtures; they do not establish high-level transport or replay persistence.
+- `group_admin_test.go` rejects a full-list note of 256 members as too large, folds delta notes from 1 member to 256, keeps `vectors/group-admin-v1.json` readable, and matches `vectors/group-admin-delta-v1.json`. A channel keeps its own roster, and a missed key payment can resume.

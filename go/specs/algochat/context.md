@@ -15,6 +15,7 @@ The repository is an early Go implementation of the AlgoChat protocol. Its teste
 - Keep protocol and cryptographic behavior grounded in package tests.
 - Use race-enabled tests to protect concurrent queue and cache behavior.
 - Do not expand migration scope into the planned high-level client.
+- New room administration notes omit the member list and record one subject, plus a parent group id. Full-list notes still reduce. A channel is a separate room created by the parent room's owner. Key deliveries are separate payments, at most 16 at a time.
 - Protocol revision 1.2.1 raises the note ceiling to 4096 bytes without a new envelope version byte. Standard header stays 126 bytes plus a 16-byte tag. PSK envelopes are implemented in `psk.go`, with a 130-byte header and 3950-byte plaintext maximum; callers own replay state, including `math.MaxUint32`, and the library does not wrap that counter or record replays. `DecodeEnvelope` has no plaintext ceiling. Note-facing opens reject a note longer than 4096 bytes before returning plaintext. There is no Falcon signer, so note fees use one minimum fee plus the surcharge.
 
 ## Current inventory and verification boundaries

@@ -33,13 +33,17 @@ The package exposes the following existing symbols. It does not implement high-l
 | Export | Contract |
 |--------|----------|
 | `UnmarshalJSON` | Room administration symbol. |
-| `DraftAdmin` | Drafts an authorized 0x03 room administration note. |
-| `ReduceAdmin` | Reduces administration transactions into one room. |
+| `DraftAdmin` | Drafts an authorized 0x03 room administration note. A new note omits the member list. One room holds 256 members. A channel names its parent room. |
+| `ReduceAdmin` | Reduces administration transactions into one room. Full-list notes still reduce. A channel reduction takes the parent room's events. |
 | `SenderMayPost` | Whether a member may post at an epoch. |
 | `DeliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `AuthorizedRecipients` | Members who may receive the room key for one accepted record. |
+| `ChannelDepartures` | Channel members who are no longer in the parent room. |
+| `PendingKeyDeliveries` | Recipients still owed a key after payments that already landed. |
+| `NextDeliveryBatch` | The next separate key payments, at most 16. Not an atomic group. |
 | `SealGroupKeyDelivery` | Seals a 227-byte 0x06 action-5 delivery. |
 | `OpenGroupKeyDelivery` | Opens a 227-byte 0x06 action-5 delivery. |
-| `RoomState` | Accepted room roster. |
+| `RoomState` | Accepted room roster. The parent group id is 32 zero bytes when the room is not a channel. |
 | `AdminDraft` | Inputs for one administration draft. |
 | `AdminEvent` | One administration transaction. |
 | `AcceptedAdmin` | One accepted administration record. |

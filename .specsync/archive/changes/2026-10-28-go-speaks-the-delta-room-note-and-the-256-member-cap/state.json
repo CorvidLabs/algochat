@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "go-speaks-the-delta-room-note-and-the-256-member-cap",
+  "slug": "go-speaks-the-delta-room-note-and-the-256-member-cap",
+  "title": "Go speaks the delta room note and the 256 member cap",
+  "description": "Go speaks the delta room note and the 256 member cap",
+  "kind": "feature",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "2ed2718d632cbaee654ef7c86fd975e510606b8c",
+  "created_at": 1793203540,
+  "updated_at": 1793203666,
+  "affected_specs": [],
+  "affected_paths": [
+    "go/specs/algochat/algochat.spec.md",
+    "go/specs/algochat/context.md",
+    "go/specs/algochat/testing.md",
+    "go/group_admin.go"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and the frozen vectors already record the delta room note, the 256 member cap, and the channel parent id. This change is the Go implementation and the Go module notes. It does not change a canonical spec.",
+  "acceptance_criteria": [
+    "Go drafts and reduces the same delta room note as TypeScript. A full-list note of 256 members is rejected. A delta note folds through 256. Old full-list notes still open. A channel keeps its own roster. A missed key payment can be resumed."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}
