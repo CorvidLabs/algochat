@@ -471,6 +471,27 @@ class GroupAdminTest {
             )
             assertEquals(draft.str("note"), hex(note), draft.str("name"))
         }
+        for (element in vector.arr("draft_errors")) {
+            val item = element.jsonObject
+            val error = assertThrows<RoomAdminException> {
+                GroupAdmin.draftAdmin(
+                    item.stateOrNull("basis_state"),
+                    item.int("op"),
+                    unhex(item.str("sender")),
+                    unhex(item.str("subject")),
+                    item.utf8OrNull("name_utf8"),
+                    item.intOrNull("policy"),
+                    item.hexOrNull("group_id"),
+                    item.hexOrNull("mailbox"),
+                    item.stateOrNull("parent_room")
+                )
+            }
+            val expected = item.str("error_includes")
+            assertTrue(
+                error.message?.contains(expected, ignoreCase = true) == true,
+                "${item.str("name")} message \"${error.message}\" does not contain \"$expected\""
+            )
+        }
         for ((name, element) in vector.obj("reductions")) {
             val reduction = element.jsonObject
             val result = reduce(reduction)
