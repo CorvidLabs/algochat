@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "rust-speaks-the-delta-room-note-and-the-256-member-cap",
+  "slug": "rust-speaks-the-delta-room-note-and-the-256-member-cap",
+  "title": "Rust speaks the delta room note and the 256 member cap",
+  "description": "Rust speaks the delta room note and the 256 member cap",
+  "kind": "feature",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "eab9653b1c23ef9cb0d55a3e1fed58d0a5f9a8a9",
+  "created_at": 1793203822,
+  "updated_at": 1793203836,
+  "affected_specs": [],
+  "affected_paths": [
+    "rs/specs/crate/context.md",
+    "rs/specs/crate/crate.spec.md",
+    "rs/specs/crate/testing.md",
+    "rs/src/group_admin.rs"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and the frozen vectors already record the delta room note, the 256 member cap, and the channel parent id. This change is the rust implementation and the rust module notes. It does not change a canonical spec.",
+  "acceptance_criteria": [
+    "Rust drafts and reduces the same delta room note as TypeScript. A full-list note of 256 members is rejected. A delta note folds through 256. Old full-list notes still open. A channel keeps its own roster. A missed key payment can be resumed."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}
