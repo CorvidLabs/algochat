@@ -1,4 +1,4 @@
-# Lesson bundle — swift-speaks-the-delta-room-note-and-the-256-member-cap
+# Lesson bundle: swift-speaks-the-delta-room-note-and-the-256-member-cap
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
