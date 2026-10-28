@@ -868,6 +868,19 @@ func TestGroupAdminDeltaVector(t *testing.T) {
 			Mailbox    *string     `json:"mailbox"`
 			Note       string      `json:"note"`
 		} `json:"drafts"`
+		DraftErrors []struct {
+			Name          string      `json:"name"`
+			BasisState    *adminBasis `json:"basis_state"`
+			ParentRoom    *adminBasis `json:"parent_room"`
+			Op            int         `json:"op"`
+			Sender        string      `json:"sender"`
+			Subject       string      `json:"subject"`
+			NameUTF8      *string     `json:"name_utf8"`
+			Policy        *int        `json:"policy"`
+			GroupID       *string     `json:"group_id"`
+			Mailbox       *string     `json:"mailbox"`
+			ErrorIncludes string      `json:"error_includes"`
+		} `json:"draft_errors"`
 		Reductions map[string]struct {
 			ParentEvents []struct {
 				Note   string `json:"note"`
@@ -913,6 +926,20 @@ func TestGroupAdminDeltaVector(t *testing.T) {
 		}
 		if hex.EncodeToString(note) != item.Note {
 			t.Fatalf("%s note mismatch: got %d bytes", item.Name, len(note))
+		}
+	}
+	for _, item := range v.DraftErrors {
+		state, err := basisRoom(item.BasisState)
+		if err != nil {
+			t.Fatal(err)
+		}
+		draft, err := draftFromVector(item.Op, item.Sender, item.Subject, item.NameUTF8, item.Policy, item.GroupID, item.Mailbox, item.ParentRoom)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = DraftAdmin(state, draft)
+		if err == nil || !strings.Contains(err.Error(), item.ErrorIncludes) {
+			t.Fatalf("%s: %v", item.Name, err)
 		}
 	}
 	for name, item := range v.Reductions {
