@@ -18,11 +18,15 @@ import (
 )
 
 const (
-	protocolIDGroupAdmin  = 0x03
-	groupDeliverAction    = 5
-	groupNameMax          = 64
-	groupAdminMax         = 16
-	groupMemberMax        = 100
+	protocolIDGroupAdmin = 0x03
+	groupDeliverAction   = 5
+	groupNameMax         = 64
+	groupAdminMax        = 16
+	groupMemberMax       = 256
+	// Member count sentinel: the note names one subject and omits the roster.
+	groupMembersOmitted = 0xffff
+	// Separate key-delivery payments in one pass. Not an atomic transaction group.
+	groupDeliverBatch     = 16
 	groupDeliverPlainSize = 133
 	groupDeliverNoteSize  = pqDataHeaderSize + groupDeliverPlainSize + TagSize
 	groupAdminNoteMin     = 141
@@ -43,17 +47,19 @@ const (
 )
 
 // RoomState is the derived roster. Pending join requests are not written in the note.
+// ParentGroupID is 32 zero bytes when this room is not a channel.
 type RoomState struct {
-	GroupID  []byte
-	Mailbox  []byte
-	Owner    []byte
-	Admins   [][]byte
-	Members  [][]byte
-	Pending  [][]byte
-	Policy   int
-	Name     []byte
-	Epoch    uint32
-	HeadTxID []byte
+	GroupID       []byte
+	Mailbox       []byte
+	ParentGroupID []byte
+	Owner         []byte
+	Admins        [][]byte
+	Members       [][]byte
+	Pending       [][]byte
+	Policy        int
+	Name          []byte
+	Epoch         uint32
+	HeadTxID      []byte
 }
 
 // AdminEvent is one confirmed administration payment.
@@ -91,16 +97,18 @@ type ReduceAdminResult struct {
 // AdminDraft is the change to encode.
 // HasName and HasPolicy select optional overrides. A nil Subject means 32 zero bytes.
 // Nil GroupID and Mailbox keep the current room, or 32 zero bytes when there is no room.
+// ParentRoom is required when creating a channel, and for every later note on that channel.
 type AdminDraft struct {
-	Op        int
-	Sender    []byte
-	Subject   []byte
-	Name      []byte
-	HasName   bool
-	Policy    int
-	HasPolicy bool
-	GroupID   []byte
-	Mailbox   []byte
+	Op         int
+	Sender     []byte
+	Subject    []byte
+	Name       []byte
+	HasName    bool
+	Policy     int
+	HasPolicy  bool
+	GroupID    []byte
+	Mailbox    []byte
+	ParentRoom *RoomState
 }
 
 // GroupKeyDelivery is the plaintext of one 0x06 action-5 note.
@@ -113,32 +121,47 @@ type GroupKeyDelivery struct {
 }
 
 type decodedAdmin struct {
-	parent  []byte
-	groupID []byte
-	mailbox []byte
-	epoch   uint32
-	op      int
-	name    []byte
-	policy  int
-	owner   []byte
-	admins  [][]byte
-	members [][]byte
-	subject []byte
+	parent         []byte
+	groupID        []byte
+	mailbox        []byte
+	epoch          uint32
+	op             int
+	name           []byte
+	policy         int
+	owner          []byte
+	admins         [][]byte
+	members        [][]byte
+	subject        []byte
+	membersOmitted bool
+	// Present on a delta note. Legacy full-list notes leave this as 32 zero bytes.
+	parentGroupID []byte
 }
 
 type roomBody struct {
-	groupID []byte
-	mailbox []byte
-	owner   []byte
-	admins  [][]byte
-	members [][]byte
-	pending [][]byte
-	policy  int
-	name    []byte
-	epoch   uint32
+	groupID       []byte
+	mailbox       []byte
+	parentGroupID []byte
+	owner         []byte
+	admins        [][]byte
+	members       [][]byte
+	pending       [][]byte
+	policy        int
+	name          []byte
+	epoch         uint32
+}
+
+type parentStep struct {
+	event AdminEvent
+	state *RoomState
+}
+
+type adminFold struct {
+	result ReduceAdminResult
+	steps  []parentStep
 }
 
 // DraftAdmin encodes the only legal next public administration record.
+// A new note omits the member list. The reducer rebuilds members from history.
 func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 	subject := in.Subject
 	if subject == nil {
@@ -186,31 +209,38 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 		admins = cloneList(state.Admins)
 		members = cloneList(state.Members)
 	}
+	parentGroup, err := channelParent(state, in)
+	if err != nil {
+		return nil, err
+	}
 	decoded := decodedAdmin{
-		parent:  parent,
-		groupID: groupID,
-		mailbox: mailbox,
-		epoch:   0,
-		op:      in.Op,
-		name:    name,
-		policy:  policy,
-		owner:   owner,
-		admins:  admins,
-		members: members,
-		subject: subject,
+		parent:         parent,
+		groupID:        groupID,
+		mailbox:        mailbox,
+		epoch:          0,
+		op:             in.Op,
+		name:           name,
+		policy:         policy,
+		owner:          owner,
+		admins:         admins,
+		members:        members,
+		subject:        subject,
+		membersOmitted: true,
+		parentGroupID:  parentGroup,
 	}
 	var next roomBody
 	if in.Op == adminOpCreate {
 		next = roomBody{
-			groupID: cloneBytes(decoded.groupID),
-			mailbox: cloneBytes(decoded.mailbox),
-			owner:   cloneBytes(in.Sender),
-			admins:  [][]byte{},
-			members: [][]byte{cloneBytes(in.Sender)},
-			pending: [][]byte{},
-			policy:  decoded.policy,
-			name:    decoded.name,
-			epoch:   1,
+			groupID:       cloneBytes(decoded.groupID),
+			mailbox:       cloneBytes(decoded.mailbox),
+			parentGroupID: cloneBytes(parentGroup),
+			owner:         cloneBytes(in.Sender),
+			admins:        [][]byte{},
+			members:       [][]byte{cloneBytes(in.Sender)},
+			pending:       [][]byte{},
+			policy:        decoded.policy,
+			name:          decoded.name,
+			epoch:         1,
 		}
 	} else {
 		if state != nil {
@@ -218,24 +248,25 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 		} else {
 			decoded.epoch = 1
 		}
-		var err error
 		next, err = expectNext(state, decoded, in.Sender)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return encodeAdminRecord(decodedAdmin{
-		parent:  decoded.parent,
-		groupID: next.groupID,
-		mailbox: next.mailbox,
-		epoch:   next.epoch,
-		op:      in.Op,
-		name:    next.name,
-		policy:  next.policy,
-		owner:   next.owner,
-		admins:  next.admins,
-		members: next.members,
-		subject: subject,
+		parent:         decoded.parent,
+		groupID:        next.groupID,
+		mailbox:        next.mailbox,
+		epoch:          next.epoch,
+		op:             in.Op,
+		name:           next.name,
+		policy:         next.policy,
+		owner:          next.owner,
+		admins:         next.admins,
+		members:        next.members,
+		subject:        subject,
+		membersOmitted: true,
+		parentGroupID:  next.parentGroupID,
 	})
 }
 
@@ -243,32 +274,43 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 // A transaction id that was already accepted is rejected with reason "replay".
 // A join request does not advance the head. Its parent must be an already accepted
 // administration transaction. The 32 zero bytes are create's parent and are not that set.
-func ReduceAdmin(events []AdminEvent) ReduceAdminResult {
+// Pass parent events when the room is a channel. Omit them for a room that is not a channel.
+func ReduceAdmin(events []AdminEvent, parent ...[]AdminEvent) ReduceAdminResult {
+	supplied := len(parent) > 0
+	var steps []parentStep
+	if supplied {
+		steps = foldAdmin(parent[0], nil, false).steps
+	}
+	return foldAdmin(events, steps, supplied).result
+}
+
+func foldAdmin(events []AdminEvent, parent []parentStep, parentSupplied bool) adminFold {
 	ordered := make([]AdminEvent, len(events))
 	copy(ordered, events)
 	sort.SliceStable(ordered, func(i, j int) bool {
-		if ordered[i].Round != ordered[j].Round {
-			return ordered[i].Round < ordered[j].Round
-		}
-		if ordered[i].Offset != ordered[j].Offset {
-			return ordered[i].Offset < ordered[j].Offset
-		}
-		return bytes.Compare(ordered[i].TxID, ordered[j].TxID) < 0
+		return compareEvents(ordered[i], ordered[j]) < 0
 	})
 	var state *RoomState
 	accepted := []AcceptedAdmin{}
 	rejected := []RejectedAdmin{}
 	seen := map[string]struct{}{}
 	known := map[string]struct{}{}
+	steps := make([]parentStep, 0, len(ordered))
 	for _, event := range ordered {
 		key := hex.EncodeToString(event.TxID)
 		if _, ok := seen[key]; ok {
 			rejected = append(rejected, RejectedAdmin{TxID: cloneBytes(event.TxID), Reason: "replay"})
+			steps = append(steps, parentStep{event: event, state: state})
 			continue
 		}
-		next, acc, advance, err := applyAdmin(state, event, known)
+		var parentState *RoomState
+		if parentSupplied {
+			parentState = parentBefore(parent, event)
+		}
+		next, acc, advance, err := applyAdmin(state, event, known, parentSupplied, parentState)
 		if err != nil {
 			rejected = append(rejected, RejectedAdmin{TxID: cloneBytes(event.TxID), Reason: err.Error()})
+			steps = append(steps, parentStep{event: event, state: state})
 			continue
 		}
 		seen[key] = struct{}{}
@@ -277,8 +319,9 @@ func ReduceAdmin(events []AdminEvent) ReduceAdminResult {
 		}
 		state = next
 		accepted = append(accepted, acc)
+		steps = append(steps, parentStep{event: event, state: state})
 	}
-	return ReduceAdminResult{State: state, Accepted: accepted, Rejected: rejected}
+	return adminFold{result: ReduceAdminResult{State: state, Accepted: accepted, Rejected: rejected}, steps: steps}
 }
 
 // SenderMayPost is true only when epoch is the room epoch and sender is a current member.
@@ -316,6 +359,72 @@ func DeliveryAuthorized(accepted []AcceptedAdmin, adminTxID, sender, recipient [
 	default:
 		return false
 	}
+}
+
+// AuthorizedRecipients lists members who may receive the room key cited by adminTxID.
+func AuthorizedRecipients(accepted []AcceptedAdmin, adminTxID, sender []byte, epoch uint32) [][]byte {
+	out := [][]byte{}
+	var record *AcceptedAdmin
+	for i := range accepted {
+		if bytes.Equal(accepted[i].TxID, adminTxID) {
+			record = &accepted[i]
+			break
+		}
+	}
+	if record == nil {
+		return out
+	}
+	for _, member := range record.Members {
+		if DeliveryAuthorized(accepted, adminTxID, sender, member, epoch) {
+			out = append(out, cloneBytes(member))
+		}
+	}
+	return out
+}
+
+// ChannelDepartures lists channel members who are no longer members of the parent room.
+func ChannelDepartures(channel, parent RoomState) ([][]byte, error) {
+	parentGroup := normalizedParent(channel.ParentGroupID)
+	if isZero(parentGroup) || !bytes.Equal(parentGroup, parent.GroupID) {
+		return nil, errors.New("Channel does not point at this parent room")
+	}
+	out := [][]byte{}
+	for _, member := range channel.Members {
+		if !containsKey(parent.Members, member) {
+			out = append(out, cloneBytes(member))
+		}
+	}
+	return out, nil
+}
+
+// PendingKeyDeliveries lists recipients still owed a key. A payment already in landed stays there.
+func PendingKeyDeliveries(recipients [][]byte, landed [][]byte) [][]byte {
+	out := [][]byte{}
+	for _, recipient := range recipients {
+		if !containsKey(landed, recipient) {
+			out = append(out, cloneBytes(recipient))
+		}
+	}
+	return out
+}
+
+// NextDeliveryBatch returns the next separate payments, at most 16. It does not build an atomic group.
+func NextDeliveryBatch(pending [][]byte, batchSize ...int) ([][]byte, error) {
+	size := groupDeliverBatch
+	if len(batchSize) > 0 {
+		size = batchSize[0]
+	}
+	if size < 1 || size > groupDeliverBatch {
+		return nil, errors.New("A key delivery batch is at most 16 payments")
+	}
+	if size > len(pending) {
+		size = len(pending)
+	}
+	out := make([][]byte, size)
+	for i := 0; i < size; i++ {
+		out[i] = cloneBytes(pending[i])
+	}
+	return out, nil
 }
 
 // SealGroupKeyDelivery seals a 133-byte action-5 plaintext under the hybrid session key.
@@ -392,7 +501,7 @@ func OpenGroupKeyDelivery(note []byte, session PQSession) (GroupKeyDelivery, err
 	return out, nil
 }
 
-func applyAdmin(state *RoomState, event AdminEvent, known map[string]struct{}) (*RoomState, AcceptedAdmin, bool, error) {
+func applyAdmin(state *RoomState, event AdminEvent, known map[string]struct{}, parentSupplied bool, parentState *RoomState) (*RoomState, AcceptedAdmin, bool, error) {
 	if err := requireLen("sender", event.Sender, KeySize); err != nil {
 		return nil, AcceptedAdmin{}, false, err
 	}
@@ -405,6 +514,9 @@ func applyAdmin(state *RoomState, event AdminEvent, known map[string]struct{}) (
 	}
 	if bytes.Equal(decoded.mailbox, event.Sender) {
 		return nil, AcceptedAdmin{}, false, errors.New("Mailbox key does not own the room")
+	}
+	if err := bindChannel(decoded, event.Sender, parentSupplied, parentState); err != nil {
+		return nil, AcceptedAdmin{}, false, err
 	}
 	parent := make([]byte, KeySize)
 	if state != nil {
@@ -433,16 +545,17 @@ func applyAdmin(state *RoomState, event AdminEvent, known map[string]struct{}) (
 		head = cloneBytes(state.HeadTxID)
 	}
 	room := &RoomState{
-		GroupID:  next.groupID,
-		Mailbox:  next.mailbox,
-		Owner:    next.owner,
-		Admins:   next.admins,
-		Members:  next.members,
-		Pending:  next.pending,
-		Policy:   next.policy,
-		Name:     next.name,
-		Epoch:    next.epoch,
-		HeadTxID: head,
+		GroupID:       next.groupID,
+		Mailbox:       next.mailbox,
+		ParentGroupID: normalizedParent(next.parentGroupID),
+		Owner:         next.owner,
+		Admins:        next.admins,
+		Members:       next.members,
+		Pending:       next.pending,
+		Policy:        next.policy,
+		Name:          next.name,
+		Epoch:         next.epoch,
+		HeadTxID:      head,
 	}
 	if room.Admins == nil {
 		room.Admins = [][]byte{}
@@ -480,13 +593,18 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 		if decoded.epoch != 1 || len(decoded.admins) != 0 {
 			return roomBody{}, errors.New("Create starts at epoch 1 with no admins")
 		}
-		if len(decoded.members) != 1 || !bytes.Equal(decoded.members[0], sender) {
+		if decoded.membersOmitted {
+			if len(decoded.members) != 0 {
+				return roomBody{}, errors.New("Create membership is the owner alone")
+			}
+		} else if len(decoded.members) != 1 || !bytes.Equal(decoded.members[0], sender) {
 			return roomBody{}, errors.New("Create membership is the owner alone")
 		}
-		if err := rejectMailboxOverlap(decoded.mailbox, decoded.members, decoded.admins, decoded.owner); err != nil {
+		members := [][]byte{cloneBytes(sender)}
+		if err := rejectMailboxOverlap(decoded.mailbox, members, decoded.admins, decoded.owner); err != nil {
 			return roomBody{}, err
 		}
-		return bodyFrom(decoded, [][]byte{}), nil
+		return bodyFrom(decoded, [][]byte{}, members), nil
 	}
 	if state == nil {
 		return roomBody{}, errors.New("Administration parent is missing")
@@ -607,39 +725,46 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 		return roomBody{}, errors.New("The owner must remain a member")
 	}
 	return roomBody{
-		groupID: cloneBytes(state.GroupID),
-		mailbox: cloneBytes(state.Mailbox),
-		owner:   owner,
-		admins:  admins,
-		members: members,
-		pending: pending,
-		policy:  policy,
-		name:    name,
-		epoch:   epoch,
+		groupID:       cloneBytes(state.GroupID),
+		mailbox:       cloneBytes(state.Mailbox),
+		parentGroupID: normalizedParent(state.ParentGroupID),
+		owner:         owner,
+		admins:        admins,
+		members:       members,
+		pending:       pending,
+		policy:        policy,
+		name:          name,
+		epoch:         epoch,
 	}, nil
 }
 
-func bodyFrom(decoded decodedAdmin, pending [][]byte) roomBody {
+func bodyFrom(decoded decodedAdmin, pending [][]byte, members [][]byte) roomBody {
+	if pending == nil {
+		pending = [][]byte{}
+	}
 	return roomBody{
-		groupID: cloneBytes(decoded.groupID),
-		mailbox: cloneBytes(decoded.mailbox),
-		owner:   cloneBytes(decoded.owner),
-		admins:  cloneList(decoded.admins),
-		members: cloneList(decoded.members),
-		pending: pending,
-		policy:  decoded.policy,
-		name:    cloneBytes(decoded.name),
-		epoch:   decoded.epoch,
+		groupID:       cloneBytes(decoded.groupID),
+		mailbox:       cloneBytes(decoded.mailbox),
+		parentGroupID: normalizedParent(decoded.parentGroupID),
+		owner:         cloneBytes(decoded.owner),
+		admins:        cloneList(decoded.admins),
+		members:       cloneList(members),
+		pending:       pending,
+		policy:        decoded.policy,
+		name:          cloneBytes(decoded.name),
+		epoch:         decoded.epoch,
 	}
 }
 
 func sameState(decoded decodedAdmin, next roomBody) bool {
+	membersOK := decoded.membersOmitted || sameSet(decoded.members, next.members)
 	return bytes.Equal(decoded.owner, next.owner) &&
 		decoded.epoch == next.epoch &&
 		decoded.policy == next.policy &&
 		bytes.Equal(decoded.name, next.name) &&
+		bytes.Equal(normalizedParent(decoded.parentGroupID), normalizedParent(next.parentGroupID)) &&
 		sameSet(decoded.admins, next.admins) &&
-		sameSet(decoded.members, next.members)
+		membersOK
 }
 
 func encodeAdminRecord(fields decodedAdmin) ([]byte, error) {
@@ -651,9 +776,9 @@ func encodeAdminRecord(fields decodedAdmin) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	members, err := canonicalSet(fields.members, "members", groupMemberMax)
-	if err != nil {
-		return nil, err
+	parentGroup := fields.parentGroupID
+	if parentGroup == nil {
+		parentGroup = make([]byte, KeySize)
 	}
 	if err := requireLen("parent", fields.parent, KeySize); err != nil {
 		return nil, err
@@ -670,13 +795,26 @@ func encodeAdminRecord(fields decodedAdmin) ([]byte, error) {
 	if err := requireLen("subject", fields.subject, KeySize); err != nil {
 		return nil, err
 	}
+	if err := requireLen("parent group", parentGroup, KeySize); err != nil {
+		return nil, err
+	}
+	if !fields.membersOmitted && !isZero(parentGroup) {
+		return nil, errors.New("A full member list cannot name a parent room")
+	}
+	members := [][]byte{}
+	if !fields.membersOmitted {
+		members, err = canonicalSet(fields.members, "members", groupMemberMax)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if fields.policy != joiningInvite && fields.policy != joiningAsk {
 		return nil, errors.New("Joining rule must be invite-only or ask-to-join")
 	}
 	if !knownAdminOp(fields.op) {
 		return nil, errors.New("Unknown room administration operation")
 	}
-	out := make([]byte, 0, 173+len(name)+KeySize*len(admins)+KeySize*len(members))
+	out := make([]byte, 0, 205+len(name)+KeySize*len(admins))
 	out = append(out, protocolVersionAAD, protocolIDGroupAdmin)
 	out = append(out, fields.parent...)
 	out = append(out, fields.groupID...)
@@ -694,14 +832,25 @@ func encodeAdminRecord(fields decodedAdmin) ([]byte, error) {
 	for _, admin := range admins {
 		out = append(out, admin...)
 	}
-	binary.BigEndian.PutUint16(count[:], uint16(len(members)))
-	out = append(out, count[:]...)
-	for _, member := range members {
-		out = append(out, member...)
+	if fields.membersOmitted {
+		binary.BigEndian.PutUint16(count[:], uint16(groupMembersOmitted))
+		out = append(out, count[:]...)
+	} else {
+		binary.BigEndian.PutUint16(count[:], uint16(len(members)))
+		out = append(out, count[:]...)
+		for _, member := range members {
+			out = append(out, member...)
+		}
 	}
 	out = append(out, fields.subject...)
+	if fields.membersOmitted {
+		out = append(out, parentGroup...)
+	}
 	if len(out) > MaxNoteSize {
-		return nil, errors.New("Administration record exceeds 4096 bytes")
+		if fields.membersOmitted {
+			return nil, errors.New("Administration record exceeds 4096 bytes")
+		}
+		return nil, errors.New("Full member list is too large")
 	}
 	return out, nil
 }
@@ -781,26 +930,45 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 		return decodedAdmin{}, err
 	}
 	memberCount := int(binary.BigEndian.Uint16(memberCountBytes))
-	members := make([][]byte, 0, memberCount)
-	for i := 0; i < memberCount; i++ {
-		item, err := take(KeySize)
-		if err != nil {
-			return decodedAdmin{}, err
+	membersOmitted := memberCount == groupMembersOmitted
+	members := [][]byte{}
+	if !membersOmitted {
+		members = make([][]byte, 0, memberCount)
+		for i := 0; i < memberCount; i++ {
+			item, err := take(KeySize)
+			if err != nil {
+				return decodedAdmin{}, err
+			}
+			members = append(members, item)
 		}
-		members = append(members, item)
 	}
 	subject, err := take(KeySize)
 	if err != nil {
 		return decodedAdmin{}, err
 	}
+	parentGroup := make([]byte, KeySize)
+	if membersOmitted {
+		parentGroup, err = take(KeySize)
+		if err != nil {
+			return decodedAdmin{}, err
+		}
+	}
 	if cursor != len(note) {
 		return decodedAdmin{}, errors.New("Administration record has trailing bytes")
+	}
+	if len(note) > MaxNoteSize {
+		if membersOmitted {
+			return decodedAdmin{}, errors.New("Administration record exceeds 4096 bytes")
+		}
+		return decodedAdmin{}, errors.New("Full member list is too large")
 	}
 	if _, err := canonicalSet(admins, "admins", groupAdminMax); err != nil {
 		return decodedAdmin{}, err
 	}
-	if _, err := canonicalSet(members, "members", groupMemberMax); err != nil {
-		return decodedAdmin{}, err
+	if !membersOmitted {
+		if _, err := canonicalSet(members, "members", groupMemberMax); err != nil {
+			return decodedAdmin{}, err
+		}
 	}
 	if !strictlyIncreasing(admins) || !strictlyIncreasing(members) {
 		return decodedAdmin{}, errors.New("Administration sets must be strictly sorted")
@@ -810,17 +978,19 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 		return decodedAdmin{}, errors.New("Joining rule must be invite-only or ask-to-join")
 	}
 	return decodedAdmin{
-		parent:  parent,
-		groupID: groupID,
-		mailbox: mailbox,
-		epoch:   epoch,
-		op:      int(opBytes[0]),
-		name:    name,
-		policy:  policy,
-		owner:   owner,
-		admins:  admins,
-		members: members,
-		subject: subject,
+		parent:         parent,
+		groupID:        groupID,
+		mailbox:        mailbox,
+		epoch:          epoch,
+		op:             int(opBytes[0]),
+		name:           name,
+		policy:         policy,
+		owner:          owner,
+		admins:         admins,
+		members:        members,
+		subject:        subject,
+		membersOmitted: membersOmitted,
+		parentGroupID:  parentGroup,
 	}, nil
 }
 
@@ -945,6 +1115,116 @@ func isZero(value []byte) bool {
 		}
 	}
 	return true
+}
+
+func normalizedParent(value []byte) []byte {
+	out := make([]byte, KeySize)
+	if len(value) == KeySize {
+		copy(out, value)
+	}
+	return out
+}
+
+func parentBefore(steps []parentStep, event AdminEvent) *RoomState {
+	var state *RoomState
+	for _, step := range steps {
+		if compareEvents(step.event, event) < 0 {
+			state = step.state
+			continue
+		}
+		break
+	}
+	return state
+}
+
+func compareEvents(a, b AdminEvent) int {
+	if a.Round != b.Round {
+		if a.Round < b.Round {
+			return -1
+		}
+		return 1
+	}
+	if a.Offset != b.Offset {
+		if a.Offset < b.Offset {
+			return -1
+		}
+		return 1
+	}
+	return bytes.Compare(a.TxID, b.TxID)
+}
+
+func channelParent(state *RoomState, in AdminDraft) ([]byte, error) {
+	subject := in.Subject
+	if subject == nil {
+		subject = make([]byte, KeySize)
+	}
+	if in.Op == adminOpCreate {
+		if in.ParentRoom == nil {
+			return make([]byte, KeySize), nil
+		}
+		if !bytes.Equal(in.Sender, in.ParentRoom.Owner) {
+			return nil, errors.New("Only the group owner creates a channel")
+		}
+		groupID := in.GroupID
+		if groupID == nil {
+			groupID = make([]byte, KeySize)
+		}
+		mailbox := in.Mailbox
+		if mailbox == nil {
+			mailbox = make([]byte, KeySize)
+		}
+		if bytes.Equal(groupID, in.ParentRoom.GroupID) || bytes.Equal(mailbox, in.ParentRoom.Mailbox) {
+			return nil, errors.New("A channel has its own mailbox and group id")
+		}
+		return cloneBytes(in.ParentRoom.GroupID), nil
+	}
+	current := normalizedParent(nil)
+	if state != nil {
+		current = normalizedParent(state.ParentGroupID)
+	}
+	if isZero(current) {
+		return current, nil
+	}
+	if in.ParentRoom == nil || !bytes.Equal(in.ParentRoom.GroupID, current) {
+		return nil, errors.New("Channel does not point at this parent room")
+	}
+	if in.Op == adminOpTransfer {
+		return nil, errors.New("The group owner keeps the channel")
+	}
+	if in.Op == adminOpAdd || in.Op == adminOpAccept || in.Op == adminOpRequest {
+		if !containsKey(in.ParentRoom.Members, subject) {
+			return nil, errors.New("That person is not in the parent room")
+		}
+	}
+	return cloneBytes(current), nil
+}
+
+func bindChannel(decoded decodedAdmin, sender []byte, parentSupplied bool, parentState *RoomState) error {
+	parentGroup := normalizedParent(decoded.parentGroupID)
+	if isZero(parentGroup) {
+		return nil
+	}
+	// A missing parent timeline and a parent that did not yet exist are both rejected.
+	if !parentSupplied || parentState == nil || !bytes.Equal(parentState.GroupID, parentGroup) {
+		return errors.New("Channel does not point at this parent room")
+	}
+	if decoded.op == adminOpCreate {
+		if !bytes.Equal(sender, parentState.Owner) {
+			return errors.New("Only the group owner creates a channel")
+		}
+		if bytes.Equal(decoded.groupID, parentState.GroupID) || bytes.Equal(decoded.mailbox, parentState.Mailbox) {
+			return errors.New("A channel has its own mailbox and group id")
+		}
+	}
+	if decoded.op == adminOpTransfer {
+		return errors.New("The group owner keeps the channel")
+	}
+	if decoded.op == adminOpAdd || decoded.op == adminOpAccept || decoded.op == adminOpRequest {
+		if !containsKey(parentState.Members, decoded.subject) {
+			return errors.New("That person is not in the parent room")
+		}
+	}
+	return nil
 }
 
 func knownAdminOp(op int) bool {
