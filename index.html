@@ -409,32 +409,32 @@
                 <tbody>
                     <tr>
                         <td>Swift</td>
-                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/swift">swift-algochat</a> 1.4.0</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/swift">swift-algochat</a> 1.5.0</td>
                         <td><span class="nes-text is-success">Production</span></td>
                     </tr>
                     <tr>
                         <td>TypeScript</td>
-                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/ts">ts-algochat</a> 0.10.0</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/ts">ts-algochat</a> 0.11.0</td>
                         <td><span class="nes-text is-warning">Active</span></td>
                     </tr>
                     <tr>
                         <td>Python</td>
-                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/py">py-algochat</a> 0.3.0</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/py">py-algochat</a> 0.4.0</td>
                         <td><span class="nes-text is-warning">Active</span></td>
                     </tr>
                     <tr>
                         <td>Rust</td>
-                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/rs">rs-algochat</a> 0.4.0</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/rs">rs-algochat</a> 0.5.0</td>
                         <td><span class="nes-text is-warning">Active</span></td>
                     </tr>
                     <tr>
                         <td>Kotlin</td>
-                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/kt">kt-algochat</a> 0.3.0</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/kt">kt-algochat</a> 0.4.0</td>
                         <td><span class="nes-text is-warning">Active</span></td>
                     </tr>
                     <tr>
                         <td>Go</td>
-                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/go">go-algochat</a> 0.3.0</td>
+                        <td><a href="https://github.com/CorvidLabs/algochat/tree/main/go">go-algochat</a> 0.4.0</td>
                         <td><span class="nes-text is-warning">Active</span></td>
                     </tr>
                 </tbody>
@@ -479,7 +479,11 @@
                     </tr>
                     <tr>
                         <td><span class="nes-text is-success">1.4.0</span></td>
-                        <td>Optional X25519 + ML-KEM-768 hybrid handshake (0x04) and session messages (0x05). Envelope versions 0x01/0x02 remain accepted for standard/PSK modes; 0x03 is unassigned.</td>
+                        <td>Group mailbox. Protocol 0x06 delivers a group key. Protocol 0x07 is one note on that mailbox. Protocol 0x03 is the public room record. These ids were not in tag v1.3.0.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="nes-text is-success">1.5.0</span></td>
+                        <td>Delta room note. The member list is omitted, one room holds 256 people, and a channel is another room the group owner keeps. The tag is prepared and not cut.</td>
                     </tr>
                 </tbody>
             </table>

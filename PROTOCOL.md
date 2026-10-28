@@ -1,6 +1,6 @@
 # AlgoChat Protocol Specification
 
-**Version**: 1.4.0
+**Version**: 1.5.0
 **Status**: Stable
 
 ## 1. Overview
@@ -1045,3 +1045,4 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
 | 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |
 | 1.4.0 | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Protocol `0x03` is the public room administration record. These ids were not in tag v1.3.0. |
+| 1.5.0 | Delta room note. A new `0x03` note omits the member list (member count 65535) and names one subject. One room holds 256 people. A channel is another room with its own mailbox, key, and roster. The group owner creates it and keeps it. Full-list notes still open. |

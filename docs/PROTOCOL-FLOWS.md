@@ -1,6 +1,6 @@
 # Hybrid sessions and administered rooms
 
-This guide describes protocol 1.4.0. It explains application integration; it does not claim a new runtime or LocalNet qualification. [PROTOCOL.md](../PROTOCOL.md) remains normative, with exact byte offsets in sections 5.7–5.8. Classical `0x01`/`0x02` behavior is unchanged. The protocol version, envelope version `0x02`, and library package versions are different concepts. Tag v1.4.0 includes `0x03`, `0x06`, and `0x07`. Tag v1.3.0 does not. A protocol tag does not by itself publish the Python, Rust, or Kotlin packages.
+This guide describes protocol 1.5.0. It explains application integration; it does not claim a new runtime or LocalNet qualification. [PROTOCOL.md](../PROTOCOL.md) remains normative, with exact byte offsets in sections 5.7–5.8. Classical `0x01`/`0x02` behavior is unchanged. The protocol version, envelope version `0x02`, and library package versions are different concepts. Tag v1.4.0 includes `0x03`, `0x06`, and `0x07`. Tag v1.3.0 does not. A protocol tag does not by itself publish the Python, Rust, or Kotlin packages.
 
 ## Dispatch and discovery
 

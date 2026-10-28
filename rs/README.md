@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/rs.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/rs.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
-[![Source version](https://img.shields.io/badge/source-0.4.0-blue)](Cargo.toml)
+[![Source version](https://img.shields.io/badge/source-0.5.0-blue)](Cargo.toml)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -12,21 +12,21 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Version and requirements
 
-- Crate: `algochat` **0.4.0**, implementing protocol **1.4.0**.
+- Crate: `algochat` **0.5.0**, implementing protocol **1.5.0**.
 - [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
 - `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
 - Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. The source version does not establish crates.io availability. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Installation
 
-The crate version in `Cargo.toml` is **0.4.0**. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`. Until 0.4.0 is published, depend on a checkout path:
+The crate version in `Cargo.toml` is **0.5.0**. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`. Until 0.5.0 is published, depend on a checkout path:
 
 ```toml
 [dependencies]
 algochat = { path = "/path/to/algochat/rs" }
 ```
 
-The protocol tag does not publish the crate. crates.io still has 0.2.1; use `algochat = "0.4.0"` only after that version is separately published. See the [dated publication evidence](../docs/RELEASE.md).
+The protocol tag does not publish the crate. crates.io still has 0.2.1; use `algochat = "0.5.0"` only after that version is separately published. See the [dated publication evidence](../docs/RELEASE.md).
 
 ## Usage
 

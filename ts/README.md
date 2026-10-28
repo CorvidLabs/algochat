@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/ts.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/ts.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
-[![Source version](https://img.shields.io/badge/source-0.10.0-blue)](package.json)
+[![Source version](https://img.shields.io/badge/source-0.11.0-blue)](package.json)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -12,7 +12,7 @@ TypeScript implementation of the AlgoChat protocol for encrypted messaging on Al
 
 ## Version and requirements
 
-- Package: `@corvidlabs/ts-algochat` **0.10.0**, implementing protocol **1.4.0**.
+- Package: `@corvidlabs/ts-algochat` **0.11.0**, implementing protocol **1.5.0**.
 - [Declared runtime](package.json): Node.js **18.0.0+**. Development uses TypeScript **`^5.7.0`**, resolved by the Bun lockfile.
 - Qualification is configured for **Node.js 22** and **Bun 1.3.6**; Node.js 18 remains unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
@@ -58,13 +58,13 @@ The package's configured registry is GitHub Packages. Set `@corvidlabs:registry=
 
 ```bash
 # npm
-npm install @corvidlabs/ts-algochat@0.10.0
+npm install @corvidlabs/ts-algochat@0.11.0
 
 # bun
-bun add @corvidlabs/ts-algochat@0.10.0
+bun add @corvidlabs/ts-algochat@0.11.0
 
 # pnpm
-pnpm add @corvidlabs/ts-algochat@0.10.0
+pnpm add @corvidlabs/ts-algochat@0.11.0
 ```
 
 ## Quick Start
