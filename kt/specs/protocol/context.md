@@ -19,6 +19,7 @@ AlgoChat messages are Algorand transaction-note bytes, so the encoded envelope a
 - Structured JSON payloads retain a legacy UTF-8 decoding fallback.
 - The note ceiling is 4096 bytes. Standard plaintext max is that ceiling minus the 126-byte header and 16-byte tag.
 - A hybrid session is optional. Its handshake and message notes use their own header version and protocol bytes, and an ACPQ announcement is not an X25519 key.
+- A new 0x03 note records one subject and omits the member list. Clients rebuild the roster by folding history. A channel is another room that names the parent group id. The parent roster is not copied.
 
 ## Accuracy audit
 

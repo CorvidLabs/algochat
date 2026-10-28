@@ -14,11 +14,17 @@ import java.security.SecureRandom
  *
  * Legacy 0x06 actions 1–4 stay in [Group] and do not create an owner.
  * Pending join requests are derived. They are not written in the note.
+ * A new note omits the member list. A full-list note still decodes.
+ * A channel names its parent group. Parent membership is not copied in.
  */
 object GroupAdmin {
     const val NAME_MAX = 64
     const val ADMIN_MAX = 16
-    const val MEMBER_MAX = 100
+    const val MEMBER_MAX = 256
+    /** Separate key-delivery payments in one pass. Not an atomic transaction group. */
+    const val DELIVER_BATCH = 16
+    /** Member count sentinel: the note names one subject and omits the roster. */
+    const val MEMBERS_OMITTED = 0xffff
     const val DELIVER_PLAINTEXT_SIZE = 133
     const val DELIVER_ACTION = 5
 
@@ -48,9 +54,11 @@ object GroupAdmin {
         name: ByteArray? = null,
         policy: Int? = null,
         groupId: ByteArray? = null,
-        mailbox: ByteArray? = null
+        mailbox: ByteArray? = null,
+        parentRoom: RoomState? = null
     ): ByteArray {
         val subjectBytes = subject?.copyOf() ?: ByteArray(32)
+        val parentGroupId = channelParent(state, op, sender, subjectBytes, groupId, mailbox, parentRoom)
         val decoded = DecodedAdmin(
             parent = state?.headTxId?.copyOf() ?: ByteArray(32),
             groupId = groupId?.copyOf() ?: state?.groupId?.copyOf() ?: ByteArray(32),
@@ -62,12 +70,15 @@ object GroupAdmin {
             owner = state?.owner?.copyOf() ?: sender.copyOf(),
             admins = state?.admins?.map { it.copyOf() } ?: emptyList(),
             members = state?.members?.map { it.copyOf() } ?: emptyList(),
-            subject = subjectBytes
+            subject = subjectBytes,
+            membersOmitted = true,
+            parentGroupId = parentGroupId
         )
         val next = if (op == OP_CREATE) {
             RoomBody(
                 groupId = decoded.groupId,
                 mailbox = decoded.mailbox,
+                parentGroupId = parentGroupId.copyOf(),
                 owner = sender.copyOf(),
                 admins = emptyList(),
                 members = listOf(sender.copyOf()),
@@ -90,7 +101,9 @@ object GroupAdmin {
                     owner = state?.owner?.copyOf() ?: sender.copyOf(),
                     admins = decoded.admins,
                     members = decoded.members,
-                    subject = decoded.subject
+                    subject = decoded.subject,
+                    membersOmitted = true,
+                    parentGroupId = parentGroupId
                 ),
                 sender
             )
@@ -107,36 +120,16 @@ object GroupAdmin {
                 owner = next.owner,
                 admins = next.admins,
                 members = next.members,
-                subject = subjectBytes
+                subject = subjectBytes,
+                membersOmitted = true,
+                parentGroupId = next.parentGroupId
             )
         )
     }
 
-    fun reduceAdmin(events: List<AdminEvent>): ReduceAdminResult {
-        val ordered = events.sortedWith { left, right -> compareEvents(left, right) }
-        var state: RoomState? = null
-        val accepted = mutableListOf<AcceptedAdmin>()
-        val rejected = mutableListOf<RejectedAdmin>()
-        val seen = HashSet<String>()
-        // 32 zero bytes are create's parent, not an accepted administration id.
-        val known = HashSet<String>()
-        for (event in ordered) {
-            val key = hexKey(event.txId)
-            if (seen.contains(key)) {
-                rejected.add(RejectedAdmin(event.txId.copyOf(), "replay"))
-                continue
-            }
-            try {
-                val next = applyAdmin(state, event, known)
-                seen.add(key)
-                if (next.advance) known.add(hexKey(event.txId))
-                state = next.state
-                accepted.add(next.accepted)
-            } catch (error: Exception) {
-                rejected.add(RejectedAdmin(event.txId.copyOf(), error.message ?: "rejected"))
-            }
-        }
-        return ReduceAdminResult(state, accepted.toList(), rejected.toList())
+    fun reduceAdmin(events: List<AdminEvent>, parentEvents: List<AdminEvent>? = null): ReduceAdminResult {
+        val parent = if (parentEvents != null) parentTimeline(parentEvents) else null
+        return foldAdmin(events, parent).result
     }
 
     fun senderMayPost(state: RoomState, sender: ByteArray, epoch: Int): Boolean {
@@ -160,6 +153,73 @@ object GroupAdmin {
             OP_REKEY, OP_TRANSFER_OWNER -> true
             else -> false
         }
+    }
+
+    fun authorizedRecipients(
+        accepted: List<AcceptedAdmin>,
+        adminTxId: ByteArray,
+        sender: ByteArray,
+        epoch: Int
+    ): List<ByteArray> {
+        val record = accepted.find { it.txId.contentEquals(adminTxId) } ?: return emptyList()
+        return record.members.filter { member ->
+            deliveryAuthorized(accepted, adminTxId, sender, member, epoch)
+        }.map { it.copyOf() }
+    }
+
+    /** Members of a channel who are no longer members of the parent room. */
+    fun channelDepartures(channel: RoomState, parent: RoomState): List<ByteArray> {
+        if (isZero(channel.parentGroupId) || !channel.parentGroupId.contentEquals(parent.groupId)) {
+            throw RoomAdminException("Channel does not point at this parent room")
+        }
+        return channel.members.filter { member -> !contains(parent.members, member) }.map { it.copyOf() }
+    }
+
+    /** Recipients still owed a key. A payment already in [landed] stays there. */
+    fun pendingKeyDeliveries(recipients: List<ByteArray>, landed: List<ByteArray>): List<ByteArray> {
+        return recipients.filter { recipient -> !contains(landed, recipient) }.map { it.copyOf() }
+    }
+
+    /** The next separate payments, at most 16. This does not build an atomic group. */
+    fun nextDeliveryBatch(pending: List<ByteArray>, batchSize: Int = DELIVER_BATCH): List<ByteArray> {
+        if (batchSize < 1 || batchSize > DELIVER_BATCH) {
+            throw RoomAdminException("A key delivery batch is at most 16 payments")
+        }
+        return pending.take(batchSize).map { it.copyOf() }
+    }
+
+    fun encodeAdminRecord(
+        parent: ByteArray,
+        groupId: ByteArray,
+        mailbox: ByteArray,
+        epoch: Int,
+        op: Int,
+        name: ByteArray,
+        policy: Int,
+        owner: ByteArray,
+        admins: List<ByteArray>,
+        members: List<ByteArray>,
+        subject: ByteArray,
+        membersOmitted: Boolean = false,
+        parentGroupId: ByteArray = ByteArray(32)
+    ): ByteArray {
+        return encodeAdminRecord(
+            DecodedAdmin(
+                parent,
+                groupId,
+                mailbox,
+                epoch,
+                op,
+                name,
+                policy,
+                owner,
+                admins,
+                members,
+                subject,
+                membersOmitted,
+                parentGroupId
+            )
+        )
     }
 
     fun sealGroupKeyDelivery(
@@ -226,13 +286,19 @@ object GroupAdmin {
     private fun encodeAdminRecord(fields: DecodedAdmin): ByteArray {
         val name = canonicalName(fields.name)
         val admins = canonicalSet(fields.admins, "admins", ADMIN_MAX)
-        val members = canonicalSet(fields.members, "members", MEMBER_MAX)
+        val membersOmitted = fields.membersOmitted
+        val parentGroupId = fields.parentGroupId
         requireLength("parent", fields.parent, 32)
         requireLength("group id", fields.groupId, 32)
         requireLength("mailbox", fields.mailbox, 32)
         requireLength("owner", fields.owner, 32)
         requireLength("subject", fields.subject, 32)
+        requireLength("parent group", parentGroupId, 32)
         requireUint32("epoch", fields.epoch)
+        if (!membersOmitted && !isZero(parentGroupId)) {
+            throw RoomAdminException("A full member list cannot name a parent room")
+        }
+        val members = if (membersOmitted) emptyList() else canonicalSet(fields.members, "members", MEMBER_MAX)
         if (fields.policy != JOINING_INVITE && fields.policy != JOINING_ASK) {
             throw RoomAdminException("Joining rule must be invite-only or ask-to-join")
         }
@@ -253,12 +319,17 @@ object GroupAdmin {
         out.write(fields.owner)
         writeU16(out, admins.size)
         for (admin in admins) out.write(admin)
-        writeU16(out, members.size)
-        for (member in members) out.write(member)
+        writeU16(out, if (membersOmitted) MEMBERS_OMITTED else members.size)
+        if (!membersOmitted) {
+            for (member in members) out.write(member)
+        }
         out.write(fields.subject)
+        if (membersOmitted) out.write(parentGroupId)
         val note = out.toByteArray()
         if (note.size > Protocol.MAX_NOTE_SIZE) {
-            throw RoomAdminException("Administration record exceeds 4096 bytes")
+            throw RoomAdminException(
+                if (membersOmitted) "Administration record exceeds 4096 bytes" else "Full member list is too large"
+            )
         }
         return note
     }
@@ -266,7 +337,8 @@ object GroupAdmin {
     private fun applyAdmin(
         state: RoomState?,
         event: AdminEvent,
-        known: Set<String>
+        known: Set<String>,
+        parentState: RoomState?
     ): AppliedAdmin {
         requireLength("sender", event.sender, 32)
         requireLength("transaction id", event.txId, 32)
@@ -274,6 +346,7 @@ object GroupAdmin {
         if (decoded.mailbox.contentEquals(event.sender)) {
             throw RoomAdminException("Mailbox key does not own the room")
         }
+        bindChannel(decoded, event.sender, parentState)
         val parent = state?.headTxId ?: ByteArray(32)
         val request = decoded.op == OP_REQUEST_JOIN
         if (request) {
@@ -297,7 +370,8 @@ object GroupAdmin {
             next.policy,
             next.name,
             next.epoch,
-            if (request) state!!.headTxId else event.txId
+            if (request) state!!.headTxId else event.txId,
+            next.parentGroupId
         )
         return AppliedAdmin(
             advance = !request,
@@ -323,11 +397,14 @@ object GroupAdmin {
             if (decoded.epoch != 1 || decoded.admins.isNotEmpty()) {
                 throw RoomAdminException("Create starts at epoch 1 with no admins")
             }
-            if (decoded.members.size != 1 || !decoded.members[0].contentEquals(sender)) {
+            if (decoded.membersOmitted) {
+                if (decoded.members.isNotEmpty()) throw RoomAdminException("Create membership is the owner alone")
+            } else if (decoded.members.size != 1 || !decoded.members[0].contentEquals(sender)) {
                 throw RoomAdminException("Create membership is the owner alone")
             }
-            rejectMailboxOverlap(decoded.mailbox, decoded.members, decoded.admins, decoded.owner)
-            return body(decoded, emptyList())
+            val members = listOf(sender.copyOf())
+            rejectMailboxOverlap(decoded.mailbox, members, decoded.admins, decoded.owner)
+            return body(decoded, emptyList(), members)
         }
         if (state == null) throw RoomAdminException("Administration parent is missing")
         if (!decoded.groupId.contentEquals(state.groupId) || !decoded.mailbox.contentEquals(state.mailbox)) {
@@ -403,6 +480,7 @@ object GroupAdmin {
         return RoomBody(
             state.groupId.copyOf(),
             state.mailbox.copyOf(),
+            state.parentGroupId.copyOf(),
             owner,
             admins,
             members,
@@ -413,13 +491,14 @@ object GroupAdmin {
         )
     }
 
-    private fun body(decoded: DecodedAdmin, pending: List<ByteArray>): RoomBody {
+    private fun body(decoded: DecodedAdmin, pending: List<ByteArray>, members: List<ByteArray>): RoomBody {
         return RoomBody(
             decoded.groupId.copyOf(),
             decoded.mailbox.copyOf(),
+            decoded.parentGroupId.copyOf(),
             decoded.owner.copyOf(),
             decoded.admins.map { it.copyOf() },
-            decoded.members.map { it.copyOf() },
+            members.map { it.copyOf() },
             pending.map { it.copyOf() },
             decoded.policy,
             decoded.name.copyOf(),
@@ -432,8 +511,9 @@ object GroupAdmin {
             decoded.epoch == next.epoch &&
             decoded.policy == next.policy &&
             decoded.name.contentEquals(next.name) &&
+            decoded.parentGroupId.contentEquals(next.parentGroupId) &&
             sameSet(decoded.admins, next.admins) &&
-            sameSet(decoded.members, next.members)
+            (decoded.membersOmitted || sameSet(decoded.members, next.members))
     }
 
     private fun decodeAdmin(note: ByteArray): DecodedAdmin {
@@ -470,23 +550,47 @@ object GroupAdmin {
         }
         val memberCount = readU16(note, cursor)
         cursor += 2
-        val members = ArrayList<ByteArray>(memberCount)
-        for (index in 0 until memberCount) {
-            members.add(take(note, cursor, 32))
-            cursor += 32
+        val membersOmitted = memberCount == MEMBERS_OMITTED
+        val members = ArrayList<ByteArray>()
+        if (!membersOmitted) {
+            for (index in 0 until memberCount) {
+                members.add(take(note, cursor, 32))
+                cursor += 32
+            }
         }
         val subject = take(note, cursor, 32)
         cursor += 32
+        val parentGroupId = if (membersOmitted) take(note, cursor, 32) else ByteArray(32)
+        if (membersOmitted) cursor += 32
         if (cursor != note.size) throw RoomAdminException("Administration record has trailing bytes")
+        if (note.size > Protocol.MAX_NOTE_SIZE) {
+            throw RoomAdminException(
+                if (membersOmitted) "Administration record exceeds 4096 bytes" else "Full member list is too large"
+            )
+        }
         canonicalSet(admins, "admins", ADMIN_MAX)
-        canonicalSet(members, "members", MEMBER_MAX)
+        if (!membersOmitted) canonicalSet(members, "members", MEMBER_MAX)
         if (!strictlyIncreasing(admins) || !strictlyIncreasing(members)) {
             throw RoomAdminException("Administration sets must be strictly sorted")
         }
         if (policy != JOINING_INVITE && policy != JOINING_ASK) {
             throw RoomAdminException("Joining rule must be invite-only or ask-to-join")
         }
-        return DecodedAdmin(parent, groupId, mailbox, epoch, op, name, policy, owner, admins, members, subject)
+        return DecodedAdmin(
+            parent,
+            groupId,
+            mailbox,
+            epoch,
+            op,
+            name,
+            policy,
+            owner,
+            admins,
+            members,
+            subject,
+            membersOmitted,
+            parentGroupId
+        )
     }
 
     private fun encodeDelivery(
@@ -510,6 +614,106 @@ object GroupAdmin {
         groupKey.copyInto(out, 69)
         adminTxId.copyInto(out, 101)
         return out
+    }
+
+    private class ParentStep(val event: AdminEvent, val state: RoomState?)
+
+    private class FoldAdmin(val result: ReduceAdminResult, val steps: List<ParentStep>)
+
+    private fun parentTimeline(events: List<AdminEvent>): List<ParentStep> {
+        return foldAdmin(events, null).steps
+    }
+
+    private fun foldAdmin(events: List<AdminEvent>, parent: List<ParentStep>?): FoldAdmin {
+        val ordered = events.sortedWith { left, right -> compareEvents(left, right) }
+        var state: RoomState? = null
+        val accepted = mutableListOf<AcceptedAdmin>()
+        val rejected = mutableListOf<RejectedAdmin>()
+        val seen = HashSet<String>()
+        // 32 zero bytes are create's parent, not an accepted administration id.
+        val known = HashSet<String>()
+        val steps = mutableListOf<ParentStep>()
+        for (event in ordered) {
+            val key = hexKey(event.txId)
+            if (seen.contains(key)) {
+                rejected.add(RejectedAdmin(event.txId.copyOf(), "replay"))
+                steps.add(ParentStep(event, state))
+                continue
+            }
+            try {
+                val parentState = if (parent != null) parentBefore(parent, event) else null
+                val next = applyAdmin(state, event, known, parentState)
+                seen.add(key)
+                if (next.advance) known.add(hexKey(event.txId))
+                state = next.state
+                accepted.add(next.accepted)
+            } catch (error: Exception) {
+                rejected.add(RejectedAdmin(event.txId.copyOf(), error.message ?: "rejected"))
+            }
+            steps.add(ParentStep(event, state))
+        }
+        return FoldAdmin(ReduceAdminResult(state, accepted.toList(), rejected.toList()), steps.toList())
+    }
+
+    private fun parentBefore(steps: List<ParentStep>, event: AdminEvent): RoomState? {
+        var state: RoomState? = null
+        for (step in steps) {
+            if (compareEvents(step.event, event) < 0) state = step.state
+            else break
+        }
+        return state
+    }
+
+    private fun channelParent(
+        state: RoomState?,
+        op: Int,
+        sender: ByteArray,
+        subject: ByteArray,
+        groupId: ByteArray?,
+        mailbox: ByteArray?,
+        parentRoom: RoomState?
+    ): ByteArray {
+        if (op == OP_CREATE) {
+            if (parentRoom == null) return ByteArray(32)
+            if (!sender.contentEquals(parentRoom.owner)) {
+                throw RoomAdminException("Only the group owner creates a channel")
+            }
+            val nextGroup = groupId?.copyOf() ?: ByteArray(32)
+            val nextMailbox = mailbox?.copyOf() ?: ByteArray(32)
+            if (nextGroup.contentEquals(parentRoom.groupId) || nextMailbox.contentEquals(parentRoom.mailbox)) {
+                throw RoomAdminException("A channel has its own mailbox and group id")
+            }
+            return parentRoom.groupId.copyOf()
+        }
+        val current = state?.parentGroupId?.copyOf() ?: ByteArray(32)
+        if (isZero(current)) return current
+        if (parentRoom == null || !parentRoom.groupId.contentEquals(current)) {
+            throw RoomAdminException("Channel does not point at this parent room")
+        }
+        if (op == OP_TRANSFER_OWNER) throw RoomAdminException("The group owner keeps the channel")
+        if (op == OP_ADD_MEMBER || op == OP_ACCEPT_JOIN || op == OP_REQUEST_JOIN) {
+            if (!contains(parentRoom.members, subject)) throw RoomAdminException("That person is not in the parent room")
+        }
+        return current
+    }
+
+    private fun bindChannel(decoded: DecodedAdmin, sender: ByteArray, parentState: RoomState?) {
+        val parentGroupId = decoded.parentGroupId
+        if (isZero(parentGroupId)) return
+        // null covers a missing parent timeline and a parent room that did not exist yet.
+        if (parentState == null || !parentState.groupId.contentEquals(parentGroupId)) {
+            throw RoomAdminException("Channel does not point at this parent room")
+        }
+        if (decoded.op == OP_CREATE) {
+            if (!sender.contentEquals(parentState.owner)) throw RoomAdminException("Only the group owner creates a channel")
+            if (decoded.groupId.contentEquals(parentState.groupId) || decoded.mailbox.contentEquals(parentState.mailbox)) {
+                throw RoomAdminException("A channel has its own mailbox and group id")
+            }
+        }
+        if (decoded.op == OP_TRANSFER_OWNER) throw RoomAdminException("The group owner keeps the channel")
+        if (decoded.op == OP_ADD_MEMBER || decoded.op == OP_ACCEPT_JOIN || decoded.op == OP_REQUEST_JOIN) {
+            if (!contains(parentState.members, decoded.subject)) throw RoomAdminException("That person is not in the parent room")
+        }
     }
 
     private fun rejectMailboxOverlap(
@@ -694,7 +898,8 @@ class RoomState(
     val policy: Int,
     name: ByteArray,
     val epoch: Int,
-    headTxId: ByteArray
+    headTxId: ByteArray,
+    parentGroupId: ByteArray = ByteArray(32)
 ) {
     val groupId: ByteArray = groupId.copyOf()
     val mailbox: ByteArray = mailbox.copyOf()
@@ -704,6 +909,8 @@ class RoomState(
     val pending: List<ByteArray> = pending.map { it.copyOf() }
     val name: ByteArray = name.copyOf()
     val headTxId: ByteArray = headTxId.copyOf()
+    /** 32 zero bytes when this room is not a channel. */
+    val parentGroupId: ByteArray = parentGroupId.copyOf()
 }
 
 /** One confirmed administration note, in chain order once reduced. */
@@ -765,12 +972,15 @@ private class DecodedAdmin(
     val owner: ByteArray,
     val admins: List<ByteArray>,
     val members: List<ByteArray>,
-    val subject: ByteArray
+    val subject: ByteArray,
+    val membersOmitted: Boolean = false,
+    val parentGroupId: ByteArray = ByteArray(32)
 )
 
 private class RoomBody(
     val groupId: ByteArray,
     val mailbox: ByteArray,
+    val parentGroupId: ByteArray,
     val owner: ByteArray,
     val admins: List<ByteArray>,
     val members: List<ByteArray>,

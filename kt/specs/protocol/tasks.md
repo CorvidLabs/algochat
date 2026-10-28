@@ -11,3 +11,4 @@ spec: protocol.spec.md
 
 - [x] Document the complete shipped PQ public surface and correct fingerprint formatting.
 - [x] Distinguish committed PQ parity vectors from optional legacy sibling fixtures.
+- [x] Teach room administration the delta 0x03 note, the 256-member cap, and channel parent linkage.

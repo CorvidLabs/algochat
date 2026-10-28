@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "kotlin-speaks-the-delta-room-note-and-the-256-member-cap",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "63a791143945a324cb8d12be20c39f3c192fe03c",
+  "contract_digest": "5c7466f7e5dcdd7a52886599ec29d6ebd8f89c531183b8e69a76382391f619d4",
+  "execution_digest": "a414691c5afd1bb5dd4328d602f92f501c0fe02c7144fc86592e80eb5e85f60c",
+  "workspace_digest": "da7c4c8779a40fbf25ef66f6626da11c8377cf139a39c19d9287f07ecf59157d",
+  "timestamp": 1793203843
+}
