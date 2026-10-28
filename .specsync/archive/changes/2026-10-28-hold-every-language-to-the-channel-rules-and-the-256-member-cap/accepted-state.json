@@ -7,11 +7,11 @@
   "title": "Hold every language to the channel rules and the 256-member cap",
   "description": "Hold every language to the channel rules and the 256-member cap",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "c1f0eb2bb1a5ab1e7a95de83ec49ebda8a298721",
   "created_at": 1793206379,
-  "updated_at": 1793206455,
+  "updated_at": 1793206476,
   "affected_specs": [],
   "affected_paths": [
     "vectors/group-admin-delta-v1.json",

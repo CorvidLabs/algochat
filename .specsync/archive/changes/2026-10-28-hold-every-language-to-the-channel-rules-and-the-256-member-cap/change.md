@@ -1,6 +1,6 @@
 ---
 id: hold-every-language-to-the-channel-rules-and-the-256-member-cap
-state: implementing
+state: archived
 type: feature
 base_commit: c1f0eb2bb1a5ab1e7a95de83ec49ebda8a298721
 ---

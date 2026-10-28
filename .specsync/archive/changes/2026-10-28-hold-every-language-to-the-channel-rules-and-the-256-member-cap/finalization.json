@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "hold-every-language-to-the-channel-rules-and-the-256-member-cap",
+  "implementation_commit": "270325f1f97cfb8cbfbadb02bd4d4d8be490237e",
+  "implementation_tree": "9fc341c90f05b363c03d4dc820143cf9782fbaf6",
+  "contract_digest": "41ef50fefa7f213d50812871b361dc1a0082da4ff1c76a48e35892cba7f4659a",
+  "workspace_digest": "dae7c03754b51eb6fc76f2ff3c47adfa5cc70ca23b1e8b77c5ef3acac312b5b0",
+  "closing_digest": "bb3438eb22bcbca4447f3002958516f03a9765b739119842be0c745139c26a01",
+  "review_digest": "66fcf837a9dad33c66f4eff368c62e7d8aef1554d342f1b0a582598c4bf3a303",
+  "finalization_digest": "83c17993cb6faabec4fd2eb1bf61933b7f9e0022c99f89e84198aea06a507e81",
+  "timestamp": 1793206476
+}
