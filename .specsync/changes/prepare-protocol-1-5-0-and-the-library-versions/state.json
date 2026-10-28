@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "prepare-protocol-1-5-0-and-the-library-versions",
+  "slug": "prepare-protocol-1-5-0-and-the-library-versions",
+  "title": "Prepare protocol 1.5.0 and the library versions",
+  "description": "Prepare protocol 1.5.0 and the library versions",
+  "kind": "documentation",
+  "state": "verifying",
+  "canonical_applied": true,
+  "base_commit": "cbf50acb463536e3b8ee91e6386badb490c443f9",
+  "created_at": 1793213900,
+  "updated_at": 1793213987,
+  "affected_specs": [
+    "release",
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "docs/RELEASE.md",
+    "ts/package.json",
+    "py/pyproject.toml",
+    "rs/Cargo.toml",
+    "kt/build.gradle.kts"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "Prepared source names protocol 1.5.0 with TypeScript 0.11.0 Python 0.4.0 Rust 0.5.0 Kotlin 0.4.0 and Go 0.4.0 and does not cut the tags."
+  ],
+  "selected_artifacts": [
+    "context",
+    "docs",
+    "design",
+    "tasks",
+    "requirements"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "No registry publish and no tag cut. v1.4.0 and go/v0.3.0 stay the previous release. Qualification still does not publish packages.",
+    "public_contract": "yes"
+  }
+}

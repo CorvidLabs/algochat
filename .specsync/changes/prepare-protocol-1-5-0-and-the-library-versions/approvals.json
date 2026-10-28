@@ -1,0 +1,47 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793213959,
+      "digest": "c1944290f20af9955e2c77c58a9dc1a0b2cf43096a405469e306ec26a449bef1",
+      "note": "Leif asked to prepare the 1.5.0 release on 28 October 2026. Tags stay uncut.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "prepare-protocol-1-5-0-and-the-library-versions",
+        "title": "Prepare protocol 1.5.0 and the library versions",
+        "description": "Prepare protocol 1.5.0 and the library versions",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol",
+          "release"
+        ],
+        "affected_paths": [
+          "PROTOCOL.md",
+          "docs/RELEASE.md",
+          "kt/build.gradle.kts",
+          "py/pyproject.toml",
+          "rs/Cargo.toml",
+          "ts/package.json"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Prepared source names protocol 1.5.0 with TypeScript 0.11.0 Python 0.4.0 Rust 0.5.0 Kotlin 0.4.0 and Go 0.4.0 and does not cut the tags."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "constraints": "No registry publish and no tag cut. v1.4.0 and go/v0.3.0 stay the previous release. Qualification still does not publish packages.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "f299533813c2f9923fdc794456fa20428405671dd92f96c69c953d629031a35c",
+        "release": "4bbeba6ad065224a351f800dbace27c84f4048129fa5cb36e3d4accec63f22c4"
+      }
+    }
+  ],
+  "reopenings": []
+}

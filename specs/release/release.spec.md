@@ -1,6 +1,6 @@
 ---
 module: release
-version: 6
+version: 7
 status: active
 files:
   - scripts/release/packages.py
@@ -110,3 +110,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-18 | Resolve the TypeScript tarball from the file npm wrote when the JSON filename differs. |
 | 2026-10-19 | release-protocol-1-4-0-and-the-library-versions: Release protocol 1.4.0 and the library versions |
 | 2026-10-28 | release-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
+| 2026-10-28 | prepare-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
