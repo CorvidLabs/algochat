@@ -1,4 +1,4 @@
-# Lesson bundle — cover-the-1-5-0-version-labels-in-the-release-scripts
+# Lesson bundle: cover-the-1-5-0-version-labels-in-the-release-scripts
 
 Material for folding this change's lessons into each affected module's lesson file.
 Synthesise from what actually happened below; do not restate the change description.
