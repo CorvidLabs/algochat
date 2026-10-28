@@ -33,3 +33,16 @@ I want rooms I can own: a small invite-only team and a larger room people ask to
 - **GROUP-6**  An ordinary message is one payment to the room mailbox.
   - **GROUP-6.a**  I ignore a mailbox note when the accepted room state does not allow that sender to post it.
 - **GROUP-7**  I can still open a membership note and a mailbox message that were written before administration records existed.
+- **GROUP-8**  I want a room change to record the one person added or removed, so I can rebuild the member list by folding that history.
+  - **GROUP-8.a**  I want a note that already carries the full member list to still open, and I want that room to keep working.
+  - **GROUP-8.b**  I want one room to hold 256 people.
+- **GROUP-9**  I want a channel to be another room with its own mailbox and key, pointing at a parent room.
+  - **GROUP-9.a**  I want the group owner to create a channel and to own it.
+  - **GROUP-9.b**  I do not want being in the parent room to add me to the channel.
+- **GROUP-10**  I want removing someone to rotate the key and deliver it only to the members who remain.
+  - **GROUP-10.a**  I want those deliveries to be separate payments, up to 16 at a time, and I want a payment that lands to be kept.
+  - **GROUP-10.b**  I want to resume the people who were missed, and I do not want that delivery to be an atomic group.
+- **GROUP-11**  I want leaving the parent room, or being removed from it, to remove me from every channel of that room.
+  - **GROUP-11.a**  I want the group owner to deliver each channel's new key the same way.
+- **GROUP-12**  I want an owner or an admin to be able to remove a person and pay for the new key.
+- **GROUP-13**  I want at most 16 admins, a name of at most 64 bytes, and a message to stay one payment to that room's mailbox.

@@ -1,6 +1,8 @@
 /**
- * Write vectors/group-admin-v1.json from the TypeScript room reducer.
+ * Write vectors/group-admin-delta-v1.json from the TypeScript room reducer.
  * Run from ts/: bun scripts/emit-group-admin-vector.ts
+ * Do not point this script at vectors/group-admin-v1.json. That file stays the
+ * full-list notes other ports already match.
  */
 import { writeFileSync } from "node:fs";
 import {
@@ -75,6 +77,7 @@ function snap(state: RoomState | null) {
         name_hex: hex(state.name),
         epoch: state.epoch,
         head_tx_id: hex(state.headTxId),
+        parent_group_id: hex(state.parentGroupId),
     };
 }
 
@@ -88,9 +91,10 @@ function serEvent(item: AdminEvent) {
     };
 }
 
-function serResult(events: AdminEvent[]) {
-    const reduced = reduceAdmin(events);
+function serResult(events: AdminEvent[], parentEvents?: AdminEvent[]) {
+    const reduced = reduceAdmin(events, parentEvents);
     return {
+        parent_events: parentEvents?.map(serEvent),
         events: events.map(serEvent),
         accepted: reduced.accepted.map((item) => ({
             tx_id: hex(item.txId),
@@ -117,11 +121,12 @@ interface DraftInput {
 
 const drafts: Record<string, unknown>[] = [];
 
-function recordDraft(name: string, state: RoomState | null, input: DraftInput): Uint8Array {
-    const note = draftAdmin(state, input);
+function recordDraft(name: string, state: RoomState | null, input: DraftInput, parentRoom?: RoomState | null): Uint8Array {
+    const note = draftAdmin(state, { ...input, parentRoom });
     drafts.push({
         name,
         basis_state: snap(state),
+        parent_room: snap(parentRoom ?? null),
         op: input.op,
         sender: hex(input.sender),
         subject: hex(input.subject ?? new Uint8Array(32)),
@@ -335,6 +340,25 @@ must("admin removed outsider", reductions.admin_changes.state?.epoch === 3 && re
 must("dismissed", reductions.dismiss_admin.state?.admins.length === 0 && reductions.dismiss_admin.state.epoch === 1);
 must("rooms differ", reductions.create_general.state?.group_id !== reductions.create_invite.state?.group_id);
 
+const channelId = addr(0x21);
+const channelMail = addr(0x22);
+const channelCreate = recordDraft("create_channel", null, {
+    op: ADMIN_OP.CREATE, sender: owner, name: bytes("ops"), policy: JOINING.INVITE, groupId: channelId, mailbox: channelMail,
+}, created.state);
+const channelOpened = reduceAdmin(
+    [event(channelCreate, owner, 30, 3)],
+    [event(createInvite, owner, 10, 1)],
+);
+must("channel starts with the owner", channelOpened.rejected.length === 0 && channelOpened.state?.members.length === 1);
+const channelAdd = recordDraft("channel_add_friend", channelOpened.state, {
+    op: ADMIN_OP.ADD_MEMBER, sender: owner, subject: friend,
+}, withFriend.state);
+const channelParentEvents = [event(createInvite, owner, 10, 1), event(addFriend, owner, 11, 2)];
+const channelEvents = [event(channelCreate, owner, 30, 3), event(channelAdd, owner, 31, 4)];
+reductions.channel = serResult(channelEvents, channelParentEvents);
+must("channel add is explicit", reductions.channel.state?.members.length === 2 && reductions.channel.rejected.length === 0);
+must("channel points at the parent", reductions.channel.state?.parent_group_id === hex(groupId));
+
 const session: PQSession = {
     sessionKey: addr(0x42),
     senderPublicKey: addr(0x11),
@@ -422,14 +446,16 @@ for (const item of draftErrors) {
 }
 
 const vector = {
-    description: "Administered rooms. Protocol 0x03 is public. 0x06 action 5 delivers the room key and cites one accepted administration transaction. Legacy 0x06 actions 1-4 stay in vectors/group-v1.json. Fill-byte addresses are test ids, not Algorand checksums. A transaction id is 32 bytes of one fill value.",
+    description: "Delta room administration. A new 0x03 note omits the member list (member count 65535) and records one subject. The last 32 bytes are the parent group id, or 32 zero bytes when the room is not a channel. Full-list notes stay in vectors/group-admin-v1.json. Legacy 0x06 actions 1-4 stay in vectors/group-v1.json. Fill-byte addresses are test ids, not Algorand checksums. A transaction id is 32 bytes of one fill value.",
     constants: {
         protocol: 3,
         deliver_action: 5,
         deliver_plaintext_size: 133,
         name_max: 64,
         admin_max: 16,
-        member_max: 100,
+        member_max: 256,
+        members_omitted: 65535,
+        deliver_batch: 16,
         joining_invite: 1,
         joining_ask: 2,
     },
@@ -466,6 +492,6 @@ const vector = {
     },
 };
 
-const target = new URL("../../vectors/group-admin-v1.json", import.meta.url);
+const target = new URL("../../vectors/group-admin-delta-v1.json", import.meta.url);
 writeFileSync(target, `${JSON.stringify(vector, null, 2)}\n`);
 console.log(`wrote ${target.pathname} drafts=${drafts.length} reductions=${Object.keys(reductions).length} delivery=${deliveryNote.length}`);

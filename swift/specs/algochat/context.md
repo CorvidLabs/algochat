@@ -19,7 +19,7 @@ spec: algochat.spec.md
 
 ## Current Status
 
-The root package declares Swift tools 6.0 and source release 1.3.0. Active root qualification runs full package tests/build on macOS 26+ and Linux, then checks exported sources and a separate consumer. The module-local Fledge lane retains filtered crypto/unit batches and a CLI build; fixed counts from the governance migration are historical. LocalNet remains environment dependent. Hybrid ML-KEM methods require Apple OS 26 and are omitted on Linux; their non-ML-KEM helpers remain available.
+The root package declares Swift tools 6.0 and source release 1.3.0. Active root qualification runs full package tests/build on macOS 26+ and Linux, then checks exported sources and a separate consumer. The module-local Fledge lane retains filtered crypto/unit batches and a CLI build; fixed counts from the governance migration are historical. LocalNet remains environment dependent. Hybrid ML-KEM methods require Apple OS 26 and are omitted on Linux; their non-ML-KEM helpers remain available. Room administration drafts delta `0x03` notes that omit the member list, accepts 256 members, and can name a parent room. Full-list notes still reduce.
 
 ## Operational Notes
 

@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by",
+  "implementation_commit": "ac6351e8f890e3d45deebc630dcc4bacc781f8da",
+  "implementation_tree": "cdd96e6da153ca0b6e84211146c51cd6adc76a1c",
+  "contract_digest": "85b096806269e0c37fd47bbf381948f03a82409b4c49654cb974d91bf4718e57",
+  "workspace_digest": "567cf78fcc218930841193abc4d600acc06a7912f6ca491cf97af10e4640850e",
+  "closing_digest": "05026b76315ebd8c9225dd0cbe458a682e56b7ecde9c9bb34171b50d27bdee56",
+  "review_digest": "47604338373f686206c29d410e994750623c476c00528534e3e28036deac48e8",
+  "finalization_digest": "f3397fec858554e93329163a9194e00c9379a0a642e2631b122bea2ee7ee60fa",
+  "timestamp": 1793199683
+}

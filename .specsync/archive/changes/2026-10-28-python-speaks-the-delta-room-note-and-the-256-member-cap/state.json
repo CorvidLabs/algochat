@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "python-speaks-the-delta-room-note-and-the-256-member-cap",
+  "slug": "python-speaks-the-delta-room-note-and-the-256-member-cap",
+  "title": "Python speaks the delta room note and the 256 member cap",
+  "description": "Python speaks the delta room note and the 256 member cap",
+  "kind": "feature",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "3124ff1e5d1bda5c7328eb29c86f7da8c0f14977",
+  "created_at": 1793203822,
+  "updated_at": 1793203895,
+  "affected_specs": [],
+  "affected_paths": [
+    "py/specs/algochat/algochat.spec.md",
+    "py/specs/algochat/context.md",
+    "py/specs/algochat/tasks.md",
+    "py/specs/algochat/testing.md",
+    "py/src/algochat/group_admin.py",
+    "py/tests/test_group_admin.py"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and the frozen vectors already record the delta room note, the 256 member cap, and the channel parent id. This change is the python implementation and the python module notes. It does not change a canonical spec.",
+  "acceptance_criteria": [
+    "Python drafts and reduces the same delta room note as TypeScript. A full-list note of 256 members is rejected. A delta note folds through 256. Old full-list notes still open. A channel keeps its own roster. A missed key payment can be resumed."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}

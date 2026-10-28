@@ -203,3 +203,13 @@ Acceptance Criteria
 - ts/src/pq/group-admin.test.ts matches vectors/group-admin-v1.json for REQ-algochat-026.
 - src/pq/group.test.ts still opens vectors/group-v1.json.
 
+### REQ-algochat-027
+
+The TypeScript package SHALL draft delta protocol 0x03 notes that record one added or removed person and omit the member list. It SHALL still open a full-list note. A full-list note of 256 members SHALL be rejected as too large. `GROUP_MEMBER_MAX` SHALL be 256. A channel SHALL be a room with its own mailbox and key whose notes name the parent room. The group owner creates and owns that channel. Parent membership SHALL NOT copy people into the channel. Key deliveries SHALL be separate payments of at most 16, and a landed payment SHALL stay landed so a missed recipient can be resumed.
+
+Acceptance Criteria
+- ts/src/pq/group-admin.test.ts folds a delta room from 1 member to 256 and rejects a 256-member full list.
+- ts/src/pq/group-admin.test.ts matches vectors/group-admin-delta-v1.json.
+- A channel reduced with its parent history does not contain a parent member who was never added.
+- ts/scripts/room-scale-localnet.ts is the LocalNet driver. It is not part of `bun test`.
+

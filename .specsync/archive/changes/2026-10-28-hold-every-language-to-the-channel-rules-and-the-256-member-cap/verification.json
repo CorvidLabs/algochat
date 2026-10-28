@@ -1,0 +1,52 @@
+{
+  "timestamp": 1793206453,
+  "commit": "270325f1f97cfb8cbfbadb02bd4d4d8be490237e",
+  "contract_digest": "41ef50fefa7f213d50812871b361dc1a0082da4ff1c76a48e35892cba7f4659a",
+  "execution_digest": "4f0d84c190a669ae7687e59fd7724c7e3df8225bc60b9679c6303dde47ea9f87",
+  "workspace_digest": "dae7c03754b51eb6fc76f2ff3c47adfa5cc70ca23b1e8b77c5ef3acac312b5b0",
+  "acceptance_input_digest": "a39f0a8316829b6f82a8cd22e9ddec31ef2761320be699dd44bd954c33075e5a",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "TEST-VECTORS.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6fb21bd1eddf85859ffd9b97f89bd66458e15e52453f30f1eaa649d263aa3b06",
+        "entry_digest": "32e884c0c0c08ad968f8a2a8c8c8a3342e51fd156f4efe4123c0f99e89563f06",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "ts/src/pq/group-admin.test.ts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "0edb68e777ee1715131b055b78f65ae5f9f0b84639c1499bb35975a603f0099d",
+        "entry_digest": "d9b564d40833c899f9c36be59072bd4a457f5b4ccb8fae51f9f4b836cff2661c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "vectors/group-admin-delta-v1.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "aa6496a63fd4233c75711b83b3de99a5546866c153092e05b304fd7f4f1c8ad4",
+        "entry_digest": "02019319e258cbb529db87d7b0a0ec630c5f3243694dc7f32dffd05637145e72",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}

@@ -28,3 +28,4 @@ spec: algochat.spec.md
 - [x] Correct package/runtime, crypto labels, storage APIs and current workflow documentation.
 - [x] Preserve accepted requirements while recording the inbound-size and storage gaps in the [accuracy ledger](../../../docs/ACCURACY.md).
 - [x] Persist accepted PSK transaction ids and fail closed on send-counter exhaustion.
+- [x] Draft delta room notes that omit the member list, keep a room at 256 members, and point a channel at its parent room.

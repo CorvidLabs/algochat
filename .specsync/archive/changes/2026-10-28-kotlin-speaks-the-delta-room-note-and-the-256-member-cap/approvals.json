@@ -1,0 +1,48 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793203827,
+      "digest": "5c7466f7e5dcdd7a52886599ec29d6ebd8f89c531183b8e69a76382391f619d4",
+      "note": "Leif approved the SpecSync changes for the delta room note on 2026-10-28.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "kotlin-speaks-the-delta-room-note-and-the-256-member-cap",
+        "title": "Kotlin speaks the delta room note and the 256 member cap",
+        "description": "Kotlin speaks the delta room note and the 256 member cap",
+        "kind": "feature",
+        "affected_specs": [],
+        "affected_paths": [
+          "kt/specs/protocol/context.md",
+          "kt/specs/protocol/protocol.spec.md",
+          "kt/specs/protocol/requirements.md",
+          "kt/specs/protocol/tasks.md",
+          "kt/specs/protocol/testing.md",
+          "kt/src/main/kotlin/com/corvidlabs/algochat/GroupAdmin.kt",
+          "kt/src/test/kotlin/com/corvidlabs/algochat/GroupAdminTest.kt"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The protocol spec and the frozen vectors already record the delta room note, the 256 member cap, and the channel parent id. This change is the kotlin implementation and the kotlin module notes. It does not change a canonical spec.",
+        "acceptance_criteria": [
+          "Kotlin drafts and reduces the same delta room note as TypeScript. A full-list note of 256 members is rejected. A delta note folds through 256. Old full-list notes still open. A channel keeps its own roster. A missed key payment can be resumed."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793203861,
+      "digest": "7b472867e6b39fbfa676451bb3ab8808da72903acb1cbd35ecfb3e047cb8dc14",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 13
+version: 15
 status: stable
 files:
   - PROTOCOL.md
@@ -17,7 +17,7 @@ Documentation of current source adds offset tables and [application flow diagram
 
 ## Public API
 
-PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json and vectors/group-admin-v1.json.
+PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json.
 
 ## Invariants
 
@@ -55,3 +55,5 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-19 | update-the-documentation-for-protocols-0x03-0x06-0x07-0x04-and-0x05-so-it-is-accurate-and-up-to-date-including-the: Update the documentation for protocols 0x03, 0x06, 0x07, 0x04 and 0x05 so it is accurate and up to date, including the Mermaid diagrams |
 | 2026-10-24 | Name hybrid `0x04` and `0x05` as the base for a new conversation. Groups use that session. Everyday and extra lock stay assigned and are not the default. No stacked extra-lock mode. |
 | 2026-10-24 | a-new-conversation-starts-as-a-hybrid-session-everyday-notes-and-extra-lock-stay-available-and-are-not-the-default: A new conversation starts as a hybrid session. Everyday notes and extra lock stay available and are not the default. |
+| 2026-10-28 | Delta `0x03` notes omit the member list so one room can hold 256 people. Full-list notes still open. A channel is a separate room that names its parent group. Key deliveries stay separate payments of at most 16. |
+| 2026-10-28 | a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by: A room note records one added or removed person so a room can hold 256 people, and a channel is another room owned by the group owner |

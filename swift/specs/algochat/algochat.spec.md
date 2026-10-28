@@ -65,6 +65,7 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 | `State` | Room administration symbol. |
 | `groupID` | Room administration symbol. |
 | `mailbox` | Room administration symbol. |
+| `parentGroupID` | Parent room group id, or 32 zero bytes when the room is not a channel. |
 | `owner` | Room administration symbol. |
 | `admins` | Room administration symbol. |
 | `members` | Room administration symbol. |
@@ -92,16 +93,23 @@ The contract includes every public declaration exported by the `AlgoChat` librar
 | `deliverAction` | Room administration symbol. |
 | `nameMax` | Room administration symbol. |
 | `adminMax` | Room administration symbol. |
-| `memberMax` | Room administration symbol. |
+| `memberMax` | Maximum members in one room, 256. A new note omits the member list. |
+| `membersOmitted` | Member-count sentinel 65535. The note omits the roster. |
+| `deliverBatch` | Separate key-delivery payments in one pass, at most 16. |
 | `deliverPlaintextSize` | Room administration symbol. |
 | `joiningInvite` | Room administration symbol. |
 | `joiningAsk` | Room administration symbol. |
 | `deliveryNoteSize` | Room administration symbol. |
 | `GroupAdmin` | Room administration reducer and action-5 delivery. |
-| `draft` | Drafts an authorized 0x03 note. |
-| `reduce` | Reduces administration transactions. |
+| `draft` | Drafts an authorized 0x03 note. A new note omits the member list. |
+| `encodeRecord` | Encodes a 0x03 note, including a legacy full member list. |
+| `reduce` | Reduces administration transactions. A delta note rebuilds members from the operation. |
 | `senderMayPost` | Whether a member may post at an epoch. |
 | `deliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `authorizedRecipients` | Members who may receive the room key for one accepted record. |
+| `channelDepartures` | Channel members who are no longer in the parent room. |
+| `pendingKeyDeliveries` | Recipients still owed a key after landed payments. |
+| `nextDeliveryBatch` | The next separate key payments, at most 16. Not an atomic group. |
 | `sealKeyDelivery` | Seals a 227-byte 0x06 action-5 delivery. |
 | `openKeyDelivery` | Opens a 227-byte 0x06 action-5 delivery. |
 | `AlgoChat` |

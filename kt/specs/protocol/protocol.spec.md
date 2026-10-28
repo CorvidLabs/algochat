@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 1.0.3
+version: 1.0.4
 status: active
 files:
   - src/main/kotlin/com/corvidlabs/algochat/Crypto.kt
@@ -27,7 +27,10 @@ Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envel
 |---|---|
 | `NAME_MAX` | Room administration symbol. |
 | `ADMIN_MAX` | Room administration symbol. |
-| `MEMBER_MAX` | Room administration symbol. |
+| `MEMBER_MAX` | Maximum room members, 256. A full-list note that does not fit in 4096 bytes is rejected. New notes omit the member list. |
+| `DELIVER_BATCH` | Separate key-delivery payments in one pass, 16. Not an atomic group. |
+| `MEMBERS_OMITTED` | Member-count sentinel 65535. The note names one subject and omits the roster. |
+| `membersOmitted` | True when the note uses the 65535 sentinel instead of a member list. |
 | `DELIVER_PLAINTEXT_SIZE` | Room administration symbol. |
 | `DELIVER_ACTION` | Room administration symbol. |
 | `policy` | Room administration symbol. |
@@ -54,10 +57,16 @@ Define Kotlin AlgoChat v1 key derivation, authenticated encryption, binary envel
 | `pending` | Room administration symbol. |
 | `advance` | Room administration symbol. |
 | `GroupAdmin` | Room administration reducer and action-5 delivery. |
-| `draftAdmin` | Drafts an authorized 0x03 note. |
-| `reduceAdmin` | Reduces administration transactions. |
+| `draftAdmin` | Drafts an authorized 0x03 note. New drafts omit the member list. |
+| `encodeAdminRecord` | Encodes one 0x03 record, full list or delta. |
+| `reduceAdmin` | Reduces administration transactions. A delta note rebuilds members from the operation. |
 | `senderMayPost` | Whether a member may post at an epoch. |
 | `deliveryAuthorized` | Whether one accepted record authorizes a key delivery. |
+| `authorizedRecipients` | Members still owed a key for one accepted record. |
+| `channelDepartures` | Channel members who are no longer in the parent room. |
+| `pendingKeyDeliveries` | Recipients whose key payment has not landed. |
+| `nextDeliveryBatch` | The next separate key payments, at most 16. |
+| `parentGroupId` | Parent room id, or 32 zero bytes when the room is not a channel. |
 | `sealGroupKeyDelivery` | Seals a 227-byte 0x06 action-5 delivery. |
 | `openGroupKeyDelivery` | Opens a 227-byte 0x06 action-5 delivery. |
 | `RoomState` | Accepted room roster. |
@@ -220,6 +229,7 @@ Each parsed member below has the following owning-type meaning (some unqualified
 5. Key announcements sign exactly the encryption public-key bytes with Ed25519 and fingerprints are the first eight SHA-256 bytes, uppercase hexadecimal grouped as four groups of four characters.
 6. A standard note is at most 4096 bytes. The header stays 126 bytes and the tag stays 16 bytes, so plaintext is at most 3954 bytes. Decode rejects fewer than 142 bytes and more than 4096 bytes. A plaintext of 882 bytes still fits in 1024 bytes. One byte past 3954 is rejected before a transaction is built. Note-facing PQ open, including an authenticated data message, rejects a note longer than 4096 bytes before it returns plaintext.
 7. The payment fee is one minimum fee plus the note surcharge. Bytes through 1024 add nothing. Each later byte adds one ten-thousandth of the minimum fee, rounded up once. This library has no Falcon signer, so the scheme contribution stays one minimum fee. Protocol document revision for this ceiling is 1.2.1.
+8. A new 0x03 note omits the member list. The member count is 65535, the subject follows, then the parent group id. 32 zero bytes mean the room is not a channel. A full-list note still reduces and must not name a parent room. `MEMBER_MAX` is 256. A full list of 256 members does not fit in 4096 bytes. A channel is a separate room whose parent group id is the parent room. Parent membership does not copy people into the channel. The group owner creates the channel. Key deliveries stay separate payments, at most 16 at a time, and a landed payment stays landed.
 
 ## Behavioral Examples
 
@@ -267,6 +277,7 @@ Then EncryptionFailed is thrown and no envelope is returned
 | Version | Date | Changes |
 |---|---|---|
 | 1.0.0 | 2026-07-14 | Canonically document the existing Kotlin AlgoChat v1 wire and cryptographic behavior. |
+| 1.0.4 | 2026-10-28 | Delta 0x03 notes omit the member list, `MEMBER_MAX` is 256, and a channel names its parent group. Full-list notes still open. |
 | 1.0.3 | 2026-10-18 | Reject standard frames shorter than 142 bytes and notes longer than 4096 bytes, including authenticated PQ opens. |
 | 1.0.2 | 2026-10-16 | Raise the note ceiling to 4096 bytes (protocol document revision 1.2.1). Plaintext max is 3954. Header stays 126 and the tag stays 16. Payment fee adds the note surcharge on one minFee. |
 | 2026-07-14 | CHG-0002-run-the-existing-jdk-17-and-21-ci-matrix-when-trust-and-specsync-governance-file: Complete Kotlin AlgoChat SDD adoption and run the native CI matrix |

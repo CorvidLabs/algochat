@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "go-speaks-the-delta-room-note-and-the-256-member-cap",
+  "implementation_commit": "1af7a6482cbf51e0888a92ac78ffdfb1662d5c10",
+  "implementation_tree": "a61cab08a805af64723cee81925ef91bb3f5fb42",
+  "contract_digest": "d81a3a4004946ac9e632da7c414f165b2b7030e9965a8287f473f0cda9a6bba1",
+  "workspace_digest": "67917d1b0319d43a8aa9396b945f71a0b3ed44eefd9dc06ce2580d789c59fe5e",
+  "closing_digest": "64d51557e545e381f39d74526f228ddc6a0d2ffec83bf24fa5e3816895e8c543",
+  "review_digest": "2df41e63d305b08c9f5723b6b70fda43d18be11553936ae42831cf40fba0dd9c",
+  "finalization_digest": "0887e70dd6460890841bf1c0b05014e61437ee799e5db41a46bd491dcca0489c",
+  "timestamp": 1793203636
+}

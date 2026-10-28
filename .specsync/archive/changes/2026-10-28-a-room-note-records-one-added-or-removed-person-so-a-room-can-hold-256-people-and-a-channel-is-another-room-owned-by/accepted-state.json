@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by",
+  "slug": "a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by",
+  "title": "A room note records one added or removed person so a room can hold 256 people, and a channel is another room owned by the group owner",
+  "description": "A room note records one added or removed person so a room can hold 256 people, and a channel is another room owned by the group owner",
+  "kind": "feature",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "fe311d125fba020091f923b2f6ab28d554313679",
+  "created_at": 1793199618,
+  "updated_at": 1793199683,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "TEST-VECTORS.md",
+    "specs/protocol/protocol.spec.md",
+    "specs/protocol/requirements.md",
+    "hi/group.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "A room note records the one person added or removed and clients rebuild the member list. Old full-list notes still open. A room can hold 256 people. A channel is another room owned by the group owner."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

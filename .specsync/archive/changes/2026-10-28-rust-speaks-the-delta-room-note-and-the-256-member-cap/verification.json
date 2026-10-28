@@ -1,0 +1,62 @@
+{
+  "timestamp": 1793203839,
+  "commit": "81e8080ca25454ce52182c17eeb95c8b791d3524",
+  "contract_digest": "feba154c3e1771b708bfcb2c186ced588c2141af2d9ffb9f9e530e9b3e9fa983",
+  "execution_digest": "9dbdf2d60e9a7db4301446cf1190f8dc18873c37fc0aaf414fef277eaac1369e",
+  "workspace_digest": "ea9a2ce07dd2461308de4ff0511ac46153cd1061aebe9402a1a920a193517815",
+  "acceptance_input_digest": "c7db1350647c23647cd83e13a69eac50157758c8c035c6e6ff5f4c900d8eb06d",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "rs/specs/crate/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a0d108fd8f3fa6450d35d8d0e4a1c586c4ce5420b8e53b194c42ff7d00766911",
+        "entry_digest": "48d796661e9867e3d2acfe9353639b9b2f0ff1e6b8b1f9716346986e0fd0e859",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "rs/specs/crate/crate.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "cbb310c2bc859abda6a65439b911b31172bcb919d6b33f843aa6d07a495743c6",
+        "entry_digest": "78c653cd9dcf60115b39144e9ad960c1ed0bdedb855c506d8f7b405b84e7040a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "rs/specs/crate/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "924bd165d4165e8c8fae2dd544e178dcca0647411a0e93011820825a4f17a09a",
+        "entry_digest": "0c1a71c3a89524a2a857846aa106949cba89a75959446c6b5ae89e67b8e78343",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "rs/src/group_admin.rs",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4f3ee0c09e4529c7ff2b53862307a964ca4e79a6da03063af428032532f747cd",
+        "entry_digest": "449f67e02c7603fc664cd30590d195ae879f1df77d0836ee87f96c008359f014",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check (no spec in scope)",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}

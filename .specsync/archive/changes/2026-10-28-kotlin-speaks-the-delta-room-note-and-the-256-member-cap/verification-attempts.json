@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1793203829,
+      "commit": "08a848937593d485b52e82726ddc4de7cdcf3138",
+      "contract_digest": "5c7466f7e5dcdd7a52886599ec29d6ebd8f89c531183b8e69a76382391f619d4",
+      "execution_digest": "a414691c5afd1bb5dd4328d602f92f501c0fe02c7144fc86592e80eb5e85f60c",
+      "workspace_digest": "da7c4c8779a40fbf25ef66f6626da11c8377cf139a39c19d9287f07ecf59157d",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793203834,
+      "commit": "08a848937593d485b52e82726ddc4de7cdcf3138",
+      "contract_digest": "5c7466f7e5dcdd7a52886599ec29d6ebd8f89c531183b8e69a76382391f619d4",
+      "execution_digest": "a414691c5afd1bb5dd4328d602f92f501c0fe02c7144fc86592e80eb5e85f60c",
+      "workspace_digest": "da7c4c8779a40fbf25ef66f6626da11c8377cf139a39c19d9287f07ecf59157d",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793203839,
+      "commit": "e90bafdd082b482a1302322091914f727ee0badb",
+      "contract_digest": "5c7466f7e5dcdd7a52886599ec29d6ebd8f89c531183b8e69a76382391f619d4",
+      "execution_digest": "a414691c5afd1bb5dd4328d602f92f501c0fe02c7144fc86592e80eb5e85f60c",
+      "workspace_digest": "da7c4c8779a40fbf25ef66f6626da11c8377cf139a39c19d9287f07ecf59157d",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793203839,
+      "commit": "63a791143945a324cb8d12be20c39f3c192fe03c",
+      "contract_digest": "5c7466f7e5dcdd7a52886599ec29d6ebd8f89c531183b8e69a76382391f619d4",
+      "execution_digest": "a414691c5afd1bb5dd4328d602f92f501c0fe02c7144fc86592e80eb5e85f60c",
+      "workspace_digest": "da7c4c8779a40fbf25ef66f6626da11c8377cf139a39c19d9287f07ecf59157d",
+      "acceptance_input_digest": "e7884496f12888e2a303c599cf5b2b7190284befeb1c91c07d623a3c7226b224",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "kt/specs/protocol/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fe547de00429b8d4470b73464e7cd3483ba645f9377abaf50851a654d26d0d2c",
+            "entry_digest": "a0055ae9e25afabf75172a58a6d19d70f5160b59807a9eafe003a6557357d703",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/specs/protocol/protocol.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "69e79ec30f1de1ac7b94894e1a213b2cac3bd4393d8ffdc97dbf915a24270e6f",
+            "entry_digest": "49d34439cc00d749f68ca3fe60ae1ed49e1796bab2d81b45ba3d25820353b7ac",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/specs/protocol/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b6509183ef6639247b1f7c19a1e3ce346c782a90489990f7c3b67221a52ca740",
+            "entry_digest": "7395c9459e9506e336a25abda4bc4926f17d8c182e9f8cb357fca715bcf63af8",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/specs/protocol/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ecc0b74f7f2c27a2ccf3fb5a1b2187dc63d32d12a90f8dd04feba5d8273970d0",
+            "entry_digest": "0390380d9f13e5a66cce8a6771e6f180389b5c6fd76373eb97c27d13f783c9e6",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/specs/protocol/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "559a7873f6a7a9a3bca1cd279cdfc6490dc25b1d04e850a55ae4339dd1fc4326",
+            "entry_digest": "014a04a39f46217b18ec40ce9dd6cf1b21c30df7915b29efca431fa41e5bd1fb",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/src/main/kotlin/com/corvidlabs/algochat/GroupAdmin.kt",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "492db2725e10613f3f1586e3c0c36e24059a3c5602943356c3d7b215fddd9629",
+            "entry_digest": "b11cdb02abd7209106c25dafd4566fea181dd894a2ecae8acbb91b3ca639b037",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/src/test/kotlin/com/corvidlabs/algochat/GroupAdminTest.kt",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fa2e019add319e336a3d590d968a203cdbe0962826e01b2e251a0e3a90984df3",
+            "entry_digest": "023861fcdbb99c0a5986b00675400fa135039311b320b7c1b52916f916e5b940",
+            "owners": [
+              "@exact:test"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}

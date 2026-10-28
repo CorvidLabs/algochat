@@ -34,6 +34,7 @@ LocalNet integration exercises real Algorand submission, confirmation, and index
 | Indexer lags after submission | Indexed send waits up to its timeout; fire-and-forget and confirmed modes retain their distinct semantics |
 | Queue restarts after a transient failure | Durable pending and retry state reloads and can resume |
 | Apple security frameworks are unavailable | Cross-platform implementation reports unsupported capability and file-backed alternatives remain usable |
+| A room note records one added or removed person | The note omits the member list. A full list of 256 members is too large. Delta notes fold from 1 member through 256. A channel names its parent room and does not copy parent members. Key deliveries stay separate payments of at most 16 |
 
 ## Observed gaps against the expected cases
 

@@ -18,3 +18,4 @@ spec: algochat.spec.md
 - [x] Order indexer and Conversation history by round then intra-round offset, including a pagination boundary.
 - [x] Reject note-facing opens longer than 4096 bytes before returning plaintext.
 - [x] Correct the sendReply example and do not claim a `/node` file-storage export.
+- [x] Draft delta room notes, keep full-list notes readable, cap a room at 256 members, and point a channel at its parent room.

@@ -5,12 +5,21 @@ import { PQ_DATA_HEADER_SIZE, PQ_PROTOCOL, type PQSession } from './types.js';
 import { openGroupMembership, openGroupMessage, sealGroupMessage } from './group.js';
 import {
     ADMIN_OP,
+    GROUP_ADMIN_MAX,
     GROUP_ADMIN_PROTOCOL,
+    GROUP_DELIVER_BATCH,
+    GROUP_MEMBER_MAX,
+    GROUP_MEMBERS_OMITTED,
+    GROUP_NAME_MAX,
     JOINING,
+    authorizedRecipients,
+    channelDepartures,
     deliveryAuthorized,
     draftAdmin,
     encodeAdminRecord,
+    nextDeliveryBatch,
     openGroupKeyDelivery,
+    pendingKeyDeliveries,
     reduceAdmin,
     sealGroupKeyDelivery,
     senderMayPost,
@@ -25,6 +34,23 @@ const mailbox = addr(9);
 const groupId = addr(7);
 function addr(byte: number): Uint8Array {
     return new Uint8Array(32).fill(byte);
+}
+
+function person(id: number): Uint8Array {
+    const out = new Uint8Array(32);
+    out[0] = (id >>> 24) & 0xff;
+    out[1] = (id >>> 16) & 0xff;
+    out[2] = (id >>> 8) & 0xff;
+    out[3] = id & 0xff;
+    return out;
+}
+
+function marked(note: Uint8Array, sender: Uint8Array, n: number): AdminEvent {
+    return { note, sender, txId: person(10_000 + n), round: n, offset: 0 };
+}
+
+function same(left: Uint8Array, right: Uint8Array): boolean {
+    return left.length === right.length && left.every((byte, index) => byte === right[index]);
 }
 
 function event(note: Uint8Array, sender: Uint8Array, tx: number, round = 1, offset = 0): AdminEvent {
@@ -308,7 +334,16 @@ describe('room administration', () => {
             };
         };
         for (const draft of vector.drafts) {
-            const note = draftAdmin(revive(draft.basis_state), {
+            const stored = hex(draft.note);
+            expect(stored[0]).toBe(0x02);
+            expect(stored[1]).toBe(GROUP_ADMIN_PROTOCOL);
+            const nameLen = stored[103] ?? 0;
+            const adminCount = ((stored[137 + nameLen] ?? 0) << 8) | (stored[138 + nameLen] ?? 0);
+            const memberAt = 139 + nameLen + (32 * adminCount);
+            const memberCount = ((stored[memberAt] ?? 0) << 8) | (stored[memberAt + 1] ?? 0);
+            expect(memberCount).not.toBe(GROUP_MEMBERS_OMITTED);
+            expect(memberCount).toBeLessThanOrEqual(100);
+            const delta = draftAdmin(revive(draft.basis_state), {
                 op: draft.op,
                 sender: hex(draft.sender),
                 subject: hex(draft.subject),
@@ -317,7 +352,11 @@ describe('room administration', () => {
                 groupId: draft.group_id ? hex(draft.group_id) : undefined,
                 mailbox: draft.mailbox ? hex(draft.mailbox) : undefined,
             });
-            expect(toHex(note)).toBe(draft.note);
+            expect(delta.length).toBeLessThanOrEqual(4096);
+            const deltaName = delta[103] ?? 0;
+            const deltaAdmins = ((delta[137 + deltaName] ?? 0) << 8) | (delta[138 + deltaName] ?? 0);
+            const deltaAt = 139 + deltaName + (32 * deltaAdmins);
+            expect(((delta[deltaAt] ?? 0) << 8) | (delta[deltaAt + 1] ?? 0)).toBe(GROUP_MEMBERS_OMITTED);
         }
         for (const item of vector.draft_errors) {
             expect(() => draftAdmin(revive(item.basis_state), {
@@ -442,7 +481,258 @@ describe('room administration', () => {
         expect(accepted.state?.pending).toEqual([friend]);
         expect(accepted.state?.headTxId).toEqual(addr(10));
     });
+
+    test('a full-list note of 256 members is too large, and a delta note folds through 256', () => {
+        const roster = Array.from({ length: 256 }, (_, index) => person(index + 1));
+        const admins = Array.from({ length: GROUP_ADMIN_MAX }, (_, index) => person(1000 + index));
+        expect(GROUP_MEMBER_MAX).toBe(256);
+        expect(GROUP_NAME_MAX).toBe(64);
+        expect(GROUP_ADMIN_MAX).toBe(16);
+        expect(() => encodeAdminRecord({
+            parent: new Uint8Array(32),
+            groupId,
+            mailbox,
+            epoch: 1,
+            op: ADMIN_OP.CREATE,
+            name: new Uint8Array(GROUP_NAME_MAX),
+            policy: JOINING.INVITE,
+            owner: roster[0]!,
+            admins,
+            members: roster,
+            subject: new Uint8Array(32),
+            membersOmitted: false,
+        })).toThrow(/too large/);
+
+        const legacy = encodeAdminRecord({
+            parent: new Uint8Array(32),
+            groupId,
+            mailbox,
+            epoch: 1,
+            op: ADMIN_OP.CREATE,
+            name: bytes('team'),
+            policy: JOINING.INVITE,
+            owner,
+            admins: [],
+            members: [owner],
+            subject: new Uint8Array(32),
+            membersOmitted: false,
+        });
+        const legacyRoom = reduceAdmin([event(legacy, owner, 10)]);
+        expect(legacyRoom.rejected).toHaveLength(0);
+        expect(legacyRoom.state?.members).toHaveLength(1);
+        const legacyAdd = draftAdmin(legacyRoom.state, { op: ADMIN_OP.ADD_MEMBER, sender: owner, subject: friend });
+        const legacyGrown = reduceAdmin([event(legacy, owner, 10), event(legacyAdd, owner, 11, 2)]);
+        expect(legacyGrown.rejected).toHaveLength(0);
+        expect(legacyGrown.state?.members).toHaveLength(2);
+
+        const hallId = person(900);
+        const hallMail = person(901);
+        const hallOwner = person(1);
+        const events: AdminEvent[] = [];
+        const createdNote = draftAdmin(null, {
+            op: ADMIN_OP.CREATE,
+            sender: hallOwner,
+            name: bytes('hall'),
+            policy: JOINING.INVITE,
+            groupId: hallId,
+            mailbox: hallMail,
+        });
+        events.push(marked(createdNote, hallOwner, 1));
+        let reduced = reduceAdmin(events);
+        expect(reduced.rejected).toHaveLength(0);
+        expect(reduced.state?.members).toHaveLength(1);
+        for (let count = 2; count <= 256; count += 1) {
+            const note = draftAdmin(reduced.state, {
+                op: ADMIN_OP.ADD_MEMBER,
+                sender: hallOwner,
+                subject: person(count),
+            });
+            expect(note.length).toBeLessThanOrEqual(4096);
+            const nameLen = note[103] ?? 0;
+            const adminCount = ((note[137 + nameLen] ?? 0) << 8) | (note[138 + nameLen] ?? 0);
+            const at = 139 + nameLen + (32 * adminCount);
+            expect(((note[at] ?? 0) << 8) | (note[at + 1] ?? 0)).toBe(GROUP_MEMBERS_OMITTED);
+            events.push(marked(note, hallOwner, count));
+            reduced = reduceAdmin(events);
+            expect(reduced.rejected).toHaveLength(0);
+            if (count === 101) expect(reduced.state?.members).toHaveLength(101);
+        }
+        expect(reduced.state?.members).toHaveLength(256);
+        expect(reduced.state?.epoch).toBe(1);
+    });
+
+    test('a channel keeps its own roster, and a missed key payment can resume', () => {
+        const parentId = person(700);
+        const parentMail = person(701);
+        const channelId = person(702);
+        const channelMail = person(703);
+        const alice = person(2);
+        const bob = person(3);
+        const cara = person(4);
+        const extra = Array.from({ length: 16 }, (_, index) => person(20 + index));
+        const parentCreate = draftAdmin(null, {
+            op: ADMIN_OP.CREATE, sender: owner, name: bytes('hall'), policy: JOINING.INVITE, groupId: parentId, mailbox: parentMail,
+        });
+        let parentEvents = [event(parentCreate, owner, 10)];
+        let parent = reduceAdmin(parentEvents);
+        for (const [index, member] of [alice, bob, cara, ...extra].entries()) {
+            const note = draftAdmin(parent.state, { op: ADMIN_OP.ADD_MEMBER, sender: owner, subject: member });
+            parentEvents.push(event(note, owner, 11 + index, index + 2));
+            parent = reduceAdmin(parentEvents);
+        }
+        expect(parent.rejected).toHaveLength(0);
+        expect(parent.state?.members.length).toBe(1 + 3 + extra.length);
+
+        expect(() => draftAdmin(null, {
+            op: ADMIN_OP.CREATE, sender: alice, name: bytes('ops'), policy: JOINING.INVITE,
+            groupId: channelId, mailbox: channelMail, parentRoom: parent.state,
+        })).toThrow(/group owner/);
+
+        const channelCreate = draftAdmin(null, {
+            op: ADMIN_OP.CREATE, sender: owner, name: bytes('ops'), policy: JOINING.INVITE,
+            groupId: channelId, mailbox: channelMail, parentRoom: parent.state,
+        });
+        let channelEvents = [event(channelCreate, owner, 80, 30)];
+        let channel = reduceAdmin(channelEvents, parentEvents);
+        expect(channel.rejected).toHaveLength(0);
+        expect(channel.state?.members).toHaveLength(1);
+        expect(channel.state?.parentGroupId).toEqual(parentId);
+        expect(channel.state?.groupId).toEqual(channelId);
+        expect(channel.state?.mailbox).toEqual(channelMail);
+        expect(channel.state?.groupId).not.toEqual(parent.state?.groupId);
+
+        for (const [index, member] of [alice, bob, ...extra].entries()) {
+            const note = draftAdmin(channel.state, {
+                op: ADMIN_OP.ADD_MEMBER, sender: owner, subject: member, parentRoom: parent.state,
+            });
+            channelEvents.push(event(note, owner, 81 + index, 31 + index));
+            channel = reduceAdmin(channelEvents, parentEvents);
+        }
+        expect(channel.rejected).toHaveLength(0);
+        expect(channel.state?.members.some((item) => same(item, cara))).toBe(false);
+        expect(channel.state?.members.some((item) => same(item, alice))).toBe(true);
+        expect(() => draftAdmin(channel.state, {
+            op: ADMIN_OP.ADD_MEMBER, sender: owner, subject: person(500), parentRoom: parent.state,
+        })).toThrow(/parent room/);
+        expect(() => draftAdmin(channel.state, {
+            op: ADMIN_OP.TRANSFER_OWNER, sender: owner, subject: bob, parentRoom: parent.state,
+        })).toThrow(/group owner keeps/);
+
+        const parentRemove = draftAdmin(parent.state, { op: ADMIN_OP.REMOVE_MEMBER, sender: owner, subject: alice });
+        parentEvents = [...parentEvents, event(parentRemove, owner, 60, 80)];
+        parent = reduceAdmin(parentEvents);
+        expect(parent.state?.epoch).toBe(2);
+        expect(senderMayPost(parent.state!, alice, 2)).toBe(false);
+        const stale = reduceAdmin(channelEvents, parentEvents);
+        expect(stale.state?.members.some((item) => same(item, alice))).toBe(true);
+        expect(channelDepartures(stale.state!, parent.state!).map((item) => item[3])).toEqual([alice[3]]);
+
+        const channelRemove = draftAdmin(stale.state, {
+            op: ADMIN_OP.REMOVE_MEMBER, sender: owner, subject: alice, parentRoom: parent.state,
+        });
+        channelEvents = [...channelEvents, event(channelRemove, owner, 120, 90)];
+        channel = reduceAdmin(channelEvents, parentEvents);
+        expect(channel.rejected).toHaveLength(0);
+        expect(channel.state?.epoch).toBe(2);
+        expect(channel.state?.members.some((item) => same(item, alice))).toBe(false);
+        const removeTx = channel.accepted[channel.accepted.length - 1]!;
+        expect(deliveryAuthorized(channel.accepted, removeTx.txId, owner, alice, 2)).toBe(false);
+        expect(deliveryAuthorized(channel.accepted, removeTx.txId, bob, bob, 2)).toBe(false);
+        const recipients = authorizedRecipients(channel.accepted, removeTx.txId, owner, 2);
+        expect(recipients.some((item) => same(item, alice))).toBe(false);
+        expect(recipients.some((item) => same(item, bob))).toBe(true);
+        expect(recipients.length).toBeGreaterThan(GROUP_DELIVER_BATCH);
+        const batch = nextDeliveryBatch(recipients);
+        expect(batch).toHaveLength(GROUP_DELIVER_BATCH);
+        const missed = batch[batch.length - 1]!;
+        const landed = batch.slice(0, -1);
+        const pending = pendingKeyDeliveries(recipients, landed);
+        expect(pending.some((item) => same(item, missed))).toBe(true);
+        expect(nextDeliveryBatch(pending)[0]).toEqual(missed);
+        const resumed = [...landed, missed];
+        expect(pendingKeyDeliveries(recipients, resumed).some((item) => same(item, missed))).toBe(false);
+        expect(pendingKeyDeliveries(recipients, resumed).length).toBe(recipients.length - resumed.length);
+    });
+
+    test('group-admin-delta-v1 vector matches the frozen delta bytes', () => {
+        const vector = JSON.parse(readFileSync(new URL('../../../vectors/group-admin-delta-v1.json', import.meta.url), 'utf8')) as {
+            constants: { member_max: number; members_omitted: number; deliver_batch: number };
+            drafts: {
+                basis_state: Parameters<typeof revive>[0];
+                parent_room: Parameters<typeof revive>[0];
+                op: number;
+                sender: string;
+                subject: string;
+                name_utf8: string | null;
+                policy: number | null;
+                group_id: string | null;
+                mailbox: string | null;
+                note: string;
+            }[];
+            draft_errors: {
+                name: string;
+                basis_state: Parameters<typeof revive>[0];
+                parent_room?: Parameters<typeof revive>[0];
+                op: number;
+                sender: string;
+                subject: string;
+                name_utf8: string | null;
+                policy: number | null;
+                group_id?: string | null;
+                mailbox?: string | null;
+                error_includes: string;
+            }[];
+            reductions: Record<string, {
+                parent_events?: { note: string; sender: string; tx_id: string; round: number; offset: number }[];
+                events: { note: string; sender: string; tx_id: string; round: number; offset: number }[];
+                accepted: { op: number }[];
+                rejected: { reason: string }[];
+                state: ReturnType<typeof snapParent>;
+            }>;
+        };
+        expect(vector.constants.member_max).toBe(GROUP_MEMBER_MAX);
+        expect(vector.constants.members_omitted).toBe(GROUP_MEMBERS_OMITTED);
+        expect(vector.constants.deliver_batch).toBe(GROUP_DELIVER_BATCH);
+        for (const draft of vector.drafts) {
+            const note = draftAdmin(revive(draft.basis_state), {
+                op: draft.op,
+                sender: hex(draft.sender),
+                subject: hex(draft.subject),
+                name: draft.name_utf8 === null ? undefined : bytes(draft.name_utf8),
+                policy: draft.policy ?? undefined,
+                groupId: draft.group_id ? hex(draft.group_id) : undefined,
+                mailbox: draft.mailbox ? hex(draft.mailbox) : undefined,
+                parentRoom: revive(draft.parent_room),
+            });
+            expect(toHex(note)).toBe(draft.note);
+        }
+        for (const item of vector.draft_errors) {
+            expect(() => draftAdmin(revive(item.basis_state), {
+                op: item.op,
+                sender: hex(item.sender),
+                subject: hex(item.subject),
+                name: item.name_utf8 === null ? undefined : bytes(item.name_utf8),
+                policy: item.policy ?? undefined,
+                groupId: item.group_id ? hex(item.group_id) : undefined,
+                mailbox: item.mailbox ? hex(item.mailbox) : undefined,
+                parentRoom: revive(item.parent_room ?? null),
+            })).toThrow(new RegExp(item.error_includes, 'i'));
+        }
+        for (const reduction of Object.values(vector.reductions)) {
+            const result = reduceAdmin(
+                reduction.events.map(wireEvent),
+                reduction.parent_events?.map(wireEvent),
+            );
+            expect(result.rejected.map((item) => item.reason)).toEqual(reduction.rejected.map((item) => item.reason));
+            expect(result.accepted.map((item) => item.op)).toEqual(reduction.accepted.map((item) => item.op));
+            expect(snapParent(result.state)).toEqual(reduction.state);
+        }
+    });
 });
+
+function wireEvent(item: { note: string; sender: string; tx_id: string; round: number; offset: number }): AdminEvent {
+    return { note: hex(item.note), sender: hex(item.sender), txId: hex(item.tx_id), round: item.round, offset: item.offset };
+}
 
 function revive(state: {
     group_id: string;
@@ -455,11 +745,13 @@ function revive(state: {
     name_hex: string;
     epoch: number;
     head_tx_id: string;
+    parent_group_id?: string;
 } | null): RoomState | null {
     if (!state) return null;
     return {
         groupId: hex(state.group_id),
         mailbox: hex(state.mailbox),
+        parentGroupId: state.parent_group_id ? hex(state.parent_group_id) : new Uint8Array(32),
         owner: hex(state.owner),
         admins: state.admins.map((item) => hex(item)),
         members: state.members.map((item) => hex(item)),
@@ -485,6 +777,11 @@ function snap(state: RoomState | null) {
         epoch: state.epoch,
         head_tx_id: toHex(state.headTxId),
     };
+}
+
+function snapParent(state: RoomState | null) {
+    if (!state) return null;
+    return { ...snap(state), parent_group_id: toHex(state.parentGroupId) };
 }
 
 function toHex(value: Uint8Array): string {

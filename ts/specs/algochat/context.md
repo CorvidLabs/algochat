@@ -18,6 +18,7 @@ AlgoChat applications need one interoperable TypeScript package for account mate
 - Derive X25519 keys from mnemonic entropy, never from a Falcon secret-key prefix.
 - Default new accounts to Falcon-1024; keep mnemonic import Ed25519 unless the caller passes a scheme.
 - Deliver envelopes only as encrypted payment notes. Do not include a raven mailbox router or other dead-drop transport.
+- New room administration notes omit the member list and record one subject, plus an optional parent group id. Full-list notes still reduce. A channel is a separate room owned by the parent room's owner. Key deliveries are separate payments, at most 16 at a time.
 
 ## Current implementation inventory
 

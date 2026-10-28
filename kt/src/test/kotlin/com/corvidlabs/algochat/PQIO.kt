@@ -302,13 +302,14 @@ private fun adminDraft(req: JsonObject): ByteArray {
         req.utf8OrNull("name_utf8"),
         req.intOrNull("policy"),
         req.hexOrNull("group_id"),
-        req.hexOrNull("mailbox")
+        req.hexOrNull("mailbox"),
+        req.stateOrNull("parent_room")
     )
 }
 
 private fun adminReduce(req: JsonObject): JsonObject {
-    val events = req["events"]?.jsonArray ?: throw IllegalArgumentException("missing events")
-    val result = GroupAdmin.reduceAdmin(events.map { element ->
+    val wire = req["events"]?.jsonArray ?: throw IllegalArgumentException("missing events")
+    val events = wire.map { element ->
         val item = element.jsonObject
         AdminEvent(
             hexToBytes(item.str("note")),
@@ -317,7 +318,24 @@ private fun adminReduce(req: JsonObject): JsonObject {
             item.reqInt("round"),
             item.reqInt("offset")
         )
-    })
+    }
+    val parentEvents = req["parent_events"]?.let { parent ->
+        if (parent is JsonNull) {
+            null
+        } else {
+            parent.jsonArray.map { element ->
+                val item = element.jsonObject
+                AdminEvent(
+                    hexToBytes(item.str("note")),
+                    hexToBytes(item.str("sender")),
+                    hexToBytes(item.str("tx_id")),
+                    item.reqInt("round"),
+                    item.reqInt("offset")
+                )
+            }
+        }
+    }
+    val result = GroupAdmin.reduceAdmin(events, parentEvents)
     return buildJsonObject {
         put("state", result.state?.let { stateJson(it) } ?: JsonNull)
         put("accepted", JsonArray(result.accepted.map { acceptedJson(it) }))
@@ -368,7 +386,10 @@ private fun roomState(state: JsonObject): RoomState {
         state.reqInt("policy"),
         hexToBytes(state.str("name_hex")),
         state.uint32("epoch"),
-        hexToBytes(state.str("head_tx_id"))
+        hexToBytes(state.str("head_tx_id")),
+        state["parent_group_id"]?.let { parent ->
+            if (parent is JsonNull) ByteArray(32) else hexToBytes(parent.jsonPrimitive.content)
+        } ?: ByteArray(32)
     )
 }
 
@@ -395,6 +416,7 @@ private fun stateJson(state: RoomState): JsonObject {
         put("name_hex", bytesToHex(state.name))
         put("epoch", unsignedEpoch(state.epoch))
         put("head_tx_id", bytesToHex(state.headTxId))
+        put("parent_group_id", bytesToHex(state.parentGroupId))
     }
 }
 

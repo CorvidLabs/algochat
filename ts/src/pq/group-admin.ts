@@ -14,7 +14,11 @@ export const GROUP_ADMIN_PROTOCOL = 0x03;
 export const GROUP_DELIVER_ACTION = 5;
 export const GROUP_NAME_MAX = 64;
 export const GROUP_ADMIN_MAX = 16;
-export const GROUP_MEMBER_MAX = 100;
+export const GROUP_MEMBER_MAX = 256;
+/** Separate key-delivery payments in one pass. Not an atomic transaction group. */
+export const GROUP_DELIVER_BATCH = 16;
+/** Member count sentinel: the note names one subject and omits the roster. */
+export const GROUP_MEMBERS_OMITTED = 0xffff;
 export const GROUP_DELIVER_PLAINTEXT_SIZE = 133;
 
 export const JOINING = {
@@ -40,6 +44,8 @@ export const ADMIN_OP = {
 export interface RoomState {
     groupId: Uint8Array;
     mailbox: Uint8Array;
+    /** 32 zero bytes when this room is not a channel. */
+    parentGroupId: Uint8Array;
     owner: Uint8Array;
     admins: Uint8Array[];
     members: Uint8Array[];
@@ -85,18 +91,28 @@ interface DecodedAdmin {
     admins: Uint8Array[];
     members: Uint8Array[];
     subject: Uint8Array;
+    /** True when the note uses the 0xFFFF sentinel instead of a member list. */
+    membersOmitted?: boolean;
+    /** Present on a delta note. Legacy full-list notes leave this as 32 zero bytes. */
+    parentGroupId?: Uint8Array;
 }
 
 export function encodeAdminRecord(fields: DecodedAdmin): Uint8Array {
     const name = canonicalName(fields.name);
     const admins = canonicalSet(fields.admins, 'admins', GROUP_ADMIN_MAX);
-    const members = canonicalSet(fields.members, 'members', GROUP_MEMBER_MAX);
+    const membersOmitted = fields.membersOmitted === true;
+    const parentGroupId = fields.parentGroupId ?? new Uint8Array(32);
     requireLength('parent', fields.parent, 32);
     requireLength('group id', fields.groupId, 32);
     requireLength('mailbox', fields.mailbox, 32);
     requireLength('owner', fields.owner, 32);
     requireLength('subject', fields.subject, 32);
+    requireLength('parent group', parentGroupId, 32);
     requireUint32('epoch', fields.epoch);
+    if (!membersOmitted && !isZero(parentGroupId)) {
+        throw new PQError('A full member list cannot name a parent room');
+    }
+    const members = membersOmitted ? [] : canonicalSet(fields.members, 'members', GROUP_MEMBER_MAX);
     if (fields.policy !== JOINING.INVITE && fields.policy !== JOINING.ASK) {
         throw new PQError('Joining rule must be invite-only or ask-to-join');
     }
@@ -114,11 +130,18 @@ export function encodeAdminRecord(fields: DecodedAdmin): Uint8Array {
     push(out, fields.owner);
     pushU16(out, admins.length);
     for (const admin of admins) push(out, admin);
-    pushU16(out, members.length);
-    for (const member of members) push(out, member);
+    pushU16(out, membersOmitted ? GROUP_MEMBERS_OMITTED : members.length);
+    if (!membersOmitted) {
+        for (const member of members) push(out, member);
+    }
     push(out, fields.subject);
+    if (membersOmitted) push(out, parentGroupId);
     const note = Uint8Array.from(out);
-    if (note.length > 4096) throw new PQError('Administration record exceeds 4096 bytes');
+    if (note.length > 4096) {
+        throw new PQError(membersOmitted
+            ? 'Administration record exceeds 4096 bytes'
+            : 'Full member list is too large');
+    }
     return note;
 }
 
@@ -130,8 +153,11 @@ export function draftAdmin(state: RoomState | null, input: {
     policy?: number;
     groupId?: Uint8Array;
     mailbox?: Uint8Array;
+    /** Required when creating a channel, and for every later note on that channel. */
+    parentRoom?: RoomState | null;
 }): Uint8Array {
     const subject = input.subject ?? new Uint8Array(32);
+    const parentGroupId = channelParent(state, input);
     const decoded: DecodedAdmin = {
         parent: state?.headTxId ?? new Uint8Array(32),
         groupId: input.groupId ?? state?.groupId ?? new Uint8Array(32),
@@ -144,11 +170,14 @@ export function draftAdmin(state: RoomState | null, input: {
         admins: state?.admins.map(copy) ?? [],
         members: state?.members.map(copy) ?? [],
         subject,
+        membersOmitted: true,
+        parentGroupId,
     };
     const next = input.op === ADMIN_OP.CREATE
         ? {
             groupId: decoded.groupId,
             mailbox: decoded.mailbox,
+            parentGroupId: copy(parentGroupId),
             owner: copy(input.sender),
             admins: [] as Uint8Array[],
             members: [copy(input.sender)],
@@ -170,37 +199,14 @@ export function draftAdmin(state: RoomState | null, input: {
         admins: next.admins,
         members: next.members,
         subject,
+        membersOmitted: true,
+        parentGroupId: next.parentGroupId,
     });
 }
 
-export function reduceAdmin(events: readonly AdminEvent[]): ReduceAdminResult {
-    const ordered = [...events].sort(compareEvents);
-    let state: RoomState | null = null;
-    const accepted: AcceptedAdmin[] = [];
-    const rejected: { txId: Uint8Array; reason: string }[] = [];
-    const seen = new Set<string>();
-    // 32 zero bytes are create's parent. They are not an accepted administration id.
-    const known = new Set<string>();
-    for (const event of ordered) {
-        const key = hex(event.txId);
-        if (seen.has(key)) {
-            rejected.push({ txId: copy(event.txId), reason: 'replay' });
-            continue;
-        }
-        try {
-            const next = applyAdmin(state, event, known);
-            seen.add(key);
-            if (next.advance) known.add(hex(event.txId));
-            state = next.state;
-            accepted.push(next.accepted);
-        } catch (error) {
-            rejected.push({
-                txId: copy(event.txId),
-                reason: error instanceof Error ? error.message : 'rejected',
-            });
-        }
-    }
-    return { state, accepted, rejected };
+export function reduceAdmin(events: readonly AdminEvent[], parentEvents?: readonly AdminEvent[]): ReduceAdminResult {
+    const parent = parentEvents ? parentTimeline(parentEvents) : null;
+    return foldAdmin(events, parent).result;
 }
 
 export function senderMayPost(state: RoomState, sender: Uint8Array, epoch: number): boolean {
@@ -224,6 +230,38 @@ export function deliveryAuthorized(
     return record.op === ADMIN_OP.REMOVE_MEMBER || record.op === ADMIN_OP.REKEY || record.op === ADMIN_OP.TRANSFER_OWNER
         ? !uint8ArrayEquals(record.subject, recipient) || record.op === ADMIN_OP.REKEY || record.op === ADMIN_OP.TRANSFER_OWNER
         : false;
+}
+
+export function authorizedRecipients(
+    accepted: readonly AcceptedAdmin[],
+    adminTxId: Uint8Array,
+    sender: Uint8Array,
+    epoch: number,
+): Uint8Array[] {
+    const record = accepted.find((item) => uint8ArrayEquals(item.txId, adminTxId));
+    if (!record) return [];
+    return record.members.filter((member) => deliveryAuthorized(accepted, adminTxId, sender, member, epoch)).map(copy);
+}
+
+/** Members of a channel who are no longer members of the parent room. */
+export function channelDepartures(channel: RoomState, parent: RoomState): Uint8Array[] {
+    if (isZero(channel.parentGroupId) || !uint8ArrayEquals(channel.parentGroupId, parent.groupId)) {
+        throw new PQError('Channel does not point at this parent room');
+    }
+    return channel.members.filter((member) => !contains(parent.members, member)).map(copy);
+}
+
+/** Recipients still owed a key. A payment already in `landed` stays there. */
+export function pendingKeyDeliveries(recipients: readonly Uint8Array[], landed: readonly Uint8Array[]): Uint8Array[] {
+    return recipients.filter((recipient) => !contains(landed, recipient)).map(copy);
+}
+
+/** The next separate payments, at most 16. This does not build an atomic group. */
+export function nextDeliveryBatch(pending: readonly Uint8Array[], batchSize = GROUP_DELIVER_BATCH): Uint8Array[] {
+    if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > GROUP_DELIVER_BATCH) {
+        throw new PQError('A key delivery batch is at most 16 payments');
+    }
+    return pending.slice(0, batchSize).map(copy);
 }
 
 export function sealGroupKeyDelivery(
@@ -295,10 +333,103 @@ export function openGroupKeyDelivery(note: Uint8Array, session: PQSession): {
     };
 }
 
+interface ParentStep {
+    event: AdminEvent;
+    state: RoomState | null;
+}
+
+function parentTimeline(events: readonly AdminEvent[]): ParentStep[] {
+    return foldAdmin(events, null).steps;
+}
+
+function foldAdmin(events: readonly AdminEvent[], parent: readonly ParentStep[] | null): {
+    result: ReduceAdminResult;
+    steps: ParentStep[];
+} {
+    const ordered = [...events].sort(compareEvents);
+    let state: RoomState | null = null;
+    const accepted: AcceptedAdmin[] = [];
+    const rejected: { txId: Uint8Array; reason: string }[] = [];
+    const seen = new Set<string>();
+    // 32 zero bytes are create's parent. They are not an accepted administration id.
+    const known = new Set<string>();
+    const steps: ParentStep[] = [];
+    for (const event of ordered) {
+        const key = hex(event.txId);
+        if (seen.has(key)) {
+            rejected.push({ txId: copy(event.txId), reason: 'replay' });
+            steps.push({ event, state });
+            continue;
+        }
+        try {
+            const parentState = parent ? parentBefore(parent, event) : undefined;
+            const next = applyAdmin(state, event, known, parentState);
+            seen.add(key);
+            if (next.advance) known.add(hex(event.txId));
+            state = next.state;
+            accepted.push(next.accepted);
+        } catch (error) {
+            rejected.push({
+                txId: copy(event.txId),
+                reason: error instanceof Error ? error.message : 'rejected',
+            });
+        }
+        steps.push({ event, state });
+    }
+    return { result: { state, accepted, rejected }, steps };
+}
+
+function parentBefore(steps: readonly ParentStep[], event: AdminEvent): RoomState | null {
+    let state: RoomState | null = null;
+    for (const step of steps) {
+        if (compareEvents(step.event, event) < 0) state = step.state;
+        else break;
+    }
+    return state;
+}
+
+function channelParent(state: RoomState | null, input: {
+    op: number;
+    sender: Uint8Array;
+    subject?: Uint8Array;
+    groupId?: Uint8Array;
+    mailbox?: Uint8Array;
+    parentRoom?: RoomState | null;
+}): Uint8Array {
+    const subject = input.subject ?? new Uint8Array(32);
+    if (input.op === ADMIN_OP.CREATE) {
+        if (!input.parentRoom) return new Uint8Array(32);
+        if (!uint8ArrayEquals(input.sender, input.parentRoom.owner)) {
+            throw new PQError('Only the group owner creates a channel');
+        }
+        const groupId = input.groupId ?? new Uint8Array(32);
+        const mailbox = input.mailbox ?? new Uint8Array(32);
+        if (uint8ArrayEquals(groupId, input.parentRoom.groupId) || uint8ArrayEquals(mailbox, input.parentRoom.mailbox)) {
+            throw new PQError('A channel has its own mailbox and group id');
+        }
+        return copy(input.parentRoom.groupId);
+    }
+    const current = state?.parentGroupId ?? new Uint8Array(32);
+    if (isZero(current)) return copy(current);
+    if (!input.parentRoom || !uint8ArrayEquals(input.parentRoom.groupId, current)) {
+        throw new PQError('Channel does not point at this parent room');
+    }
+    if (input.op === ADMIN_OP.TRANSFER_OWNER) throw new PQError('The group owner keeps the channel');
+    if (
+        input.op === ADMIN_OP.ADD_MEMBER
+        || input.op === ADMIN_OP.ACCEPT_JOIN
+        || input.op === ADMIN_OP.REQUEST_JOIN
+    ) {
+        if (!contains(input.parentRoom.members, subject)) throw new PQError('That person is not in the parent room');
+    }
+    return copy(current);
+}
+
 function applyAdmin(
     state: RoomState | null,
     event: AdminEvent,
     known: Set<string>,
+    parentState: RoomState | null | undefined,
 ): { state: RoomState; accepted: AcceptedAdmin; advance: boolean } {
     requireLength('sender', event.sender, 32);
     requireLength('transaction id', event.txId, 32);
@@ -306,6 +437,7 @@ function applyAdmin(
     if (uint8ArrayEquals(decoded.mailbox, event.sender)) {
         throw new PQError('Mailbox key does not own the room');
     }
+    bindChannel(decoded, event.sender, parentState);
     const parent = state?.headTxId ?? new Uint8Array(32);
     const request = decoded.op === ADMIN_OP.REQUEST_JOIN;
     if (request) {
@@ -336,17 +468,43 @@ function applyAdmin(
     };
 }
 
+function bindChannel(decoded: DecodedAdmin, sender: Uint8Array, parentState: RoomState | null | undefined): void {
+    const parentGroupId = decoded.parentGroupId ?? new Uint8Array(32);
+    if (isZero(parentGroupId)) return;
+    // undefined means the caller did not supply the parent room. null means it was supplied and did not yet exist.
+    if (parentState === undefined || !parentState || !uint8ArrayEquals(parentState.groupId, parentGroupId)) {
+        throw new PQError('Channel does not point at this parent room');
+    }
+    if (decoded.op === ADMIN_OP.CREATE) {
+        if (!uint8ArrayEquals(sender, parentState.owner)) throw new PQError('Only the group owner creates a channel');
+        if (uint8ArrayEquals(decoded.groupId, parentState.groupId) || uint8ArrayEquals(decoded.mailbox, parentState.mailbox)) {
+            throw new PQError('A channel has its own mailbox and group id');
+        }
+    }
+    if (decoded.op === ADMIN_OP.TRANSFER_OWNER) throw new PQError('The group owner keeps the channel');
+    if (
+        decoded.op === ADMIN_OP.ADD_MEMBER
+        || decoded.op === ADMIN_OP.ACCEPT_JOIN
+        || decoded.op === ADMIN_OP.REQUEST_JOIN
+    ) {
+        if (!contains(parentState.members, decoded.subject)) throw new PQError('That person is not in the parent room');
+    }
+}
+
 function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint8Array): Omit<RoomState, 'headTxId'> {
     if (decoded.op === ADMIN_OP.CREATE) {
         if (state) throw new PQError('Create requires an empty parent');
         if (!isZero(decoded.parent) || !isZero(decoded.subject)) throw new PQError('Create parent and subject must be zero');
         if (!uint8ArrayEquals(decoded.owner, sender)) throw new PQError('Create sender is not the owner');
         if (decoded.epoch !== 1 || decoded.admins.length !== 0) throw new PQError('Create starts at epoch 1 with no admins');
-        if (decoded.members.length !== 1 || !uint8ArrayEquals(decoded.members[0], sender)) {
+        if (decoded.membersOmitted) {
+            if (decoded.members.length !== 0) throw new PQError('Create membership is the owner alone');
+        } else if (decoded.members.length !== 1 || !uint8ArrayEquals(decoded.members[0]!, sender)) {
             throw new PQError('Create membership is the owner alone');
         }
-        rejectMailboxOverlap(decoded.mailbox, decoded.members, decoded.admins, decoded.owner);
-        return body(decoded, []);
+        const members = [copy(sender)];
+        rejectMailboxOverlap(decoded.mailbox, members, decoded.admins, decoded.owner);
+        return body(decoded, [], members);
     }
     if (!state) throw new PQError('Administration parent is missing');
     if (!uint8ArrayEquals(decoded.groupId, state.groupId) || !uint8ArrayEquals(decoded.mailbox, state.mailbox)) {
@@ -422,6 +580,7 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
     return {
         groupId: copy(state.groupId),
         mailbox: copy(state.mailbox),
+        parentGroupId: copy(state.parentGroupId),
         owner,
         admins,
         members,
@@ -432,13 +591,14 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
     };
 }
 
-function body(decoded: DecodedAdmin, pending: Uint8Array[]): Omit<RoomState, 'headTxId'> {
+function body(decoded: DecodedAdmin, pending: Uint8Array[], members: Uint8Array[]): Omit<RoomState, 'headTxId'> {
     return {
         groupId: copy(decoded.groupId),
         mailbox: copy(decoded.mailbox),
+        parentGroupId: copy(decoded.parentGroupId ?? new Uint8Array(32)),
         owner: copy(decoded.owner),
         admins: decoded.admins.map(copy),
-        members: decoded.members.map(copy),
+        members: members.map(copy),
         pending,
         policy: decoded.policy,
         name: copy(decoded.name),
@@ -451,8 +611,9 @@ function sameState(decoded: DecodedAdmin, next: Omit<RoomState, 'headTxId'>): bo
         && decoded.epoch === next.epoch
         && decoded.policy === next.policy
         && uint8ArrayEquals(decoded.name, next.name)
+        && uint8ArrayEquals(decoded.parentGroupId ?? new Uint8Array(32), next.parentGroupId)
         && sameSet(decoded.admins, next.admins)
-        && sameSet(decoded.members, next.members);
+        && (decoded.membersOmitted || sameSet(decoded.members, next.members));
 }
 
 function decodeAdmin(note: Uint8Array): DecodedAdmin {
@@ -478,22 +639,46 @@ function decodeAdmin(note: Uint8Array): DecodedAdmin {
         cursor += 32;
     }
     const memberCount = readU16(note, cursor); cursor += 2;
+    const membersOmitted = memberCount === GROUP_MEMBERS_OMITTED;
     const members: Uint8Array[] = [];
-    for (let i = 0; i < memberCount; i += 1) {
-        members.push(take(note, cursor, 32));
-        cursor += 32;
+    if (!membersOmitted) {
+        for (let i = 0; i < memberCount; i += 1) {
+            members.push(take(note, cursor, 32));
+            cursor += 32;
+        }
     }
     const subject = take(note, cursor, 32); cursor += 32;
+    const parentGroupId = membersOmitted ? take(note, cursor, 32) : new Uint8Array(32);
+    if (membersOmitted) cursor += 32;
     if (cursor !== note.length) throw new PQError('Administration record has trailing bytes');
+    if (note.length > 4096) {
+        throw new PQError(membersOmitted
+            ? 'Administration record exceeds 4096 bytes'
+            : 'Full member list is too large');
+    }
     canonicalSet(admins, 'admins', GROUP_ADMIN_MAX);
-    canonicalSet(members, 'members', GROUP_MEMBER_MAX);
+    if (!membersOmitted) canonicalSet(members, 'members', GROUP_MEMBER_MAX);
     if (!strictlyIncreasing(admins) || !strictlyIncreasing(members)) {
         throw new PQError('Administration sets must be strictly sorted');
     }
     if (policy !== JOINING.INVITE && policy !== JOINING.ASK) {
         throw new PQError('Joining rule must be invite-only or ask-to-join');
     }
-    return { parent, groupId, mailbox, epoch, op, name, policy, owner, admins, members, subject };
+    return {
+        parent,
+        groupId,
+        mailbox,
+        epoch,
+        op,
+        name,
+        policy,
+        owner,
+        admins,
+        members,
+        subject,
+        membersOmitted,
+        parentGroupId,
+    };
 }
 
 function encodeDelivery(epoch: number, groupId: Uint8Array, mailbox: Uint8Array, groupKey: Uint8Array, adminTxId: Uint8Array): Uint8Array {

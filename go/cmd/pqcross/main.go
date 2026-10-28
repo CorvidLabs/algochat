@@ -50,8 +50,10 @@ type request struct {
 	Sender           flexString     `json:"sender"`
 	Recipient        flexString     `json:"recipient"`
 	Events           []eventWire    `json:"events"`
+	ParentEvents     []eventWire    `json:"parent_events"`
 	Accepted         []acceptedWire `json:"accepted"`
 	State            *basisWire     `json:"state"`
+	ParentRoom       *basisWire     `json:"parent_room"`
 }
 
 // flexString accepts a JSON string or null. Null is the same as an omitted field.
@@ -72,16 +74,17 @@ func (f *flexString) UnmarshalJSON(data []byte) error {
 
 // basisWire is the public room roster. admin_op is the room operation because op is the command.
 type basisWire struct {
-	GroupID  string   `json:"group_id"`
-	Mailbox  string   `json:"mailbox"`
-	Owner    string   `json:"owner"`
-	Admins   []string `json:"admins"`
-	Members  []string `json:"members"`
-	Pending  []string `json:"pending"`
-	Policy   int      `json:"policy"`
-	NameHex  string   `json:"name_hex"`
-	Epoch    uint32   `json:"epoch"`
-	HeadTxID string   `json:"head_tx_id"`
+	GroupID       string   `json:"group_id"`
+	Mailbox       string   `json:"mailbox"`
+	Owner         string   `json:"owner"`
+	Admins        []string `json:"admins"`
+	Members       []string `json:"members"`
+	Pending       []string `json:"pending"`
+	Policy        int      `json:"policy"`
+	NameHex       string   `json:"name_hex"`
+	Epoch         uint32   `json:"epoch"`
+	HeadTxID      string   `json:"head_tx_id"`
+	ParentGroupID string   `json:"parent_group_id"`
 }
 
 type eventWire struct {
@@ -628,6 +631,13 @@ func adminDraft(req request) (map[string]any, error) {
 		draft.Policy = *req.Policy
 		draft.HasPolicy = true
 	}
+	if req.ParentRoom != nil {
+		parent, err := reviveRoom(req.ParentRoom)
+		if err != nil {
+			return nil, err
+		}
+		draft.ParentRoom = parent
+	}
 	note, err := algochat.DraftAdmin(state, draft)
 	if err != nil {
 		return nil, err
@@ -652,7 +662,26 @@ func adminReduce(req request) (map[string]any, error) {
 		}
 		events[i] = algochat.AdminEvent{Note: note, Sender: sender, TxID: txID, Round: item.Round, Offset: item.Offset}
 	}
-	reduced := algochat.ReduceAdmin(events)
+	var parent []algochat.AdminEvent
+	if req.ParentEvents != nil {
+		parent = make([]algochat.AdminEvent, len(req.ParentEvents))
+		for i, item := range req.ParentEvents {
+			note, err := hex.DecodeString(item.Note)
+			if err != nil {
+				return nil, err
+			}
+			sender, err := hex.DecodeString(item.Sender)
+			if err != nil {
+				return nil, err
+			}
+			txID, err := hex.DecodeString(item.TxID)
+			if err != nil {
+				return nil, err
+			}
+			parent[i] = algochat.AdminEvent{Note: note, Sender: sender, TxID: txID, Round: item.Round, Offset: item.Offset}
+		}
+	}
+	reduced := algochat.ReduceAdmin(events, parent)
 	accepted := make([]acceptedWire, len(reduced.Accepted))
 	for i, item := range reduced.Accepted {
 		accepted[i] = acceptedWire{
@@ -857,33 +886,49 @@ func reviveRoom(state *basisWire) (*algochat.RoomState, error) {
 	if err != nil {
 		return nil, err
 	}
+	parentGroup := make([]byte, 32)
+	if state.ParentGroupID != "" {
+		parentGroup, err = hex.DecodeString(state.ParentGroupID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &algochat.RoomState{
-		GroupID:  groupID,
-		Mailbox:  mailbox,
-		Owner:    owner,
-		Admins:   admins,
-		Members:  members,
-		Pending:  pending,
-		Policy:   state.Policy,
-		Name:     name,
-		Epoch:    state.Epoch,
-		HeadTxID: head,
+		GroupID:       groupID,
+		Mailbox:       mailbox,
+		Owner:         owner,
+		Admins:        admins,
+		Members:       members,
+		Pending:       pending,
+		Policy:        state.Policy,
+		Name:          name,
+		Epoch:         state.Epoch,
+		HeadTxID:      head,
+		ParentGroupID: parentGroup,
 	}, nil
 }
 
 func snapRoom(state *algochat.RoomState) basisWire {
 	return basisWire{
-		GroupID:  hex.EncodeToString(state.GroupID),
-		Mailbox:  hex.EncodeToString(state.Mailbox),
-		Owner:    hex.EncodeToString(state.Owner),
-		Admins:   encodeHexList(state.Admins),
-		Members:  encodeHexList(state.Members),
-		Pending:  encodeHexList(state.Pending),
-		Policy:   state.Policy,
-		NameHex:  hex.EncodeToString(state.Name),
-		Epoch:    state.Epoch,
-		HeadTxID: hex.EncodeToString(state.HeadTxID),
+		GroupID:       hex.EncodeToString(state.GroupID),
+		Mailbox:       hex.EncodeToString(state.Mailbox),
+		Owner:         hex.EncodeToString(state.Owner),
+		Admins:        encodeHexList(state.Admins),
+		Members:       encodeHexList(state.Members),
+		Pending:       encodeHexList(state.Pending),
+		Policy:        state.Policy,
+		NameHex:       hex.EncodeToString(state.Name),
+		Epoch:         state.Epoch,
+		HeadTxID:      hex.EncodeToString(state.HeadTxID),
+		ParentGroupID: hex.EncodeToString(parentOrZero(state.ParentGroupID)),
 	}
+}
+
+func parentOrZero(value []byte) []byte {
+	if len(value) == 32 {
+		return value
+	}
+	return make([]byte, 32)
 }
 
 func decodeHexList(items []string) ([][]byte, error) {
