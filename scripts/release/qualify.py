@@ -164,7 +164,7 @@ repositories { maven { url = uri("''' + str(repo) + '''") }; mavenCentral() }
 dependencies { implementation("''' + ':'.join(coords) + '''") }
 tasks.register("smoke") { doLast {
     val jars = configurations.runtimeClasspath.get().files
-    check(jars.any { it.name == "kt-algochat-0.3.0.jar" })
+    check(jars.any { it.name == "kt-algochat-0.4.0.jar" })
     val loader = URLClassLoader(jars.map { it.toURI().toURL() }.toTypedArray(), null)
     loader.loadClass("com.corvidlabs.algochat.Keys")
 } }
@@ -182,7 +182,7 @@ tasks.register("smoke") { doLast {
         write(consumer / 'main.go', 'package main\nimport _ "github.com/CorvidLabs/algochat/go"\nfunc main() {}\n')
         run(['go', 'mod', 'tidy'], consumer)
         run(['go', 'run', '.'], consumer)
-        write(output / 'distribution-limit.txt', 'Consumer uses an explicit local replacement of github.com/CorvidLabs/algochat/go. The release tag go/v0.3.0 is not fetched here.\n')
+        write(output / 'distribution-limit.txt', 'Consumer uses an explicit local replacement of github.com/CorvidLabs/algochat/go. The release tag go/v0.4.0 is not fetched here.\n')
     elif lane in {'swift', 'swift-linux'}:
         VERSIONS['swift'] = run(['swift', '--version']).strip()
         if lane == 'swift':

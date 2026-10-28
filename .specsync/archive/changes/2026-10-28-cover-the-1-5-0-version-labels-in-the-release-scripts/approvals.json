@@ -1,0 +1,45 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793217970,
+      "digest": "a38a38eb7275bfd4bc98f9d89758d2126c372aac8159b21e742a70e0fa4b2c6a",
+      "note": "Leif asked to tag the prepared 1.5.0 release. This only covers the version-label paths.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "cover-the-1-5-0-version-labels-in-the-release-scripts",
+        "title": "Cover the 1.5.0 version labels in the release scripts",
+        "description": "Cover the 1.5.0 version labels in the release scripts",
+        "kind": "documentation",
+        "affected_specs": [],
+        "affected_paths": [
+          "TEST-VECTORS.md",
+          "scripts/release/packages.py",
+          "scripts/release/qualify.py",
+          "scripts/release/test_release.py"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "These files only carry the prepared 1.5.0 version labels. The protocol contract is already in the archived release change. No tag is cut.",
+        "acceptance_criteria": [
+          "The test vector header and release scripts name the prepared 1.5.0 library versions."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793217998,
+      "digest": "9dad51dff503c98bac6e2215be2698d2ec19300fc551819298b002f90e2d0a0d",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

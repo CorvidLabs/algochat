@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 15
+version: 16
 status: stable
 files:
   - PROTOCOL.md
@@ -11,7 +11,7 @@ files:
 
 ## Purpose
 
-The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. PQ levels are the integers 0 through 5 in section 5.4.2. A new conversation should start at hybrid `0x04` and `0x05`, which is PQ level 3. Group mailbox protocols `0x06` and `0x07` use that same session. Everyday and Extra lock stay assigned and are not the default. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does. This wording does not change the wire format.
+The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. Version 1.5.0 names the delta room note already specified in section 5.8: member count 65535, 256 people, and channels the group owner keeps. PQ levels are the integers 0 through 5 in section 5.4.2. A new conversation should start at hybrid `0x04` and `0x05`, which is PQ level 3. Group mailbox protocols `0x06` and `0x07` use that same session. Everyday and Extra lock stay assigned and are not the default. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does. This wording does not change the wire format.
 
 Documentation of current source adds offset tables and [application flow diagrams](../../docs/PROTOCOL-FLOWS.md), including separate cryptographic and authorization checks. The flow guide records port-specific limitations without relaxing normative requirements or qualifying a release.
 
@@ -57,3 +57,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-24 | a-new-conversation-starts-as-a-hybrid-session-everyday-notes-and-extra-lock-stay-available-and-are-not-the-default: A new conversation starts as a hybrid session. Everyday notes and extra lock stay available and are not the default. |
 | 2026-10-28 | Delta `0x03` notes omit the member list so one room can hold 256 people. Full-list notes still open. A channel is a separate room that names its parent group. Key deliveries stay separate payments of at most 16. |
 | 2026-10-28 | a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by: A room note records one added or removed person so a room can hold 256 people, and a channel is another room owned by the group owner |
+| 2026-10-28 | prepare-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |

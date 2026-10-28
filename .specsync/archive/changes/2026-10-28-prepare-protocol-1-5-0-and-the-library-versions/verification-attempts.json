@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1793213985,
+      "commit": "2bde8cce1e57c744e9399f8e16daa13ca3c59532",
+      "contract_digest": "c1944290f20af9955e2c77c58a9dc1a0b2cf43096a405469e306ec26a449bef1",
+      "execution_digest": "1603c97b0767e0dffc03bde569cf24f4651e57159eb2cd2a90cd66a4ed48a286",
+      "workspace_digest": "5c3334b952ba0bf80c89bda0d1fa8353a6381177225f2a63552509b49a8e3144",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-4",
+        "REQ-release-5"
+      ]
+    },
+    {
+      "timestamp": 1793213991,
+      "commit": "6ba69d8906999949cfed3f69d95e631d18b33a33",
+      "contract_digest": "c1944290f20af9955e2c77c58a9dc1a0b2cf43096a405469e306ec26a449bef1",
+      "execution_digest": "1603c97b0767e0dffc03bde569cf24f4651e57159eb2cd2a90cd66a4ed48a286",
+      "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-4",
+        "REQ-release-5"
+      ]
+    },
+    {
+      "timestamp": 1793213991,
+      "commit": "8a7d879500ce8e7c31d4255ae4ae52f051fafe89",
+      "contract_digest": "c1944290f20af9955e2c77c58a9dc1a0b2cf43096a405469e306ec26a449bef1",
+      "execution_digest": "1603c97b0767e0dffc03bde569cf24f4651e57159eb2cd2a90cd66a4ed48a286",
+      "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+      "acceptance_input_digest": "6b2e094f5f8d28496ce676595c055016b2d217c7979132f9907e004ec6c2ffff",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "PROTOCOL.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "71635b27df20d620522f9dbe5437053ba6d4d51691c75d12a1565f0ce93c1ed0",
+            "entry_digest": "99a46a3fb9c27ac26c017afd6dae5bd9ee7b46d4cea5beef3961699a50b5f211",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "docs/RELEASE.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2abcdbe1aff77fb3e3eec2c95df9c6e7e163f1ef91f046927253ac5fff1571f1",
+            "entry_digest": "9cccbce1f5face9c5cae078a8828bb4633c58c1ae1fe254c47c8e5f3a73c7af2",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "kt/build.gradle.kts",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f42b2cb625e100cf5dcc52bd080b3cec1ea5645252f5270b17abe8adc60d87e9",
+            "entry_digest": "43a33862be08259ab2069c02ea2e58377458b25683711b6ece52ffc4871aac79",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/pyproject.toml",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e1f965c1ed97873bcf1a8cffb984934691a0b74bbe2dbe61ed32b624125bfb74",
+            "entry_digest": "bd1001b1ff57effdc6b35b197911a64b189f5f2391928c7129b23c9890e7c7fd",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "rs/Cargo.toml",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bc8050e4774388465d9ca65f60a9480d703183f7934ee7cbee0747572b430efd",
+            "entry_digest": "90462b2d2bc2c04db2d33be1e3bfcde348d893086347191c73a472316db30159",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "specs/protocol/protocol.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "305e353e858e08f0acb07a2b4250dee64dc1ae0cd6f9583cf56851598ee8478f",
+            "entry_digest": "373da711b167dac5a2625805f14c4352274c2fb4fda4815f92ba9876cf9a4a2b",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "specs/protocol/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ecda0495df2cd5fc96ba87c6b9b7910fb62e53d10c232c7882a5c6ff6180e960",
+            "entry_digest": "adf649d7fb58858b78972303d23136a84d5cc63a949baa08421268f2066ef2c2",
+            "owners": [
+              "protocol"
+            ]
+          },
+          {
+            "path": "specs/release/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a65a7e77dc3b33739fdb248aeff89e6e9ac79ca0e7cb583da54b75254087d9ec",
+            "entry_digest": "408040983931c857066f9fac1024f9f79f589c48175f6403b49ef8cd901de2d3",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "specs/release/release.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a5330687cbba90a833f71da54f7fbe244aa7e052e47868a1273b253c12a4f5ed",
+            "entry_digest": "384a3c9f049ebb2f01af1c3aa91b1d93d9014e30ee8f91aeb048fca3be481788",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "specs/release/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "949e72240d4ed8b56a4bf8efaa65699b16fd666dbaae01961e83a17a9cecb0ab",
+            "entry_digest": "d4153864baa890c3f287421b594da3646e6a0127be1363d08e23b82f279fa8ac",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "specs/release/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d18081fcbbf495a44ef0be06f8a77ff0b995c63246b361b760c271171c4913b3",
+            "entry_digest": "5f154ab38dc3fbcb30bc0571f3b99ed174054cd9a41c8e788d0fd596c4024ae4",
+            "owners": [
+              "release"
+            ]
+          },
+          {
+            "path": "ts/package.json",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c1278093aa761e25053b2837b979289b7b59a6b4eb53adc5f4d3477e437c1c9a",
+            "entry_digest": "1eaaa90cb94dd8312d0f84539943e815cfaf0c6bea9cc09280533342a8f954fc",
+            "owners": [
+              "@exact:delivery"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-4",
+        "REQ-release-5"
+      ]
+    }
+  ]
+}

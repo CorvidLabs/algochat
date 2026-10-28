@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "prepare-protocol-1-5-0-and-the-library-versions",
+  "implementation_commit": "8a7d879500ce8e7c31d4255ae4ae52f051fafe89",
+  "implementation_tree": "d1846d70b40a648b85e28dbd30fc40adf833a523",
+  "contract_digest": "c1944290f20af9955e2c77c58a9dc1a0b2cf43096a405469e306ec26a449bef1",
+  "workspace_digest": "17cc333bb010ee239a7daf2933c32fdeb4ce25abbf91180a185cc6a135623a0e",
+  "closing_digest": "56aaaa7d4e4ee5fd4df3278534745ccc9f1334c85c892d646309d05637889205",
+  "review_digest": "adee6069b419f13f52eb762b6f0d49fec44efd797bf262b49f5d55adf15dbf26",
+  "finalization_digest": "eb7dc02c8c3a355b5f1d43bc677cec34dfef2b7ed5f356c9eade5bbb0a0603b4",
+  "timestamp": 1793214017
+}
