@@ -666,6 +666,11 @@ class TestGroupAdmin:
         assert vector["constants"]["deliver_batch"] == GROUP_DELIVER_BATCH
         for draft in vector["drafts"]:
             assert _draft_note(draft).hex() == draft["note"], draft["name"]
+        for item in vector["draft_errors"]:
+            with pytest.raises(PQError) as caught:
+                _draft_note(item)
+            message = str(caught.value)
+            assert item["error_includes"].lower() in message.lower(), (item["name"], message)
         for name, reduction in vector["reductions"].items():
             parent_events = reduction.get("parent_events")
             result = reduce_admin(
