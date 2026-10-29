@@ -14,3 +14,6 @@ LocalNet: `cd ts && bun scripts/group-bot-localnet.ts` against algod 127.0.0.1:4
 | Requirement | Evidence |
 | --- | --- |
 | REQ-protocol-9 | vectors/group-admin-bots-v1.json passes in all six libraries; ts/scripts/group-bot-localnet.ts passes on LocalNet with every language agreeing on the confirmed notes. |
+| AGENT-7.b | `self_posts_are_not_a_bot` in the vector, and one named test in each of the six libraries: a key announcement, a chat note, a plain-text flag, a join request and a self op 13 leave the account an ordinary member with no bot record. |
+| AGENT-7.c | `bot_removed`, `parent_bot_removed` and `channel_bot_removed` reductions, `checks.channel_departures`, and one named test in each library: op 11 removes the bot at epoch 2, the bot is a channel departure, and the owner's op 11 on the channel drops it there at a new channel epoch. |
+| AGENT-8.a, AGENT-8.b | Pinned draft_errors and reductions for mode 0, mode 4, zero replies, zero seconds and values above 65535 (wide-integer APIs), and accepted mode 2 drafts and reductions. Swift asserts the exact sentences. |

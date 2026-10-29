@@ -89,6 +89,11 @@ type botsVector struct {
 			Account   string       `json:"account"`
 			Bot       *botsWireBot `json:"bot"`
 		} `json:"room_bot"`
+		ChannelDepartures []struct {
+			Channel    string   `json:"channel"`
+			Parent     string   `json:"parent"`
+			Departures []string `json:"departures"`
+		} `json:"channel_departures"`
 	} `json:"checks"`
 }
 
@@ -335,5 +340,84 @@ func TestBotSettingsOnlyOnBotOps(t *testing.T) {
 	}
 	if len(note) != 205+BotSettingsSize || !bytes.Equal(note[len(note)-BotSettingsSize:], []byte{1, 0, 5, 0, 60}) {
 		t.Fatalf("note tail %x", note[len(note)-BotSettingsSize:])
+	}
+}
+
+// AGENT-7.b: a key announcement, a chat note, a plain-text flag, a join request and an op 13
+// naming itself never make an account a bot.
+func TestSelfPostsNeverMarkABot(t *testing.T) {
+	v := loadBotsVector(t)
+	account := bytes.Repeat([]byte{5}, 32)
+	selfSent := 0
+	for _, item := range v.Reductions["self_posts_are_not_a_bot"].Events {
+		if item.Sender == hex.EncodeToString(account) {
+			selfSent++
+		}
+	}
+	if selfSent != 5 {
+		t.Fatalf("self-sent events %d, want 5", selfSent)
+	}
+	got := botsReduce(t, v, "self_posts_are_not_a_bot")
+	if got.State == nil || len(got.State.Bots) != 0 {
+		t.Fatalf("bots %v", got.State)
+	}
+	member := false
+	for _, item := range got.State.Members {
+		member = member || bytes.Equal(item, account)
+	}
+	if !member {
+		t.Fatal("account should be an ordinary member")
+	}
+	found, err := RoomBotFor(*got.State, account)
+	if err != nil || found != nil {
+		t.Fatalf("RoomBotFor = %v, %v", found, err)
+	}
+	for _, item := range got.Accepted {
+		if item.Op == AdminOpAddBot {
+			t.Fatal("op 13 accepted")
+		}
+	}
+	reasons := map[string]string{}
+	for _, item := range got.Rejected {
+		reasons[hex.EncodeToString(item.TxID)] = item.Reason
+	}
+	if r := reasons[strings.Repeat("57", 32)]; r != "Sender cannot add that bot" {
+		t.Fatalf("self op 13: %q", r)
+	}
+	for _, tx := range []string{"54", "55", "56"} {
+		if r := reasons[strings.Repeat(tx, 32)]; r != "Not a room administration record" {
+			t.Fatalf("%s: %q", tx, r)
+		}
+	}
+}
+
+// AGENT-7.c: removing a bot is ordinary op 11 with a new room key, and the bot is dropped from
+// the room's channels with op 11 on each channel.
+func TestRemovedBotLeavesRoomAndChannels(t *testing.T) {
+	v := loadBotsVector(t)
+	if len(v.Checks.ChannelDepartures) == 0 {
+		t.Fatal("no channel_departures checks")
+	}
+	for _, item := range v.Checks.ChannelDepartures {
+		channel := botsReduce(t, v, item.Channel).State
+		parent := botsReduce(t, v, item.Parent).State
+		got, err := ChannelDepartures(*channel, *parent)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hexes := []string{}
+		for _, item := range got {
+			hexes = append(hexes, hex.EncodeToString(item))
+		}
+		if !reflect.DeepEqual(hexes, item.Departures) {
+			t.Fatalf("%s/%s departures %v want %v", item.Channel, item.Parent, hexes, item.Departures)
+		}
+	}
+	for _, name := range []string{"parent_bot_removed", "channel_bot_removed"} {
+		got := botsReduce(t, v, name)
+		last := got.Accepted[len(got.Accepted)-1]
+		if last.Op != adminOpRemove || got.State.Epoch != 2 || len(got.State.Bots) != 0 {
+			t.Fatalf("%s: op %d epoch %d bots %d", name, last.Op, got.State.Epoch, len(got.State.Bots))
+		}
 	}
 }

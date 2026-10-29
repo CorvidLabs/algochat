@@ -22,9 +22,11 @@ from algochat.group_admin import (
     BOT_SETTINGS_SIZE,
     OP_ADD_BOT,
     OP_ADD_MEMBER,
+    OP_REMOVE_MEMBER,
     OP_SET_BOT,
     AdminEvent,
     RoomState,
+    channel_departures,
     encode_admin_record,
 )
 
@@ -183,3 +185,34 @@ def test_bot_settings_appear_only_on_ops_13_and_14():
     note = encode_admin_record(op=OP_ADD_BOT, members_omitted=True, bot=preset, **base)
     assert len(note) == 205 + BOT_SETTINGS_SIZE
     assert list(note[-BOT_SETTINGS_SIZE:]) == [1, 0, 5, 0, 60]
+
+
+def test_nothing_an_account_posts_about_itself_marks_it_as_a_bot():
+    """AGENT-7.b: key announcement, chat note, text flag, join request, self op 13."""
+    account = b"\x05" * 32
+    reduction = _VECTOR["reductions"]["self_posts_are_not_a_bot"]
+    self_sent = [i for i in reduction["events"] if i["sender"] == account.hex()]
+    assert len(self_sent) == 5
+    result = _reduce("self_posts_are_not_a_bot")
+    assert account in result.state.members
+    assert result.state.bots == []
+    assert room_bot(result.state, account) is None
+    assert OP_ADD_BOT not in [i.op for i in result.accepted]
+    rejected = {i.tx_id.hex(): i.reason for i in result.rejected}
+    assert rejected["57" * 32] == "Sender cannot add that bot"
+    for tx in ("54", "55", "56"):
+        assert rejected[tx * 32] == "Not a room administration record"
+
+
+def test_a_removed_bot_is_dropped_from_the_room_and_its_channels():
+    """AGENT-7.c: ordinary op 11, a new room key, and op 11 on each channel."""
+    checks = _VECTOR["checks"]["channel_departures"]
+    assert checks
+    for item in checks:
+        got = channel_departures(_reduce(item["channel"]).state, _reduce(item["parent"]).state)
+        assert [i.hex() for i in got] == item["departures"], item
+    for name in ("parent_bot_removed", "channel_bot_removed"):
+        result = _reduce(name)
+        assert result.accepted[-1].op == OP_REMOVE_MEMBER, name
+        assert result.state.epoch == 2, name
+        assert result.state.bots == [], name

@@ -94,6 +94,46 @@ class GroupAdminBotsTest {
         }
     }
 
+    /** AGENT-7.c: ordinary op 11, a new room key, and op 11 on each channel. */
+    @Test
+    fun `a removed bot is dropped from the room and its channels`() {
+        val checks = vector.obj("checks").arr("channel_departures")
+        assertTrue(checks.isNotEmpty())
+        for (element in checks) {
+            val item = element.jsonObject
+            val got = GroupAdmin.channelDepartures(
+                reduce(item.str("channel")).state!!,
+                reduce(item.str("parent")).state!!
+            )
+            assertEquals(item.arr("departures").map { it.jsonPrimitive.content }, got.map(::hex), item.toString())
+        }
+        for (name in listOf("parent_bot_removed", "channel_bot_removed")) {
+            val got = reduce(name)
+            assertEquals(11, got.accepted.last().op, name) // op 11, ordinary remove
+            assertEquals(2, got.state!!.epoch, name)
+            assertTrue(got.state!!.bots.isEmpty(), name)
+        }
+    }
+
+    /** AGENT-7.b: key announcement, chat note, text flag, join request and self op 13 never mark a bot. */
+    @Test
+    fun `nothing an account posts about itself marks it as a bot`() {
+        val account = ByteArray(32) { 5 }
+        val events = vector.obj("reductions").obj("self_posts_are_not_a_bot").arr("events")
+        assertEquals(5, events.count { it.jsonObject.str("sender") == hex(account) })
+        val got = reduce("self_posts_are_not_a_bot")
+        val state = got.state!!
+        assertTrue(state.members.any { it.contentEquals(account) })
+        assertTrue(state.bots.isEmpty())
+        assertNull(GroupAdmin.roomBot(state, account))
+        assertTrue(got.accepted.none { it.op == GroupAdmin.OP_ADD_BOT })
+        val reasons = got.rejected.associate { hex(it.txId) to it.reason }
+        assertEquals("Sender cannot add that bot", reasons["57".repeat(32)])
+        for (tx in listOf("54", "55", "56")) {
+            assertEquals("Not a room administration record", reasons[tx.repeat(32)], tx)
+        }
+    }
+
     @Test
     fun `bot settings ride only on a bot delta record`() {
         val preset = BotSettings(

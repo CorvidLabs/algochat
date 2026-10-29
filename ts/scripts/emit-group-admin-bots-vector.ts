@@ -5,12 +5,14 @@
  * vectors/group-admin-v1.json or vectors/group-admin-delta-v1.json.
  */
 import { writeFileSync } from "node:fs";
+import { encodeEnvelope } from "../src/crypto/envelope.js";
 import {
     ADMIN_OP,
     BOT_MODE,
     BOT_RATE_PRESET,
     BOT_SETTINGS_SIZE,
     JOINING,
+    channelDepartures,
     deliveryAuthorized,
     draftAdmin,
     encodeAdminRecord,
@@ -48,6 +50,12 @@ function bytes(text: string): Uint8Array {
 
 function event(note: Uint8Array, sender: Uint8Array, tx: number, round: number, offset = 0): AdminEvent {
     return { note, sender, txId: addr(tx), round, offset };
+}
+
+interface WireEvent { note: string; sender: string; tx_id: string; round: number; offset: number }
+
+function unwire(e: WireEvent): AdminEvent {
+    return { note: Buffer.from(e.note, "hex"), sender: Buffer.from(e.sender, "hex"), txId: Buffer.from(e.tx_id, "hex"), round: e.round, offset: e.offset };
 }
 
 function must(label: string, condition: boolean): void {
@@ -134,13 +142,23 @@ function recordDraft(name: string, state: RoomState | null, input: DraftInput, p
     return note;
 }
 
-function recordDraftError(name: string, state: RoomState | null, input: DraftInput, part: string, parentRoom?: RoomState | null): void {
+function recordDraftError(
+    name: string,
+    state: RoomState | null,
+    input: DraftInput,
+    part: string,
+    parentRoom?: RoomState | null,
+    wideInteger = false,
+): void {
     try {
         draftAdmin(state, { ...input, parentRoom });
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         must(`${name} threw ${message}`, message.toLowerCase().includes(part.toLowerCase()));
-        draftErrors.push({ ...draftFields(name, state, input, parentRoom), error_includes: part });
+        // wide_integer: a replies or seconds value a 16-bit settings type cannot hold. Only the
+        // libraries whose API takes a wider integer (TypeScript, Go, Python, Kotlin) draft it;
+        // Rust and Swift take u16 / UInt16 and check that the value does not fit.
+        draftErrors.push({ ...draftFields(name, state, input, parentRoom), error_includes: part, ...(wideInteger ? { wide_integer: true } : {}) });
         return;
     }
     throw new Error(`${name} did not throw`);
@@ -176,6 +194,24 @@ recordDraftError("appoint_bot", s4, { op: ADMIN_OP.APPOINT_ADMIN, sender: owner,
 recordDraftError("transfer_to_bot", s4, { op: ADMIN_OP.TRANSFER_OWNER, sender: owner, subject: bot }, "cannot own the room");
 recordDraftError("set_bot_on_person", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: friend, bot: quieter }, "cannot change that bot");
 recordDraftError("bot_sets_itself", s4, { op: ADMIN_OP.SET_BOT, sender: bot, subject: bot, bot: quieter }, "cannot change that bot");
+
+// Setting bounds. Mode 2 (every message) is accepted; 0 and 4 are not; replies and seconds are
+// 1 through 65535. Each case is pinned so a library that drifts fails on these bytes.
+const everyMessage: BotSettings = { mode: BOT_MODE.EVERY_MESSAGE, ...BOT_RATE_PRESET };
+const addBotEvery = recordDraft("admin_add_bot_every_message", s3, { op: ADMIN_OP.ADD_BOT, sender: friend, subject: bot, bot: everyMessage });
+const withEvery = [...base, event(addBotEvery, friend, 0x46, 4)];
+const sEvery = reduceAdmin(withEvery).state!;
+must("every message accepted", roomBot(sEvery, bot)?.mode === BOT_MODE.EVERY_MESSAGE);
+const setEvery = recordDraft("admin_set_bot_every_message", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: everyMessage });
+recordDraftError("add_bot_mode_four", s3, { op: ADMIN_OP.ADD_BOT, sender: owner, subject: bot, bot: { mode: 4, replies: 5, seconds: 60 } }, "reply mode must");
+recordDraftError("set_bot_mode_zero", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: { mode: 0, replies: 5, seconds: 60 } }, "reply mode must");
+recordDraftError("set_bot_mode_four", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: { mode: 4, replies: 5, seconds: 60 } }, "reply mode must");
+recordDraftError("set_bot_zero_rate", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: { mode: 1, replies: 0, seconds: 60 } }, "rate limit must");
+recordDraftError("set_bot_zero_window", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: { mode: 1, replies: 5, seconds: 0 } }, "rate limit must");
+recordDraftError("add_bot_replies_above_65535", s3, { op: ADMIN_OP.ADD_BOT, sender: owner, subject: bot, bot: { mode: 1, replies: 65536, seconds: 60 } }, "rate limit must", null, true);
+recordDraftError("add_bot_seconds_above_65535", s3, { op: ADMIN_OP.ADD_BOT, sender: owner, subject: bot, bot: { mode: 1, replies: 5, seconds: 65536 } }, "rate limit must", null, true);
+recordDraftError("set_bot_replies_above_65535", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: { mode: 1, replies: 65536, seconds: 60 } }, "rate limit must", null, true);
+recordDraftError("set_bot_seconds_above_65535", s4, { op: ADMIN_OP.SET_BOT, sender: owner, subject: bot, bot: { mode: 1, replies: 5, seconds: 65536 } }, "rate limit must", null, true);
 
 // Forged notes: the bytes a draft refuses to write.
 function forged(op: number, state: RoomState, subject: Uint8Array, extra: Partial<Parameters<typeof encodeAdminRecord>[0]> = {}): Uint8Array {
@@ -217,6 +253,17 @@ const fullListBot = Uint8Array.from(addBot);
     fullListBot[at + 1] = 0;
 }
 
+// Notes with mode 4 and a zero window, forged past the draft check.
+const modeFour = Uint8Array.from(addBot);
+modeFour[modeFour.length - BOT_SETTINGS_SIZE] = 4;
+const zeroWindow = Uint8Array.from(addBot);
+zeroWindow[zeroWindow.length - 2] = 0;
+zeroWindow[zeroWindow.length - 1] = 0;
+const setModeZero = Uint8Array.from(setEvery);
+setModeZero[setModeZero.length - BOT_SETTINGS_SIZE] = 0;
+const setModeFour = Uint8Array.from(setEvery);
+setModeFour[setModeFour.length - BOT_SETTINGS_SIZE] = 4;
+
 // Ask-to-join room for the self-flag case: the bot account asks and is accepted like anyone.
 const askCreate = draftAdmin(null, { op: ADMIN_OP.CREATE, sender: owner, name: bytes("lobby"), policy: JOINING.ASK, groupId, mailbox });
 const a1 = reduceAdmin([event(askCreate, owner, 0x50, 1)]).state!;
@@ -225,6 +272,32 @@ const a2 = reduceAdmin([event(askCreate, owner, 0x50, 1), event(selfRequest, bot
 const acceptSelf = draftAdmin(a2, { op: ADMIN_OP.ACCEPT_JOIN, sender: owner, subject: bot });
 const a3 = reduceAdmin([event(askCreate, owner, 0x50, 1), event(selfRequest, bot, 0x51, 2), event(acceptSelf, owner, 0x52, 3)]).state!;
 const lateMark = forged(ADMIN_OP.ADD_BOT, a3, bot, { bot: preset });
+
+// AGENT-7.b: nothing an account posts about itself marks it as a bot. In an ask-to-join room the
+// account posts a key announcement (32-byte key and 64-byte signature), an ordinary chat note, a
+// plain-text note claiming to be a bot, a join request, and an op 13 naming itself. The owner then
+// accepts the request. The account is an ordinary member, and the room has no bots.
+const keyAnnouncement = Uint8Array.from([...new Uint8Array(32).fill(0x55), ...new Uint8Array(64).fill(0x66)]);
+const chatNote = encodeEnvelope({
+    version: 1,
+    protocolId: 1,
+    senderPublicKey: new Uint8Array(32).fill(0x55),
+    ephemeralPublicKey: new Uint8Array(32).fill(0x77),
+    nonce: new Uint8Array(12).fill(0x88),
+    encryptedSenderKey: new Uint8Array(48).fill(0x99),
+    ciphertext: new Uint8Array(20).fill(0xaa),
+});
+const flagNote = bytes("bot: true");
+const selfMark = forged(ADMIN_OP.ADD_BOT, a2, bot, { bot: preset });
+const selfPosts = [
+    event(askCreate, owner, 0x50, 1),
+    event(keyAnnouncement, bot, 0x54, 2, 0),
+    event(chatNote, bot, 0x55, 2, 1),
+    event(flagNote, bot, 0x56, 2, 2),
+    event(selfRequest, bot, 0x51, 3),
+    event(selfMark, bot, 0x57, 4),
+    event(acceptSelf, owner, 0x52, 5),
+];
 
 // Channel: the bot is a bot in the parent room; each channel add is its own record.
 const parentEvents = [...base, event(addBot, owner, 0x43, 4)];
@@ -242,6 +315,16 @@ const channelMarkFriend = forged(ADMIN_OP.ADD_BOT, c1, friend, { bot: preset });
 const parentNoBot = base;
 const channelNoParentBot = reduceAdmin([event(channelCreate, owner, 0x60, 10)], parentNoBot).state!;
 must("channel before bot", channelNoParentBot.members.length === 1);
+
+// AGENT-7.c: removing a bot is ordinary op 11. The room gets a new key (epoch 2), and the bot is
+// dropped from that room's channels the same way as any departing member: channelDepartures names
+// it, and the owner posts op 11 on each channel, which rotates the channel key.
+const parentLate = [...withBot, event(setBot, friend, 0x44, 5), event(removeBot, owner, 0x45, 15)];
+const parentAfter = reduceAdmin(parentLate).state!;
+must("parent drops bot", roomBot(parentAfter, bot) === null && parentAfter.epoch === 2);
+const channelWithBot = [event(channelCreate, owner, 0x60, 10), event(channelAddBot, owner, 0x63, 12)];
+const c2 = reduceAdmin(channelWithBot, parentLate).state!;
+const channelRemoveBot = recordDraft("channel_remove_bot", c2, { op: ADMIN_OP.REMOVE_MEMBER, sender: owner, subject: bot }, parentAfter);
 
 const reductions = {
     bot_added: serResult(withBot),
@@ -270,6 +353,19 @@ const reductions = {
         event(acceptSelf, owner, 0x52, 3),
         event(lateMark, owner, 0x53, 4),
     ]),
+    bot_every_message: serResult(withEvery),
+    bot_every_message_set: serResult([...withBot, event(setEvery, owner, 0x47, 5)]),
+    bad_bot_settings: serResult([
+        ...base,
+        event(modeFour, owner, 0x7a, 4, 0),
+        event(zeroWindow, owner, 0x7b, 4, 1),
+        event(addBot, owner, 0x43, 5),
+        event(setModeZero, owner, 0x7c, 6, 0),
+        event(setModeFour, owner, 0x7d, 6, 1),
+    ]),
+    self_posts_are_not_a_bot: serResult(selfPosts),
+    parent_bot_removed: serResult(parentLate),
+    channel_bot_removed: serResult([...channelWithBot, event(channelRemoveBot, owner, 0x64, 16)], parentLate),
     channel_bot: serResult([
         event(channelCreate, owner, 0x60, 10),
         event(channelPlainBot, owner, 0x61, 11, 0),
@@ -288,6 +384,11 @@ must("bot removed", reductions.bot_removed.state!.bots.length === 0 && reduction
 must("five rejects", reductions.bot_should_reject.rejected.length === 5 && reductions.bot_should_reject.state!.bots.length === 1);
 must("malformed all rejected", reductions.malformed_bot_notes.rejected.length === 5 && reductions.malformed_bot_notes.state!.bots.length === 0);
 must("self request not a bot", reductions.self_request_is_not_a_bot.state!.members.length === 2 && reductions.self_request_is_not_a_bot.state!.bots.length === 0 && reductions.self_request_is_not_a_bot.rejected.length === 1);
+must("every message added", reductions.bot_every_message.state!.bots[0]!.mode === BOT_MODE.EVERY_MESSAGE && reductions.bot_every_message.rejected.length === 0);
+must("every message set", reductions.bot_every_message_set.state!.bots[0]!.mode === BOT_MODE.EVERY_MESSAGE && reductions.bot_every_message_set.rejected.length === 0);
+must("bad settings rejected", reductions.bad_bot_settings.rejected.length === 4 && reductions.bad_bot_settings.state!.bots.length === 1 && reductions.bad_bot_settings.state!.bots[0]!.mode === BOT_MODE.MENTIONS);
+must("self posts not a bot", reductions.self_posts_are_not_a_bot.state!.bots.length === 0 && reductions.self_posts_are_not_a_bot.state!.members.length === 2 && reductions.self_posts_are_not_a_bot.rejected.length === 4);
+must("channel drops bot", reductions.channel_bot_removed.state!.bots.length === 0 && reductions.channel_bot_removed.state!.epoch === 2 && reductions.channel_bot_removed.rejected.length === 0);
 must("channel bot", reductions.channel_bot.state!.bots.length === 1 && reductions.channel_bot.rejected.length === 2);
 must("channel needs parent bot", reductions.channel_bot_not_in_parent.rejected.length === 1);
 
@@ -298,6 +399,13 @@ const checks = {
         { reduction: "bot_settings_changed", admin_tx_id: hex(addr(0x44)), sender: hex(friend), recipient: hex(bot), epoch: 1, allowed: false },
         { reduction: "bot_removed", admin_tx_id: hex(addr(0x45)), sender: hex(owner), recipient: hex(bot), epoch: 2, allowed: false },
         { reduction: "bot_removed", admin_tx_id: hex(addr(0x45)), sender: hex(owner), recipient: hex(friend), epoch: 2, allowed: true },
+        { reduction: "channel_bot_removed", admin_tx_id: hex(addr(0x64)), sender: hex(owner), recipient: hex(bot), epoch: 2, allowed: false },
+        { reduction: "channel_bot_removed", admin_tx_id: hex(addr(0x64)), sender: hex(owner), recipient: hex(owner), epoch: 2, allowed: true },
+    ],
+    // Members of the channel (from `channel`) who are no longer in the parent room (from `parent`).
+    channel_departures: [
+        { channel: "channel_bot", parent: "parent_bot_removed", departures: [hex(bot)] },
+        { channel: "channel_bot", parent: "bot_settings_changed", departures: [] as string[] },
     ],
     room_bot: [
         { reduction: "bot_added", account: hex(bot), bot: serBot(preset) },
@@ -306,13 +414,25 @@ const checks = {
         { reduction: "bot_removed", account: hex(bot), bot: null },
         { reduction: "self_request_is_not_a_bot", account: hex(bot), bot: null },
         { reduction: "channel_bot", account: hex(bot), bot: serBot(quieter) },
+        { reduction: "bot_every_message", account: hex(bot), bot: serBot(everyMessage) },
+        { reduction: "bot_every_message_set", account: hex(bot), bot: serBot(everyMessage) },
+        { reduction: "bad_bot_settings", account: hex(bot), bot: serBot(preset) },
+        { reduction: "self_posts_are_not_a_bot", account: hex(bot), bot: null },
+        { reduction: "parent_bot_removed", account: hex(bot), bot: null },
+        { reduction: "channel_bot_removed", account: hex(bot), bot: null },
     ],
 };
+for (const item of checks.channel_departures) {
+    const channel = reduceAdmin(
+        reductions.channel_bot.events.map(unwire),
+        reductions.channel_bot.parent_events!.map(unwire),
+    ).state!;
+    const parentState = reduceAdmin((reductions as unknown as Record<string, { events: WireEvent[] }>)[item.parent]!.events.map(unwire)).state!;
+    must(`departures ${item.parent}`, JSON.stringify(channelDepartures(channel, parentState).map(hex)) === JSON.stringify(item.departures));
+}
 for (const item of checks.delivery_authorized) {
-    const events = (reductions as Record<string, { events: { note: string; sender: string; tx_id: string; round: number; offset: number }[]; parent_events?: unknown }>)[item.reduction]!;
-    const accepted = reduceAdmin(events.events.map((e) => ({
-        note: Buffer.from(e.note, "hex"), sender: Buffer.from(e.sender, "hex"), txId: Buffer.from(e.tx_id, "hex"), round: e.round, offset: e.offset,
-    }))).accepted;
+    const wired = (reductions as unknown as Record<string, { events: WireEvent[]; parent_events?: WireEvent[] }>)[item.reduction]!;
+    const accepted = reduceAdmin(wired.events.map(unwire), wired.parent_events?.map(unwire)).accepted;
     must(`delivery ${item.reduction} ${item.recipient}`, deliveryAuthorized(
         accepted, Buffer.from(item.admin_tx_id, "hex"), Buffer.from(item.sender, "hex"), Buffer.from(item.recipient, "hex"), item.epoch,
     ) === item.allowed);

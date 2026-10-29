@@ -10,4 +10,5 @@ artifact: tasks
 - [x] Go, Rust, Python, Kotlin, Swift: the same, matching the vector.
 - [x] Each pqcross tool reads `bot` and `bots` and writes `bots`.
 - [x] ts/scripts/group-bot-localnet.ts on LocalNet, with the Swift replay test.
+- [x] Review round 1 (Leif, 2026-10-29): AGENT-7.c in requirements; exact Swift sentences; pinned mode-2 accept and mode 0/4, zero, above-65535 rejects; AGENT-7.b self-post test in all six.
 Leif approves, reviews, verifies and finalizes this change. Those steps are his.

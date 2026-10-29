@@ -2331,6 +2331,13 @@ mod tests {
         }
         for draft in value["draft_errors"].as_array().unwrap() {
             let name = draft["name"].as_str().unwrap();
+            if draft["wide_integer"].as_bool() == Some(true) {
+                // BotSettings takes u16, so a value above 65535 cannot reach the draft at all.
+                let bot = &draft["bot"];
+                let fits = |key: &str| u16::try_from(bot[key].as_u64().unwrap()).is_ok();
+                assert!(!(fits("replies") && fits("seconds")), "{name} fits in u16");
+                continue;
+            }
             let state = revive(&draft["basis_state"]);
             let error = draft_admin(state.as_ref(), &draft_from(draft))
                 .expect_err(name)
@@ -2392,6 +2399,75 @@ mod tests {
                 found.map(|b| b.settings),
                 optional_bot(&check["bot"]),
                 "{check}"
+            );
+        }
+    }
+
+    /// AGENT-7.c: removing a bot is ordinary op 11 with a new room key, and the bot is dropped
+    /// from the room's channels with op 11 on each channel.
+    #[test]
+    fn a_removed_bot_is_dropped_from_the_room_and_its_channels() {
+        let value = bots_vector();
+        let checks = value["checks"]["channel_departures"].as_array().unwrap();
+        assert!(!checks.is_empty());
+        for check in checks {
+            let channel = bots_reduce(&value, check["channel"].as_str().unwrap());
+            let parent = bots_reduce(&value, check["parent"].as_str().unwrap());
+            let got: Vec<String> = channel_departures(
+                channel.state.as_ref().unwrap(),
+                parent.state.as_ref().unwrap(),
+            )
+            .unwrap()
+            .iter()
+            .map(hex::encode)
+            .collect();
+            let wanted: Vec<String> = check["departures"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|d| d.as_str().unwrap().to_string())
+                .collect();
+            assert_eq!(got, wanted, "{check}");
+        }
+        for name in ["parent_bot_removed", "channel_bot_removed"] {
+            let got = bots_reduce(&value, name);
+            assert_eq!(got.accepted.last().unwrap().op, OP_REMOVE_MEMBER, "{name}");
+            let state = got.state.as_ref().unwrap();
+            assert_eq!(state.epoch, 2, "{name}");
+            assert!(state.bots.is_empty(), "{name}");
+        }
+    }
+
+    /// AGENT-7.b: key announcement, chat note, text flag, join request and self op 13 never mark a bot.
+    #[test]
+    fn nothing_an_account_posts_about_itself_marks_it_as_a_bot() {
+        let value = bots_vector();
+        let account = [5u8; 32];
+        let self_sent = value["reductions"]["self_posts_are_not_a_bot"]["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|e| e["sender"].as_str() == Some(hex::encode(account).as_str()))
+            .count();
+        assert_eq!(self_sent, 5);
+        let got = bots_reduce(&value, "self_posts_are_not_a_bot");
+        let state = got.state.as_ref().unwrap();
+        assert!(state.members.contains(&account));
+        assert!(state.bots.is_empty());
+        assert!(room_bot(state, &account).is_none());
+        assert!(got.accepted.iter().all(|a| a.op != OP_ADD_BOT));
+        let reason = |tx: &str| {
+            got.rejected
+                .iter()
+                .find(|r| hex::encode(r.tx_id) == tx.repeat(32))
+                .map(|r| r.reason.clone())
+        };
+        assert_eq!(reason("57").as_deref(), Some("Sender cannot add that bot"));
+        for tx in ["54", "55", "56"] {
+            assert_eq!(
+                reason(tx).as_deref(),
+                Some("Not a room administration record"),
+                "{tx}"
             );
         }
     }

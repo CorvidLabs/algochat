@@ -29,6 +29,12 @@ struct GroupAdminBotsTests {
             #expect(hexString(note) == item.note, "\(item.name)")
         }
         for item in vector.draft_errors {
+            if item.wide_integer == true {
+                // BotSettings takes UInt16, so a value above 65535 cannot reach the draft at all.
+                let bot = try #require(item.bot, "\(item.name)")
+                #expect(UInt16(exactly: bot.replies) == nil || UInt16(exactly: bot.seconds) == nil, "\(item.name)")
+                continue
+            }
             do {
                 _ = try botDraft(item)
                 Issue.record("\(item.name) drafted")
@@ -98,6 +104,79 @@ struct GroupAdminBotsTests {
         }
     }
 
+    @Test("bad bot drafts fail with the exact shared sentence")
+    func draftSentences() throws {
+        let vector = try loadBotsVector()
+        let sentences: [String: String] = [
+            "add_bot_without_settings": "A bot needs a reply mode and a rate limit",
+            "add_bot_no_mode": "Bot reply mode must be mentions, every message, or commands",
+            "add_bot_mode_four": "Bot reply mode must be mentions, every message, or commands",
+            "set_bot_mode_zero": "Bot reply mode must be mentions, every message, or commands",
+            "set_bot_mode_four": "Bot reply mode must be mentions, every message, or commands",
+            "add_bot_zero_rate": "Bot rate limit must be from 1 through 65535",
+            "add_bot_zero_window": "Bot rate limit must be from 1 through 65535",
+            "set_bot_zero_rate": "Bot rate limit must be from 1 through 65535",
+            "set_bot_zero_window": "Bot rate limit must be from 1 through 65535",
+            "non_admin_add_bot": "Sender cannot add that bot",
+            "mark_existing_member": "Sender cannot add that bot",
+            "appoint_bot": "A bot cannot be an admin",
+            "transfer_to_bot": "A bot cannot own the room",
+            "set_bot_on_person": "Sender cannot change that bot",
+            "bot_sets_itself": "Sender cannot change that bot",
+            "channel_plain_add_of_bot": "A bot joins a channel only when added as a bot",
+            "channel_marks_person": "That account is not a bot in the parent room",
+        ]
+        let named = vector.draft_errors.filter { $0.wide_integer != true }
+        #expect(Set(named.map(\.name)) == Set(sentences.keys))
+        for item in named {
+            let sentence = try #require(sentences[item.name], "\(item.name)")
+            expectSentence(sentence, item.name) { try botDraft(item) }
+        }
+    }
+
+    /// AGENT-7.c: removing a bot is ordinary op 11 with a new room key, and the bot is dropped from
+    /// the room's channels with op 11 on each channel.
+    @Test("a removed bot is dropped from the room and its channels")
+    func removedBotLeavesRoomAndChannels() throws {
+        let vector = try loadBotsVector()
+        let checks = try #require(vector.checks.channel_departures)
+        #expect(!checks.isEmpty)
+        for item in checks {
+            let channel = try #require(try botReduce(vector, item.channel).state)
+            let parent = try #require(try botReduce(vector, item.parent).state)
+            let got = try GroupAdmin.channelDepartures(channel: channel, parent: parent)
+            #expect(got.map(hexString) == item.departures, "\(item.channel) \(item.parent)")
+        }
+        for name in ["parent_bot_removed", "channel_bot_removed"] {
+            let got = try botReduce(vector, name)
+            #expect(got.accepted.last?.op == 11, "\(name)") // op 11, ordinary remove
+            let state = try #require(got.state)
+            #expect(state.epoch == 2, "\(name)")
+            #expect(state.bots.isEmpty, "\(name)")
+        }
+    }
+
+    /// AGENT-7.b: a key announcement, a chat note, a plain-text flag, a join request and an op 13
+    /// naming itself never make an account a bot.
+    @Test("nothing an account posts about itself marks it as a bot")
+    func selfPostsNeverMarkABot() throws {
+        let vector = try loadBotsVector()
+        let account = Data(repeating: 5, count: 32)
+        let events = try #require(vector.reductions["self_posts_are_not_a_bot"]).events
+        #expect(events.filter { $0.sender == hexString(account) }.count == 5)
+        let got = try botReduce(vector, "self_posts_are_not_a_bot")
+        let state = try #require(got.state)
+        #expect(state.members.contains(account))
+        #expect(state.bots.isEmpty)
+        #expect(try GroupAdmin.roomBot(state: state, account: account) == nil)
+        #expect(!got.accepted.contains { $0.op == GroupAdmin.opAddBot })
+        let reasons = Dictionary(uniqueKeysWithValues: got.rejected.map { (hexString($0.txID), $0.reason) })
+        #expect(reasons[String(repeating: "57", count: 32)] == "Sender cannot add that bot")
+        for tx in ["54", "55", "56"] {
+            #expect(reasons[String(repeating: tx, count: 32)] == "Not a room administration record", "\(tx)")
+        }
+    }
+
     @Test("bot settings ride only on a bot delta record")
     func settingsOnlyOnBotRecords() throws {
         let preset = GroupAdmin.BotSettings(
@@ -122,9 +201,9 @@ struct GroupAdminBotsTests {
                 bot: bot
             )
         }
-        #expect(throws: (any Error).self) { try encode(7, true, preset) }
-        #expect(throws: (any Error).self) { try encode(GroupAdmin.opAddBot, true, nil) }
-        #expect(throws: (any Error).self) { try encode(GroupAdmin.opAddBot, false, preset) }
+        expectSentence("Only a bot record carries bot settings") { try encode(7, true, preset) }
+        expectSentence("A bot needs a reply mode and a rate limit") { try encode(GroupAdmin.opAddBot, true, nil) }
+        expectSentence("A bot record uses the delta note") { try encode(GroupAdmin.opAddBot, false, preset) }
         let note = try encode(GroupAdmin.opAddBot, true, preset)
         #expect(note.count == 205 + GroupAdmin.botSettingsSize)
         #expect([UInt8](note.suffix(5)) == [1, 0, 5, 0, 60])
@@ -191,6 +270,7 @@ private struct BotDraftWire: Codable {
     let bot: BotWire?
     let note: String?
     let error_includes: String?
+    let wide_integer: Bool?
 }
 
 private struct BotReductionWire: Codable {
@@ -219,8 +299,15 @@ private struct BotChecksWire: Codable {
         let bot: BotWire?
     }
 
+    struct Departures: Codable {
+        let channel: String
+        let parent: String
+        let departures: [String]
+    }
+
     let delivery_authorized: [Delivery]
     let room_bot: [Lookup]
+    let channel_departures: [Departures]?
 }
 
 private struct BotLocalnetRecord: Codable {
@@ -262,6 +349,21 @@ private func hexData(_ text: String) throws -> Data {
 
 private enum GroupAdminBotsTestError: Error {
     case badHex
+}
+
+/// The error's text must be exactly `sentence`; any other error fails.
+private func expectSentence<T>(
+    _ sentence: String,
+    _ label: String = "",
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: () throws -> T
+) {
+    do {
+        _ = try body()
+        Issue.record("\(label) did not throw; wanted \(sentence)", sourceLocation: sourceLocation)
+    } catch {
+        #expect(String(describing: error) == sentence, "\(label)", sourceLocation: sourceLocation)
+    }
 }
 
 private func hexString(_ data: Data) -> String {

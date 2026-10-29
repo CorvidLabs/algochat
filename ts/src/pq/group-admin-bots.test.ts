@@ -9,6 +9,7 @@ import {
     draftAdmin,
     encodeAdminRecord,
     reduceAdmin,
+    channelDepartures,
     roomBot,
     type AdminEvent,
     type BotSettings,
@@ -60,6 +61,7 @@ interface BotsVector {
     checks: {
         delivery_authorized: { reduction: string; admin_tx_id: string; sender: string; recipient: string; epoch: number; allowed: boolean }[];
         room_bot: { reduction: string; account: string; bot: WireBot | null }[];
+        channel_departures: { channel: string; parent: string; departures: string[] }[];
     };
 }
 
@@ -114,6 +116,42 @@ describe('room bots (ops 13 and 14)', () => {
             const found = roomBot(state, hex(item.account));
             expect(found ? { mode: found.mode, replies: found.replies, seconds: found.seconds } : null).toEqual(item.bot);
         }
+    });
+
+    test('nothing an account posts about itself marks it as a bot (AGENT-7.b)', () => {
+        const reduction = vector.reductions.self_posts_are_not_a_bot!;
+        const account = hex('05'.repeat(32));
+        const selfSent = reduction.events.filter((item) => item.sender === '05'.repeat(32)).map((item) => item.tx_id);
+        // Key announcement, chat note, plain-text flag, join request, op 13 naming itself.
+        expect(selfSent.length).toBe(5);
+        const result = reduceAdmin(reduction.events.map(wireEvent));
+        const state = result.state!;
+        expect(state.members.some((member) => toHex(member) === '05'.repeat(32))).toBe(true);
+        expect(state.bots ?? []).toEqual([]);
+        expect(roomBot(state, account)).toBeNull();
+        expect(result.accepted.some((item) => item.op === ADMIN_OP.ADD_BOT)).toBe(false);
+        const rejected = new Map(result.rejected.map((item) => [toHex(item.txId), item.reason]));
+        expect(rejected.get('57'.repeat(32))).toBe('Sender cannot add that bot');
+        for (const tx of ['54', '55', '56']) expect(rejected.get(tx.repeat(32))).toBe('Not a room administration record');
+    });
+
+    test('a removed bot leaves the room and is dropped from its channels (AGENT-7.c)', () => {
+        const fold = (name: string) => {
+            const reduction = vector.reductions[name]!;
+            return reduceAdmin(reduction.events.map(wireEvent), reduction.parent_events?.map(wireEvent));
+        };
+        expect(vector.checks.channel_departures.length).toBeGreaterThan(0);
+        for (const item of vector.checks.channel_departures) {
+            const got = channelDepartures(fold(item.channel).state!, fold(item.parent).state!);
+            expect(got.map(toHex), `${item.channel} ${item.parent}`).toEqual(item.departures);
+        }
+        const parent = fold('parent_bot_removed');
+        expect(parent.accepted.at(-1)!.op).toBe(ADMIN_OP.REMOVE_MEMBER);
+        expect(parent.state!.epoch).toBe(2);
+        const channel = fold('channel_bot_removed');
+        expect(channel.accepted.at(-1)!.op).toBe(ADMIN_OP.REMOVE_MEMBER);
+        expect(channel.state!.epoch).toBe(2);
+        expect(channel.state!.bots ?? []).toEqual([]);
     });
 
     test('bot settings appear only on ops 13 and 14', () => {
