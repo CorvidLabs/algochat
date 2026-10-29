@@ -7,6 +7,7 @@ I want two people to send encrypted notes on Algorand payments, readable only by
 
 <!-- hi:index -->
 - [account](hi/account.md): ACCOUNT (3 criteria)
+- [agent](hi/agent.md): AGENT (30 criteria)
 - [base](hi/base.md): BASE (5 criteria)
 - [encrypt](hi/encrypt.md): ENCRYPT (3 criteria)
 - [godot](hi/godot.md): GODOT (9 criteria)
