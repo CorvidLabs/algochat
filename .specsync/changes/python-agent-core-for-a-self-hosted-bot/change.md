@@ -1,0 +1,24 @@
+---
+id: python-agent-core-for-a-self-hosted-bot
+state: draft
+type: feature
+base_commit: 8e165d5a399fd0e5b94fe2998a07f2a43f448328
+---
+
+# Python agent core for a self-hosted bot
+
+## Intent
+
+Python agent core for a self-hosted bot
+
+## Affected Canonical Specs
+
+- None
+
+## Acceptance Criteria
+
+- AGENT-1, AGENT-1.b, AGENT-1.d, AGENT-2 and AGENT-4 in hi/agent.md, as scoped by algochat#43: algochat.agent builds the bot's own Algorand account from its 25-word mnemonic, read only from ALGOCHAT_AGENT_MNEMONIC or an owner-only local file named by ALGOCHAT_AGENT_MNEMONIC_FILE; AgentCore binds an AlgoChat client to that account on operator-supplied algod and indexer clients; tests use mocks and public non-secret seeds only.
+
+## No-spec Rationale
+
+The protocol spec and vectors do not change. This change adds the Python agent module and its own module spec under py/specs/agent. Wire bytes are untouched.

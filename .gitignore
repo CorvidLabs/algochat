@@ -30,3 +30,8 @@ __pycache__/
 godot/extension/target/
 godot/example/bin/
 godot/example/.godot/
+
+# AlgoChat agent bot keys. A bot's 25-word mnemonic lives in an env var or a
+# local file on the bot host (AGENT-4) and is never committed.
+*.mnemonic
+.algochat-agent/
