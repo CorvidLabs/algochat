@@ -1,8 +1,8 @@
 # Localnet integration tests
 
 The agent tests in `tests/test_agent_localnet.py`,
-`tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py` and
-`tests/test_agent_policy_localnet.py` run against a real local
+`tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py`,
+`tests/test_agent_policy_localnet.py` and `tests/test_agent_adapters_localnet.py` run against a real local
 Algorand network: algod, kmd and the indexer. They check what mocks cannot,
 such as whether algod accepts transactions signed with the key loaded from the
 bot's mnemonic, and whether a message the bot sends is read back by another
@@ -62,8 +62,8 @@ ALGOCHAT_LOCALNET_ALGOD_DATA="$HOME/.cache/algochat-localnet/net/data" \
 
 ### Every language
 
-`tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py` and
-`tests/test_agent_policy_localnet.py` have people write to the bot with the
+`tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py`,
+`tests/test_agent_policy_localnet.py` and `tests/test_agent_adapters_localnet.py` have people write to the bot with the
 TypeScript, Go, Rust, Python and Kotlin implementations, and has every
 implementation read the bot's replies. Build their tools first, from the
 repository root:
@@ -120,3 +120,12 @@ Other endpoints can be set with `ALGOCHAT_LOCALNET_ALGOD_URL`,
   implementation, Swift included, opens every note and reduces the chain with
   both bots' modes and limits. The test waits out two rate windows, so it takes
   about a minute.
+- MCP server, command line and webhook (`tests/test_agent_adapters_localnet.py`):
+  the real `algochat-agent` command and its MCP server run as separate
+  processes with the mnemonic only in their environment. They publish the
+  bot's keys once, answer a person one-to-one and refuse the other bot, list
+  every tool, refuse room replies the policy keeps silent and answer a
+  mention, and `serve --once` sends a signed webhook on 127.0.0.1 only what
+  the policy allows and posts its answers. The command posts the command list
+  and leaves the room. Every implementation, Swift included, opens every note
+  and reduces the chain, and nothing the processes print carries the key.

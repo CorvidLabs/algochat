@@ -151,7 +151,51 @@ for result in await core.serve_rooms(answer):
     print(result.txid, result.skipped)  # skipped says why the bot stayed silent
 ```
 
-The MCP, CLI, and webhook adapters come in later releases.
+### MCP server, command line and webhook
+
+Any agent can drive the same bot through an MCP server, the `algochat-agent` command, or a webhook. All three run on `AgentCore`, and the MCP server has a tool for every command. Settings come from the environment; there is no default network:
+
+```bash
+export ALGOCHAT_AGENT_MNEMONIC_FILE=~/.algochat-agent/bot.mnemonic   # chmod 600
+export ALGOCHAT_ALGOD_URL=http://localhost:4001 ALGOCHAT_ALGOD_TOKEN=...
+export ALGOCHAT_INDEXER_URL=http://localhost:8980 ALGOCHAT_INDEXER_TOKEN=...
+
+algochat-agent --name helper --command "echo=Repeat your text" publish-keys
+algochat-agent read-rooms            # each message says why the bot would stay silent, if it would
+algochat-agent reply-room --txid TXID --text "hello"
+```
+
+| Command (MCP tool) | What it does |
+|---|---|
+| `address` | The bot's address and name. |
+| `publish-keys` (`publish_keys`) | Publishes its encryption and post-quantum keys if they are not on chain. |
+| `send`, `read`, `reply` | One-to-one messages. `reply` refuses an account a room marks as a bot. |
+| `rooms`, `read-rooms` (`read_rooms`), `reply-room` (`reply_room`) | Rooms and channels. `reply-room` refuses what the room's mode or rate limit keeps silent, and other bots. |
+| `declare-commands` (`declare_commands`), `leave-room` (`leave_room`) | Posts the command list where it is due; leaves a room. |
+| `serve` | Answers new messages through a webhook (`--once`, or every `--interval` seconds). |
+
+Every command prints JSON. `algochat-agent mcp` runs the MCP server over stdio; an MCP client starts it like this:
+
+```json
+{"mcpServers": {"algochat": {"command": "algochat-agent", "args": ["--name", "helper", "mcp"],
+  "env": {"ALGOCHAT_AGENT_MNEMONIC_FILE": "/home/me/.algochat-agent/bot.mnemonic",
+          "ALGOCHAT_ALGOD_URL": "http://localhost:4001", "ALGOCHAT_INDEXER_URL": "http://localhost:8980"}}}}
+```
+
+`algochat-agent serve --webhook URL` posts each message the bot may answer to your service as JSON (`type`, `txid`, `sender`, `text`, `reply_to`, and for rooms `group_id`, `mailbox`, `mentioned`, `command`), and posts the `{"reply": "..."}` you send back (`null`, an empty body or HTTP 204 for none). Messages carry readable text, so the bridge only sends them:
+
+- to this machine (`localhost` or a loopback address, http or https), or
+- over https with a checked certificate to another address, with every request signed by a shared secret of at least 32 characters in `ALGOCHAT_WEBHOOK_SECRET` or an owner-only file named by `ALGOCHAT_WEBHOOK_SECRET_FILE` (`ALGOCHAT_WEBHOOK_CA_FILE` for a private CA).
+
+Requests carry `X-AlgoChat-Timestamp` and `X-AlgoChat-Signature: sha256=<hex>`, an HMAC-SHA256 of `"<timestamp>." + body`. Check it in your service:
+
+```python
+from algochat.agent import verify_signature
+
+ok = verify_signature(secret, headers["X-AlgoChat-Timestamp"], body, headers["X-AlgoChat-Signature"])
+```
+
+The bridge ignores proxy settings and refuses redirects.
 
 ## Encrypted Key Storage
 

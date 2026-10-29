@@ -744,6 +744,19 @@ class AgentCore:
             return SKIP_RATE_LIMIT
         return None
 
+    def room_skip_reason(self, message: RoomMessage) -> str | None:
+        """Why the reply policy keeps the bot silent on ``message`` right now, or None (AGENT-8).
+
+        Reads the room's current record and the bot's recent posts there, so
+        the answer can change once the rate window moves or an admin changes
+        the mode. The MCP, CLI and webhook adapters check it before replying.
+        """
+        return self._skip_reason(self._track(message), message)
+
+    def is_known_bot(self, address: str) -> bool:
+        """Whether any of the bot's rooms marks ``address`` as a bot (AGENT-8.c)."""
+        return public_key_from_address(address) in self._known_bots()
+
     async def declare_commands(self) -> list[str]:
         """Posts the bot's command list in each room where its mode is commands.
 

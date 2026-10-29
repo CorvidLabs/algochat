@@ -67,3 +67,14 @@ Acceptance Criteria
 - A mode or limit change by the owner or an admin applies from the next message the bot handles.
 - In commands mode the bot posts its command list once (again only when the list changes), as plain room text every implementation reads, and answers `/help` with it.
 - A bot added as a plain member has no mode and does not reply.
+
+### REQ-agent-007
+
+The Python agent module SHALL let any agent plug in through an MCP server, a command-line tool or a webhook bridge, all on the shared core, with an MCP tool for every command-line command, and SHALL send readable message text through the webhook only to the same machine or to a secured address over authenticated HTTPS (AGENT-1.a, AGENT-1.c, AGENT-1.e).
+
+Acceptance Criteria
+
+- The CLI, the MCP server and the webhook bridge all run on `AgentCore`.
+- Every CLI command has an MCP tool with the same parameters.
+- The webhook bridge sends readable text only to a loopback address, or over HTTPS with a checked certificate and a signed request to another address.
+- The adapters keep the reply policy and never print the bot's key.
