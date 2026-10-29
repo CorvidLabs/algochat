@@ -29,4 +29,4 @@ cd py
 ALGOCHAT_LOCALNET_ALGOD_DATA=<localnet>/net/data ALGOCHAT_REQUIRE_LOCALNET=1 python -m pytest
 ```
 
-Result: 490 passed, 199 skipped. The skips are the existing cross-implementation fixture tests that are skipped on the base branch too, and the optional `py-algorand-sdk` decoder cross-check. All 10 `localnet` tests pass, the policy one included. The algochat#42 LocalNet script (`ts/scripts/group-bot-localnet.ts`), `pq-localnet.ts`, `room-scale-localnet.ts` and the full `swift test` pass on the same network.
+Result: 491 passed, 199 skipped (with the 49b8cc2 fix). The skips are the existing cross-implementation fixture tests that are skipped on the base branch too, and the optional `py-algorand-sdk` decoder cross-check. All 10 `localnet` tests pass, the policy one included. The algochat#42 LocalNet script (`ts/scripts/group-bot-localnet.ts`), `pq-localnet.ts`, `room-scale-localnet.ts` and the full `swift test` pass on the same network.
