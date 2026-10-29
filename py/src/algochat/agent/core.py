@@ -51,9 +51,11 @@ from ..pq import (
 from ..signature import sign_encryption_key
 from ..storage import EncryptionKeyStorage, MessageCache
 from ..transaction import send_payment
+from ..types import payment_fee
 from .account import AgentAccount, address_from_public_key, public_key_from_address
 from .config import AgentConfigError, load_agent_mnemonic
 from .direct import DirectMessage, DirectReply, encode_reply
+from .funds import LOW_FUNDS_NOTICE, FundsStatus, reply_fee
 from .policy import (
     HELP_COMMAND,
     SKIP_FROM_BOT,
@@ -138,6 +140,8 @@ class AgentCore:
         self._inbox_cursor: int | None = None
         self._inbox_seen: set[str] = set()
         self._kem: MLKEMKeyPair | None = None
+        self._low_funds_warned: bool | None = None
+        """Whether the bot already posted its low-funds notice; None until it looked."""
 
     @classmethod
     async def create(
@@ -312,6 +316,12 @@ class AgentCore:
         )
         txid = await self._pay(message.sender, note)
         self._answered.add(message.txid)
+        try:
+            # A direct reply spends too; a refill seen here resets the notice.
+            # The notice itself only goes in a room.
+            await self.check_funds()
+        except Exception as error:  # noqa: BLE001 - the reply already went out
+            _LOG.warning("Could not check funds: %s", type(error).__name__)
         return txid
 
     async def _open(self, tx: NoteTransaction) -> DirectMessage | None:
@@ -762,7 +772,9 @@ class AgentCore:
 
         A room already showing the current list (the bot's latest list there
         since it was added) gets nothing. A post that would go over the rate
-        limit waits for a later call. Returns the transaction ids.
+        limit waits for a later call. Returns the transaction ids: each
+        command list, followed by the low-funds notice when a list brought the
+        wallet low.
         """
         await self.sync_rooms()
         return await self._declare()
@@ -779,7 +791,10 @@ class AgentCore:
                 continue
             if not self._rate_ok(track):
                 continue
-            txids.append(await self._post(track, self._command_list))
+            txid, notice = await self._post_noting_funds(track, self._command_list)
+            txids.append(txid)
+            if notice is not None:
+                txids.append(notice)
         return txids
 
     async def _post(self, track: RoomTrack, text: str) -> str:
@@ -813,6 +828,8 @@ class AgentCore:
             raise ValueError("A room message needs text")
         if text == LEAVE_NOTICE:
             raise ValueError("Use leave_room to leave a room")
+        if text == LOW_FUNDS_NOTICE:
+            raise ValueError("That text is reserved for the bot's low-funds notice")
 
     async def send_room(
         self, room: Room | RoomMessage | tuple[bytes, str], text: str
@@ -821,8 +838,17 @@ class AgentCore:
 
         Reads the room again first. Refuses with :class:`PolicySkip` when the
         room gives the bot no mode or the rate window is full (AGENT-8.a,
-        AGENT-8.b); the post counts toward that window.
+        AGENT-8.b); the post counts toward that window. When the post brings
+        the wallet low, the bot also posts :data:`LOW_FUNDS_NOTICE` there
+        (see :meth:`check_funds`).
         """
+        txid, _ = await self._send_room_noting_funds(room, text)
+        return txid
+
+    async def _send_room_noting_funds(
+        self, room: Room | RoomMessage | tuple[bytes, str], text: str
+    ) -> tuple[str, str | None]:
+        """:meth:`send_room`, also returning the low-funds notice txid if one went out."""
         self._check_room_text(text)
         await self.sync_rooms()
         track = self._track(room)
@@ -831,7 +857,12 @@ class AgentCore:
             raise PolicySkip(SKIP_NO_MODE)
         if not self._rate_ok(track):
             raise PolicySkip(SKIP_RATE_LIMIT)
-        return await self._post(track, text)
+        return await self._post_noting_funds(track, text)
+
+    async def _post_noting_funds(self, track: RoomTrack, text: str) -> tuple[str, str | None]:
+        """Posts ``text``, then the low-funds notice if this post brought the wallet low."""
+        txid = await self._post(track, text)
+        return txid, await self._low_funds_notice(track)
 
     async def reply_room(self, message: RoomMessage, text: str) -> str:
         """Answers ``message`` in the room it was posted in. Returns the txid.
@@ -840,14 +871,81 @@ class AgentCore:
         ``message`` was read applies. Refuses with :class:`PolicySkip` when the
         reply policy keeps the bot silent on ``message`` (AGENT-8); the reply
         counts toward the same rate window as every other post there.
+
+        When the wallet has fewer than about 100 replies' worth of fees left,
+        the bot also posts :data:`LOW_FUNDS_NOTICE` in that room, once until
+        the wallet is refilled (see :meth:`check_funds`).
         """
+        txid, _ = await self._reply_room_noting_funds(message, text)
+        return txid
+
+    async def _reply_room_noting_funds(self, message: RoomMessage, text: str) -> tuple[str, str | None]:
+        """:meth:`reply_room`, also returning the low-funds notice txid if one went out."""
         self._check_room_text(text)
         await self.sync_rooms()
         track = self._track(message)
         skipped = self._skip_reason(track, message)
         if skipped is not None:
             raise PolicySkip(skipped)
-        return await self._post(track, text)
+        return await self._post_noting_funds(track, text)
+
+    async def check_funds(self) -> FundsStatus:
+        """Reads the bot's balance and what one reply costs (AGENT-3, AGENT-3.a).
+
+        Seeing the wallet at or above the threshold counts as a refill, so the
+        next time it runs low the bot warns again.
+        """
+        algod, _ = self._clients()
+        info = await algod.get_account_info(self.address)
+        params = await algod.get_suggested_params()
+        status = FundsStatus(info.amount, info.min_balance, reply_fee(params.min_fee))
+        if not status.low:
+            self._low_funds_warned = False
+        return status
+
+    async def _notice_still_current(self, status: FundsStatus) -> bool:
+        """For a core that has not seen its wallet yet (a restart, or a new CLI run).
+
+        Its latest notice, in any room, is still current unless the wallet was
+        refilled since. The bot sends nothing but notes with no amount
+        (AGENT-9), so its balance only falls by the fee of each note it sends:
+        if today's spendable balance plus those fees reaches the threshold,
+        money came in after the notice.
+        """
+        notices = [
+            tx
+            for tx in (t.last_text_since_join(LOW_FUNDS_NOTICE) for t in self._rooms.values())
+            if tx is not None
+        ]
+        if not notices:
+            return False
+        latest = max(notices, key=_chain_order)
+        algod, indexer = self._clients()
+        min_fee = (await algod.get_suggested_params()).min_fee
+        since = await indexer.search_transactions(self.address, after_round=latest.confirmed_round - 1)
+        spent = sum(
+            payment_fee(len(tx.note), max(min_fee, 1000))
+            for tx in since
+            if tx.sender == self.address and _chain_order(tx) > _chain_order(latest)
+        )
+        return status.spendable + spent < status.threshold
+
+    async def _low_funds_notice(self, track: RoomTrack) -> str | None:
+        """Posts the low-funds notice in ``track`` if the wallet is low and no notice is current."""
+        try:
+            status = await self.check_funds()
+            if not status.low:
+                return None
+            if self._low_funds_warned is None:
+                self._low_funds_warned = await self._notice_still_current(status)
+            if self._low_funds_warned:
+                return None
+            txid = await self._post(track, LOW_FUNDS_NOTICE)
+            self._low_funds_warned = True
+            return txid
+        except Exception as error:  # noqa: BLE001 - the reply already went out
+            _LOG.warning("Could not check or report low funds: %s", type(error).__name__)
+            return None
 
     async def serve_rooms(self, handler: RoomHandler) -> list[RoomReply]:
         """Reads new room messages and answers them the way each room's record says.
@@ -896,7 +994,8 @@ class AgentCore:
                 if skipped is not None:
                     results.append(RoomReply(message, None, skipped=skipped))
                     continue
-                results.append(RoomReply(message, await self._post(track, reply_text)))
+                txid, notice = await self._post_noting_funds(track, reply_text)
+                results.append(RoomReply(message, txid, low_funds_notice=notice))
             except Exception as error:  # noqa: BLE001 - one bad message must not stop the others
                 results.append(RoomReply(message, None, type(error).__name__))
         return results
@@ -909,6 +1008,8 @@ class AgentCore:
         The protocol has no op for a member to remove themselves, so the bot
         posts :data:`LEAVE_NOTICE` and stops reading and posting there. Only the
         owner or an admin can remove it and rotate the key.
+        Each leave notice may be followed by the low-funds notice, posted before
+        the bot stops posting there, when that notice brought the wallet low.
         """
         track = self._track(room)
         txids: list[str] = []
@@ -917,7 +1018,11 @@ class AgentCore:
         active = [target.status() == ROOM_ACTIVE for target in targets]
         for target, post in zip(targets, active):
             if post:
-                txids.append(await self._post(target, LEAVE_NOTICE))
+                # The low-funds check comes before left_here, while the bot may still post there.
+                txid, notice = await self._post_noting_funds(target, LEAVE_NOTICE)
+                txids.append(txid)
+                if notice is not None:
+                    txids.append(notice)
             target.left_here = True
         return txids
 
