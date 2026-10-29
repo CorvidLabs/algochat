@@ -333,3 +333,26 @@ async def test_unknown_rooms_are_refused():
     bot = await _bot(chain)
     with pytest.raises(LookupError):
         await bot.send_room((bytes(32), address(MAILBOX_SEED)), "hi")
+
+
+# --- public_key_from_address (used to match room members to addresses) -----
+
+
+def test_public_key_from_address_round_trips_and_checks_the_checksum():
+    from algochat.agent.account import address_from_public_key, public_key_from_address
+
+    key = public_key(BOT_SEED)
+    addr = address_from_public_key(key)
+    assert public_key_from_address(addr) == key
+    # Change one character inside the checksum (bits 265-269 of the 288 decoded bits).
+    swap = "A" if addr[53] != "A" else "B"
+    with pytest.raises(ValueError, match="checksum"):
+        public_key_from_address(addr[:53] + swap + addr[54:])
+    # Change one public-key character: the checksum no longer matches either.
+    first = "A" if addr[0] != "A" else "B"
+    with pytest.raises(ValueError, match="checksum"):
+        public_key_from_address(first + addr[1:])
+    with pytest.raises(ValueError, match="58 characters"):
+        public_key_from_address(addr[:-1])
+    with pytest.raises(ValueError, match="base32"):
+        public_key_from_address("1" * 58)

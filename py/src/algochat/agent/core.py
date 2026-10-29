@@ -27,7 +27,7 @@ from ..blockchain import AlgodClient, IndexerClient, NoteTransaction
 from ..client import AlgoChat, AlgoChatConfig
 from ..group import GroupCounter, open_group_message, seal_group_message
 from ..group_admin import open_group_key_delivery, sender_may_post
-from ..keys import derive_keys_from_seed, public_key_to_bytes
+from ..keys import derive_keys_from_seed
 from ..models import MessageDirection
 from ..pq import (
     MLKEMKeyPair,
