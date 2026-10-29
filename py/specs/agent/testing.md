@@ -4,8 +4,8 @@ spec: agent.spec.md
 
 ## Requirement Coverage
 
-- `REQ-agent-001`: `tests/test_agent.py::TestAgentAccount`, including `test_matches_algosdk` when `py-algorand-sdk` is installed (skipped otherwise; fixed vectors still run).
-- `REQ-agent-002`: `tests/test_agent.py::TestLoadMnemonic`.
+- `REQ-agent-001`: `tests/test_agent.py::TestAgentAccount`, including `test_matches_algosdk` and `test_word_index_matches_algosdk` (`py-algorand-sdk` is a dev dependency, so they run in CI), the 4-letter prefix tests, and the seed/field consistency, `asdict`/`vars`/pickle tests; `tests/test_agent.py::TestTracebackLocals` walks `tb.tb_frame.f_locals` of every library frame.
+- `REQ-agent-002`: `tests/test_agent.py::TestLoadMnemonic` (owner, ACL, symlink to a 0644 target, FIFO, non-UTF-8, both variables plus a path, fstat-and-read on one descriptor) and `TestTracebackLocals`.
 - `REQ-agent-003`: `tests/test_agent.py::TestAgentCore`.
 
 Unit-test fixtures use public, non-secret seeds and call no network.

@@ -16,6 +16,7 @@ import asyncio
 import base64
 import logging
 import os
+import re
 import traceback
 
 import pytest
@@ -300,7 +301,11 @@ async def test_mnemonic_decoding_matches_goal_export():
         capture_output=True,
         text=True,
     )
-    phrase = result.stdout.split('"')[1]
+    # `goal account export` prints the phrase in double quotes; match the 25
+    # quoted words wherever they appear so a changed prefix or JSON output still parses.
+    found = re.search(r'"((?:[a-z]+ ){24}[a-z]+)"', result.stdout)
+    assert found is not None, "goal account export did not print a quoted 25-word mnemonic"
+    phrase = found.group(1)
     account = AgentAccount.from_mnemonic(phrase)
     assert account.address == source.address
     assert account.seed == source.seed

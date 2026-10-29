@@ -13,6 +13,12 @@ Add the subpackage `algochat.agent` in py/ (account, config, core) with its own 
 
 Replies, rooms, channels, removal, reply policy, the MCP server, CLI, webhook bridge, the funds warning, and the operator guide (algochat#44 to #48). Falcon accounts.
 
+### AGENT-2 identity NFT
+
+AGENT-2 has two halves: the bot's own Algorand wallet, and the bot's own Raven identity NFT, which does not make it a bot. This change builds only the wallet (the Ed25519 account). The identity NFT half is out of scope and AGENT-2 is not marked fully done here.
+
+No issue in tracker algochat#39 clearly owns minting or attaching the bot's Raven identity NFT. AGENT-2 is listed only on algochat#43 (this change), and none of algochat#41 to #48 or raven#578 to #583 covers issuing it. raven#579 covers the related display rule (Raven ignores any self-set bot flag on the identity NFT's ARC-69 note and reads the bot mark only from the room record), which is AGENT-7.b's side, not issuing the NFT. The owner of the identity NFT half needs to be decided in algochat#39; this change does not file a new issue.
+
 ## Steps
 
 1. Decode the 25-word mnemonic with a bundled BIP-39 English word list, so `cryptography` stays the only runtime dependency.

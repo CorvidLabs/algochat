@@ -17,14 +17,16 @@ from ..blockchain import AlgodClient, IndexerClient
 from ..client import AlgoChat, AlgoChatConfig
 from ..storage import EncryptionKeyStorage, MessageCache
 from .account import AgentAccount
-from .config import load_agent_mnemonic
+from .config import AgentConfigError, load_agent_mnemonic
 
 
 class AgentCore:
     """A self-hosted AlgoChat bot with its own account."""
 
     def __init__(self, account: AgentAccount, chat: AlgoChat) -> None:
-        if chat.address != account.address:
+        # ``AgentAccount`` already proves its address and public key come from
+        # its seed; also require the chat client's signing key to be that key.
+        if chat.address != account.address or chat._ed25519_public_key != account.ed25519_public_key:
             raise ValueError("The chat client must belong to the bot's own account")
         self._account = account
         self._chat = chat
@@ -63,7 +65,13 @@ class AgentCore:
         message_cache: MessageCache | None = None,
     ) -> AgentCore:
         """Loads the bot's mnemonic from its env var or local file, then builds the core."""
-        account = AgentAccount.from_mnemonic(load_agent_mnemonic(environ=environ, path=path))
+        try:
+            account = AgentAccount.from_mnemonic(load_agent_mnemonic(environ=environ, path=path))
+        except AgentConfigError:
+            # Keep the environment mapping (and so the phrase) off the traceback's frame locals.
+            environ = None
+            raise
+        environ = None
         return await cls.create(account, config, algod, indexer, key_storage, message_cache)
 
     @property

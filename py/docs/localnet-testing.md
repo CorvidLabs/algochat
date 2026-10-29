@@ -28,6 +28,11 @@ Without Docker (Linux x86_64), from `py/`:
 scripts/native-localnet.sh start   # from py/; first run downloads binaries and takes a few minutes
 ```
 
+The script pins a SHA-256 for every download (go-algorand, indexer, conduit,
+and the PostgreSQL jar plus the archive inside it) and refuses to unpack a file
+that does not match; a mismatched file is deleted. The pins come from the
+checksums each project publishes with its release.
+
 The script runs the same ports, token and wallet as AlgoKit's localnet: algod on
 `127.0.0.1:4001`, kmd on `127.0.0.1:4002` and the indexer on `127.0.0.1:8980`,
 each with the token `aaaa…` (64 × `a`). It stores everything under

@@ -31,6 +31,9 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    # Test-only cross-check of the agent mnemonic decoder (tests/test_agent.py::test_matches_algosdk).
+    # Not a runtime dependency: cryptography stays the only one.
+    "py-algorand-sdk>=2.6.0",
 ]
 
 [project.urls]

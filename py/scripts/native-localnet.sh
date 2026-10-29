@@ -19,6 +19,17 @@ ALGOD_VERSION="5.0.5"
 INDEXER_VERSION="3.11.1"
 CONDUIT_VERSION="1.11.1"
 PG_VERSION="16.4.0"
+# SHA-256 of each pinned download, checked before anything is unpacked. The
+# node, indexer and conduit values match the checksum files published with
+# their GitHub releases (hashes_stable_linux_amd64_5.0.5 and checksums.txt);
+# the PostgreSQL jar value matches the .sha256 file Maven Central publishes
+# next to it. The .txz inside the verified jar is pinned too. Bumping a
+# version means updating its hash from the same published source.
+NODE_SHA256="312ce90bc4b1f5ded20b005ea8173209c2740f4ea84cfe14f79c050a874bc8b1"
+INDEXER_SHA256="b90a6118645dc74c97978f729bf89d11a1baac7f9f52428c7c14004b1e3e3a00"
+CONDUIT_SHA256="17cd7f6138b2937a2487422531bba21707c5bb1daf9f9b330a071e55629ad025"
+PG_JAR_SHA256="14a5cf546aee7d327a2f5b46be6c571f2f724a2b485c270d46f3e44a1ac3df18"
+PG_TXZ_SHA256="d24cafae863e1ba9502bdc27942661391748ce60345725e7a15429be637fc8b6"
 DIR="${ALGOCHAT_LOCALNET_DIR:-$HOME/.cache/algochat-localnet}"
 TOKEN="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 PG_PORT=5443
@@ -27,33 +38,50 @@ BIN="$DIR/node/bin"
 
 log() { printf '[localnet] %s\n' "$*"; }
 
+# verify FILE SHA256: refuses (and deletes) a file whose SHA-256 is not the pinned value.
+verify() {
+  local file="$1" want="$2" got
+  got=$(sha256sum "$file" | awk '{print $1}')
+  if [ "$got" != "$want" ]; then
+    rm -f "$file"
+    log "checksum mismatch for $(basename "$file"): expected $want, got $got; deleted it"
+    return 1
+  fi
+}
+
+# fetch URL OUT SHA256: downloads (or reuses) OUT and verifies it before any caller unpacks it.
 fetch() {
-  local url="$1" out="$2"
-  [ -s "$out" ] || curl -fsSL -o "$out" "$url"
+  local url="$1" out="$2" want="$3"
+  if [ ! -s "$out" ]; then
+    curl -fsSL -o "$out.part" "$url"
+    mv "$out.part" "$out"
+  fi
+  verify "$out" "$want"
 }
 
 install_binaries() {
   mkdir -p "$DIR/dl"
   if [ ! -x "$BIN/algod" ]; then
     log "downloading go-algorand ${ALGOD_VERSION}"
-    fetch "https://github.com/algorand/go-algorand/releases/download/v${ALGOD_VERSION}-stable/node_stable_linux-amd64_${ALGOD_VERSION}.tar.gz" "$DIR/dl/node.tar.gz"
+    fetch "https://github.com/algorand/go-algorand/releases/download/v${ALGOD_VERSION}-stable/node_stable_linux-amd64_${ALGOD_VERSION}.tar.gz" "$DIR/dl/node.tar.gz" "$NODE_SHA256"
     mkdir -p "$DIR/node" && tar xzf "$DIR/dl/node.tar.gz" -C "$DIR/node"
   fi
   if [ ! -x "$DIR/indexer/algorand-indexer" ]; then
     log "downloading indexer ${INDEXER_VERSION}"
-    fetch "https://github.com/algorand/indexer/releases/download/v${INDEXER_VERSION}/indexer_Linux_x86_64_${INDEXER_VERSION}.tar.gz" "$DIR/dl/indexer.tar.gz"
+    fetch "https://github.com/algorand/indexer/releases/download/v${INDEXER_VERSION}/indexer_Linux_x86_64_${INDEXER_VERSION}.tar.gz" "$DIR/dl/indexer.tar.gz" "$INDEXER_SHA256"
     mkdir -p "$DIR/indexer" && tar xzf "$DIR/dl/indexer.tar.gz" -C "$DIR/indexer"
   fi
   if [ ! -x "$DIR/conduit/conduit" ]; then
     log "downloading conduit ${CONDUIT_VERSION}"
-    fetch "https://github.com/algorand/conduit/releases/download/v${CONDUIT_VERSION}/conduit_Linux_x86_64_${CONDUIT_VERSION}.tar.gz" "$DIR/dl/conduit.tar.gz"
+    fetch "https://github.com/algorand/conduit/releases/download/v${CONDUIT_VERSION}/conduit_Linux_x86_64_${CONDUIT_VERSION}.tar.gz" "$DIR/dl/conduit.tar.gz" "$CONDUIT_SHA256"
     mkdir -p "$DIR/conduit" && tar xzf "$DIR/dl/conduit.tar.gz" -C "$DIR/conduit"
   fi
   if [ ! -x "$DIR/pg/bin/postgres" ]; then
     log "downloading PostgreSQL ${PG_VERSION} (embedded binaries)"
-    fetch "https://repo1.maven.org/maven2/io/zonky/test/postgres/embedded-postgres-binaries-linux-amd64/${PG_VERSION}/embedded-postgres-binaries-linux-amd64-${PG_VERSION}.jar" "$DIR/dl/pg.jar"
+    fetch "https://repo1.maven.org/maven2/io/zonky/test/postgres/embedded-postgres-binaries-linux-amd64/${PG_VERSION}/embedded-postgres-binaries-linux-amd64-${PG_VERSION}.jar" "$DIR/dl/pg.jar" "$PG_JAR_SHA256"
     mkdir -p "$DIR/pg"
     python3 -c "import sys,zipfile;zipfile.ZipFile(sys.argv[1]).extract('postgres-linux-x86_64.txz',sys.argv[2])" "$DIR/dl/pg.jar" "$DIR/dl"
+    verify "$DIR/dl/postgres-linux-x86_64.txz" "$PG_TXZ_SHA256"
     tar xJf "$DIR/dl/postgres-linux-x86_64.txz" -C "$DIR/pg"
   fi
 }
