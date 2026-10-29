@@ -1,6 +1,6 @@
 ---
 module: agent
-version: 5
+version: 6
 status: active
 files:
   - src/algochat/agent/__init__.py
@@ -10,6 +10,7 @@ files:
   - src/algochat/agent/config.py
   - src/algochat/agent/core.py
   - src/algochat/agent/direct.py
+  - src/algochat/agent/funds.py
   - src/algochat/agent/mcp.py
   - src/algochat/agent/policy.py
   - src/algochat/agent/rooms.py
@@ -25,7 +26,7 @@ depends_on: [algochat]
 
 ## Purpose
 
-Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). It joins the rooms and channels an owner or admin adds it to, reads and replies there, and stops when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g). In each room it replies only in the mode the room's record holds, within the rate limit there, never to another bot, and it declares its own slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f). An agent plugs in through an MCP server, a command-line tool or a webhook bridge, all three on the same `AgentCore`; the MCP server has a tool for every command-line command, and the webhook bridge sends readable text only to the same machine or to a secured address over authenticated HTTPS (AGENT-1.a, AGENT-1.c, AGENT-1.e).
+Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). It joins the rooms and channels an owner or admin adds it to, reads and replies there, and stops when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g). In each room it replies only in the mode the room's record holds, within the rate limit there, never to another bot, and it declares its own slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f). An agent plugs in through an MCP server, a command-line tool or a webhook bridge, all three on the same `AgentCore`; the MCP server has a tool for every command-line command, and the webhook bridge sends readable text only to the same machine or to a secured address over authenticated HTTPS (AGENT-1.a, AGENT-1.c, AGENT-1.e). The operator hosts the bot and funds its wallet, which pays every fee; when fewer than about 100 replies' worth of fees remain, the bot posts a short warning once, in the room where it reached that level, and not again until the wallet is refilled (AGENT-1.d, AGENT-3, AGENT-3.a). This version sends no payments or tips: every bot transaction carries no amount (AGENT-9). `docs/operator-guide.md` is the operator guide.
 
 ## Public API
 
@@ -51,7 +52,7 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 | `REPLY_PREVIEW_CHARS` | 80, the longest preview kept whole. |
 | `Room` | Frozen dataclass of a room or channel the bot was added to: `group_id`, `mailbox` address, `name`, `epoch`, `status`, `parent_group_id` (`None` for a room), the bot's `bot` settings or `None`, and the reduced `state`. `is_channel`; `key` is `(group_id, mailbox)`. |
 | `RoomMessage` | Frozen dataclass of one room message to the bot: `txid`, `group_id`, `mailbox`, `sender` address, `text`, `epoch`, `counter`, `confirmed_round`, `intra_round_offset`, `is_channel`, `reply_to` (the txid a section 9.2 reply names), `mentioned`, `command` (a `CommandCall` or `None`) and `from_bot`; `room_key`. `text` is the section 9.1 or 9.2 text when the plaintext is one of those JSON forms, else the plaintext. |
-| `RoomReply` | Frozen dataclass: the `message`, the reply `txid` or `None`, an `error` type name or `None`, and `skipped`, the `SKIP_*` reason the reply policy kept the bot silent, or `None`. |
+| `RoomReply` | Frozen dataclass: the `message`, the reply `txid` or `None`, an `error` type name or `None`, `skipped`, the `SKIP_*` reason the reply policy kept the bot silent, or `None`, and `low_funds_notice`, the txid of the low-funds notice posted right after this reply, or `None`. |
 | `BotCommand` | Frozen dataclass of a slash command the bot declares: `name` (1 to 32 lowercase letters, digits, `_` or `-`, starting with a letter or digit) and a one-line `description`. Anything else raises `ValueError`. |
 | `CommandCall` | Frozen dataclass of a declared command a message starts with: lowercase `name` and the rest of the message as `arguments`. |
 | `RoomHandler` | Type of a `serve_rooms` handler: `RoomMessage` to `str`, `None`, or an awaitable of either. |
@@ -66,8 +67,11 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 | `SKIP_RATE_LIMIT` | `"rate-limit"`: one more post would go over the room's rate limit for the bot. |
 | `SKIP_TO_BOT` | `"to-bot"`: `send_direct` to an account one of the bot's rooms marks as a bot. |
 | `PolicySkip` | `PermissionError` raised by `send_room`, `reply_room`, `send_direct` and `reply` when the reply policy keeps the bot silent; `reason` is one of the `SKIP_*` values. |
+| `LOW_FUNDS_REPLIES` | 100: the bot warns when fewer than this many replies' worth of fees remain (AGENT-3.a). |
+| `LOW_FUNDS_NOTICE` | The plain text of the warning: `"I'm running low on funds for fees. My operator needs to refill my wallet."` |
+| `FundsStatus` | Frozen dataclass of the bot's wallet in microAlgos: `balance`, `min_balance`, `fee_per_reply`; properties `spendable` (balance above the minimum balance, never below 0), `threshold` (`fee_per_reply` x `LOW_FUNDS_REPLIES`), `replies_left` and `low` (`spendable < threshold`). |
 | `LEAVE_NOTICE` | The plain text the bot posts when it leaves: `"I left this room. An owner or admin can remove me to rotate the room key."` |
-| `COMMANDS` | The shared commands, in order: `address`, `publish-keys`, `send`, `read`, `reply`, `rooms`, `read-rooms`, `reply-room`, `declare-commands`, `leave-room`, `serve`. The CLI has one subcommand and the MCP server one tool for each (AGENT-1.e). |
+| `COMMANDS` | The shared commands, in order: `address`, `publish-keys`, `send`, `read`, `reply`, `rooms`, `read-rooms`, `reply-room`, `declare-commands`, `leave-room`, `funds`, `serve`. The CLI has one subcommand and the MCP server one tool for each (AGENT-1.e). |
 | `AgentCommand` | Frozen dataclass of one shared command: CLI `name`, `description`, `params` (each a name, a kind `string`, `boolean` or `integer`, a description and whether it is required) and `run`; `tool_name` is the name with `-` as `_`, and `input_schema` its JSON Schema (no extra properties). |
 | `AgentService` | Runs the shared commands on one `AgentCore`: `run(name, arguments)` by CLI or tool name. It keeps the messages it read, so `reply` and `reply-room` find one by transaction id (reading again first when it is not known). |
 | `CommandError` | `ValueError` subclass for bad arguments, an unknown message, or a reply the reply policy refuses. |
@@ -95,8 +99,13 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 - `send_room`: Posts plain UTF-8 text to an active room or channel (Raven's room text format). Reads the rooms again first and raises `PolicySkip` when the room gives the bot no mode (`SKIP_NO_MODE`) or the rate window is full (`SKIP_RATE_LIMIT`). Returns the transaction id.
 - `reply_room`: Answers a `RoomMessage` with plain text in its room and marks it answered. Reads the rooms again first and raises `PolicySkip` with the reason when the reply policy keeps the bot silent on that message on the fresh record (mode, rate window, and whether the sender is now a bot); nothing is posted then. (A room reply format is left to algochat#46.)
 - `serve_rooms`: Reads new room messages, posts the command list where it is due, and replies with a sync or async handler's text where the reply policy allows (AGENT-8). Returns one `RoomReply` per message, with `skipped` set for each message the policy kept the bot silent on.
-- `declare_commands`: Posts `command_list` in each active room whose current mode is commands and whose latest list from the bot (since it was last added) is different. Waits when the rate limit is full. Returns the transaction ids.
-- `leave_room`: Leaves a room and its channels: posts `LEAVE_NOTICE` in each active one and stops reading and posting there. Returns the notice transaction ids.
+- `declare_commands`: Posts `command_list` in each active room whose current mode is commands and whose latest list from the bot (since it was last added) is different. Waits when the rate limit is full. Returns the transaction ids, with a low-funds notice after the list that brought the wallet low.
+- `leave_room`: Leaves a room and its channels: posts `LEAVE_NOTICE` in each active one and stops reading and posting there. Returns the notice transaction ids, with a low-funds notice after the leave notice that brought the wallet low (posted before the bot stops posting there).
+
+`AgentCore` methods for funds (AGENT-3, AGENT-3.a):
+
+- `check_funds`: Reads the bot's balance and minimum balance from algod and the network's minimum fee, and returns a `FundsStatus`. Seeing the wallet not low counts as a refill, so the next drop warns again.
+- After every room post through `send_room`, `reply_room` or `serve_rooms`, the bot checks its funds. When they are low and no notice is current, it posts `LOW_FUNDS_NOTICE` in that same room. A one-to-one reply also checks funds (a refill seen there re-arms the notice), but the notice itself goes only in a room. A failed funds check is logged by error type and never blocks the reply.
 
 Module internals of `algochat.agent.rooms`, used by `AgentCore` and not exported from `algochat.agent`:
 
@@ -107,7 +116,7 @@ Module internals of `algochat.agent.rooms`, used by `AgentCore` and not exported
 | `is_admin_note` | True for a section 5.8 administration record (`0x02 0x03`). |
 | `is_room_message` | True for a section 5.8 room message (`0x02 0x07`). |
 | `KeyDelivery` | A key delivery the bot opened, with the transaction that carried it. |
-| `RoomTrack` | Per-room state: records and messages read from the mailbox, keys by epoch, the reduced chain, the parent room, replay counters, what was answered, and when the bot posted (`own_txids`, `post_times`, `latest_command_list`). |
+| `RoomTrack` | Per-room state: records and messages read from the mailbox, keys by epoch, the reduced chain, the parent room, replay counters, what was answered, and when the bot posted (`own_txids`, `post_times`, `latest_command_list`, `last_text_since_join`). |
 
 Reply policy (AGENT-8): the reply mode and rate limit come from the bot's entry in the room's current reduced state (op 13, changed by op 14), read every time the bot serves.
 
@@ -146,10 +155,11 @@ Adapters (AGENT-1.a, AGENT-1.c, AGENT-1.e). The CLI, the MCP server and the webh
 | `reply` | `txid`, `text` | The reply `txid`. Refused for a sender a room marks as a bot (AGENT-8.c). |
 | `rooms` | none | Each room and channel: `group_id` (hex), `mailbox`, `name`, `epoch`, `status`, `is_channel`, `parent_group_id`, and the bot's `mode`, `replies`, `seconds`. |
 | `read-rooms` (`read_rooms`) | none | New room messages with `mentioned`, `command`, `from_bot` and `skipped`, the reason the reply policy keeps the bot silent, or `None`. |
-| `reply-room` (`reply_room`) | `txid`, `text` | The reply `txid`. Refused when the room's mode, rate limit or bot mark keeps the bot silent (AGENT-8). |
-| `declare-commands` (`declare_commands`) | none | `command_list` and the `txids` posted. |
-| `leave-room` (`leave_room`) | `group_id` (hex), `mailbox` | The leave notice `txids`. |
-| `serve` | `webhook` | One pass of `serve_direct` and `serve_rooms` with a `WebhookBridge`: per message its `txid`, `reply_txid`, `error` and `skipped`. |
+| `reply-room` (`reply_room`) | `txid`, `text` | The reply `txid` and `low_funds_notice` (txid or `None`). Refused when the room's mode, rate limit or bot mark keeps the bot silent (AGENT-8). |
+| `declare-commands` (`declare_commands`) | none | `command_list` and the `txids` posted (a low-funds notice included). |
+| `leave-room` (`leave_room`) | `group_id` (hex), `mailbox` | The leave notice `txids` (a low-funds notice included). |
+| `funds` | none | `balance`, `min_balance`, `spendable`, `fee_per_reply`, `threshold`, `replies_left` and `low`. |
+| `serve` | `webhook` | One pass of `serve_direct` and `serve_rooms` with a `WebhookBridge`: per message its `txid`, `reply_txid`, `error` and `skipped`, and for rooms `low_funds_notice`. |
 
 - CLI: `algochat-agent` (also `python -m algochat.agent`) takes `--name`, a repeatable `--command NAME=DESCRIPTION`, then one subcommand per command with `--param` flags (`--group-id` for `group_id`). `serve` runs until stopped, one pass every `--interval` seconds (default 5), or once with `--once`. `mcp` runs the MCP server. Each command prints its result as JSON; an error prints one `error: <Type>: <message>` line to stderr and exits 1.
 - MCP server: JSON-RPC 2.0, one message per line on stdin and stdout. `initialize` (protocol versions `2025-06-18`, `2025-03-26`, `2024-11-05`), `ping`, `tools/list` and `tools/call`. A tool's result is its JSON as text; a `CommandError` or other failure is a result with `isError`. Notifications get no answer; bad JSON, bad requests, unknown methods and bad parameters get the JSON-RPC errors -32700, -32600, -32601 and -32602. The bot is built on the first tool call.
@@ -166,6 +176,8 @@ Module internals used by the adapters and not exported from `algochat.agent`:
 | `webhook.is_loopback_host`, `webhook.is_link_local_or_metadata`, `webhook.sign`, `webhook.direct_payload`, `webhook.room_payload` | The loopback test, the signature, and the request bodies. |
 | `service.Param`, `service.check_arguments`, `service.command_by_name`, `service.to_json` | A command parameter, argument checks (unknown or mistyped ones refused), lookup by CLI or tool name, and JSON for results. |
 | `runtime.build_core`, `runtime.webhook_factory`, `runtime.parse_command` | Build the bot and its webhook bridges from the environment, and read `NAME=DESCRIPTION`. |
+| `funds.reply_fee` | One reply's fee: `payment_fee(MAX_NOTE_SIZE, max(min_fee, 1000))`. |
+| `AgentCore._post_noting_funds`, `AgentCore._send_room_noting_funds`, `AgentCore._reply_room_noting_funds` | Post a room text, then the low-funds notice when due, returning both txids; every room post but the notice itself goes through `_post_noting_funds` (`send_room`, `reply_room`, `serve_rooms`, the command list and the leave notice), and `reply-room` uses `_reply_room_noting_funds` so the CLI and MCP report the notice. |
 | `mcp.McpServer` | The MCP server on an async factory of `AgentService`. |
 | `cli.main`, `cli.build_parser` | The command-line tool. |
 
@@ -200,6 +212,10 @@ Module internals used by the adapters and not exported from `algochat.agent`:
 25. Replies through any adapter follow the reply policy: `reply-room` refuses what `serve_rooms` would skip, `reply` refuses a sender a room marks as a bot, `send` refuses an account a room marks as a bot and posts nothing; each reads the rooms again first, so a long-lived MCP server follows a mode change or a new bot, and `serve` sends the webhook only the messages the policy allows. The adapters post no room message except replies, command lists and the leave notice (design choice).
 26. The webhook bridge sends readable text only to a loopback host, or over `https` with the certificate checked to another host when a shared secret signs every request. Proxies in the environment are ignored and redirects refused (AGENT-1.c; signing, proxies and redirects are design choices).
 27. The CLI and the MCP server have no default network: without `ALGOCHAT_ALGOD_URL` and `ALGOCHAT_INDEXER_URL` they stop with an error. They use only keys signed by their account. Their output and errors never contain the mnemonic or the webhook secret.
+28. One reply's worth of fees is the fee of a payment carrying the largest note (`MAX_NOTE_SIZE` bytes) at the network's minimum fee, and only the balance above the account's minimum balance counts, so the estimate errs toward warning early (design choice). The warning comes when `spendable < 100 x fee_per_reply` (AGENT-3.a).
+29. The bot checks its wallet after every room post except the notice itself: replies, `send_room`, the command list and the leave notice (checked before it stops posting there). It posts `LOW_FUNDS_NOTICE` once per drop, in the room whose post took it low (or the first room it posts in while low), and in no other room, until it sees the wallet not low again (AGENT-3.a). The notice is posted even when the rate limit there is full, and counts toward the limit after (design choice).
+30. A core that has not checked its wallet yet (a restart, or a new CLI run) finds its latest notice in any room since it was last added. That notice is current unless the spendable balance today plus the fees of every note the bot sent after it reaches the threshold, which can only happen if the wallet was refilled, because the bot spends nothing but fees (design choice).
+31. The bot sends no payments or tips: every transaction it sends carries amount 0 (AGENT-9). Only the operator funds the wallet (AGENT-3).
 
 ## Behavioral Examples
 
@@ -247,6 +263,11 @@ When `algochat-agent serve --webhook http://127.0.0.1:PORT/hook --once` runs
 Then the receiver gets each message the policy allows, signed, and the bot posts its replies
 And a message from another bot never reaches the receiver
 
+Given the bot's spendable balance is just above 100 replies' worth of fees and it is in rooms A and B
+When it replies in room A and that reply takes it below the threshold
+Then it posts LOW_FUNDS_NOTICE once in room A, and its next replies in A and B carry no notice
+And after the operator refills the wallet, the next drop posts one new notice, in the room where it happened
+
 Given a webhook URL http://example.com/hook
 Then check_webhook_url refuses it: readable text goes over plain http only to this machine
 ```
@@ -270,6 +291,8 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | Not active | `send_room` or `reply_room` in a room the bot was removed from, left, or has no current key for | Raise `PermissionError` |
 | Leave text | `send_room` with empty text or `LEAVE_NOTICE` | Raise `ValueError` (use `leave_room`) |
 | Policy refusal | `send_room` or `reply_room` the reply policy rules out on the fresh record; `send_direct` or `reply` to an account a room marks as a bot | Raise `PolicySkip` with the reason; nothing is paid or posted |
+| Reserved text | `send_room` with `LOW_FUNDS_NOTICE` | Raise `ValueError`: that text is the bot's own notice |
+| Funds check failure | algod cannot report the balance or parameters after a post | Log the error type, post no notice; the reply stands and the next post checks again |
 | Unauthorized key | A key delivery whose sender, cited record, epoch or session does not check out | Ignore it; the room stays unjoined |
 | Bad name or command | `name` or a `BotCommand` breaks its pattern, a command repeats, or the list is over 4026 bytes | Raise `ValueError` when the core or command is built |
 | Policy skip | A room message the mode, the bot mark or the rate limit rules out | No handler call and no post; `RoomReply.skipped` says why; the message is handled |
@@ -295,4 +318,5 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | 2 | 2026-10-29 | One-to-one messages: the bot publishes its key, reads messages to it and replies by itself (algochat#44, AGENT-5). |
 | 3 | 2026-10-29 | Rooms and channels: the bot joins when added, reads and replies, and stops when removed or when it leaves (algochat#45, AGENT-6, AGENT-7). |
 | 4 | 2026-10-29 | Reply policy from the room record: mode, rate limit, mentions, never another bot, declared slash commands (algochat#46, AGENT-8). |
+| 6 | 2026-10-29 | Out-of-funds notice: the operator funds the wallet, the bot warns once in the room where fewer than about 100 replies' worth of fees remain, until refilled; the `funds` command; no payments or tips; operator guide (algochat#48, AGENT-1.d, AGENT-3, AGENT-3.a, AGENT-4, AGENT-9). |
 | 5 | 2026-10-29 | MCP server, command-line tool and webhook bridge on the shared core; an MCP tool for every CLI command; webhook text only to this machine or authenticated HTTPS (algochat#47, AGENT-1.a, AGENT-1.c, AGENT-1.e). |
