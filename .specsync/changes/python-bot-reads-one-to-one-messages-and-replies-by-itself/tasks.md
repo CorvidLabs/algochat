@@ -11,3 +11,4 @@ artifact: tasks
 - [x] Unit tests: `test_transaction.py`, `test_http_clients.py`, `test_agent_direct.py`.
 - [x] Localnet: algochat#43 helpers through the library, `test_agent_direct_localnet.py`, `tests/cross_tools.py`, `swift/Tests/AlgoChatTests/AgentDirectLocalnetTests.swift`.
 - [x] Module specs, README, localnet how-to.
+- [x] 2026-10-29 review: rebased on the hardened algochat#43, merged algochat#50, removed the key-object workaround in `AgentCore.encryption_public_key`.

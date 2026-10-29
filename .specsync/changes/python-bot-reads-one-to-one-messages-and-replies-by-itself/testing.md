@@ -29,4 +29,6 @@ cd py
 ALGOCHAT_LOCALNET_ALGOD_DATA=<localnet>/net/data ALGOCHAT_REQUIRE_LOCALNET=1 python -m pytest
 ```
 
-Result: 423 passed, 199 skipped. The skips are the existing cross-implementation fixture tests that are skipped on the base branch too, and the optional `py-algorand-sdk` decoder cross-check. All 7 `localnet` tests pass.
+Result after the 2026-10-29 review, rebased on algochat#43 at `1d57b8e` with algochat#50 merged, two full runs in a row with OpenJDK 17 on `PATH` and `goal` on `PATH`: 469 passed, 198 skipped. The skips are the existing cross-implementation fixture tests that are skipped on the base branch too. All 7 `localnet` tests pass on both runs, including the algochat#43 traceback, pickle and ACL tests.
+
+`test_the_chat_client_and_the_core_give_the_key_as_32_raw_bytes` checks that `AlgoChat.encryption_public_key` is 32 raw bytes (algochat#50) and that `AgentCore.encryption_public_key` passes it through; the core no longer converts a key object.

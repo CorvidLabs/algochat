@@ -31,7 +31,6 @@ from algochat.blockchain import (
     TransactionInfo,
 )
 from algochat.client import AlgoChat, AlgoChatConfig
-from algochat.keys import public_key_to_bytes
 from algochat.signature import sign_encryption_key
 from algochat.transaction import build_payment, sign_payment
 
@@ -146,7 +145,7 @@ def _config() -> AlgoChatConfig:
 
 async def _person(chain: Chain, seed: bytes = PERSON_SEED) -> AlgoChat:
     chat = await AlgoChat.from_seed(seed=seed, address=_address(seed), config=_config(), algod=chain, indexer=chain)
-    key = public_key_to_bytes(chat.encryption_public_key)
+    key = chat.encryption_public_key
     chain.pay(seed, _address(seed), key + sign_encryption_key(key, Ed25519PrivateKey.from_private_bytes(seed)))
     return chat
 
@@ -175,6 +174,16 @@ def test_reply_payload_is_compact_json_with_a_cut_preview():
 
 
 # --- AGENT-5: read and reply ------------------------------------------------
+
+
+async def test_the_chat_client_and_the_core_give_the_key_as_32_raw_bytes():
+    # algochat#50: AlgoChat.encryption_public_key itself is bytes, so the core
+    # passes it through with no type check of its own.
+    chain = Chain()
+    core = await AgentCore.create(AgentAccount.from_seed(BOT_SEED), _config(), chain, chain)
+    key = core.chat.encryption_public_key
+    assert type(key) is bytes and len(key) == 32
+    assert type(core.encryption_public_key) is bytes and core.encryption_public_key == key
 
 
 async def test_publish_key_is_signed_and_not_repeated():

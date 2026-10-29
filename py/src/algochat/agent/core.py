@@ -20,7 +20,6 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from ..blockchain import AlgodClient, IndexerClient, NoteTransaction
 from ..client import AlgoChat, AlgoChatConfig
-from ..keys import public_key_to_bytes
 from ..models import MessageDirection
 from ..signature import sign_encryption_key
 from ..storage import EncryptionKeyStorage, MessageCache
@@ -115,9 +114,7 @@ class AgentCore:
     @property
     def encryption_public_key(self) -> bytes:
         """The bot's 32-byte X25519 public key."""
-        key = self._chat.encryption_public_key
-        # AlgoChat.encryption_public_key returns the key object today (see #50).
-        return key if isinstance(key, bytes) else public_key_to_bytes(key)
+        return self._chat.encryption_public_key
 
     def _clients(self) -> tuple[AlgodClient, IndexerClient]:
         if self._algod is None or self._indexer is None:
