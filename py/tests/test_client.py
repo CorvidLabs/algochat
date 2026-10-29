@@ -139,7 +139,9 @@ class TestFromSeed:
         client = await make_client()
         # Public key should be bytes (raw X25519 public key)
         pub_key = client.encryption_public_key
-        assert pub_key is not None
+        assert isinstance(pub_key, bytes)
+        assert len(pub_key) == 32
+        assert pub_key == public_key_to_bytes(client._encryption_public_key)
 
     @pytest.mark.asyncio
     async def test_deterministic_key_derivation(self):
