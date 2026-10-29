@@ -46,6 +46,7 @@ from ..group_admin import (
 )
 from ..pq import PQ_VERSION
 from .account import address_from_public_key, public_key_from_address
+from .policy import CommandCall, is_command_list
 
 GROUP_MESSAGE_PROTOCOL = 0x07
 _ZERO_ID = bytes(32)
@@ -129,6 +130,14 @@ class RoomMessage:
     confirmed_round: int
     intra_round_offset: int = 0
     is_channel: bool = False
+    reply_to: str | None = None
+    """The transaction id this message replies to, when it is a section 9.2 reply."""
+    mentioned: bool = False
+    """Whether it writes ``@`` and the bot's name or address, or replies to one of the bot's messages."""
+    command: CommandCall | None = None
+    """The bot's declared ``/command`` it starts with, if any."""
+    from_bot: bool = False
+    """Whether a room record marks the sender as a bot."""
 
     @property
     def room_key(self) -> tuple[bytes, str]:
@@ -144,6 +153,8 @@ class RoomReply:
     """The bot's reply transaction id, or None when it stayed silent or failed."""
     error: str | None = None
     """The exception type name when the handler or the send failed."""
+    skipped: str | None = None
+    """Why the reply policy kept the bot silent (one of the ``SKIP_*`` values), if it did."""
 
 
 @dataclass
@@ -174,6 +185,8 @@ class RoomTrack:
     handled_mark: tuple[int, int, bytes] | None = None
     next_counter: dict[int, int] = field(default_factory=dict)
     left_here: bool = False
+    # When the bot sent each of its own posts here: local clock for posts this core made.
+    sent_at: dict[str, float] = field(default_factory=dict)
 
     def ingest(self, found: list[NoteTransaction]) -> None:
         for tx in found:
@@ -276,6 +289,33 @@ class RoomTrack:
     def own_messages(self) -> list[NoteTransaction]:
         own = address_from_public_key(self.bot_key)
         return [tx for tx in self.messages if tx.sender == own]
+
+    def own_txids(self) -> set[str]:
+        """Every room message the bot posted here, on chain or just sent."""
+        return {tx.txid for tx in self.own_messages()} | set(self.sent_at)
+
+    def post_times(self) -> list[float]:
+        """When the bot posted here since it was last added: local time when this
+        core sent it, otherwise the block time, so a restart keeps the count."""
+        joined = self.joined_at()
+        times = dict(self.sent_at)
+        for tx in self.own_messages():
+            if joined is not None and _position(tx) <= joined:
+                continue
+            times.setdefault(tx.txid, float(tx.round_time))
+        return list(times.values())
+
+    def latest_command_list(self) -> str | None:
+        """The text of the bot's last command list here since it was last added, or None."""
+        joined = self.joined_at()
+        found = None
+        for tx in self.own_messages():
+            if joined is not None and _position(tx) <= joined:
+                continue
+            opened = self.open_text(tx)
+            if opened is not None and is_command_list(opened[0]):
+                found = opened[0]
+        return found
 
     def open_text(self, tx: NoteTransaction) -> tuple[str, int, int] | None:
         """Opens a message with the key for its epoch, without replay checks."""

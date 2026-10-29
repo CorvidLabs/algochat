@@ -89,7 +89,7 @@ async def test_bot_joins_as_soon_as_it_is_added_without_a_request_or_accept():
 @pytest.mark.asyncio
 async def test_bot_reads_and_replies_in_its_room_once_and_not_again_after_a_restart():
     chain = Ledger()
-    room, _ = await _room(chain)
+    room, _ = await _room(chain, BOT_MODE_EVERY_MESSAGE)  # every message: the policy is tested in test_agent_policy.py
     bot = await _bot(chain)
     await room.post(PERSON_SEED, "hello bot")
     await room.post(OWNER_SEED, "")  # empty text needs no answer
@@ -298,7 +298,7 @@ async def test_bot_leaves_a_room_and_its_channels_and_stays_out_after_a_restart(
 @pytest.mark.asyncio
 async def test_handler_errors_are_reported_and_silence_sends_nothing():
     chain = Ledger()
-    room, _ = await _room(chain)
+    room, _ = await _room(chain, BOT_MODE_EVERY_MESSAGE)  # every message: the policy is tested in test_agent_policy.py
     bot = await _bot(chain)
     await bot.sync_rooms()
     await room.post(PERSON_SEED, "quiet")

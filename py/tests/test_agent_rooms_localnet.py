@@ -180,7 +180,9 @@ class Harness:
             assert state["epoch"] == expected.epoch, lang
             assert sorted(state["members"]) == sorted(m.hex() for m in expected.members), lang
             assert [b["account"] for b in state["bots"]] == [b.account.hex() for b in expected.bots], lang
-            assert [b["mode"] for b in state["bots"]] == [b.mode for b in expected.bots], lang
+            assert [(b["mode"], b["replies"], b["seconds"]) for b in state["bots"]] == [
+                (b.mode, b.replies, b.seconds) for b in expected.bots
+            ], lang
             assert state["parent_group_id"] == expected.parent_group_id.hex(), lang
         return {
             "events": _events(room),
@@ -188,12 +190,17 @@ class Harness:
             "epoch": expected.epoch,
             "members": [m.hex() for m in expected.members],
             "bots": [b.account.hex() for b in expected.bots],
+            "bot_settings": [[b.mode, b.replies, b.seconds] for b in expected.bots],
             "parent_group_id": expected.parent_group_id.hex(),
         }
 
 
-async def _core(account: SigningAccount, harness: Harness) -> AgentCore:
-    return await AgentCore.create(AgentAccount.from_seed(account.seed), _config(), harness.algod, harness.indexer)
+async def _core(account: SigningAccount, harness: Harness, **kwargs) -> AgentCore:
+    # Members mention the bot as @bot; the room's mode is mentions and the channel's every message.
+    kwargs.setdefault("name", "bot")
+    return await AgentCore.create(
+        AgentAccount.from_seed(account.seed), _config(), harness.algod, harness.indexer, **kwargs
+    )
 
 
 async def _bot_note(harness: Harness, room: OwnerRoom, bot: SigningAccount, txid: str, text: str, name: str):
@@ -222,7 +229,8 @@ async def test_bot_in_a_room_and_a_channel_across_every_language(tmp_path):
         await room.admin(owner.seed, OP_CREATE, name="team \u2713")
         await room.admin(owner.seed, OP_ADD_MEMBER, subject=public_key(member.seed))
         add = await room.admin(
-            owner.seed, OP_ADD_BOT, subject=public_key(bot_account.seed), bot=BotSettings(BOT_MODE_MENTIONS, 5, 60)
+            # 10 per 60 s: room for the 7 room replies below (the limit itself is tested in the policy tests).
+            owner.seed, OP_ADD_BOT, subject=public_key(bot_account.seed), bot=BotSettings(BOT_MODE_MENTIONS, 10, 60)
         )
         # A plain member may not hand the bot a key: the bot ignores this one.
         await room.deliver(member.seed, bot_account.seed, add)

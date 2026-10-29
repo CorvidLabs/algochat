@@ -1,7 +1,8 @@
 # Localnet integration tests
 
 The agent tests in `tests/test_agent_localnet.py`,
-`tests/test_agent_direct_localnet.py` and `tests/test_agent_rooms_localnet.py` run against a real local
+`tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py` and
+`tests/test_agent_policy_localnet.py` run against a real local
 Algorand network: algod, kmd and the indexer. They check what mocks cannot,
 such as whether algod accepts transactions signed with the key loaded from the
 bot's mnemonic, and whether a message the bot sends is read back by another
@@ -61,8 +62,8 @@ ALGOCHAT_LOCALNET_ALGOD_DATA="$HOME/.cache/algochat-localnet/net/data" \
 
 ### Every language
 
-`tests/test_agent_direct_localnet.py` and `tests/test_agent_rooms_localnet.py`
-have people write to the bot with the
+`tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py` and
+`tests/test_agent_policy_localnet.py` have people write to the bot with the
 TypeScript, Go, Rust, Python and Kotlin implementations, and has every
 implementation read the bot's replies. Build their tools first, from the
 repository root:
@@ -110,3 +111,12 @@ Other endpoints can be set with `ALGOCHAT_LOCALNET_ALGOD_URL`,
   removes it from the room it answers nothing in the room or its channel.
   Every implementation, Swift included, opens every room note and reduces both
   room chains to the same state.
+- Reply policy (`tests/test_agent_policy_localnet.py`): in mentions mode the bot
+  answers only `@helper` and replies to its own messages, stays within its rate
+  limit (also after a restart) and never answers another bot. An admin, then
+  the owner, change its mode with op 14 and it follows: in commands mode it
+  posts its command list once and answers only its commands and `/help`. A
+  one-to-one message from the other bot is not answered. Every
+  implementation, Swift included, opens every note and reduces the chain with
+  both bots' modes and limits. The test waits out two rate windows, so it takes
+  about a minute.

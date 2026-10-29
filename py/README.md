@@ -123,7 +123,35 @@ for result in await core.serve_rooms(answer):
 
 Call `serve_rooms` on a timer. Replies are plain text, as Raven shows room messages. Each message is answered once, also after a restart, and nothing from before the bot joined is answered. When the owner or an admin removes the bot it stops in that room and in the room's channels. `await core.leave_room(room)` posts a short notice and stops; only an owner or admin can remove the bot and rotate the room key.
 
-Reply modes and the MCP, CLI, and webhook adapters come in later releases.
+### Reply modes, rate limits and commands
+
+The room's owner or admin picks the bot's reply mode and rate limit when adding it, and can change them at any time. The bot reads them from the room's record every time it serves:
+
+- **Mentions**: it answers `@` and its name (or its address), and replies to its own messages.
+- **Every message**: it answers everything.
+- **Commands**: it posts its command list in the room once, then answers only the commands it declared. `/help` is always declared.
+
+It never answers another bot, and it posts at most the room's limit (for example 5 per 60 seconds) in any window, also after a restart. A message over the limit is skipped, not queued. Give the bot a name and its commands when you build it:
+
+```python
+from algochat.agent import AgentCore, BotCommand
+
+core = await AgentCore.from_environment(
+    config, algod, indexer,
+    name="helper",
+    commands=[BotCommand("echo", "Repeat your text")],
+)
+
+def answer(message):
+    if message.command is not None:  # commands mode, or a /command in another mode
+        return f"echo: {message.command.arguments}"
+    return f"You said: {message.text}"
+
+for result in await core.serve_rooms(answer):
+    print(result.txid, result.skipped)  # skipped says why the bot stayed silent
+```
+
+The MCP, CLI, and webhook adapters come in later releases.
 
 ## Encrypted Key Storage
 

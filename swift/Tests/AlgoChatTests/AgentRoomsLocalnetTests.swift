@@ -2,10 +2,11 @@ import Foundation
 import Testing
 @testable import AlgoChat
 
-/// Room and channel bot messages from LocalNet (AGENT-6, AGENT-7).
+/// Room and channel bot messages from LocalNet (AGENT-6, AGENT-7, AGENT-8).
 ///
 /// py/tests/test_agent_rooms_localnet.py has a bot join a room and a channel on LocalNet, answer
-/// real 0x07 notes, get removed and leave. It records every confirmed room note with its room key
+/// real 0x07 notes, get removed and leave; py/tests/test_agent_policy_localnet.py has it follow
+/// reply modes and rate limits that admins change. It records every confirmed room note with its room key
 /// and every room's administration chain, then runs this test with ALGOCHAT_ROOMS_LOCALNET_RECORD
 /// set. The Swift pqcross tool needs macOS 26 for ML-KEM-768, so on Linux this is how Swift reads
 /// the same notes and reduces the same chains.
@@ -40,6 +41,12 @@ struct AgentRoomsLocalnetTests {
             #expect(state.epoch == room.epoch, "\(name)")
             #expect(state.members.map(hexText).sorted() == room.members.sorted(), "\(name)")
             #expect(state.bots.map { hexText($0.account) } == room.bots, "\(name)")
+            // Reply mode, replies and window seconds per bot, in account order (AGENT-8, AGENT-10.a).
+            #expect(
+                state.bots.map { [Int($0.settings.mode), Int($0.settings.replies), Int($0.settings.seconds)] }
+                    == room.bot_settings,
+                "\(name)"
+            )
             #expect(hexText(state.parentGroupID) == room.parent_group_id, "\(name)")
         }
         // Written last so the harness knows every check above ran.
@@ -72,6 +79,7 @@ private struct RoomChain: Decodable {
     let epoch: UInt32
     let members: [String]
     let bots: [String]
+    let bot_settings: [[Int]]
     let parent_group_id: String
 }
 

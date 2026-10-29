@@ -7,8 +7,10 @@ the bot runs wherever the operator hosts it; nothing here calls a hosted
 service. The core reads one-to-one messages sent to the bot and replies to
 them from the bot's own account (AGENT-5). It joins the rooms and channels
 an owner or admin adds it to, reads and replies there, and stops when it is
-removed or leaves (AGENT-6, AGENT-7). Later changes add reply policy and the
-MCP, CLI and webhook adapters on top of this object.
+removed or leaves (AGENT-6, AGENT-7). In each room it follows the reply
+mode and rate limit in the room's record, never answers another bot, and
+declares its own slash commands (AGENT-8). Later changes add the MCP, CLI
+and webhook adapters on top of this object.
 """
 
 from __future__ import annotations
@@ -16,7 +18,8 @@ from __future__ import annotations
 import inspect
 import logging
 import os
-from collections.abc import Awaitable, Callable, Mapping
+import time
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
@@ -26,7 +29,13 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 from ..blockchain import AlgodClient, IndexerClient, NoteTransaction
 from ..client import AlgoChat, AlgoChatConfig
 from ..group import GroupCounter, open_group_message, seal_group_message
-from ..group_admin import open_group_key_delivery, sender_may_post
+from ..group_admin import (
+    BOT_MODE_COMMANDS,
+    BOT_MODE_MENTIONS,
+    open_group_key_delivery,
+    room_bot,
+    sender_may_post,
+)
 from ..keys import derive_keys_from_seed
 from ..models import MessageDirection
 from ..pq import (
@@ -44,6 +53,22 @@ from ..transaction import send_payment
 from .account import AgentAccount, address_from_public_key, public_key_from_address
 from .config import AgentConfigError, load_agent_mnemonic
 from .direct import DirectMessage, DirectReply, encode_reply
+from .policy import (
+    HELP_COMMAND,
+    SKIP_FROM_BOT,
+    SKIP_NO_MODE,
+    SKIP_NOT_A_COMMAND,
+    SKIP_NOT_MENTIONED,
+    SKIP_RATE_LIMIT,
+    BotCommand,
+    check_bot_name,
+    command_call,
+    command_list_text,
+    declared_commands,
+    mentions,
+    parse_room_text,
+    within_rate,
+)
 from .rooms import (
     LEAVE_NOTICE,
     ROOM_ACTIVE,
@@ -76,11 +101,24 @@ def _chain_order(tx: NoteTransaction) -> tuple[int, int, bytes]:
 class AgentCore:
     """A self-hosted AlgoChat bot with its own account."""
 
-    def __init__(self, account: AgentAccount, chat: AlgoChat) -> None:
+    def __init__(
+        self,
+        account: AgentAccount,
+        chat: AlgoChat,
+        *,
+        name: str | None = None,
+        commands: Sequence[BotCommand] = (),
+        clock: Callable[[], float] = time.time,
+    ) -> None:
         # ``AgentAccount`` already proves its address and public key come from
         # its seed; also require the chat client's signing key to be that key.
         if chat.address != account.address or chat._ed25519_public_key != account.ed25519_public_key:
             raise ValueError("The chat client must belong to the bot's own account")
+        self._name = check_bot_name(name)
+        self._operator_commands = {command.name for command in commands}
+        self._commands = declared_commands(commands)
+        self._command_list = command_list_text(self._commands, self._name)
+        self._clock = clock
         self._account = account
         self._chat = chat
         self._algod: AlgodClient | None = None
@@ -104,8 +142,17 @@ class AgentCore:
         indexer: IndexerClient,
         key_storage: EncryptionKeyStorage | None = None,
         message_cache: MessageCache | None = None,
+        *,
+        name: str | None = None,
+        commands: Sequence[BotCommand] = (),
+        clock: Callable[[], float] = time.time,
     ) -> AgentCore:
-        """Builds the core for ``account`` on the operator's algod and indexer clients."""
+        """Builds the core for ``account`` on the operator's algod and indexer clients.
+
+        ``name`` is what members write after ``@`` to mention the bot, and
+        ``commands`` are the slash commands it declares (``/help`` is always
+        added). ``clock`` gives the time for the rate limit.
+        """
         chat = await AlgoChat.from_seed(
             seed=account.seed,
             address=account.address,
@@ -115,7 +162,7 @@ class AgentCore:
             key_storage=key_storage,
             message_cache=message_cache,
         )
-        core = cls(account, chat)
+        core = cls(account, chat, name=name, commands=commands, clock=clock)
         core._algod = algod
         core._indexer = indexer
         return core
@@ -130,6 +177,10 @@ class AgentCore:
         path: str | os.PathLike[str] | None = None,
         key_storage: EncryptionKeyStorage | None = None,
         message_cache: MessageCache | None = None,
+        *,
+        name: str | None = None,
+        commands: Sequence[BotCommand] = (),
+        clock: Callable[[], float] = time.time,
     ) -> AgentCore:
         """Loads the bot's mnemonic from its env var or local file, then builds the core."""
         try:
@@ -139,7 +190,32 @@ class AgentCore:
             environ = None
             raise
         environ = None
-        return await cls.create(account, config, algod, indexer, key_storage, message_cache)
+        return await cls.create(
+            account,
+            config,
+            algod,
+            indexer,
+            key_storage,
+            message_cache,
+            name=name,
+            commands=commands,
+            clock=clock,
+        )
+
+    @property
+    def name(self) -> str | None:
+        """The name members mention the bot by, as ``@name``."""
+        return self._name
+
+    @property
+    def commands(self) -> list[BotCommand]:
+        """The slash commands the bot declares, ``/help`` included, sorted by name."""
+        return list(self._commands)
+
+    @property
+    def command_list(self) -> str:
+        """The command list the bot posts in rooms where its mode is commands."""
+        return self._command_list
 
     @property
     def account(self) -> AgentAccount:
@@ -271,9 +347,17 @@ class AgentCore:
 
         A handler that returns ``None`` or an empty string sends nothing. A
         handler or send that fails is reported in the result and not retried.
+        A sender that any of the bot's rooms marks as a bot gets no answer.
         """
         results: list[DirectReply] = []
-        for message in await self.read_direct():
+        messages = await self.read_direct()
+        bots = self._known_bots() if messages else set()
+        for message in messages:
+            if public_key_from_address(message.sender) in bots:
+                # Never answer another bot (AGENT-8.c), here too.
+                self._answered.add(message.txid)
+                results.append(DirectReply(message, None, skipped=SKIP_FROM_BOT))
+                continue
             try:
                 answer = handler(message)
                 if inspect.isawaitable(answer):
@@ -544,18 +628,89 @@ class AgentCore:
             return None
         if not text:
             return None
+        parsed = parse_room_text(text)
+        own = track.own_txids()
         return RoomMessage(
             txid=tx.txid,
             group_id=track.group_id,
             mailbox=track.mailbox,
             sender=tx.sender,
-            text=text,
+            text=parsed.text,
             epoch=opened.epoch,
             counter=opened.counter,
             confirmed_round=tx.confirmed_round,
             intra_round_offset=tx.intra_round_offset,
             is_channel=track.parent is not None,
+            reply_to=parsed.reply_to,
+            mentioned=mentions(parsed.text, self._name, self.address)
+            or (parsed.reply_to is not None and parsed.reply_to in own),
+            command=command_call(
+                parsed.text,
+                [command.name for command in self._commands],
+                self._name,
+                self.address,
+            ),
+            from_bot=sender in self._known_bots(),
         )
+
+    def _known_bots(self) -> set[bytes]:
+        """Every account a room the bot is in marks as a bot, the bot itself excluded."""
+        found: set[bytes] = set()
+        for track in self._rooms.values():
+            if track.state is not None:
+                found.update(bytes(item.account) for item in track.state.bots)
+        found.discard(self._bot_key)
+        return found
+
+    def _rate_ok(self, track: RoomTrack) -> bool:
+        state = track.state
+        settings = None if state is None else room_bot(state, self._bot_key)
+        if settings is None:
+            return False
+        return within_rate(
+            track.post_times(), self._clock(), settings.replies, settings.seconds
+        )
+
+    def _skip_reason(self, track: RoomTrack, message: RoomMessage) -> str | None:
+        """Why the room's current record keeps the bot silent on ``message``, or None."""
+        if message.from_bot:
+            return SKIP_FROM_BOT
+        state = track.state
+        settings = None if state is None else room_bot(state, self._bot_key)
+        if settings is None:
+            return SKIP_NO_MODE
+        if settings.mode == BOT_MODE_MENTIONS and not message.mentioned:
+            return SKIP_NOT_MENTIONED
+        if settings.mode == BOT_MODE_COMMANDS and message.command is None:
+            return SKIP_NOT_A_COMMAND
+        if not self._rate_ok(track):
+            return SKIP_RATE_LIMIT
+        return None
+
+    async def declare_commands(self) -> list[str]:
+        """Posts the bot's command list in each room where its mode is commands.
+
+        A room already showing the current list (the bot's latest list there
+        since it was added) gets nothing. A post that would go over the rate
+        limit waits for a later call. Returns the transaction ids.
+        """
+        await self.sync_rooms()
+        return await self._declare()
+
+    async def _declare(self) -> list[str]:
+        txids: list[str] = []
+        for track in self._rooms.values():
+            if track.state is None or track.status() != ROOM_ACTIVE:
+                continue
+            settings = room_bot(track.state, self._bot_key)
+            if settings is None or settings.mode != BOT_MODE_COMMANDS:
+                continue
+            if track.latest_command_list() == self._command_list:
+                continue
+            if not self._rate_ok(track):
+                continue
+            txids.append(await self._post(track, self._command_list))
+        return txids
 
     async def _post(self, track: RoomTrack, text: str) -> str:
         status = track.status()
@@ -576,6 +731,7 @@ class AgentCore:
         )
         txid = await self._pay(track.mailbox, note)
         track.next_counter[epoch] = counter + 1
+        track.sent_at[txid] = self._clock()
         return txid
 
     async def send_room(
@@ -593,17 +749,40 @@ class AgentCore:
         return await self.send_room(message, text)
 
     async def serve_rooms(self, handler: RoomHandler) -> list[RoomReply]:
-        """Reads new room messages and answers each with ``handler``'s text.
+        """Reads new room messages and answers them the way each room's record says.
+
+        The reply mode and rate limit come from the room's current record, so
+        a change by the owner or an admin applies from the next message. In
+        mentions mode the bot answers ``@name`` (or ``@address``) and replies
+        to its own messages; in every-message mode, everything; in commands
+        mode, its declared ``/commands``, after posting its command list
+        there. It never answers an account a room marks as a bot. A message
+        over the rate limit is skipped, not queued. ``/help`` is answered with
+        the command list unless the operator declared their own ``help``.
 
         A handler that returns ``None`` or an empty string sends nothing. A
         handler or send that fails is reported in the result and not retried.
         """
+        messages = await self.read_rooms()
+        await self._declare()
         results: list[RoomReply] = []
-        for message in await self.read_rooms():
+        for message in messages:
+            track = self._track(message)
+            skipped = self._skip_reason(track, message)
+            if skipped is not None:
+                results.append(RoomReply(message, None, skipped=skipped))
+                continue
             try:
-                answer = handler(message)
-                if inspect.isawaitable(answer):
-                    answer = await answer
+                if (
+                    message.command is not None
+                    and message.command.name == HELP_COMMAND
+                    and HELP_COMMAND not in self._operator_commands
+                ):
+                    answer = self._command_list
+                else:
+                    answer = handler(message)
+                    if inspect.isawaitable(answer):
+                        answer = await answer
                 if not answer:
                     results.append(RoomReply(message, None))
                     continue

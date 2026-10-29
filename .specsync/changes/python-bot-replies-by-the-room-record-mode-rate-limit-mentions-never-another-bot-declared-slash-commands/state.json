@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "python-bot-replies-by-the-room-record-mode-rate-limit-mentions-never-another-bot-declared-slash-commands",
+  "slug": "python-bot-replies-by-the-room-record-mode-rate-limit-mentions-never-another-bot-declared-slash-commands",
+  "title": "Python bot replies by the room record: mode, rate limit, mentions, never another bot, declared slash commands",
+  "description": "Python bot replies by the room record: mode, rate limit, mentions, never another bot, declared slash commands",
+  "kind": "feature",
+  "state": "draft",
+  "base_commit": "e32b4671829c9d82d32271392b44feda973b5716",
+  "created_at": 1793291695,
+  "updated_at": 1793291704,
+  "affected_specs": [],
+  "affected_paths": [
+    "py/specs/agent",
+    "py/src/algochat/agent",
+    "py/tests",
+    "py/README.md",
+    "py/docs",
+    "swift/Tests/AlgoChatTests/AgentRoomsLocalnetTests.swift"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and vectors do not change. The bot reads the existing section 5.8 op 13 and op 14 bot record (mode, replies, seconds) and posts its command list as an ordinary plain-text 0x07 room message, so no new note type is needed. This change adds the reply policy to the Python agent core, with the Python module specs under py/specs updated in place. Wire bytes are untouched.",
+  "acceptance_criteria": [
+    "AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e and AGENT-8.f in hi/agent.md, as scoped by algochat#46: in each room the Python bot replies only in the mode the room's record holds (mentions: @name, @address or a reply to one of its messages; every message; commands: only its declared /commands); it posts at most the record's replies in any window of the record's seconds, also across a restart, and skips (does not queue) messages over the limit; it never answers an account a room's record marks as a bot, in rooms or one-to-one; a mode or limit change by the owner or an admin (op 14) applies from the next message it handles; in commands mode it posts its command list once as plain room text (again only when the list changes) and answers /help with it; a bot added as a plain member has no mode and stays silent; on localnet, messages written by TypeScript, Go, Rust, Python and Kotlin drive every mode, and every implementation including Swift (through the recorded-notes swift test on Linux) opens the bot's notes and reduces the room chain with both bots' modes and limits; unit tests use public non-secret seeds, a fake clock and no network; localnet tests use throwaway accounts funded only from the local KMD wallet."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}
