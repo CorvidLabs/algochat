@@ -1,7 +1,7 @@
 # AlgoChat
 
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](https://github.com/CorvidLabs/algochat/blob/main/LICENSE)
-[![Protocol](https://img.shields.io/badge/protocol-1.5.0-2ea44f)](PROTOCOL.md)
+[![Protocol](https://img.shields.io/badge/protocol-1.6.0-2ea44f)](PROTOCOL.md)
 [![Docs](https://img.shields.io/badge/docs-corvidlabs.xyz-1f6feb)](https://corvidlabs.xyz/algochat/)
 
 End-to-end encrypted messages carried as notes on Algorand payments. One protocol. Six libraries. Your keys stay with you.
@@ -23,7 +23,7 @@ PQ levels are the integers in [PROTOCOL.md section 5.4.2](PROTOCOL.md#542-pq-lev
 
 The reported protocol 1.3.0 LocalNet matrix is in [PARITY.md](PARITY.md): six libraries wrote empty, small, large, and maximum notes for `0x01`, `0x02`, and `0x05`, plus one `0x04` handshake each. That historical run reported 540 successful reads. It does not qualify every later commit or every platform; Swift's ML-KEM methods are unavailable on Linux.
 
-Public room administration `0x03` and group mailbox notes `0x06` and `0x07` are in tag v1.4.0. They were not in tag v1.3.0. Version 1.5.0 is the delta room note: the member list is omitted, one room holds 256 people, and a channel is another room the group owner keeps. [Protocol flows](docs/PROTOCOL-FLOWS.md) explains their integration and known port differences. PROTOCOL.md section 5.8.4 records two LocalNet runs. One creates a group of three, adds a member, removes one, and posts one message. The other puts all six libraries in one group, and each library posts its own line. Those historical reports say every library opened every line; they are not fresh verification of this checkout.
+Public room administration `0x03` and group mailbox notes `0x06` and `0x07` are in tag v1.4.0. They were not in tag v1.3.0. Version 1.5.0 is the delta room note: the member list is omitted, one room holds 256 people, and a channel is another room the group owner keeps. Version 1.6.0 adds room bots: the owner or an admin adds a bot with a reply mode and a rate limit, and can change them later. [Protocol flows](docs/PROTOCOL-FLOWS.md) explains their integration and known port differences. PROTOCOL.md section 5.8.4 records two LocalNet runs. One creates a group of three, adds a member, removes one, and posts one message. The other puts all six libraries in one group, and each library posts its own line. Those historical reports say every library opened every line; they are not fresh verification of this checkout.
 
 ```mermaid
 flowchart LR
@@ -61,7 +61,7 @@ Fenced `mermaid` blocks render on GitHub. The Pages site renders the same fences
 
 ## Versions and requirements
 
-This repository is the source for the protocol and all six libraries. Archived language repositories stay archived. Protocol **1.5.0** is the specification version; each library has its own package version. The table records the versions and requirements declared by this source tree, not registry publication status.
+This repository is the source for the protocol and all six libraries. Archived language repositories stay archived. Protocol **1.6.0** is the specification version; each library has its own package version. The table records the versions and requirements declared by this source tree, not registry publication status.
 
 | Library | Package | Package version / tag | Declared language and runtime |
 | --- | --- | --- | --- |

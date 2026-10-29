@@ -22,6 +22,8 @@ from algochat.group import (
 from algochat.group_admin import (
     AcceptedAdmin,
     AdminEvent,
+    BotSettings,
+    RoomBot,
     RoomState,
     delivery_authorized,
     draft_admin,
@@ -211,7 +213,24 @@ def _room_state(value: object) -> RoomState | None:
         epoch=int(value["epoch"]),
         head_tx_id=_hex_bytes(value["head_tx_id"]),
         parent_group_id=_hex_bytes(parent_group_id) if isinstance(parent_group_id, str) else bytes(32),
+        bots=[
+            RoomBot(
+                account=_hex_bytes(item["account"]),
+                mode=int(item["mode"]),
+                replies=int(item["replies"]),
+                seconds=int(item["seconds"]),
+            )
+            for item in value.get("bots") or []
+        ],
     )
+
+
+def _bot_settings(value: object) -> BotSettings | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise RuntimeError("bot must be an object or null")
+    return BotSettings(mode=int(value["mode"]), replies=int(value["replies"]), seconds=int(value["seconds"]))
 
 
 def _room_state_json(state: RoomState | None) -> dict | None:
@@ -229,6 +248,10 @@ def _room_state_json(state: RoomState | None) -> dict | None:
         "epoch": state.epoch,
         "head_tx_id": state.head_tx_id.hex(),
         "parent_group_id": state.parent_group_id.hex(),
+        "bots": [
+            {"account": item.account.hex(), "mode": item.mode, "replies": item.replies, "seconds": item.seconds}
+            for item in state.bots
+        ],
     }
 
 
@@ -264,6 +287,7 @@ def admin_draft(req: dict) -> dict:
         group_id=_optional_hex_field(req, "group_id"),
         mailbox=_optional_hex_field(req, "mailbox"),
         parent_room=_room_state(req.get("parent_room")),
+        bot=_bot_settings(req.get("bot")),
     )
     return {"note": note.hex()}
 

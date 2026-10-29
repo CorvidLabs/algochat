@@ -303,8 +303,13 @@ private fun adminDraft(req: JsonObject): ByteArray {
         req.intOrNull("policy"),
         req.hexOrNull("group_id"),
         req.hexOrNull("mailbox"),
-        req.stateOrNull("parent_room")
+        req.stateOrNull("parent_room"),
+        req["bot"]?.let { if (it is JsonNull) null else botSettings(it.jsonObject) }
     )
+}
+
+private fun botSettings(item: JsonObject): BotSettings {
+    return BotSettings(item.reqInt("mode"), item.reqInt("replies"), item.reqInt("seconds"))
 }
 
 private fun adminReduce(req: JsonObject): JsonObject {
@@ -389,7 +394,17 @@ private fun roomState(state: JsonObject): RoomState {
         hexToBytes(state.str("head_tx_id")),
         state["parent_group_id"]?.let { parent ->
             if (parent is JsonNull) ByteArray(32) else hexToBytes(parent.jsonPrimitive.content)
-        } ?: ByteArray(32)
+        } ?: ByteArray(32),
+        state["bots"]?.let { bots ->
+            if (bots is JsonNull) {
+                emptyList()
+            } else {
+                bots.jsonArray.map { element ->
+                    val item = element.jsonObject
+                    RoomBot(hexToBytes(item.str("account")), botSettings(item))
+                }
+            }
+        } ?: emptyList()
     )
 }
 
@@ -417,6 +432,19 @@ private fun stateJson(state: RoomState): JsonObject {
         put("epoch", unsignedEpoch(state.epoch))
         put("head_tx_id", bytesToHex(state.headTxId))
         put("parent_group_id", bytesToHex(state.parentGroupId))
+        put(
+            "bots",
+            JsonArray(
+                state.bots.map { bot ->
+                    buildJsonObject {
+                        put("account", bytesToHex(bot.account))
+                        put("mode", bot.settings.mode)
+                        put("replies", bot.settings.replies)
+                        put("seconds", bot.settings.seconds)
+                    }
+                }
+            )
+        )
     }
 }
 

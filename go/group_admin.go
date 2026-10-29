@@ -44,7 +44,43 @@ const (
 	adminOpDecline        = 10
 	adminOpRemove         = 11
 	adminOpRekey          = 12
+	adminOpAddBot         = 13
+	adminOpSetBot         = 14
 )
+
+// Room bots. Op 13 adds a bot: an owner or admin marks it as a bot at that moment,
+// with a reply mode and a rate limit. Op 14 changes that mode and limit.
+const (
+	// AdminOpAddBot adds a bot, marked as a bot with its reply mode and rate limit.
+	AdminOpAddBot = adminOpAddBot
+	// AdminOpSetBot changes a bot's reply mode and rate limit.
+	AdminOpSetBot = adminOpSetBot
+	// BotModeMentions replies only when the bot is mentioned or replied to.
+	BotModeMentions = 1
+	// BotModeEveryMessage replies on every message.
+	BotModeEveryMessage = 2
+	// BotModeCommands replies only to the bot's slash commands.
+	BotModeCommands = 3
+	// BotRatePresetReplies and BotRatePresetSeconds are the suggested safe preset,
+	// 5 replies per 60 seconds. A suggestion, never a default.
+	BotRatePresetReplies = 5
+	BotRatePresetSeconds = 60
+	// BotSettingsSize is the bytes a bot record adds after the parent group id.
+	BotSettingsSize = 5
+)
+
+// BotSettings is a bot's reply mode and rate limit in one room: Replies per Seconds.
+type BotSettings struct {
+	Mode    int
+	Replies int
+	Seconds int
+}
+
+// RoomBot is one member marked as a bot in a room.
+type RoomBot struct {
+	Account []byte
+	BotSettings
+}
 
 // RoomState is the derived roster. Pending join requests are not written in the note.
 // ParentGroupID is 32 zero bytes when this room is not a channel.
@@ -60,6 +96,8 @@ type RoomState struct {
 	Name          []byte
 	Epoch         uint32
 	HeadTxID      []byte
+	// Bots are the members marked as bots in this room, sorted by account.
+	Bots []RoomBot
 }
 
 // AdminEvent is one confirmed administration payment.
@@ -109,6 +147,8 @@ type AdminDraft struct {
 	GroupID    []byte
 	Mailbox    []byte
 	ParentRoom *RoomState
+	// Bot is required for add-bot and set-bot. There is no default.
+	Bot *BotSettings
 }
 
 // GroupKeyDelivery is the plaintext of one 0x06 action-5 note.
@@ -135,6 +175,8 @@ type decodedAdmin struct {
 	membersOmitted bool
 	// Present on a delta note. Legacy full-list notes leave this as 32 zero bytes.
 	parentGroupID []byte
+	// Present only on an add-bot or set-bot note.
+	bot *BotSettings
 }
 
 type roomBody struct {
@@ -148,6 +190,7 @@ type roomBody struct {
 	policy        int
 	name          []byte
 	epoch         uint32
+	bots          []RoomBot
 }
 
 type parentStep struct {
@@ -166,6 +209,14 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 	subject := in.Subject
 	if subject == nil {
 		subject = make([]byte, KeySize)
+	}
+	if isBotOp(in.Op) {
+		if in.Bot == nil {
+			return nil, errors.New("A bot needs a reply mode and a rate limit")
+		}
+		if err := checkBotSettings(*in.Bot); err != nil {
+			return nil, err
+		}
 	}
 	name := []byte{}
 	switch {
@@ -227,6 +278,7 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 		subject:        subject,
 		membersOmitted: true,
 		parentGroupID:  parentGroup,
+		bot:            in.Bot,
 	}
 	var next roomBody
 	if in.Op == adminOpCreate {
@@ -241,6 +293,7 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 			policy:        decoded.policy,
 			name:          decoded.name,
 			epoch:         1,
+			bots:          []RoomBot{},
 		}
 	} else {
 		if state != nil {
@@ -252,6 +305,10 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	var bot *BotSettings
+	if isBotOp(in.Op) {
+		bot = in.Bot
 	}
 	return encodeAdminRecord(decodedAdmin{
 		parent:         decoded.parent,
@@ -267,7 +324,22 @@ func DraftAdmin(state *RoomState, in AdminDraft) ([]byte, error) {
 		subject:        subject,
 		membersOmitted: true,
 		parentGroupID:  next.parentGroupID,
+		bot:            bot,
 	})
+}
+
+// RoomBotFor returns the bot mark, reply mode and rate limit for account, or nil when it is not a bot here.
+func RoomBotFor(state RoomState, account []byte) (*RoomBot, error) {
+	if err := requireLen("account", account, KeySize); err != nil {
+		return nil, err
+	}
+	for _, item := range state.Bots {
+		if bytes.Equal(item.Account, account) {
+			found := RoomBot{Account: cloneBytes(item.Account), BotSettings: item.BotSettings}
+			return &found, nil
+		}
+	}
+	return nil, nil
 }
 
 // ReduceAdmin applies events in confirmed order: round, then offset, then transaction id.
@@ -350,7 +422,7 @@ func DeliveryAuthorized(accepted []AcceptedAdmin, adminTxID, sender, recipient [
 		return false
 	}
 	switch record.Op {
-	case adminOpAdd, adminOpAccept:
+	case adminOpAdd, adminOpAccept, adminOpAddBot:
 		return bytes.Equal(record.Subject, recipient)
 	case adminOpRemove:
 		return !bytes.Equal(record.Subject, recipient)
@@ -556,6 +628,7 @@ func applyAdmin(state *RoomState, event AdminEvent, known map[string]struct{}, p
 		Name:          next.name,
 		Epoch:         next.epoch,
 		HeadTxID:      head,
+		Bots:          cloneBots(next.bots),
 	}
 	if room.Admins == nil {
 		room.Admins = [][]byte{}
@@ -620,6 +693,7 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 	epoch := state.Epoch
 	name := cloneBytes(state.Name)
 	policy := state.Policy
+	bots := cloneBots(state.Bots)
 	subject := decoded.subject
 	switch decoded.op {
 	case adminOpSetName:
@@ -639,6 +713,9 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 		if !containsKey(members, subject) || bytes.Equal(subject, owner) || containsKey(admins, subject) {
 			return roomBody{}, errors.New("That person cannot be appointed")
 		}
+		if botIndex(bots, subject) >= 0 {
+			return roomBody{}, errors.New("A bot cannot be an admin")
+		}
 		var err error
 		admins, err = canonicalSet(append(admins, subject), "admins", groupAdminMax)
 		if err != nil {
@@ -652,6 +729,9 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 	case adminOpTransfer:
 		if !bytes.Equal(sender, state.Owner) || !containsKey(members, subject) || bytes.Equal(subject, owner) {
 			return roomBody{}, errors.New("Ownership can move only from the owner to another member")
+		}
+		if botIndex(bots, subject) >= 0 {
+			return roomBody{}, errors.New("A bot cannot own the room")
 		}
 		owner = cloneBytes(subject)
 		admins = filterOut(admins, subject)
@@ -701,6 +781,9 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 		members = filterOut(members, subject)
 		admins = filterOut(admins, subject)
 		pending = filterOut(pending, subject)
+		if at := botIndex(bots, subject); at >= 0 {
+			bots = append(bots[:at], bots[at+1:]...)
+		}
 		var err error
 		epoch, err = bumpEpoch(epoch)
 		if err != nil {
@@ -715,6 +798,31 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 		if err != nil {
 			return roomBody{}, err
 		}
+	case adminOpAddBot:
+		if !privileged || containsKey(members, subject) || bytes.Equal(subject, state.Mailbox) || isZero(subject) {
+			return roomBody{}, errors.New("Sender cannot add that bot")
+		}
+		settings, err := requireBot(decoded)
+		if err != nil {
+			return roomBody{}, err
+		}
+		members, err = canonicalSet(append(members, subject), "members", groupMemberMax)
+		if err != nil {
+			return roomBody{}, err
+		}
+		pending = filterOut(pending, subject)
+		bots = append(bots, RoomBot{Account: cloneBytes(subject), BotSettings: settings})
+		sort.Slice(bots, func(i, j int) bool { return bytes.Compare(bots[i].Account, bots[j].Account) < 0 })
+	case adminOpSetBot:
+		at := botIndex(bots, subject)
+		if !privileged || at < 0 {
+			return roomBody{}, errors.New("Sender cannot change that bot")
+		}
+		settings, err := requireBot(decoded)
+		if err != nil {
+			return roomBody{}, err
+		}
+		bots[at] = RoomBot{Account: cloneBytes(subject), BotSettings: settings}
 	default:
 		return roomBody{}, errors.New("Unknown room administration operation")
 	}
@@ -735,7 +843,51 @@ func expectNext(state *RoomState, decoded decodedAdmin, sender []byte) (roomBody
 		policy:        policy,
 		name:          name,
 		epoch:         epoch,
+		bots:          bots,
 	}, nil
+}
+
+func isBotOp(op int) bool {
+	return op == adminOpAddBot || op == adminOpSetBot
+}
+
+func checkBotSettings(bot BotSettings) error {
+	if bot.Mode != BotModeMentions && bot.Mode != BotModeEveryMessage && bot.Mode != BotModeCommands {
+		return errors.New("Bot reply mode must be mentions, every message, or commands")
+	}
+	for _, value := range []int{bot.Replies, bot.Seconds} {
+		if value < 1 || value > 0xffff {
+			return errors.New("Bot rate limit must be from 1 through 65535")
+		}
+	}
+	return nil
+}
+
+func requireBot(decoded decodedAdmin) (BotSettings, error) {
+	if decoded.bot == nil {
+		return BotSettings{}, errors.New("A bot needs a reply mode and a rate limit")
+	}
+	if err := checkBotSettings(*decoded.bot); err != nil {
+		return BotSettings{}, err
+	}
+	return *decoded.bot, nil
+}
+
+func botIndex(bots []RoomBot, account []byte) int {
+	for i, item := range bots {
+		if bytes.Equal(item.Account, account) {
+			return i
+		}
+	}
+	return -1
+}
+
+func cloneBots(bots []RoomBot) []RoomBot {
+	out := make([]RoomBot, 0, len(bots))
+	for _, item := range bots {
+		out = append(out, RoomBot{Account: cloneBytes(item.Account), BotSettings: item.BotSettings})
+	}
+	return out
 }
 
 func bodyFrom(decoded decodedAdmin, pending [][]byte, members [][]byte) roomBody {
@@ -753,6 +905,7 @@ func bodyFrom(decoded decodedAdmin, pending [][]byte, members [][]byte) roomBody
 		policy:        decoded.policy,
 		name:          cloneBytes(decoded.name),
 		epoch:         decoded.epoch,
+		bots:          []RoomBot{},
 	}
 }
 
@@ -814,6 +967,20 @@ func encodeAdminRecord(fields decodedAdmin) ([]byte, error) {
 	if !knownAdminOp(fields.op) {
 		return nil, errors.New("Unknown room administration operation")
 	}
+	botOp := isBotOp(fields.op)
+	if botOp {
+		if !fields.membersOmitted {
+			return nil, errors.New("A bot record uses the delta note")
+		}
+		if fields.bot == nil {
+			return nil, errors.New("A bot needs a reply mode and a rate limit")
+		}
+		if err := checkBotSettings(*fields.bot); err != nil {
+			return nil, err
+		}
+	} else if fields.bot != nil {
+		return nil, errors.New("Only a bot record carries bot settings")
+	}
 	out := make([]byte, 0, 205+len(name)+KeySize*len(admins))
 	out = append(out, protocolVersionAAD, protocolIDGroupAdmin)
 	out = append(out, fields.parent...)
@@ -845,6 +1012,13 @@ func encodeAdminRecord(fields decodedAdmin) ([]byte, error) {
 	out = append(out, fields.subject...)
 	if fields.membersOmitted {
 		out = append(out, parentGroup...)
+	}
+	if botOp {
+		out = append(out, byte(fields.bot.Mode))
+		binary.BigEndian.PutUint16(count[:], uint16(fields.bot.Replies))
+		out = append(out, count[:]...)
+		binary.BigEndian.PutUint16(count[:], uint16(fields.bot.Seconds))
+		out = append(out, count[:]...)
 	}
 	if len(out) > MaxNoteSize {
 		if fields.membersOmitted {
@@ -953,6 +1127,25 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 			return decodedAdmin{}, err
 		}
 	}
+	op := int(opBytes[0])
+	var bot *BotSettings
+	if isBotOp(op) {
+		if !membersOmitted {
+			return decodedAdmin{}, errors.New("A bot record uses the delta note")
+		}
+		settings, err := take(BotSettingsSize)
+		if err != nil {
+			return decodedAdmin{}, err
+		}
+		bot = &BotSettings{
+			Mode:    int(settings[0]),
+			Replies: int(binary.BigEndian.Uint16(settings[1:3])),
+			Seconds: int(binary.BigEndian.Uint16(settings[3:5])),
+		}
+		if err := checkBotSettings(*bot); err != nil {
+			return decodedAdmin{}, err
+		}
+	}
 	if cursor != len(note) {
 		return decodedAdmin{}, errors.New("Administration record has trailing bytes")
 	}
@@ -982,7 +1175,7 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 		groupID:        groupID,
 		mailbox:        mailbox,
 		epoch:          epoch,
-		op:             int(opBytes[0]),
+		op:             op,
 		name:           name,
 		policy:         policy,
 		owner:          owner,
@@ -991,6 +1184,7 @@ func decodeAdmin(note []byte) (decodedAdmin, error) {
 		subject:        subject,
 		membersOmitted: membersOmitted,
 		parentGroupID:  parentGroup,
+		bot:            bot,
 	}, nil
 }
 
@@ -1191,10 +1385,8 @@ func channelParent(state *RoomState, in AdminDraft) ([]byte, error) {
 	if in.Op == adminOpTransfer {
 		return nil, errors.New("The group owner keeps the channel")
 	}
-	if in.Op == adminOpAdd || in.Op == adminOpAccept || in.Op == adminOpRequest {
-		if !containsKey(in.ParentRoom.Members, subject) {
-			return nil, errors.New("That person is not in the parent room")
-		}
+	if err := checkChannelJoin(in.Op, subject, in.ParentRoom); err != nil {
+		return nil, err
 	}
 	return cloneBytes(current), nil
 }
@@ -1219,16 +1411,30 @@ func bindChannel(decoded decodedAdmin, sender []byte, parentSupplied bool, paren
 	if decoded.op == adminOpTransfer {
 		return errors.New("The group owner keeps the channel")
 	}
-	if decoded.op == adminOpAdd || decoded.op == adminOpAccept || decoded.op == adminOpRequest {
-		if !containsKey(parentState.Members, decoded.subject) {
-			return errors.New("That person is not in the parent room")
-		}
+	return checkChannelJoin(decoded.op, decoded.subject, parentState)
+}
+
+// checkChannelJoin: a channel takes people from its parent room. A bot there joins a channel only as a bot.
+func checkChannelJoin(op int, subject []byte, parentRoom *RoomState) error {
+	joining := op == adminOpAdd || op == adminOpAccept || op == adminOpRequest
+	if !joining && op != adminOpAddBot {
+		return nil
+	}
+	if !containsKey(parentRoom.Members, subject) {
+		return errors.New("That person is not in the parent room")
+	}
+	parentBot := botIndex(parentRoom.Bots, subject) >= 0
+	if op == adminOpAddBot && !parentBot {
+		return errors.New("That account is not a bot in the parent room")
+	}
+	if joining && parentBot {
+		return errors.New("A bot joins a channel only when added as a bot")
 	}
 	return nil
 }
 
 func knownAdminOp(op int) bool {
-	return op >= adminOpCreate && op <= adminOpRekey
+	return op >= adminOpCreate && op <= adminOpSetBot
 }
 
 func cloneBytes(value []byte) []byte {
