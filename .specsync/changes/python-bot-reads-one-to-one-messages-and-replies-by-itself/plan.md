@@ -9,6 +9,10 @@ artifact: plan
 
 Move transaction sending into the library, then build one-to-one reading and replying on `AgentCore`. Point the algochat#43 localnet helpers at the library so the tests run the code a bot runs. Prove it on localnet with every implementation.
 
+## Out of scope
+
+Rooms and channels (algochat#45), reply policy (algochat#46), MCP, CLI and webhook adapters (algochat#47), the funds warning and operator guide (algochat#48).
+
 ## Steps
 
 1. `algochat.transaction` and `algochat.http_clients`, with algosdk-derived vectors and a loopback-server test.
