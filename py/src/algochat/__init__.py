@@ -34,6 +34,21 @@ from .group import (
     seal_group_membership,
     seal_group_message,
 )
+from .group_admin import (
+    AcceptedAdmin,
+    AdminEvent,
+    GroupKeyDelivery,
+    ReduceAdminResult,
+    RejectedAdmin,
+    RoomState,
+    delivery_authorized,
+    draft_admin,
+    open_group_key_delivery,
+    reduce_admin,
+    seal_group_key_delivery,
+    sender_may_post,
+)
+from .http_clients import HttpAlgodClient, HttpError, HttpIndexerClient
 from .keys import derive_keys_from_seed, generate_ephemeral_keypair
 from .models import (
     Conversation,
@@ -133,6 +148,7 @@ from .storage import (
     MessageCache,
     PublicKeyCache,
 )
+from .transaction import SignedPayment, build_payment, send_payment, sign_payment
 from .types import (
     MAX_NOTE_SIZE,
     MAX_PAYLOAD_SIZE,
@@ -159,24 +175,20 @@ from .types import (
     UnverifiedKeyError,
     payment_fee,
 )
-from .group_admin import (
-    AcceptedAdmin,
-    AdminEvent,
-    GroupKeyDelivery,
-    ReduceAdminResult,
-    RejectedAdmin,
-    RoomState,
-    delivery_authorized,
-    draft_admin,
-    open_group_key_delivery,
-    reduce_admin,
-    seal_group_key_delivery,
-    sender_may_post,
-)
 
 __version__ = "0.2.0"
 
 __all__ = [
+    # Payments and HTTP clients
+    "HttpAlgodClient",
+    "HttpError",
+    "HttpIndexerClient",
+    "SignedPayment",
+    "TransactionError",
+    "build_payment",
+    "payment_fee",
+    "send_payment",
+    "sign_payment",
     "GROUP_MAX_PAYLOAD_SIZE",
     # Group mailbox (protocols 0x06 and 0x07)
     "GROUP_MEMBERSHIP_NOTE_SIZE",
@@ -266,7 +278,6 @@ __all__ = [
     "SendResult",
     "StorageError",
     "SuggestedParams",
-    "TransactionError",
     "TransactionInfo",
     "UnverifiedKeyError",
     "accept_pq_session",
@@ -317,7 +328,6 @@ __all__ = [
     "open_pq_session_as_sender",
     "parse_pq_key_announcement",
     "parse_psk_exchange_uri",
-    "payment_fee",
     "pq_announcement_signing_input",
     "record_receive",
     "seal_group_membership",

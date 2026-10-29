@@ -20,18 +20,15 @@ import re
 import traceback
 
 import pytest
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from algochat.agent import AgentAccount, AgentConfigError, AgentCore
 from algochat.agent.config import MNEMONIC_ENV, MNEMONIC_FILE_ENV
 from algochat.client import AlgoChat, AlgoChatConfig
-from algochat.keys import public_key_to_bytes
+from algochat.http_clients import HttpError
 from algochat.models import MessageDirection
-from algochat.signature import sign_encryption_key
 
 from .localnet_support import (
     LocalnetAlgod,
-    LocalnetHTTPError,
     LocalnetIndexer,
     SigningAccount,
     dispenser,
@@ -91,32 +88,11 @@ async def _funded_account(algod: LocalnetAlgod) -> SigningAccount:
     return account
 
 
-async def _publish_key(
-    algod: LocalnetAlgod, account: SigningAccount, chat: AlgoChat
-) -> None:
-    """Self-payment whose note is the X25519 key plus its Ed25519 signature."""
-    key = chat.encryption_public_key
-    # AlgoChat.encryption_public_key is annotated as bytes but returns the key object today.
-    raw = key if isinstance(key, bytes) else public_key_to_bytes(key)
-    signature = sign_encryption_key(
-        raw, Ed25519PrivateKey.from_private_bytes(account.seed)
-    )
-    info = await send_payment(algod, account, account.address, 0, raw + signature)
-    await LocalnetIndexer().wait_for_indexer(info.txid, 30)
-
-
-async def _send_chat(
-    algod: LocalnetAlgod,
-    sender: SigningAccount,
-    chat: AlgoChat,
-    receiver: str,
-    text: str,
-) -> str:
-    key = await chat.discover_key(receiver)
-    assert key is not None and key.is_verified
-    note = chat.encrypt(text, key.public_key)
-    info = await send_payment(algod, sender, receiver, 0, note)
-    return info.txid
+async def _publish_key(core: AgentCore) -> None:
+    """Publishes through the library and waits until the indexer has it."""
+    txid = await core.publish_key()
+    assert txid is not None
+    await LocalnetIndexer().wait_for_indexer(txid, 30)
 
 
 async def _sync_until(chat: AlgoChat, indexer: LocalnetIndexer, txid: str):
@@ -172,27 +148,23 @@ async def test_bot_sends_and_receives_a_real_message_on_localnet():
     bot = await AgentCore.from_environment(
         _config(), algod, indexer, environ={MNEMONIC_ENV: bot_account.mnemonic}
     )
-    human_chat = await AlgoChat.from_seed(
-        human.seed, human.address, _config(), algod, indexer
+    human_core = await AgentCore.create(
+        AgentAccount.from_seed(human.seed), _config(), algod, indexer
     )
+    human_chat = human_core.chat
 
-    await _publish_key(algod, bot_account, bot.chat)
-    await _publish_key(algod, human, human_chat)
+    await _publish_key(bot)
+    await _publish_key(human_core)
 
     # Human -> bot.
-    hello_txid = await _send_chat(
-        algod, human, human_chat, bot.address, "hello bot, are you there?"
-    )
+    hello_txid = await human_core.send_direct(bot.address, "hello bot, are you there?")
     received = await _sync_until(bot.chat, indexer, hello_txid)
     assert received[hello_txid].content == "hello bot, are you there?"
     assert received[hello_txid].sender == human.address
     assert received[hello_txid].direction == MessageDirection.RECEIVED
 
-    # Bot -> human, signed with the key loaded from the bot's mnemonic.
-    bot_signer = SigningAccount(address=bot.address, seed=bot.account.seed)
-    reply_txid = await _send_chat(
-        algod, bot_signer, bot.chat, human.address, "yes, hello from the bot"
-    )
+    # Bot -> human, signed and sent by the library with the key from the bot's mnemonic.
+    reply_txid = await bot.send_direct(human.address, "yes, hello from the bot")
     seen_by_human = await _sync_until(human_chat, indexer, reply_txid)
     assert seen_by_human[reply_txid].content == "yes, hello from the bot"
     assert seen_by_human[reply_txid].sender == bot.address
@@ -257,7 +229,7 @@ async def test_errors_reprs_and_logs_never_leak_the_bot_key(tmp_path, caplog):
     broke_core = await AgentCore.from_environment(
         _config(), algod, indexer, environ={MNEMONIC_ENV: broke.mnemonic}
     )
-    with pytest.raises(LocalnetHTTPError) as caught:
+    with pytest.raises(HttpError) as caught:
         await send_payment(
             algod,
             SigningAccount(broke_core.address, broke_core.account.seed),

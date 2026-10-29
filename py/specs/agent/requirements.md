@@ -32,3 +32,14 @@ The Python agent core SHALL be one self-hosted object that later adapters build 
 Acceptance Criteria
 
 - `AgentCore` binds an `AlgoChat` client to the bot's own address on operator-supplied clients and refuses a client for another address.
+
+### REQ-agent-004
+
+The Python agent core SHALL read one-to-one messages to the bot and reply to them itself (AGENT-5).
+
+Acceptance Criteria
+
+- The bot publishes its signed encryption key once and reads messages to it, oldest first, across every indexer page.
+- The bot replies with its own account through the library's payment path, as a section 9.2 reply naming the message.
+- A message is answered at most once, also after a restart. Unreadable notes, its own notes and key publishes are skipped.
+- Messages written by every implementation are read, and every implementation reads the bot's replies.

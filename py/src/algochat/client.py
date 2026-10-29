@@ -35,6 +35,7 @@ from .models import (
     DiscoveredKey,
     Message,
     MessageDirection,
+    ReplyContext,
 )
 from .psk_crypto import decrypt_psk_message, encrypt_psk_message
 from .psk_envelope import decode_psk_envelope, encode_psk_envelope, is_psk_message
@@ -49,6 +50,7 @@ from .storage import (
     PublicKeyCache,
 )
 from .types import (
+    DecryptedContent,
     InvalidEnvelopeError,
     PSKDecryptionError,
     PublicKeyNotFoundError,
@@ -329,19 +331,21 @@ class AlgoChat:
         if not is_chat_message(envelope_bytes):
             raise InvalidEnvelopeError("Not an AlgoChat message")
 
-        decoded = decode_envelope(envelope_bytes)
-
-        result = decrypt_message(
-            decoded,
-            self._encryption_private_key,
-            self._encryption_public_key,
-        )
+        result = self._standard_content(envelope_bytes)
 
         if result is None:
             # Key-publish payload
             return ""
 
         return result.text
+
+    def _standard_content(self, envelope_bytes: bytes) -> DecryptedContent | None:
+        """Opens a standard envelope; ``None`` for a key publish."""
+        return decrypt_message(
+            decode_envelope(envelope_bytes),
+            self._encryption_private_key,
+            self._encryption_public_key,
+        )
 
     def _decrypt_psk(self, envelope_bytes: bytes, psk: bytes | None = None) -> str:
         """Decrypt a PSK v1.1 envelope."""
@@ -477,7 +481,17 @@ class AlgoChat:
             channel = self._psk_channels.get(other_address)
             if channel is not None:
                 psk = channel[0]
-        content = self.decrypt(tx.note, other_key, psk=psk)
+        reply_context = None
+        if is_psk:
+            content = self.decrypt(tx.note, other_key, psk=psk)
+        else:
+            opened = self._standard_content(tx.note)
+            content = "" if opened is None else opened.text
+            if opened is not None and opened.reply_to_id:
+                reply_context = ReplyContext(
+                    message_id=opened.reply_to_id,
+                    preview=opened.reply_to_preview or "",
+                )
 
         # Create message
         timestamp = datetime.fromtimestamp(tx.round_time, tz=timezone.utc)
@@ -490,7 +504,7 @@ class AlgoChat:
             timestamp=timestamp,
             confirmed_round=tx.confirmed_round,
             direction=direction,
-            reply_context=None,  # Reply context would be parsed from content
+            reply_context=reply_context,
         )
 
         # Update conversation
