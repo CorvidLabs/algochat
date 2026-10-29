@@ -24,3 +24,7 @@ Replies, rooms, channels, removal, reply policy, the MCP server, CLI, webhook br
 ## Risks
 
 The decoder is a reimplementation; fixed vectors and an optional algosdk cross-check guard it. The owner-only file rule refuses Kubernetes-style 0644 secret mounts.
+
+## Constraints consulted
+
+AGENT-1, AGENT-1.b, AGENT-1.d, AGENT-2 and AGENT-4 in hi/agent.md. py/AGENTS.md: no SDD approval on a human owner's behalf. The py package keeps `cryptography` as its only runtime dependency. No real mnemonics, wallets, or network calls in tests.
