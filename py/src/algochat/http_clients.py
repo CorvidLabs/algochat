@@ -137,6 +137,7 @@ def _note_transaction(tx: dict[str, Any]) -> NoteTransaction | None:
         note=base64.b64decode(tx["note"]),
         confirmed_round=tx.get("confirmed-round", 0),
         round_time=tx.get("round-time", 0),
+        intra_round_offset=tx.get("intra-round-offset", 0),
     )
 
 

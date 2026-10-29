@@ -5,7 +5,9 @@ The shared core that lets any agent run a self-hosted AlgoChat bot. The bot
 has its own Algorand account, loaded from a 25-word mnemonic held in an
 environment variable or a local file on the bot host (AGENT-1, AGENT-1.b,
 AGENT-1.d, AGENT-2, AGENT-4). It reads one-to-one messages and replies to
-them (AGENT-5). The MCP server, CLI and webhook bridge build on
+them (AGENT-5). It joins the rooms and channels an owner or admin adds it
+to, reads and replies there, and stops when removed or when it leaves
+(AGENT-6, AGENT-7). The MCP server, CLI and webhook bridge build on
 :class:`AgentCore` in later changes.
 """
 
@@ -17,18 +19,37 @@ from .config import (
     load_agent_mnemonic,
     read_mnemonic_file,
 )
-from .core import AgentCore, DirectHandler
+from .core import AgentCore, DirectHandler, RoomHandler
 from .direct import DirectMessage, DirectReply, encode_reply, reply_preview
+from .rooms import (
+    LEAVE_NOTICE,
+    ROOM_ACTIVE,
+    ROOM_LEFT,
+    ROOM_REMOVED,
+    ROOM_WAITING,
+    Room,
+    RoomMessage,
+    RoomReply,
+)
 
 __all__ = [
+    "LEAVE_NOTICE",
     "MNEMONIC_ENV",
     "MNEMONIC_FILE_ENV",
+    "ROOM_ACTIVE",
+    "ROOM_LEFT",
+    "ROOM_REMOVED",
+    "ROOM_WAITING",
     "AgentAccount",
     "AgentConfigError",
     "AgentCore",
     "DirectHandler",
     "DirectMessage",
     "DirectReply",
+    "Room",
+    "RoomHandler",
+    "RoomMessage",
+    "RoomReply",
     "address_from_public_key",
     "encode_reply",
     "load_agent_mnemonic",
