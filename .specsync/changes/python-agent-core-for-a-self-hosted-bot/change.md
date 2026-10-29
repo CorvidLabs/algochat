@@ -17,7 +17,7 @@ Python agent core for a self-hosted bot
 
 ## Acceptance Criteria
 
-- AGENT-1, AGENT-1.b, AGENT-1.d, AGENT-2 and AGENT-4 in hi/agent.md, as scoped by algochat#43: algochat.agent builds the bot's own Algorand account from its 25-word mnemonic, read only from ALGOCHAT_AGENT_MNEMONIC or an owner-only local file named by ALGOCHAT_AGENT_MNEMONIC_FILE; AgentCore binds an AlgoChat client to that account on operator-supplied algod and indexer clients; tests use mocks and public non-secret seeds only.
+- AGENT-1, AGENT-1.b, AGENT-1.d, AGENT-2 and AGENT-4 in hi/agent.md, as scoped by algochat#43: algochat.agent builds the bot's own Algorand account from its 25-word mnemonic, read only from ALGOCHAT_AGENT_MNEMONIC or an owner-only local file named by ALGOCHAT_AGENT_MNEMONIC_FILE; AgentCore binds an AlgoChat client to that account on operator-supplied algod and indexer clients; unit tests use mocks and public non-secret seeds only; localnet integration tests use throwaway accounts funded from the local network's own KMD wallet only.
 
 ## No-spec Rationale
 

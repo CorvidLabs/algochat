@@ -10,3 +10,4 @@ artifact: tasks
 - [x] Add `AgentCore` in `py/src/algochat/agent/core.py`.
 - [x] Add `py/specs/agent`, the README section, and the ignore patterns.
 - [x] Cover it in `py/tests/test_agent.py`.
+- [x] Run it end to end on a local network: `py/tests/test_agent_localnet.py`, helpers in `py/tests/localnet_support.py`, `py/scripts/native-localnet.sh` for machines without Docker, and `py/docs/localnet-testing.md`.

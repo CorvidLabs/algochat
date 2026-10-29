@@ -44,3 +44,6 @@ packages = ["src/algochat"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "localnet: needs a local Algorand network (see docs/localnet-testing.md); skipped when none is running",
+]
