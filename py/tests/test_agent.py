@@ -124,6 +124,8 @@ def _assert_no_secret_in_traceback(error: BaseException, phrase: str, seed: byte
     while pending:
         current = pending.pop()
         _assert_text_has_no_secret(str(current), phrase, seed)
+        _assert_text_has_no_secret(repr(current), phrase, seed)
+        assert not _holds_secret(vars(current), phrase, seed), "an exception attribute holds the bot key"
         for arg in current.args:
             assert not _holds_secret(arg, phrase, seed), "an exception argument holds the bot key"
         tb = current.__traceback__
@@ -596,6 +598,15 @@ class TestTracebackLocals:
             leaky_seed(SEED_A)
         with pytest.raises(AssertionError, match="holds the bot key"):
             _assert_no_secret_in_traceback(caught.value, MNEMONIC_A, SEED_A)
+
+    def test_the_walker_catches_an_exception_attribute(self):
+        error = AgentConfigError("bad")
+        error.detail = SEED_A
+        try:
+            raise error
+        except AgentConfigError as caught:
+            with pytest.raises(AssertionError, match="exception attribute holds the bot key"):
+                _assert_no_secret_in_traceback(caught, MNEMONIC_A, SEED_A)
 
 
 # ---------------------------------------------------------------------------
