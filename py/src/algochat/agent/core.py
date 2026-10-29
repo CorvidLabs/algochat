@@ -351,6 +351,9 @@ class AgentCore:
         """
         results: list[DirectReply] = []
         messages = await self.read_direct()
+        if messages:
+            # Read the rooms first, so a fresh core also knows which senders are bots.
+            await self.sync_rooms()
         bots = self._known_bots() if messages else set()
         for message in messages:
             if public_key_from_address(message.sender) in bots:

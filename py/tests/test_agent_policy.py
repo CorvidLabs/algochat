@@ -395,3 +395,18 @@ async def test_a_one_to_one_message_from_a_room_bot_gets_no_answer():
     ]
     assert await bot.serve_direct(lambda m: "hello") == []
 
+
+
+async def test_a_fresh_core_reads_its_rooms_before_answering_one_to_one():
+    chain = Ledger()
+    clock = Clock(chain)
+    await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60), other_bot=True)
+    bot = await _bot(chain, clock)
+    await bot.publish_key()
+    other = await _person(chain, OTHER_BOT_SEED)
+    await _say(chain, other, OTHER_BOT_SEED, bot.address, "hi from a bot")
+    # No sync_rooms call first: serve_direct must still see the room's bot mark.
+    served = await bot.serve_direct(lambda m: "hello")
+    assert [(m.message.text, m.reply_txid, m.skipped) for m in served] == [
+        ("hi from a bot", None, SKIP_FROM_BOT)
+    ]

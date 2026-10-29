@@ -66,7 +66,7 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 - `send_direct`: Sends a one-to-one message to an address that has a usable published key. Returns the transaction id.
 - `read_direct`: Returns one-to-one messages to the bot it has not answered, oldest first, each once per core. Reads every indexer page after its cursor.
 - `reply`: Answers a `DirectMessage` with a section 9.2 reply (`{"text","replyTo":{"txid","preview"}}`) and marks it answered.
-- `serve_direct`: Reads new messages and replies with a sync or async handler's text. `None` or empty sends nothing. A failing handler or send is reported by error type and not retried. A sender marked as a bot in any of the bot's rooms is not answered (`skipped` is `SKIP_FROM_BOT`). Returns one `DirectReply` per message.
+- `serve_direct`: Reads new messages and replies with a sync or async handler's text. `None` or empty sends nothing. A failing handler or send is reported by error type and not retried. A sender marked as a bot in any of the bot's rooms is not answered (`skipped` is `SKIP_FROM_BOT`); when there are new messages it reads its rooms first, so a fresh core knows the marks. Returns one `DirectReply` per message.
 
 `AgentCore` methods for rooms and channels (AGENT-6, AGENT-7):
 
