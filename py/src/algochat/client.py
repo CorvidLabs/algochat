@@ -29,7 +29,7 @@ from .blockchain import (
 )
 from .crypto import decrypt_message, encrypt_message
 from .envelope import decode_envelope, encode_envelope, is_chat_message
-from .keys import derive_keys_from_seed, public_key_from_bytes
+from .keys import derive_keys_from_seed, public_key_from_bytes, public_key_to_bytes
 from .models import (
     Conversation,
     DiscoveredKey,
@@ -197,8 +197,8 @@ class AlgoChat:
 
     @property
     def encryption_public_key(self) -> bytes:
-        """Returns the user's encryption public key."""
-        return self._encryption_public_key
+        """Returns the user's raw 32-byte X25519 encryption public key."""
+        return public_key_to_bytes(self._encryption_public_key)
 
     async def conversation(self, participant: str) -> Conversation:
         """Gets or creates a conversation with the given participant."""

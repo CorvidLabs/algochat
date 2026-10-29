@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "python-algochat-encryption-public-key-returns-raw-bytes",
+  "slug": "python-algochat-encryption-public-key-returns-raw-bytes",
+  "title": "Python AlgoChat.encryption_public_key returns raw bytes",
+  "description": "Python AlgoChat.encryption_public_key returns raw bytes",
+  "kind": "bug_fix",
+  "state": "draft",
+  "base_commit": "8e165d5a399fd0e5b94fe2998a07f2a43f448328",
+  "created_at": 1793285087,
+  "updated_at": 1793285115,
+  "affected_specs": [],
+  "affected_paths": [
+    "py/src/algochat/client.py",
+    "py/tests/test_client.py"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "Python-only return-type fix; the protocol spec, vectors and wire bytes do not change.",
+  "acceptance_criteria": [
+    "KEY-2 and KEY-1.a in hi/key.md (existing intent): AlgoChat.encryption_public_key returns the raw 32-byte X25519 public key, as its annotation and docstring say, so a Python caller can publish it and it matches what other implementations derive from the same account."
+  ],
+  "selected_artifacts": [
+    "context",
+    "testing",
+    "plan",
+    "tasks",
+    "requirements",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}
