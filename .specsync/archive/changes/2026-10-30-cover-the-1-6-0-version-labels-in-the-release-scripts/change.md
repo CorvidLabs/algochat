@@ -1,6 +1,6 @@
 ---
 id: cover-the-1-6-0-version-labels-in-the-release-scripts
-state: implementing
+state: archived
 type: documentation
 base_commit: 3d252ceda012256fb60f8503d701ca6f482786f3
 ---
