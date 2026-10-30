@@ -1,0 +1,1019 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1793370790,
+      "commit": "a4b92249dde964386c86be7a4dd64a16a8a37a53",
+      "contract_digest": "fdc8f30541f89029acda661c3dd07edcf09243a2e8a74e02e7d04fe01455c4e3",
+      "execution_digest": "4b5044776fad42ae309ef78266f0ec85db9b41d16c9eb99f92a4f2a07113e0fe",
+      "workspace_digest": "ab28c35f7eccee89589915e9cd5239cda6a41570bd60f9a9cc7e5d032a891ef6",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793370791,
+      "commit": "32241bb0edce1c476d2abe2d514a171644f10fb5",
+      "contract_digest": "fdc8f30541f89029acda661c3dd07edcf09243a2e8a74e02e7d04fe01455c4e3",
+      "execution_digest": "4b5044776fad42ae309ef78266f0ec85db9b41d16c9eb99f92a4f2a07113e0fe",
+      "workspace_digest": "ab28c35f7eccee89589915e9cd5239cda6a41570bd60f9a9cc7e5d032a891ef6",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793370791,
+      "commit": "2c4eea858c1c5b62b40fba7c8b7cf580bf3f61a3",
+      "contract_digest": "fdc8f30541f89029acda661c3dd07edcf09243a2e8a74e02e7d04fe01455c4e3",
+      "execution_digest": "4b5044776fad42ae309ef78266f0ec85db9b41d16c9eb99f92a4f2a07113e0fe",
+      "workspace_digest": "ab28c35f7eccee89589915e9cd5239cda6a41570bd60f9a9cc7e5d032a891ef6",
+      "acceptance_input_digest": "09b14b89357cde149de99b607d3e31f5dfb84fa1c606b876b8f8f209ea5d6a92",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "INTENT.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0b54547fe4029c50758680118cf3df35b3bb901bbd13cf4076acb69637af9228",
+            "entry_digest": "09c57fd65b3ea2b363122c0fe6ea3775486bfacfd7d7f696a0cc9793251227aa",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "hi/agent.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "79bd38fa374746b4b680dc086bf6e165e2e7458f10d1965e748024fdd4677f5e",
+            "entry_digest": "1c06c49796f0b0e0757b763db42526da161b570e58a2f4cda6faad7ff2a023b2",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/README.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fd43c8e4fcd9033d902ee7715902be5d4313a658e35a8554ad00c8aa6ed4d38c",
+            "entry_digest": "76b6c9cd6987b6132e655b1a93edf3b7d97f5e139c11459a482d8035844c8c4a",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/docs",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "419e0f525b1103b46e360630e9f3a1ae12ad2c6ef6f1dddd40e83e74aa670223",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/docs/localnet-testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a8f9cc89da59dfce58788d8fd966adca242304c79fbf623f7e8198be5ef647d9",
+            "entry_digest": "c4541a6e5e81734fecb78791dd53c8e1b5f6963ffce122e09a2e3ed0efdd46ed",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/docs/operator-guide.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "456887a80c961bbc1d256382e116eb149562891664d78e6c1858499ba570628f",
+            "entry_digest": "3aaa15c43113e38e4e5a98e77b92829dbddd573d8a0a0d92caa91647cda3a2d3",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/scripts",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "f5da79ded2ad9daaa690a80f8602f2037772879f94a0d231089eec2f5d33edb2",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/scripts/native-localnet.sh",
+            "kind": "file",
+            "mode": 33261,
+            "payload_digest": "1e1a71e0a4c8ff0a043f7ddf629f1637e2027fbdd49e96ead4e0ebd7ba5e3cd5",
+            "entry_digest": "11c73526dc3c578e40644da78bc0f03ad6bf31d0bac2fa4f75c845dccd0003c8",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "ce5f5ab255426e310a9fc961f41d06f1fd6fc388c3271f5d9eaf0b77977d7bfc",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/agent/agent.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "05d765df2579dfbd7899ea9cc77b00a591a6cca6e7a7fa50738c1ee1cce4fa10",
+            "entry_digest": "ab7dde432fbd41dcf34ba93271bf9b159d015949a70262f4a2edcd5c3e8de8b4",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/agent/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e6117ff7b21d1edc52d22213063876437bb063b05bb679fd36efb0b3dc3eb1b2",
+            "entry_digest": "93c026a2798cd482b4e4277b0bcf063542c0c72e9eebeaafdae50af468fe97d4",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/agent/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fc5c14f13404424fea41207701ce01b4c28b8a1c7a311e256344f7071c9b8bf4",
+            "entry_digest": "6290afa8df4a462e85e9ca0396e6e4bd6d7ef838326f172c38d3f793959e13dc",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/agent/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "60fe2546f2ff5668d1596f9ced2339257d050015ade980aedb34462d25d0bd9c",
+            "entry_digest": "a97673e508fd5f8b6d3c3757dbedd1aaa6f00a2d21a11d9a45ed2cb2f50030d9",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/agent/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "176a6e45ef167ac23eb42d2d74a6f694fcdc2f0a99adf52cb666074a84b03005",
+            "entry_digest": "66c36ffa6b2fbd47b3790e71a398306fd069f590621dd78f4e56b1e01ba55bc1",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/algochat/algochat.spec.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6a0c85e06877c4d91a5eabbb5a590df43adb9f0f2168e1ead2abe2d7e1d5c774",
+            "entry_digest": "6178e7787f24f478b5aee384cc71f64ff80045eb2a3445f040141a765eacf9d3",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/algochat/context.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "72ea7011399cb7e1cc7423ebf8934c5620dba17841739cebe1f8715df166dc1d",
+            "entry_digest": "d7addeddc6828de1fc4a6fd3797c5cbb16121456f71b664e1c7f376a427496f7",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/algochat/requirements.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2bc67a6f262a3b088bc13df1b30dada8acf345ca37132162444a24f75313d652",
+            "entry_digest": "f8bba71c8701146a31b9414c43554e18f544f383f74be68d83518e7038576b68",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/algochat/tasks.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0f2db2d4bdf3aeb9d03d3f3909f2c3908e0f61f67477b17a52b42fba7db2104f",
+            "entry_digest": "049225044ed20ecfd57ac71bf0a03747912c515b4950ec9321810773b6afb6ae",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/specs/algochat/testing.md",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "23f2cef576397f4852d1a46c9253d9a2e07a27a2007aa7f65ff2c443b25d46b1",
+            "entry_digest": "1c6c297200c7bd53750ccd1db0b15f702ba41be9ba08c26a6a3433dd62c6e407",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "9464eb63e468cf21775153a12d6e102b7f41256a501fdb6a8549d4bc8d1070e5",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/__init__.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "98e764ae20f75c290f2caae4301a938e4383ea5bdad5a0889dc4900e966e86dd",
+            "entry_digest": "a1bd7a4a09a629176499950b0e1149b78125e44f132aa6b4e954b13aac4f4c4d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/__init__.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f1738e77a8c02aa2d3d5f3c63d8f00590eba361f0379e0aa496b9b1ec50a8bd4",
+            "entry_digest": "233a353f43927a790f490f50ea9b294b3de65e4409d3bd0673eab6fd6a67615c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/__main__.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1fa20f10c3346de6e7fa5376475f92ece8d2bdd41f7fbe001b26a76c87c227ab",
+            "entry_digest": "848613e18a8f1aa1d38e98db47ce7190b08bcc53473d45936b5d05ccfb11aff7",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/account.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "df8225670f41b99a72bc29f68081e539bf7457afb687c0371d46a7918543ba01",
+            "entry_digest": "d3a9442af7c178053dfc913cfbb41877ebb4c069e7b32e75932842f57d09b36d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/cli.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ac6412c98274b6dd372391dfb9c1758e4f7b37ac5c7dbf0ca1c2343c15497a8a",
+            "entry_digest": "80a5798cc58a60c124624c194f6a2c0c1669d7a81fb9906d4a7f490bb2fdfd37",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/config.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3573fe09f7a39a62d973a8a86130825357a5c0aab1c3e55283ba8db4e64ad1ca",
+            "entry_digest": "1a8e3bd30c5afd2bf7e1d6ca0f5779e3bc4ebb3bfbc189ec18d64b45b8493e0d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/core.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5886f0174cf6f309341cce3605cfc8651dd6fff005d0cdab95395ed0d088f0c1",
+            "entry_digest": "e910573bff3fbb5a27903cf8f0a12edfd1c819f6aed2f213348f2e64b0922a4d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/direct.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "283712f23e61bc208cb247a5ce221c48eacd6578e1ee93952d520ceb300e4b10",
+            "entry_digest": "60afaa8c5b1c12c7419e6fa03f8671e0bf3589751e340c191413c172e8b12c4d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/funds.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "16bf8df61517ba31b952df27dc353430c3ddcc46e711fc51a26fbbf2890166a9",
+            "entry_digest": "422930d433b343836bbd682c0ac5cfa50fe969a467a6646d511fac25ef216810",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/identity.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "073ebdeb271f7c7cc9bb526592e4ccf25477fef31f993475123b76ccc6064059",
+            "entry_digest": "07bcbdd46eaf638c592e7e97f5edd06daa280747f7546aee83eed7738098ab40",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/mcp.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "cfc9dfb02075510f20a542c2ae38405ea8b2cca3466e04b5090b1217f84d3fd6",
+            "entry_digest": "f72a805224b6fe82178d228762939fd1cacc420bc72992ce7aad16fd57a88fe5",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/policy.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7a2fc005249e1d427bd70c96b0457978dec495a85016cc6aa3983e36becd63dc",
+            "entry_digest": "68c44311aed00f001ee06afeca582dd4c39f96809684b428af03dd0195019b9c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/rooms.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "129afe086665b9c6deeade6f70186c0c5da8a0da0fb4f0ae34df93440f75e874",
+            "entry_digest": "924b887252f15b627a91ddfe8f4cd6b76be1721be1811aaa1387baaa415d5df1",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/runtime.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "0fae575687ed5b31408088a743e47f65d3d11b6fc1f241895d16d203a7fef8d2",
+            "entry_digest": "3e7f51684c0a935945da5f96deffbcc35800354a4dea31deb56cd971b95d5950",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/service.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f12deb8f672817d8a48a6120c2e7370fa4d9245602de90b7fa155d101d17cf2d",
+            "entry_digest": "e1b27d5ff3c345e3ac310558c027751822e2de7df3bcf6a6778405c2387e7aba",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/webhook.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ea36f8b7d7f3cabff86da1f57dca32c3d61c3dccbc4e49a9ff87f5d720c4a2e8",
+            "entry_digest": "dd2a9bae1989a646e6a36d0c8b525fb5ffab3e43683399bf875fc17521d04678",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/agent/wordlist.txt",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda",
+            "entry_digest": "4905ff22517157d6c8332d8eed1a63bb0919aa40856d9a0711f04ab4734dd82a",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/blockchain.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "48819f80f1bef8b9d17ff603fca4e769c8b5350c39c5d81c6caffd2df12801d0",
+            "entry_digest": "40303000f79ae3a460271c36422fdac6534a372b64f1d2a77f47388420f8ba8c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/client.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8332a392d58f5fbbcb9f17782e9b2ab311e8acdcef77bafb56c94a666347b302",
+            "entry_digest": "041668166fd611795feeeff30a42ab22fe3645b501e4bcd2bfbf46ba236ee03e",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/crypto.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a26a4b8048eb022305bf1dac6c041ea0fad4776e43a8e33a781f1b5469ac3e82",
+            "entry_digest": "f994cb5a0a4605a872d073099de9cc51807ddca838e0b9b69ba5d8d258a7fd93",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/envelope.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b83e3d4e3d4dd1f5e7d2aefce42e2cbbaf1b84f203dad4e1ebb576f0908c028d",
+            "entry_digest": "10889fa723fa07eb35d8ecaabaf802459e7f6309e1a27e8039d6399c3cca114f",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/group.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ad214282d89e120746640eb02a41ae1faefe17068b511c2b87ff3370e0d8f4aa",
+            "entry_digest": "d07bf41be7e8dda84b8edf43d458c161f1841eaa6d8fb3947e8b43b157f2cea1",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/group_admin.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "52d2afa26882062433c2c3ba842214fc6579223d0f6106e34b8790ba0db6636c",
+            "entry_digest": "5d6417eabeb692aa6e661c58b7d268bfe0c2b4dee0deef1229804985069a279c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/http_clients.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "281b983d40930c2f3bc46dbf9017f13af598a15a2d97609e03a1d9b8647783b0",
+            "entry_digest": "77e6df145bda8b233830a712a1972abfebf8684b4d30e061b9e5e1acb6e9978f",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/keys.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1f15bd6ec0c89df4b1cc7d7409d7ec4770fdfa6258cef409e4f60d94d95c5fdd",
+            "entry_digest": "43df1a0603a458afeba8dce9bd7af81b6059162689902ab227d358d8b1aa500d",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/models.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "68df214c0fe6ea10b0d832cd25483aae7df776fc0d32a257ec4c3e7315d2a380",
+            "entry_digest": "b1e752f0f945ef83e4226630f54ccdd99dca22d37f8889e413877123ef96013b",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/pq.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "2817d0e29203a81a8a96a16238f47cf843c228c952cdde3180445bb6b110648e",
+            "entry_digest": "ecfccab08b6e7b9e6362d8f8c1a4dd9625fe94f320ecc62600ce6c2d38cb05b3",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/psk_crypto.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5218cfa45bf5f84da650d7c51a673d0b4779f5fe400089667ed4fd38b0bd33ae",
+            "entry_digest": "c2eec38f810603d05b39aa3e0393e42d2b5440064bd0c014d9198fcf89059d13",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/psk_envelope.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4ed1a4617e712d3459bad0b97abb75e200376578764564ac64761bdbf7191ae9",
+            "entry_digest": "f06db194e9353fb8a172173985a2b8d17fff7a1254cb36ae2f42e259de82c002",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/psk_exchange.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "3ea5d7ec20e5c86eb0180f4c0e5aea84260a79634b5fe9c59b7a3c429e2bfae4",
+            "entry_digest": "5182c569544a5f88927ac74a740fbd71794f8115d4a481599954860f83d40fb7",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/psk_ratchet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b2e479357f85562dbd63942563e800b482e0fbe1e0286ea37eb7092be0f2ded7",
+            "entry_digest": "4b7e5b82bedfb0d3fef7b75df728059928156ba21049d2d256098882fb2cb762",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/psk_state.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "d0f68283a4579802b2df4a08077d7c1119a444bc0df20082f70aef7b9557a9fe",
+            "entry_digest": "ef2b7dd4868eb9c6bb8ce83d8e34831a13f92647b262e3a646881460b563d571",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/psk_types.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "9a145eeb063f5db2762ae921faed07e0b2e209171d057601fbcf39d66b6230b3",
+            "entry_digest": "b755c07c57e39733cf905cedfe3ea39636b7c3e0ab0a507b37d7ead9b39356bf",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/queue.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "46ceb1eee1f30d35e49ca4312b5ad8255cb96e79c824acc7fbb0af36b54da5ca",
+            "entry_digest": "193ee08b8672d3a4fb98d5f70c682e30ef77f9a0c3ef97da30a11902a982ebe1",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/signature.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "25251dfc3132ba641723739e393186a0a9636d95a6e99f91754530312ae92a75",
+            "entry_digest": "ad393f1fcf158f369a108c10831b2d0c90a1b5bc6efdbb2ff9dbbeb10d20044c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/storage.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "eb6adde9b0d32a708e0ff100bd0566a61bcc355815488bc6f7d4ab081ef296c3",
+            "entry_digest": "9cecdc8ce1d811a1be26ce7550a1d95f7fe4396bb96a314940d9d790443b1335",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/transaction.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "fd13e89cd6ce5b2575d8964bc9335a598127763e49e09f056d3829aa36993a9f",
+            "entry_digest": "8bff048bbc5a8d3b9904ebe5a2e5333d9a9b16cb183cf2d0386cf2594d18ff95",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/src/algochat/types.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e17d1afa9854fdaa192fb74ccbfb4da17c59ecadf55a004531c4020e203fc528",
+            "entry_digest": "382ebb9f14c98cb24a8f0c1637f5b7219d578cf78f5d5a7fea0c458eff23c97c",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/tests",
+            "kind": "non_file",
+            "mode": 0,
+            "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "entry_digest": "915c893b0fb6dbac3555477b63d87ef844373aa605cd51fc2578b769cc24863f",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/tests/__init__.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "004968428129131e40bab5eb310d40a2084c52a2cf47086c7fdb085f753324f9",
+            "entry_digest": "a40c1413cbd63f85606572ed97f5cebe71dd7e0cd4709f63436fd7ff39fb59f0",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/cross_tools.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "f54dfef5254ea71d4d9a22ef643d516914f9aebac9827b182452374108517288",
+            "entry_digest": "5c5a97bfdda923c0ad767e989e233d7a473133d9b12b82abbde2500b012544c8",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/export_envelopes.py",
+            "kind": "file",
+            "mode": 33261,
+            "payload_digest": "a211875a4aad17db6de75348db5d82f9190521635343a7049575d44a38e8f8e6",
+            "entry_digest": "d229a61e1d25e2625f9032e0c2525e95b3a794452f84668d88006a7648c93873",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/localnet_support.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "7f649809224ae5fd9a644fcc261394ea2282c4f392bfe6bfeba0445132bb896f",
+            "entry_digest": "12af71ec03aedea5f92bba89a2a33fb6774c4f720ef18ba5f01d0da9a4042078",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/room_support.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "1be034457a595bc01355321530f2b4bb763e8567d87cc472e63280e62e7a0ad9",
+            "entry_digest": "872fcaf743bd45fd4fd95bf031f59bff8075443eb5434067acaa26ce03cc253e",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5bfe27fd09275c14e2dbfac8446acedcbabe924860e93276231abe72e504275e",
+            "entry_digest": "06a46910afb0e10aa9389deb91913860daf3b132cc5121097b6153853a691d5b",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_adapters.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e0afe70ebce71de8002c4882ee2e209784aaa26945f24d9399e68cd971ad8a42",
+            "entry_digest": "5d2f2c4a178b6e0bcee67ddf90778ff940c2676df5aba9646a8fcd25b7311115",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_adapters_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5fe0feb08bbd5294addfc5c860ea248d3fbadc66287d34f1385380baf8bcdda6",
+            "entry_digest": "ed906f92016c624732ecab696af81232be15b69eb020250a53d73931893e4d3e",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_direct.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "db8419740bf1befaf326b3c429433878a11609873a49686e1f01c6907d015838",
+            "entry_digest": "bf8412f2549902e4871f711b40f5c3e7e67afb0ff7aa82726acfde77d0b0089b",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_direct_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "054b800cd72374ecfb8654250d4055f7844c9ef8666c04d1c327a60dff395018",
+            "entry_digest": "e296f5352a091390c88b844f803ff2e781e46f9f239142e45c31f5cfe708be08",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_funds.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b97dd5a4934940a2ed5ab1cc7cb67f2f403efe87039cf048853499dd6bbcd5c1",
+            "entry_digest": "c7de3f21c1b2d37dff5ba779583ec610d53e88ac985ad631ff512f7a44b7b989",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_funds_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "e692b1833eb372f80ccecc86d0b4766fe84d31e6f3a0f3c29721e527c48824e6",
+            "entry_digest": "42caa29a3e67ab418913111d302c033ce86864d39b307209e08be5dcf96cca43",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_identity.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "76fbfc43c2afcc261a047299bbbd6dec5aa0a3f12aa0a1d333cb7d7d4e7aa3a5",
+            "entry_digest": "51334585a9d4f73241a9dde39906b9eb5bf26f563d85305115f373b3c58d0c2f",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_identity_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b468f4ab98e2785603e04002ffe6ee0f8075d8aae062e69e0a7740b6a902c280",
+            "entry_digest": "db3201c8061ce2bbec15fda3a13921c15cc6b93af5db44c1aeb2d192117bfdbe",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c5d5b5f4ba217714d213108b57edc253ee8686626344b274d351e6e0550cc26f",
+            "entry_digest": "361d0c112c46f10455c3dd0426b895f0be5bc2543ca06e5054a40d0eb33fbfb7",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_policy.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "dd4016bfc542fcf627cf970eae4e6e204568c5dac94c5ead9c42f872d814bf44",
+            "entry_digest": "8b2d771e59dd94409d4d5ed18da9dd3e2861eb1b67b72edae170154c2881234b",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_policy_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6c906034d401542ce0caaab182828722f0137af55b6e9576f980846687420243",
+            "entry_digest": "6f0eb762ebb629790b36c17beabbac6d234d97da212ba474dcfef665ab4b4a92",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_rooms.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "bfd842772bd4bd6ae5175cf3e0c012a0dadf1ba8520c3f92cee264e85686fc24",
+            "entry_digest": "9007f43d54bda981b26f209d2d599ba432eba1e6e5f4ee28d81b24110cc8d1f6",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_agent_rooms_localnet.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "65364c4b762f2197fad858a2bf87970d0492d28367cd9cfe0af58b5cb719f8cc",
+            "entry_digest": "0aa35adcc0f363814ac692458576e154d41c9ba97671bfe96a614e620bd4bc98",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_blockchain.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "8f3f22e9e0c466e6b69cdd3ba5268ba9d6e6b715081d0e059f07f48c4251c1ce",
+            "entry_digest": "b29854a2111da459296ffed2cc8b678d4a2069c1ccf2d68bca2bc16f1fcb28c2",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_client.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "be7ff559a614ad682285139af80c44801f0e7b53b0649da85e6cbcea523b1840",
+            "entry_digest": "0ae4756f98cfba1ed104a8fa1ca096bf6c09dff73b31071026aa1f150c2f3dae",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_cross_impl.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "692b8ad756b1d916002a256d0954e2e2befcb05caf7533062bd08ad0c6db73d4",
+            "entry_digest": "51dbb3e6fab989717d2e8d9f251bed3a6c81622fc1335b724c0c0aec2f3eafd8",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_crypto.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "74d79bd0c4b62c56b748be78c72acc3f960b767a3e58d682bd9ba9b9e8f6b6c4",
+            "entry_digest": "9305c1a5f3c38d7a3c51ef72f3519da42d7727cd505adc20bf2254a4385d259a",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_group.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "80bbee72c4ac78289cf7d0bba5d018a46d3e9c546fe143354f8047e0cba58b82",
+            "entry_digest": "fa5d97b2afaf9be5763d88e8fe59cff4eb5c1991c8952f212e5c5d64e43ea8ad",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_group_admin.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "b0c9cfa12f8198fbfa5f8cf62e3966af8f2725f072dd52a11dde09520a03a200",
+            "entry_digest": "03f1494c1e0f35150a5f201a2427796d4fd184417563de2392569c0a9fc92043",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_group_admin_bots.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "383cf6624dac7a668a28786a5e2079e226a2e1400d61f5f29646eaf49040c977",
+            "entry_digest": "64e2cc1e8a3afc5d86ce65478fe5bc52d8493a0be28c23310c825bdf11dc77b9",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_http_clients.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "431b6c0f687cf12e1294251797df1077b338d0bd916b56143e6fcb85c482d13d",
+            "entry_digest": "21bd3b96a63acf0916203326d092f48bbb698cdb7bc081f4f1093d8926c4d184",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_keys.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "82541097dbb5992934df1d1bebaf503e3135a0072286a7175d21c43c87a180e9",
+            "entry_digest": "ce8e1cde10185e2cf1c6ebc714c4222a3ad9ab5ce09128a098fcd1606d7f10c5",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_models.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "c07d5c80083f46a56bc2954c56536f180b8188017914621e938015af3c6cb4e9",
+            "entry_digest": "adb953779537a715f4f0ebd19000fcd9117e3844d4e8b4c7ae17a1f61560cebe",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_pq.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "55de36f72b0fa09962c675117b22a14b2444663bd519834782f245ce1abf3cc6",
+            "entry_digest": "09e5cbffaefe522a5132ac01fa1f7499288e538f69b63873006428b2a6e34f9c",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_psk.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "a979c6374fb0d3b85ba502dc2157924011277863ad5495cc007325b3ed635081",
+            "entry_digest": "13cff36b731ddccf5f980d40b02643e888fc07b8a85fe48ae987571827d9065c",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_queue.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5d519fae74eaca6db393f6e882c5e3576bc437e2e9303a01c8b84edc2fd5eae1",
+            "entry_digest": "7c478b51980c2f0eecd4f163025d9914b855352b5067d97aeb7afcf7dc3941dd",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_signature.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "ec0a7d6f56de147d48b7f9729679d4e60720fb836de2dca72f8b8382b33044e2",
+            "entry_digest": "2371d8b8fddbc68184e933d371a44c97990251991d3903489e7b6146c41bf5f0",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_storage.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "5a8fa653cf4616fd3727a9baa5eb6db4392cb1d43ff41e469c6c9a2fa6b4671f",
+            "entry_digest": "c4ea7ad4781a9dd86eb2c0e0429b23a06a9451fa5307218c17d0e4cc5bfcea63",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_transaction.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6691d6db621d309d1e12ff3e9d0cfe7c9796808113f8281509c5477132d6ef4b",
+            "entry_digest": "7a8d129f08061e7e32556489f51c90730cdd4e6e9b1fe5ddf3b87239102fa281",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/test_vectors.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "4dc1e1a8c6eaaca2c38aaebb59316bab84f79794e38c7e46eb9258958cefa548",
+            "entry_digest": "2ec8bca0999231373e823529aab9def4db1449760592f7103c4845f737806294",
+            "owners": [
+              "@exact:test"
+            ]
+          },
+          {
+            "path": "py/tests/webhook_support.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "259de984be7128b2946aecda8e6c9aa578e5e9bb6df3260f6d9c1a3fb6c20163",
+            "entry_digest": "e9c3d954cad6c13f07c1d32cf7ed94ec0f6efd77120f104a601abf2ae3b41b1e",
+            "owners": [
+              "@exact:test"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}
