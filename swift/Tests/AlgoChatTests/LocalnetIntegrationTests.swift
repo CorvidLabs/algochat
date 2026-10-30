@@ -270,7 +270,7 @@ struct LocalnetIntegrationTests {
             from: bobAccount.address.description, to: bobAccount.address.description,
             plaintext: "<key-publish-payload>", amount: "0 ALGO")
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -377,7 +377,7 @@ struct LocalnetIntegrationTests {
             from: bob.address.description, to: bob.address.description,
             plaintext: "<key-publish-payload>", amount: "0 ALGO")
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: alice.address, algokit: algokit)
         try await waitForTransaction(from: bob.address, algokit: algokit)
 
@@ -478,7 +478,7 @@ struct LocalnetIntegrationTests {
             from: account.address.description, to: account.address.description,
             plaintext: "<key-publish-payload>", amount: "0 ALGO")
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: account.address, algokit: algokit)
 
         let selfMessage = "Hello, myself! Testing self-messaging with indexer wait. 🪞"
@@ -565,7 +565,7 @@ struct LocalnetIntegrationTests {
             from: bobAccount.address.description, to: bobAccount.address.description,
             plaintext: "<key-publish-payload>", amount: "0 ALGO")
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -632,7 +632,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -690,7 +690,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -737,7 +737,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -840,7 +840,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -911,7 +911,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -984,7 +984,7 @@ struct LocalnetIntegrationTests {
         _ = try await bobChat.publishKeyAndWait()
         _ = try await carolChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
         try await waitForTransaction(from: carolAccount.address, algokit: algokit)
@@ -1077,7 +1077,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -1172,7 +1172,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -1287,7 +1287,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -1363,7 +1363,7 @@ struct LocalnetIntegrationTests {
         _ = try await bobChat.publishKeyAndWait()
         _ = try await eveChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
         try await waitForTransaction(from: eveAccount.address, algokit: algokit)
@@ -1439,7 +1439,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -1612,7 +1612,7 @@ struct LocalnetIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
 
@@ -1707,7 +1707,7 @@ struct LocalnetIntegrationTests {
         _ = try await bobChat.publishKeyAndWait()
         _ = try await carolChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: aliceAccount.address, algokit: algokit)
         try await waitForTransaction(from: bobAccount.address, algokit: algokit)
         try await waitForTransaction(from: carolAccount.address, algokit: algokit)

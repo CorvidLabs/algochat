@@ -1,0 +1,392 @@
+{
+  "timestamp": 1793324698,
+  "commit": "82f7d58e5e88ef0a501ad723892384cf9f61a0eb",
+  "contract_digest": "32de72cd3a2e852f7db699ec82608ea098c79d60836b4f7a11aca71dabcbbda7",
+  "execution_digest": "e9f3248a8194e653b9b339e176f15d4bd352a539ad0a996c02d508d682664922",
+  "workspace_digest": "b261432bd4bf4e39fcfabe7b8e04847a702c516a52dd6b31faa5293f81f836ec",
+  "acceptance_input_digest": "0a2f92aca87b66154ead3f2e0be351adcfb62cbc8cfecc92004419e9bfb1785b",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "Package.resolved",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8d1683ecc5aa82f86b1a7045dcd0dab9ebe4baddea4ab12f7b6854c940459c85",
+        "entry_digest": "80de65cae1fd98c4c692681a82781b11a66c7231ffcde97c81c33d70cb9347d5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "Package.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "845335cc47f202f03dfc359be6b0d0b44a64787f5005675537ed59654f059284",
+        "entry_digest": "16a943d1e985d7f76237a496c8ab8ea7f6c90d64907357ef8741922e8be9a36f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Sources/AlgoChatCLI/AlgoChatCLI.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "afb0dce8cbf413de22d5f8eac1983f07ff047473ed1234681ff3f3e47aee2e45",
+        "entry_digest": "0cd349f7594ba6c87e2b7c3b88a2d6a3fbaadea86c444aee7bcdb915fdcd039f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests",
+        "kind": "non_file",
+        "mode": 0,
+        "payload_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "entry_digest": "6b1497ba359c17303a8c92e776fb9b4d89e39067457dfe5ec113dfd6be7a620c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/AlgoChatTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "16ffb061c5335dd190d29b176be936d9dcb1d0715f463ea68a865d4cc3f727e4",
+        "entry_digest": "bc9883d02d331cf58eb695136f353226dc63dddcb6b789204f2898f73703ba6e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/CacheTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "61d76ea01f892b184d5afc1f271713e5d72f3c8a5eeea793459114850465840a",
+        "entry_digest": "e72d10410fa052886773e5d822f26ff3345a66a8162fc4bd4828c7ec54fa9234",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/ConversationMergeTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "41b9f47b8ef42823b36d884bc036443c35d5549592c29d14511ed544460af35c",
+        "entry_digest": "e536f73f457793e48030a40e3aab055adc6dd442e22f2f6d72497e934752b76f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/CrossProtocolTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "82a21b4f180b5916c26e9d1fe2473be61d6475112e93c4ca3a0c7316da93b38a",
+        "entry_digest": "3ec803b678261504747a6443077cd0b59b0771706edd6578cf74e3fc3c2ee79d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/CustomAmountTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8f03bf6844a16a36c44dec0532f6a494292b9a0de0025d66d9275f0357d1a3da",
+        "entry_digest": "5c21e10587b8b978e2f1e2596e395b69710cb48d4c31da4c218526a69b4e33f7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/DiscoveredKeyTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ceeed4f187475737f85f2a002346e085b39c2a6d754363cc1d6ea3e6b9e0ae7e",
+        "entry_digest": "70aa61efae2c971d7293f9ad168cb94ccb364d88376b4d1328114f95820dc1f1",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/EndToEndSimulation.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "92e4937302ab677a71a4e14de66e227a23b9676a0ec5e1e85c92ae29ef693f16",
+        "entry_digest": "1977924836a10088aaba7c510c5088367975d3a18daa7b71e10be6b4f2c4280e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/EnvelopeDecoderTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d85f2fe16901aa9c106fae14adc56884830b696a4d97e63b14ec38e4ac4df623",
+        "entry_digest": "3f2496f45cddddcf843a1041d1bddf6713ab499119fe9185e9302fb376ec0e5a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/EnvelopeSecurityTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "56e19391480a7ac9df051174f061d98b17d60cddaa6c310000583e7bcbc0d3d4",
+        "entry_digest": "f146bdcdb4e4ceddae041bca79cee248ff67824cf8e26bfa07f782224d0eb5b7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/EphemeralKeyTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4794855ebbc5a90087c50cf53400a8c5b87249eb6b1c205226093d50dced3df8",
+        "entry_digest": "de879c72d6475607feaf55d2781dcf58e9f6c0c2719c0c6e92ba0e5e0dd9077c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/ErrorHandlingTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1cc12b4401fa6e01d885d17fef67d81702a9057ad91371f4bd8f07676839a899",
+        "entry_digest": "6d1e2c262e75583b539bada30d6c9542233e985ab3565b730714e1d8371d8255",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/FileKeyStorageTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "162b78ffd7c9738de54707934fc56e9c6e6c8e39e4cca6116cb94af07ea57037",
+        "entry_digest": "8f76f9cc1038cc84bb59cedb030c1df8aec8c513ee8174daa2f1386caec565e3",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/FileSendQueueStorageTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "aa315b3b9fd014fdfbc82b01ac7eaf3973b18e1f294910a7a6458ce44e5d81ac",
+        "entry_digest": "6e5fc13be3728a416120cfb628dbcd717a357f4229cbc2a168fca4ef7796831f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/GroupAdminTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ec89c0d49fde09de288de0614be4aa14ef042fd3c6a620bb5de79a7b2e1d6c8f",
+        "entry_digest": "6874c49911b0b86b635640f3a15735c37437326455803e2359be6bb1b8c0cc0c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/GroupMailboxTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "44b78935e649d628628d93bb7099a7984d585300e2d9d3051a14f84a0f28b8e8",
+        "entry_digest": "b1fb9682ace63199c52dffe50eafb854f02dfaf81a8d500e7efbf3fe62ecc2b7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/KeySeparationProof.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e6d4f0c2f8fd514ace632b444e476fc4b26426e57456ac2309ec25f3dd62af18",
+        "entry_digest": "e72b1f776605334d47e6d45c5ddcc50747a7508acc5744cfab8f0c9091a68ef9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/KeyStorageTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ff7c460cc6caf3beb69e890eef628934ff8c63572c71aaf16e3eb005939c7ec5",
+        "entry_digest": "c647d93ac8464655e90ab665dafde34fb99068b81bb0747b3dda71b5eb32d066",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/KeyVerificationTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4776c24e1ebe4f6f8da1c1f725e11b82e206500c71659c759d9d8201aacb3a90",
+        "entry_digest": "376b964589ad6732fe37295ca30bcd27760f0b6eaab8e9b6f9e048f0336b549b",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/LocalnetIntegrationTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "81c88c56eb61dee281a90d892541dc8c9a7211a0e90d9f7a5693b0daa871310e",
+        "entry_digest": "c6ea022dc695f380706e3a315cf8afc5a7574e8dcbf2d0730030fd2c6df49cfa",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/MessageIndexerTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "5ba7460f3eee4598a359ae8ac62637eeae58b10811e3aabbc6fd7ea125ff027f",
+        "entry_digest": "36378df73992e77329cf9798c03b2bd890ba7f34eb954c14ece9200151a033b5",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PQTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "e7f9fded19bb9776ea02bb451a0a5cecad959819148fd9f5b365742c599b3442",
+        "entry_digest": "b3c9ac03f41251adc292407dfc12d76b69d97f60a8e466e24cbf3437d4b1fa2d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PSKEncryptionTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ed113741708c2396a1f29906b493390981827bcce619826b76f4da258bd1b02f",
+        "entry_digest": "d3455d9568ba4d897ae8bdc2b363354d7fd74f17cab615233da2ec07c52e7b18",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PSKEnvelopeTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9c76bc8cf9f16ed11fae96fa4e95e23d61d9c5c93847b79cd9bbaec0dbf55528",
+        "entry_digest": "6d2ad65f6b2b4a4b13c3ca43ae79b631f09e184385d60c9ba207398ace0991ac",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PSKExchangeURITests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4d18eb4ad2b834303475cf19f372cbac529f749e3e4febc594dbf97a25160080",
+        "entry_digest": "2f8d3a2367d1523769e845823d538dd16258269a83ae456f4065dc9a29d85d86",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PSKHistoryTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "dead4b8690375a12bb45e9013bde54d69687674239959e61cb26217aef44ba9e",
+        "entry_digest": "51bf956fdf29a2d05c2046dbf756423af6b9aca93b8747df6aa9bd2ebdaccaa7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PSKRatchetTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "77df496fff9dec7a97fefacf132b25a4e38067d1f43bbcd9dc52cdd9857a0688",
+        "entry_digest": "d50868e460ceb8662864e689eb1e9087639d7422a5b8e9c5314af0fc1c914d9a",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PSKStateTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "2d4ab6ca0a0461c5f9f9ebbea1be8791caa834ff2c18c748959b08a9b972c1bf",
+        "entry_digest": "785443d5defcaac6630f9653d0b15305a55e96b70126d4cfc3708e7b7f5a436d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/PaginatedKeyDiscoveryTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "dfb3f54060cccddb183cb530cfc6cb7d5d7ec831427077c5a20409ba28b17306",
+        "entry_digest": "7e4016ab070298e8778726353109b6b5269e1b7415138741132e2ae85a14f3a7",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/QueueTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ac3d29a2d32faa523907dc2cc7b6bf7f60f7a288cff51f622617e58caa1708ef",
+        "entry_digest": "5be73d4487e50ae58f9111c6fc0088e0d8be850aa847360e079c616491b20abf",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/ReplyContextTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d920b7f75950af86dd43478b60646cacb9b7282325c283a09ffcefc56b868b12",
+        "entry_digest": "caabf8613bf8b241094635c569113618de11fc50c571693c3bc74f9859e339a9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/SignatureVerifierTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "df3c7c3f0895e978b0c8e53d84a5471db2299e8666e007f84017fff5ddd9cbe2",
+        "entry_digest": "dba0e32567f6da51f8fbd8280c4a8c6b69a1adcaa81b743f32129cb344173095",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/Tests/AlgoChatTests/SyncManagerTests.swift",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "4e1715cc64df0989150f2402ec20c18125265e7069f5366031b093a217d9f7e8",
+        "entry_digest": "b2869c5df85fcc75e89f2c56f8691cf25a48959673ba692b924ff181915ef779",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "swift/docs/HLD.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "9a5f981115ebda42e1901df91b6ebcd22cbeba1c40e3ae2283d82f9b16813c18",
+        "entry_digest": "01337ad57776bcc6fe6d5007e2da911d0897c0cd9405a2c67ec4afe8fc528a4e",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check (no spec in scope)",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": []
+}
