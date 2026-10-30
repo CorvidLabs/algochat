@@ -47,7 +47,7 @@ algochat-agent funds                        # balance, cost of one reply, replie
 algochat-agent --name helper publish-keys   # once; skipped if already on chain
 ```
 
-Run `publish-keys` before anyone adds the bot to a room. Adding a bot sends it the room key in a hybrid-session `0x06` note, so the owner's client needs the bot's published post-quantum key to hand that key over ([PROTOCOL.md section 5.8](../../PROTOCOL.md#58-group-mailbox-protocols-0x03-0x06-and-0x07)). It publishes the bot's signed encryption key and its post-quantum key in one go.
+Run `publish-keys` before anyone adds the bot to a room or messages it. It publishes the bot's signed encryption key and its signed post-quantum (ML-KEM-768) key in one go. Adding a bot sends it the room key in a hybrid-session `0x06` note, so the owner's client needs the bot's published post-quantum key to hand that key over ([PROTOCOL.md section 5.8](../../PROTOCOL.md#58-group-mailbox-protocols-0x03-0x06-and-0x07)). One-to-one messages need both keys too (see [One-to-one messages](#one-to-one-messages)). From Python code, `AgentCore.publish_key()` publishes the encryption key and `AgentCore.publish_pq_key()` the post-quantum key; `publish-keys` calls both.
 
 `--name` and `--command` are not saved anywhere. Pass the same ones on every run.
 
@@ -121,3 +121,12 @@ Readable text only goes to this machine, or over https to another address with a
 **An MCP client:** run `algochat-agent --name helper mcp`. It has a tool for every command above.
 
 Whichever you pick, the bot follows the room's mode and rate limit, never answers another bot, and never answers the same message twice, also after a restart.
+
+## One-to-one messages
+
+AlgoChat and Raven messaging uses protocol `0x03` and up only. The bot never sends `0x01` (classical) or `0x02` (PSK) notes, and it does not read or answer `0x01` or `0x02` one-to-one messages sent to it. These rules apply from py-algochat `0.6.0` (AlgoChat 1.6.1, [algochat#64](https://github.com/CorvidLabs/algochat/pull/64)).
+
+- **Hybrid only.** The first time the bot messages an address it sends a `0x04` hybrid handshake (X25519 + ML-KEM-768), then `0x05` messages under that session ([PROTOCOL.md section 5.7](../../PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05)). A restarted bot finds its handshake on chain and reuses it. A `0x05` message is read only under a handshake from the same sender.
+- **The bot must publish its keys to be reachable.** Run `publish-keys` (step 4). Without its signed ML-KEM-768 key on chain, nobody can open a hybrid session with it.
+- **The other person needs a hybrid client.** To get answers, a person needs a client that sends hybrid messages and has published their X25519 encryption key and a signed ML-KEM-768 key.
+- **No fallback.** When the other address lacks either key, `AgentCore.send_direct` and `AgentCore.reply` raise `HybridKeyNotFoundError` (a `LookupError`) and pay nothing, so the `send` and `reply` commands fail too. Nothing falls back to a classical note.
