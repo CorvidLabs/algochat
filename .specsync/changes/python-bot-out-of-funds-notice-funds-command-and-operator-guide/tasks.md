@@ -10,3 +10,4 @@ artifact: tasks
 - [x] Unit tests: `py/tests/test_agent_funds.py`; command count in `py/tests/test_agent_adapters.py`.
 - [x] Localnet: `py/tests/test_agent_funds_localnet.py`.
 - [x] Module specs, `py/docs/operator-guide.md`, README, localnet how-to.
+- [x] Leif's review of algochat#56: rebased on the reviewed #49 to #55; the low-funds check after the command list and the leave notice too; crossing tests for both and a rate-window count test.

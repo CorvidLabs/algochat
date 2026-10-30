@@ -1008,6 +1008,7 @@ class AgentCore:
         The protocol has no op for a member to remove themselves, so the bot
         posts :data:`LEAVE_NOTICE` and stops reading and posting there. Only the
         owner or an admin can remove it and rotate the key.
+
         Each leave notice may be followed by the low-funds notice, posted before
         the bot stops posting there, when that notice brought the wallet low.
         """

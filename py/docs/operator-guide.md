@@ -66,7 +66,9 @@ same numbers are the MCP tool `funds` and `AgentCore.check_funds()`.
 
 When fewer than about 100 replies' worth of fees remain (`spendable` below
 `threshold`, 0.1308 Algo at the minimum fee), the bot posts once, in the room
-where its post took it to that level (AGENT-3.a):
+where its post took it to that level (AGENT-3.a). That post can be a reply, its
+command list or its leave notice (the warning then goes in before it stops
+posting in that room):
 
 > I'm running low on funds for fees. My operator needs to refill my wallet.
 
@@ -75,7 +77,8 @@ wallet. The next time it runs low after a refill it warns once more, in the
 room where that happens. A restarted bot or a new `algochat-agent` run that is
 still low finds its earlier notice on chain and stays quiet. One-to-one replies
 spend fees too, but the warning only goes in a room. `reply-room` and `serve`
-report the notice's transaction id as `low_funds_notice`.
+report the notice's transaction id as `low_funds_notice`; `declare-commands`
+and `leave-room` list it among their `txids`.
 
 To refill, send Algo to the bot's address again so `spendable` is above
 `threshold`; `algochat-agent funds` then shows `"low": false`. If the wallet

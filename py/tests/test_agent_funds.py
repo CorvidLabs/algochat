@@ -13,9 +13,13 @@ import os
 import pytest
 
 from algochat.agent import (
+    LEAVE_NOTICE,
     LOW_FUNDS_NOTICE,
     LOW_FUNDS_REPLIES,
+    ROOM_LEFT,
+    SKIP_RATE_LIMIT,
     AgentService,
+    BotCommand,
     FundsStatus,
     RoomMessage,
 )
@@ -23,6 +27,7 @@ from algochat.agent.account import address_from_public_key
 from algochat.agent.funds import reply_fee
 from algochat.blockchain import AccountInfo
 from algochat.group_admin import (
+    BOT_MODE_COMMANDS,
     BOT_MODE_EVERY_MESSAGE,
     OP_ADD_BOT,
     OP_ADD_MEMBER,
@@ -305,3 +310,85 @@ async def test_fresh_runs_see_a_refill_on_chain_like_separate_cli_calls():
     assert (await one_run("five"))["low_funds_notice"]
     assert (await one_run("six"))["low_funds_notice"] is None
     assert _texts(chain, room).count(LOW_FUNDS_NOTICE) == 2
+
+
+@pytest.mark.asyncio
+async def test_a_command_list_post_that_crosses_the_line_warns_in_its_own_room():
+    # Leif's #56 review: serve_rooms posts the command list first; when that
+    # post is the one that takes the wallet low, the notice belongs in that room,
+    # not after the next reply somewhere else.
+    chain = Wallet()
+    clock = Clock(chain)
+    listed = await _room(
+        chain, bytes([0x46]) * 32, BotSettings(BOT_MODE_COMMANDS, 20, 60)
+    )
+    other = await _room(chain, bytes([0x47]) * 32, EVERY)
+    bot = await _bot(chain, clock, commands=[BotCommand("echo", "Repeat your text")])
+    await bot.sync_rooms()
+    chain.balance = MIN_BALANCE + THRESHOLD + FEE // 2
+    await other.post(PERSON_SEED, "hello")
+    [served] = await bot.serve_rooms(_echo)
+    assert served.txid and served.low_funds_notice is None
+    assert _texts(chain, listed) == [bot.command_list, LOW_FUNDS_NOTICE]
+    assert _texts(chain, other) == ["heard: hello"]
+
+
+@pytest.mark.asyncio
+async def test_declare_commands_returns_the_notice_after_the_list_that_crossed():
+    chain = Wallet()
+    clock = Clock(chain)
+    listed = await _room(
+        chain, bytes([0x48]) * 32, BotSettings(BOT_MODE_COMMANDS, 20, 60)
+    )
+    bot = await _bot(chain, clock, commands=[BotCommand("echo", "Repeat your text")])
+    await bot.sync_rooms()
+    chain.balance = MIN_BALANCE + THRESHOLD + FEE // 2
+    txids = await bot.declare_commands()
+    assert len(txids) == 2
+    assert [_read(listed, txid, chain) for txid in txids] == [
+        bot.command_list,
+        LOW_FUNDS_NOTICE,
+    ]
+
+
+@pytest.mark.asyncio
+async def test_a_leave_that_crosses_the_line_warns_in_that_room_before_the_bot_is_left():
+    chain = Wallet()
+    clock = Clock(chain)
+    room = await _room(chain, bytes([0x49]) * 32, EVERY)
+    other = await _room(chain, bytes([0x4A]) * 32, EVERY)
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    chain.balance = MIN_BALANCE + THRESHOLD + FEE // 2
+    txids = await bot.leave_room((room.group_id, room.mailbox_address))
+    assert [_read(room, txid, chain) for txid in txids] == [
+        LEAVE_NOTICE,
+        LOW_FUNDS_NOTICE,
+    ]
+    assert _texts(chain, room) == [LEAVE_NOTICE, LOW_FUNDS_NOTICE]
+    statuses = {r.mailbox: r.status for r in await bot.sync_rooms()}
+    assert statuses[room.mailbox_address] == ROOM_LEFT
+    # Once per drop: a later reply elsewhere adds no second notice.
+    await other.post(PERSON_SEED, "still here?")
+    [served] = await bot.serve_rooms(_echo)
+    assert served.txid and served.low_funds_notice is None
+    assert _texts(chain, other) == ["heard: still here?"]
+
+
+@pytest.mark.asyncio
+async def test_the_notice_counts_toward_the_rate_limit_after_it_posts():
+    # Leif's #56 review: the notice may post when the window is full, but it
+    # still counts afterward. Two posts per 60 s: the reply and the notice fill it.
+    chain = Wallet()
+    clock = Clock(chain)
+    room = await _room(chain, bytes([0x4B]) * 32, BotSettings(BOT_MODE_EVERY_MESSAGE, 2, 60))
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    chain.balance = MIN_BALANCE + THRESHOLD
+    await room.post(PERSON_SEED, "one")
+    [served] = await bot.serve_rooms(_echo)
+    assert served.low_funds_notice
+    await room.post(PERSON_SEED, "two")
+    [served] = await bot.serve_rooms(_echo)
+    assert (served.txid, served.skipped) == (None, SKIP_RATE_LIMIT)
+    assert _texts(chain, room) == ["heard: one", LOW_FUNDS_NOTICE]
