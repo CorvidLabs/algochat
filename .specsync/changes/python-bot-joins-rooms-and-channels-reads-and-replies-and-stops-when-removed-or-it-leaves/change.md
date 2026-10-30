@@ -1,6 +1,6 @@
 ---
 id: python-bot-joins-rooms-and-channels-reads-and-replies-and-stops-when-removed-or-it-leaves
-state: draft
+state: implementing
 type: feature
 base_commit: 77a8c31ee75ec3e099f7a605c62f21ca168e00ca
 ---
