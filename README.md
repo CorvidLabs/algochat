@@ -8,6 +8,8 @@ End-to-end encrypted messages carried as notes on Algorand payments. One protoco
 
 This is the public specification and the language implementations. It is not a chat app. [Raven](https://corvidlabs.xyz/raven/) is the CorvidLabs app. Everyday chat still belongs in Signal or Matrix. AlgoChat is the niche where the message is tied to a transaction that anyone can verify and nobody can edit.
 
+**Want a bot in your rooms?** [Run your own bot](py/docs/run-your-own-bot.md) with the Python agent. What is new in 1.6.0 is in [CHANGELOG.md](CHANGELOG.md).
+
 ## Libraries
 
 | Path | Language | Protocols | Test |
@@ -65,12 +67,12 @@ This repository is the source for the protocol and all six libraries. Archived l
 
 | Library | Package | Package version / tag | Declared language and runtime |
 | --- | --- | --- | --- |
-| Swift | package `algochat`, product `AlgoChat` | `1.5.0` / `v1.5.0` | [Swift tools 6.0+](Package.swift) |
-| TypeScript | `@corvidlabs/ts-algochat` | `0.11.0` | [Node.js 18.0.0+; TypeScript `^5.7.0` for development](ts/package.json) |
-| Python | `py-algochat` | `0.4.0` | [Python 3.10+](py/pyproject.toml) |
-| Rust | `algochat` | `0.5.0` | [Rust 1.85+; edition 2021](rs/Cargo.toml) |
-| Kotlin | `com.corvidlabs:kt-algochat` | `0.4.0` | [Kotlin 2.1.20; JDK 17 toolchain](kt/build.gradle.kts) |
-| Go | `github.com/CorvidLabs/algochat/go` | `0.4.0` / `go/v0.4.0` | [Go 1.25.0+](go/go.mod) |
+| Swift | package `algochat`, product `AlgoChat` | `1.6.0` / `v1.6.0` | [Swift tools 6.0+](Package.swift) |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | [Node.js 18.0.0+; TypeScript `^5.7.0` for development](ts/package.json) |
+| Python | `py-algochat` | `0.5.0` | [Python 3.10+](py/pyproject.toml) |
+| Rust | `algochat` | `0.6.0` | [Rust 1.85+; edition 2021](rs/Cargo.toml) |
+| Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | [Kotlin 2.1.20; JDK 17 toolchain](kt/build.gradle.kts) |
+| Go | `github.com/CorvidLabs/algochat/go` | `0.5.0` / `go/v0.5.0` | [Go 1.25.0+](go/go.mod) |
 
 Swift declares iOS 15+, macOS 12+, tvOS 15+, watchOS 8+, and visionOS 1+. Its hybrid ML-KEM methods require Apple OS 26 APIs; release qualification covers macOS 26, and Linux builds without those methods.
 
@@ -79,7 +81,7 @@ Declared requirements and configured CI versions differ. Qualification uses Node
 The Swift package name is `algochat`. The library product is `AlgoChat`.
 
 ```swift
-.package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.5.0")
+.package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.6.0")
 ```
 
 ```swift

@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/kt.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/kt.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
-[![Source version](https://img.shields.io/badge/source-0.4.0-blue)](build.gradle.kts)
+[![Source version](https://img.shields.io/badge/source-0.5.0-blue)](build.gradle.kts)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -12,13 +12,13 @@ Kotlin implementation of the AlgoChat protocol for encrypted messaging on Algora
 
 ## Version and requirements
 
-- Artifact: `com.corvidlabs:kt-algochat` **0.4.0**, implementing protocol **1.5.0**.
+- Artifact: `com.corvidlabs:kt-algochat` **0.5.0**, implementing protocol **1.6.0**.
 - [Build configuration](build.gradle.kts): Kotlin JVM/serialization plugins **2.1.20** and a **JDK 17** toolchain.
 - [Gradle wrapper 8.11](gradle/wrapper/gradle-wrapper.properties) builds/tests the library. Qualification uses **JDK 17** and **Gradle 8.14** for the external consumer; Android is unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Installation
 
-The intended release destination is GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages), with coordinate `com.corvidlabs:kt-algochat:0.4.0`. As checked on 2026-10-18, the existing GitHub package entry is still associated with archived `CorvidLabs/kt-algochat`; availability at the monorepo Maven endpoint and equivalence to current source were not verified. See [the dated distribution evidence](../docs/RELEASE.md#package-versions-and-distribution).
+The intended release destination is GitHub Packages for [CorvidLabs/algochat](https://github.com/CorvidLabs/algochat/packages), with coordinate `com.corvidlabs:kt-algochat:0.5.0`. As checked on 2026-10-18, the existing GitHub package entry is still associated with archived `CorvidLabs/kt-algochat`; availability at the monorepo Maven endpoint and equivalence to current source were not verified. See [the dated distribution evidence](../docs/RELEASE.md#package-versions-and-distribution).
 
 To use the current source, clone this monorepo and run `./gradlew publishToMavenLocal` from `kt/`, then use `mavenLocal()` in the consuming project's repositories. This is a local development installation, not a remote publication.
 
@@ -49,7 +49,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.corvidlabs:kt-algochat:0.4.0")
+    implementation("com.corvidlabs:kt-algochat:0.5.0")
 }
 ```
 
@@ -68,7 +68,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.corvidlabs:kt-algochat:0.4.0'
+    implementation 'com.corvidlabs:kt-algochat:0.5.0'
 }
 ```
 

@@ -1,6 +1,6 @@
 # Hybrid sessions and administered rooms
 
-This guide describes protocol 1.5.0. It explains application integration; it does not claim a new runtime or LocalNet qualification. [PROTOCOL.md](../PROTOCOL.md) remains normative, with exact byte offsets in sections 5.7–5.8. Classical `0x01`/`0x02` behavior is unchanged. The protocol version, envelope version `0x02`, and library package versions are different concepts. Tag v1.4.0 includes `0x03`, `0x06`, and `0x07`. Tag v1.3.0 does not. A protocol tag does not by itself publish the Python, Rust, or Kotlin packages.
+This guide describes protocol 1.6.0. It explains application integration; it does not claim a new runtime or LocalNet qualification. [PROTOCOL.md](../PROTOCOL.md) remains normative, with exact byte offsets in sections 5.7–5.8. Classical `0x01`/`0x02` behavior is unchanged. The protocol version, envelope version `0x02`, and library package versions are different concepts. Tag v1.4.0 includes `0x03`, `0x06`, and `0x07`. Tag v1.3.0 does not. A protocol tag does not by itself publish the Python, Rust, or Kotlin packages.
 
 ## Dispatch and discovery
 
@@ -83,7 +83,7 @@ flowchart TD
     V -.->|"snapshot mismatch"| X
 ```
 
-Every accepted transaction id is replay-protected within the supplied reduction. Earlier valid head-advancing records win same-parent conflicts; clients recompute from the full ordered set. Join requests may cite an earlier accepted head, but must repeat the **current** state and cannot cite zero or another request. Public pending requests are derived, not stored in the snapshot. The [operation table](../PROTOCOL.md#582-room-administration-0x03) defines all twelve operations and roles.
+Every accepted transaction id is replay-protected within the supplied reduction. Earlier valid head-advancing records win same-parent conflicts; clients recompute from the full ordered set. Join requests may cite an earlier accepted head, but must repeat the **current** state and cannot cite zero or another request. Public pending requests are derived, not stored in the snapshot. The [operation table](../PROTOCOL.md#582-room-administration-0x03) defines all fourteen operations and roles.
 
 | Change | Epoch | Key handling by application |
 | --- | --- | --- |
@@ -91,8 +91,32 @@ Every accepted transaction id is replay-protected within the supplied reduction.
 | Direct add or accept join | Unchanged | Current key delivered only to the new member |
 | Remove, rekey or transfer owner | Increment; reject uint32 overflow | Generate a fresh key and deliver to remaining members |
 | Name, policy, appoint/dismiss admin, request/decline join | Unchanged | No key delivery authorized by this record |
+| Add bot (op 13) | Unchanged | Current key delivered only to the bot |
+| Set bot (op 14) | Unchanged | No key delivery authorized by this record |
 
 An add can reveal earlier messages in the same epoch because the key is unchanged. A remove cannot erase old keys or history. Role changes do not happen merely because a payment was signed or the mailbox spending key is held. Legacy `0x06` actions 1–4 create no administration chain or owner; their codecs do not enforce a stateful roster or epoch transition sequence.
+
+## Bots in a room
+
+Protocol 1.6.0 adds room bots. [PROTOCOL.md section 5.8.2](../PROTOCOL.md#582-room-administration-0x03) is normative; this is how they fit together.
+
+- **Only the owner or an admin makes a bot.** Op 13 adds an account that is not yet a member and marks it as a bot in that room, with a reply mode and a rate limit. Nothing an account posts about itself makes it a bot, and a member who is already in the room cannot be marked later.
+- **The settings live in the room record.** Op 13 and op 14 are delta notes with five more bytes after the parent group id: the reply mode (1 when mentioned or replied to, 2 every message, 3 its commands), then the most replies and the window in seconds, each big-endian and 1 through 65535. There is no default mode or limit. 5 replies per 60 seconds is a preset a client may suggest.
+- **Every member can read the mode and limit.** The record is public, so any client can show them and check the bot against them.
+- **A bot joins at once and is never an admin.** It does not request or accept. It cannot be appointed admin or given the room.
+- **Each channel adds the bot separately.** A channel's owner or admin adds it there with its own op 13 and its own settings. The bot must already be a bot in the parent room. A plain add of that bot to a channel is rejected.
+- **Removing a bot is a normal remove.** Op 11 drops the bot and its settings and raises the epoch, so the remaining members get a new key.
+
+```mermaid
+flowchart LR
+    A["Owner or admin<br/>op 13: add bot<br/>mode + rate limit"] --> B["Bot is a member<br/>marked as a bot here<br/>epoch unchanged"]
+    B --> K["Current key delivered<br/>to the bot only"]
+    B --> C["op 14: change<br/>mode or limit"]
+    B --> R["op 11: remove<br/>epoch + 1, new key<br/>for everyone else"]
+    B --> H["Channel owner or admin<br/>op 13 in that channel"]
+```
+
+Whether a bot keeps to its rate limit is up to the bot. The Python agent in `py/` does; see [Run your own bot](../py/docs/run-your-own-bot.md).
 
 ## Authorized key delivery
 

@@ -8,7 +8,7 @@ Encrypted peer-to-peer messaging on the Algorand blockchain. Built with Swift 6 
 
 ## Version and requirements
 
-- Package: `algochat`, product `AlgoChat`, **1.5.0** via repository tag **`v1.5.0`**, implementing protocol **1.5.0**. The archived repository's **0.4.0** tag belongs to the previous distribution. Tag **`v1.4.0`** is the previous monorepo release.
+- Package: `algochat`, product `AlgoChat`, **1.6.0** via repository tag **`v1.6.0`**, implementing protocol **1.6.0**. The archived repository's **0.4.0** tag belongs to the previous distribution. Tag **`v1.5.0`** is the previous monorepo release.
 - [Root manifest](../Package.swift): Swift tools **6.0+**; iOS **15+**, macOS **12+**, tvOS **15+**, watchOS **8+**, and visionOS **1+**.
 - Hybrid ML-KEM methods require Apple OS **26** APIs. Qualification covers **macOS 26** and a separate Linux build without ML-KEM; exact runner compiler versions are recorded in receipts. Older platform minima are unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
@@ -36,7 +36,7 @@ The package manifest is at the root of [CorvidLabs/algochat](https://github.com/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.5.0")
+    .package(url: "https://github.com/CorvidLabs/algochat.git", from: "1.6.0")
 ]
 ```
 
