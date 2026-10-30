@@ -1,4 +1,36 @@
 {
-  "approvals": [],
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "corvid-agent",
+      "timestamp": 1793323076,
+      "digest": "e440276103470ecb58040f80c7a4c3ed83b77195fdd7ee05ee5d09f8e12b1768",
+      "note": "Leif (0xLeif) authorized approving all SpecSync changes on algochat #49-#56 in chat on 2026-10-29 7:13 PM MDT; recorded by corvid-agent, not as Leif.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "python-algochat-encryption-public-key-returns-raw-bytes",
+        "title": "Python AlgoChat.encryption_public_key returns raw bytes",
+        "description": "Python AlgoChat.encryption_public_key returns raw bytes",
+        "kind": "bug_fix",
+        "affected_specs": [],
+        "affected_paths": [
+          "py/src/algochat/client.py",
+          "py/tests/test_client.py"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "Python-only return-type fix; the protocol spec, vectors and wire bytes do not change.",
+        "acceptance_criteria": [
+          "KEY-2 and KEY-1.a in hi/key.md (existing intent): AlgoChat.encryption_public_key returns the raw 32-byte X25519 public key, as its annotation and docstring say, so a Python caller can publish it and it matches what other implementations derive from the same account."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
   "reopenings": []
 }

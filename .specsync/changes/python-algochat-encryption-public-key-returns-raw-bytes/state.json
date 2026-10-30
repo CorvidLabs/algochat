@@ -7,10 +7,11 @@
   "title": "Python AlgoChat.encryption_public_key returns raw bytes",
   "description": "Python AlgoChat.encryption_public_key returns raw bytes",
   "kind": "bug_fix",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "8e165d5a399fd0e5b94fe2998a07f2a43f448328",
   "created_at": 1793285087,
-  "updated_at": 1793285115,
+  "updated_at": 1793323077,
   "affected_specs": [],
   "affected_paths": [
     "py/src/algochat/client.py",

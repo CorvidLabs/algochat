@@ -1,6 +1,6 @@
 ---
 id: python-algochat-encryption-public-key-returns-raw-bytes
-state: draft
+state: implementing
 type: bug_fix
 base_commit: 8e165d5a399fd0e5b94fe2998a07f2a43f448328
 ---
