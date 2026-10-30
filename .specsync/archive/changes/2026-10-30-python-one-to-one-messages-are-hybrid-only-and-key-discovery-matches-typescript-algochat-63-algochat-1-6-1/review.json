@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "python-one-to-one-messages-are-hybrid-only-and-key-discovery-matches-typescript-algochat-63-algochat-1-6-1",
+  "reviewer": "corvid-agent",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "8c2cbe9c5d43836b6b5dc9065235520386661bba",
+  "contract_digest": "cce865b3029db6f029e0ffa9092b61ec4ad3d2a09cb71cea111b88dae1663a5c",
+  "execution_digest": "035d7347d3675e96b3f73ac2fb84ecabec6db35f9cda70b778eedb0ca1d8a31a",
+  "workspace_digest": "073bc28e027e4458780eb4d6d17b55e77d42e77c39d6f47c7832c8edf2f1de75",
+  "timestamp": 1793403497
+}

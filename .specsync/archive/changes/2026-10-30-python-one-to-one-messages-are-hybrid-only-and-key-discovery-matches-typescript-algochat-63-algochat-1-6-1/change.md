@@ -1,6 +1,6 @@
 ---
 id: python-one-to-one-messages-are-hybrid-only-and-key-discovery-matches-typescript-algochat-63-algochat-1-6-1
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 7d7b280ae027b55502a3d16d72ab7afac3f93043
 ---
