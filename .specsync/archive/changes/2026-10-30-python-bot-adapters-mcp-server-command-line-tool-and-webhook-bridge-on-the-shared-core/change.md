@@ -1,6 +1,6 @@
 ---
 id: python-bot-adapters-mcp-server-command-line-tool-and-webhook-bridge-on-the-shared-core
-state: implementing
+state: archived
 type: feature
 base_commit: 49b8cc215eca16862c600f78fb4aa9169573c8ca
 ---

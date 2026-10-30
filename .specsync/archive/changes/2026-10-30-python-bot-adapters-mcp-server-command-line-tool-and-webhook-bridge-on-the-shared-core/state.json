@@ -7,11 +7,11 @@
   "title": "Python bot adapters: MCP server, command-line tool and webhook bridge on the shared core",
   "description": "Python bot adapters: MCP server, command-line tool and webhook bridge on the shared core",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "49b8cc215eca16862c600f78fb4aa9169573c8ca",
   "created_at": 1793295395,
-  "updated_at": 1793324829,
+  "updated_at": 1793325358,
   "affected_specs": [],
   "affected_paths": [
     "py/specs/agent",
