@@ -155,8 +155,11 @@ async def test_cli_mcp_and_webhook_on_localnet_across_every_language(tmp_path):
         mailbox = await harness.account()
         person = await _core(member, harness, name="member")
         other_bot = await _core(other_bot_account, harness, name="other")
+        # One-to-one messages are hybrid only (AGENT-5.a, AGENT-5.b), so everyone publishes
+        # an X25519 key and a signed ML-KEM-768 key before anyone writes one.
         for core in (person, other_bot):
             await harness.indexer.wait_for_indexer(await core.publish_key(), 30)
+            await harness.indexer.wait_for_indexer(await core.publish_pq_key(), 30)
 
         # 1. The CLI knows the bot's address and publishes its keys once.
         assert bot.cli("address") == {"address": bot_account.address, "name": "helper"}
