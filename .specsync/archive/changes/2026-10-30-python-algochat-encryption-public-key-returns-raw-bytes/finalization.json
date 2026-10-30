@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-algochat-encryption-public-key-returns-raw-bytes",
+  "implementation_commit": "58aefa97d168383caaa84d26f08a7c0eff54321a",
+  "implementation_tree": "d62a47e7d28f0371b7ea24a95a300fb6f50376cd",
+  "contract_digest": "e440276103470ecb58040f80c7a4c3ed83b77195fdd7ee05ee5d09f8e12b1768",
+  "workspace_digest": "5f0c7f45b3f9cb5009685664255dac3b9eb9fc1336befa0e0a21cc4d32a37ae3",
+  "closing_digest": "0a430cf737f2d76aded6d7c5378c07c6c4eb0f9a8ea2bec83e12c89f891faa73",
+  "review_digest": "62361a740034fd74b248d42c98197dc2faf3a1359e9cb7c4e7f526eaaed8cd47",
+  "finalization_digest": "04ff191d77f470cb2795aa10b6a47a0420c9768ce3e7fa2cb7b9802b486bd874",
+  "timestamp": 1793323618
+}

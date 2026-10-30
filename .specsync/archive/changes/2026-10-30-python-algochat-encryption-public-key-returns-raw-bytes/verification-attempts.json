@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1793323076,
+      "commit": "ec95cb11c03cee18fada5917e60accf89b841d28",
+      "contract_digest": "e440276103470ecb58040f80c7a4c3ed83b77195fdd7ee05ee5d09f8e12b1768",
+      "execution_digest": "44796360a336233324d25b9d81a49b14711f16c8c14a8e21145c9bef8cd7936d",
+      "workspace_digest": "5f0c7f45b3f9cb5009685664255dac3b9eb9fc1336befa0e0a21cc4d32a37ae3",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793323077,
+      "commit": "4d01c8ff83981277ab8116a278c2e1ba5bbeef90",
+      "contract_digest": "e440276103470ecb58040f80c7a4c3ed83b77195fdd7ee05ee5d09f8e12b1768",
+      "execution_digest": "44796360a336233324d25b9d81a49b14711f16c8c14a8e21145c9bef8cd7936d",
+      "workspace_digest": "5f0c7f45b3f9cb5009685664255dac3b9eb9fc1336befa0e0a21cc4d32a37ae3",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    },
+    {
+      "timestamp": 1793323077,
+      "commit": "58aefa97d168383caaa84d26f08a7c0eff54321a",
+      "contract_digest": "e440276103470ecb58040f80c7a4c3ed83b77195fdd7ee05ee5d09f8e12b1768",
+      "execution_digest": "44796360a336233324d25b9d81a49b14711f16c8c14a8e21145c9bef8cd7936d",
+      "workspace_digest": "5f0c7f45b3f9cb5009685664255dac3b9eb9fc1336befa0e0a21cc4d32a37ae3",
+      "acceptance_input_digest": "018347489b4a31d4fa922d2ea6fc11775516b2bce6ea4f99cea2190fbec419d2",
+      "acceptance_manifest": {
+        "schema_version": 1,
+        "entries": [
+          {
+            "path": "py/src/algochat/client.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "6022c51bbc73769c68fb1d7e2fb7481cf966a43c9eb67f967a8ed04006a5068c",
+            "entry_digest": "5b40c9629f47725581b83aa640c6d987e92afe2ff501740b772ad49722653005",
+            "owners": [
+              "@exact:delivery"
+            ]
+          },
+          {
+            "path": "py/tests/test_client.py",
+            "kind": "file",
+            "mode": 33188,
+            "payload_digest": "be7ff559a614ad682285139af80c44801f0e7b53b0649da85e6cbcea523b1840",
+            "entry_digest": "0ae4756f98cfba1ed104a8fa1ca096bf6c09dff73b31071026aa1f150c2f3dae",
+            "owners": [
+              "@exact:test"
+            ]
+          }
+        ]
+      },
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check (no spec in scope)",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": []
+    }
+  ]
+}
