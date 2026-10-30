@@ -7,11 +7,11 @@
   "title": "Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64)",
   "description": "Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64)",
   "kind": "documentation",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "34eb8622d50f58c5e31cf7eee8729924b0a460f6",
   "created_at": 1793387504,
-  "updated_at": 1793403260,
+  "updated_at": 1793403281,
   "affected_specs": [
     "release"
   ],
