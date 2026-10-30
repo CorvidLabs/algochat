@@ -7,10 +7,11 @@
   "title": "Python one-to-one messages are hybrid only and key discovery matches TypeScript (algochat#63, AlgoChat 1.6.1)",
   "description": "Python one-to-one messages are hybrid only and key discovery matches TypeScript (algochat#63, AlgoChat 1.6.1)",
   "kind": "bug_fix",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "7d7b280ae027b55502a3d16d72ab7afac3f93043",
   "created_at": 1793386942,
-  "updated_at": 1793387036,
+  "updated_at": 1793403477,
   "affected_specs": [],
   "affected_paths": [
     "py/src/algochat",
