@@ -1,6 +1,6 @@
 ---
 id: python-bot-out-of-funds-notice-funds-command-and-operator-guide
-state: implementing
+state: archived
 type: feature
 base_commit: bf386df9960b5c5c1cbc45ac342e543d7d81b821
 ---
