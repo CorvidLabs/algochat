@@ -244,6 +244,9 @@ async def test_cli_mcp_and_webhook_on_localnet_across_every_language(tmp_path):
         [list_txid] = declared["txids"]
         left = bot.cli("leave-room", "--group-id", room.group_id.hex(), "--mailbox", mailbox.address)
         [notice] = left["txids"]
+        # leave-room confirms on algod; `rooms` is a new process that sees the notice only
+        # through the indexer, so wait for the indexer to have it first.
+        await harness.indexer.wait_for_indexer(notice, 30)
         [after] = bot.cli("rooms")
         assert after["status"] == ROOM_LEFT
 

@@ -93,12 +93,41 @@ def is_loopback_host(host: str) -> bool:
         return False
 
 
+_METADATA_NAMES = frozenset({"metadata", "metadata.google.internal", "metadata.goog", "instance-data", "instance-data.ec2.internal"})
+_METADATA_ADDRESSES = (ipaddress.ip_network("fd00:ec2::254/128"), ipaddress.ip_network("100.100.100.200/32"))
+
+
+def is_link_local_or_metadata(host: str) -> bool:
+    """Whether ``host`` is a link-local, unspecified or cloud metadata address or name.
+
+    Covers 169.254.0.0/16 (where most clouds serve instance metadata),
+    fe80::/10, 0.0.0.0 and ::, their IPv4-mapped IPv6 forms, the AWS IPv6
+    and Alibaba metadata addresses, and the usual metadata host names.
+    """
+    host = host.strip("[]").lower().rstrip(".")
+    if host in _METADATA_NAMES:
+        return True
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+    return (
+        address.is_link_local
+        or address.is_unspecified
+        or any(address in network for network in _METADATA_ADDRESSES)
+    )
+
+
 def check_webhook_url(url: str, has_secret: bool) -> str:
     """Checks where the bridge may send readable text (AGENT-1.c). Returns ``url``.
 
     Allowed: ``http`` or ``https`` to a loopback host, or ``https`` to any
     other host when a shared secret signs each request. Credentials inside
-    the URL are refused, so they never land in logs.
+    the URL are refused, so they never land in logs. Link-local, unspecified
+    and cloud metadata addresses are refused outright, without relying on the
+    certificate check.
     """
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.hostname:
@@ -107,6 +136,8 @@ def check_webhook_url(url: str, has_secret: bool) -> str:
         raise WebhookError("Put no credentials in the webhook URL; use the shared secret")
     if is_loopback_host(parts.hostname):
         return url
+    if is_link_local_or_metadata(parts.hostname):
+        raise WebhookError("The webhook may not be a link-local, unspecified or cloud metadata address")
     if parts.scheme != "https":
         raise WebhookError(
             "Readable text goes over plain http only to this machine; use https for another address"
@@ -269,6 +300,7 @@ __all__ = [
     "WebhookError",
     "check_webhook_url",
     "direct_payload",
+    "is_link_local_or_metadata",
     "is_loopback_host",
     "load_webhook_secret",
     "room_payload",

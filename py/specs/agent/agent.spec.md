@@ -73,7 +73,7 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 | `CommandError` | `ValueError` subclass for bad arguments, an unknown message, or a reply the reply policy refuses. |
 | `WebhookBridge` | Async callable used as a `serve_direct` or `serve_rooms` handler: posts the message as JSON to the operator's URL and returns the reply text. Built with the URL, the shared secret or `None`, and an optional SSL context. |
 | `WebhookError` | `RuntimeError` subclass: the URL is not allowed, or the webhook refused, failed or answered in another shape. |
-| `check_webhook_url` | Allows `http` or `https` to a loopback host (`localhost` or a loopback IP), or `https` to another host only with a shared secret. Refuses credentials in the URL. Returns the URL or raises `WebhookError` (AGENT-1.c). |
+| `check_webhook_url` | Allows `http` or `https` to a loopback host (`localhost` or a loopback IP), or `https` to another host only with a shared secret. Refuses credentials in the URL and any link-local, unspecified or cloud metadata host (169.254.0.0/16, fe80::/10, 0.0.0.0, ::, their IPv4-mapped forms, fd00:ec2::254, 100.100.100.200, metadata.google.internal), even over https with a secret. Returns the URL or raises `WebhookError` (AGENT-1.c). |
 | `load_webhook_secret` | The shared secret from `ALGOCHAT_WEBHOOK_SECRET` or the owner-only file named by `ALGOCHAT_WEBHOOK_SECRET_FILE`; `None` when neither is set. Both set, under 32 characters, or an unsafe file raise `AgentConfigError` without the secret in the message. |
 | `verify_signature` | For the operator's receiver: whether `X-AlgoChat-Signature` is the HMAC-SHA256 `sha256=<hex>` of `"<timestamp>." + body` under the secret, with the timestamp within 300 seconds. |
 | `SECRET_ENV` | `"ALGOCHAT_WEBHOOK_SECRET"`. |
@@ -163,7 +163,7 @@ Module internals used by the adapters and not exported from `algochat.agent`:
 | `config.read_owner_only_file` | The owner-only file reader behind `read_mnemonic_file` and the webhook secret file, with the label in its messages. |
 | `AgentCore.room_skip_reason` | The `SKIP_*` reason the room's current record and the bot's recent posts keep it silent on a `RoomMessage`, or `None`. |
 | `AgentCore.is_known_bot` | Whether any of the bot's rooms marks an address as a bot. |
-| `webhook.is_loopback_host`, `webhook.sign`, `webhook.direct_payload`, `webhook.room_payload` | The loopback test, the signature, and the request bodies. |
+| `webhook.is_loopback_host`, `webhook.is_link_local_or_metadata`, `webhook.sign`, `webhook.direct_payload`, `webhook.room_payload` | The loopback test, the signature, and the request bodies. |
 | `service.Param`, `service.check_arguments`, `service.command_by_name`, `service.to_json` | A command parameter, argument checks (unknown or mistyped ones refused), lookup by CLI or tool name, and JSON for results. |
 | `runtime.build_core`, `runtime.webhook_factory`, `runtime.parse_command` | Build the bot and its webhook bridges from the environment, and read `NAME=DESCRIPTION`. |
 | `mcp.McpServer` | The MCP server on an async factory of `AgentService`. |
@@ -197,7 +197,7 @@ Module internals used by the adapters and not exported from `algochat.agent`:
 22. The command list is plain room text that every implementation reads. The bot posts it only in commands mode, and only when its latest list there since it was last added is different, so a restart posts nothing new.
 23. The bot's own replies stay plain room text (Raven shows room text as it is); it reads section 9.2 replies from members only to know when they reply to it.
 24. The CLI and the MCP server are built from the same `COMMANDS`: every CLI command has an MCP tool with the same parameters, and the reverse (AGENT-1.e).
-25. Replies through any adapter follow the reply policy: `reply-room` refuses what `serve_rooms` would skip, `reply` refuses a sender a room marks as a bot, and `serve` sends the webhook only the messages the policy allows. The adapters post no room message except replies, command lists and the leave notice (design choice).
+25. Replies through any adapter follow the reply policy: `reply-room` refuses what `serve_rooms` would skip, `reply` refuses a sender a room marks as a bot, `send` refuses an account a room marks as a bot and posts nothing; each reads the rooms again first, so a long-lived MCP server follows a mode change or a new bot, and `serve` sends the webhook only the messages the policy allows. The adapters post no room message except replies, command lists and the leave notice (design choice).
 26. The webhook bridge sends readable text only to a loopback host, or over `https` with the certificate checked to another host when a shared secret signs every request. Proxies in the environment are ignored and redirects refused (AGENT-1.c; signing, proxies and redirects are design choices).
 27. The CLI and the MCP server have no default network: without `ALGOCHAT_ALGOD_URL` and `ALGOCHAT_INDEXER_URL` they stop with an error. They use only keys signed by their account. Their output and errors never contain the mnemonic or the webhook secret.
 
@@ -276,7 +276,7 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | Room handler failure | A `serve_rooms` handler or send raises | Record the error type in `RoomReply.error`, mark answered, go on |
 | Policy refusal | `reply` or `reply-room` on a message the reply policy keeps silent, or an unknown txid | Raise `CommandError` (MCP: `isError` result; CLI: exit 1) and post nothing |
 | Bad arguments | An unknown parameter, a missing required one, or a wrong type | Raise `CommandError`; MCP `tools/call` with an unknown tool answers -32602 |
-| Webhook not allowed | Plain http to another machine, https to another machine without a secret, credentials in the URL | Raise `WebhookError` before any request |
+| Webhook not allowed | Plain http to another machine, https to another machine without a secret, credentials in the URL, a link-local, unspecified or cloud metadata host | Raise `WebhookError` before any request |
 | Webhook failure | A non-2xx answer, a redirect, a bad certificate, a timeout, over 65536 bytes or another shape | The bridge raises `WebhookError`; the core records it as the message's error and goes on |
 | Missing settings | No algod or indexer URL, or no mnemonic | CLI and MCP stop with `AgentConfigError`, never echoing a secret |
 

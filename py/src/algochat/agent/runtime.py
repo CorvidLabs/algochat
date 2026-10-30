@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import os
 import ssl
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 
 from ..blockchain import AlgorandConfig
 from ..client import AlgoChatConfig
@@ -63,7 +63,7 @@ async def build_core(
     )
 
 
-def webhook_factory(environ: Mapping[str, str] | None = None):
+def webhook_factory(environ: Mapping[str, str] | None = None) -> Callable[[str], WebhookBridge]:
     """Returns a function that builds a :class:`WebhookBridge` for a URL, with the secret and CA from the environment."""
     env = os.environ if environ is None else environ
 

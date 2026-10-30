@@ -195,7 +195,7 @@ from algochat.agent import verify_signature
 ok = verify_signature(secret, headers["X-AlgoChat-Timestamp"], body, headers["X-AlgoChat-Signature"])
 ```
 
-The bridge ignores proxy settings and refuses redirects.
+The bridge ignores proxy settings and refuses redirects. It also refuses link-local, unspecified and cloud metadata hosts (such as 169.254.169.254 or metadata.google.internal), even over https with a secret.
 
 ## Encrypted Key Storage
 

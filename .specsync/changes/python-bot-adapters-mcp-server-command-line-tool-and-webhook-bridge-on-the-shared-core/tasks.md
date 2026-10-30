@@ -10,3 +10,4 @@ artifact: tasks
 - [x] Unit tests: `py/tests/test_agent_adapters.py`, `py/tests/webhook_support.py`.
 - [x] Localnet: `py/tests/test_agent_adapters_localnet.py`.
 - [x] Module specs, README, localnet how-to.
+- [x] Leif's review of algochat#55: link-local and metadata hosts refused; URL, bridge and redirect tests with exact texts; `send`, `reply` and `reply-room` through the core's synced refusals with tests on a fresh and a long-lived service; rebased on the hardened owner-only file reader; the localnet test waits for the leave notice on the indexer.

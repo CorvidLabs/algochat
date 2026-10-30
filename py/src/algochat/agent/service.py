@@ -20,7 +20,7 @@ from typing import Any
 
 from .core import AgentCore
 from .direct import DirectMessage
-from .policy import SKIP_FROM_BOT
+from .policy import PolicySkip
 from .rooms import Room, RoomMessage
 from .webhook import WebhookBridge
 
@@ -191,7 +191,12 @@ async def _publish_keys(service: AgentService, args: dict[str, Any]) -> Any:
 
 
 async def _send(service: AgentService, args: dict[str, Any]) -> Any:
-    return {"txid": await service.core.send_direct(args["to"], args["text"])}
+    # send_direct reads the rooms first and refuses an account any of them marks as a bot.
+    try:
+        txid = await service.core.send_direct(args["to"], args["text"])
+    except PolicySkip as skipped:
+        raise CommandError(f"The bot does not message another bot ({skipped.reason})") from None
+    return {"txid": txid}
 
 
 async def _read(service: AgentService, _: dict[str, Any]) -> Any:
@@ -206,9 +211,12 @@ async def _reply(service: AgentService, args: dict[str, Any]) -> Any:
         message = service._direct.get(txid)
     if message is None:
         raise CommandError(f"No unanswered one-to-one message {txid}")
-    if service.core.is_known_bot(message.sender):
-        raise CommandError(f"The bot does not reply to another bot ({SKIP_FROM_BOT})")
-    reply_txid = await service.core.reply(message, args["text"])
+    # core.reply reads the rooms again first, so a long-lived service (the MCP
+    # server) sees a bot mark made after the message was read.
+    try:
+        reply_txid = await service.core.reply(message, args["text"])
+    except PolicySkip as skipped:
+        raise CommandError(f"The bot does not reply to another bot ({skipped.reason})") from None
     service._direct.pop(txid, None)
     return {"txid": reply_txid}
 
@@ -230,10 +238,14 @@ async def _reply_room(service: AgentService, args: dict[str, Any]) -> Any:
         message = service._room.get(txid)
     if message is None:
         raise CommandError(f"No unanswered room message {txid}")
-    skipped = service.core.room_skip_reason(message)
-    if skipped is not None:
-        raise CommandError(f"The room's reply policy keeps the bot silent on this message ({skipped})")
-    reply_txid = await service.core.reply_room(message, args["text"])
+    # core.reply_room reads the rooms again and applies the policy on that
+    # fresh record (mode, rate window, bot marks), not the cached message's.
+    try:
+        reply_txid = await service.core.reply_room(message, args["text"])
+    except PolicySkip as skipped:
+        raise CommandError(
+            f"The room's reply policy keeps the bot silent on this message ({skipped.reason})"
+        ) from None
     service._room.pop(txid, None)
     return {"txid": reply_txid}
 
