@@ -39,7 +39,38 @@ export const ADMIN_OP = {
     DECLINE_JOIN: 10,
     REMOVE_MEMBER: 11,
     REKEY: 12,
+    /** Owner or admin adds a bot, marked as a bot with its reply mode and rate limit. */
+    ADD_BOT: 13,
+    /** Owner or admin changes a bot's reply mode and rate limit. */
+    SET_BOT: 14,
 } as const;
+
+/** How a bot replies in one room. There is no default; the admin picks one. */
+export const BOT_MODE = {
+    /** Only when it is mentioned or replied to. */
+    MENTIONS: 1,
+    /** On every message. */
+    EVERY_MESSAGE: 2,
+    /** Only for its slash commands. */
+    COMMANDS: 3,
+} as const;
+
+/** Suggested safe preset: 5 replies per 60 seconds. A suggestion, never a default. */
+export const BOT_RATE_PRESET = { replies: 5, seconds: 60 } as const;
+/** Bytes a bot record adds after the parent group id: mode, replies, seconds. */
+export const BOT_SETTINGS_SIZE = 5;
+
+export interface BotSettings {
+    mode: number;
+    /** Most replies in one window, 1 through 65535. */
+    replies: number;
+    /** Window length in seconds, 1 through 65535. */
+    seconds: number;
+}
+
+export interface RoomBot extends BotSettings {
+    account: Uint8Array;
+}
 
 export interface RoomState {
     groupId: Uint8Array;
@@ -54,6 +85,8 @@ export interface RoomState {
     name: Uint8Array;
     epoch: number;
     headTxId: Uint8Array;
+    /** Members marked as bots in this room, sorted by account. Absent means none. */
+    bots?: RoomBot[];
 }
 
 export interface AdminEvent {
@@ -95,6 +128,8 @@ interface DecodedAdmin {
     membersOmitted?: boolean;
     /** Present on a delta note. Legacy full-list notes leave this as 32 zero bytes. */
     parentGroupId?: Uint8Array;
+    /** Present only on an add-bot or set-bot note. */
+    bot?: BotSettings;
 }
 
 export function encodeAdminRecord(fields: DecodedAdmin): Uint8Array {
@@ -119,6 +154,14 @@ export function encodeAdminRecord(fields: DecodedAdmin): Uint8Array {
     if (!Object.values(ADMIN_OP).includes(fields.op as (typeof ADMIN_OP)[keyof typeof ADMIN_OP])) {
         throw new PQError('Unknown room administration operation');
     }
+    const botOp = isBotOp(fields.op);
+    if (botOp) {
+        if (!membersOmitted) throw new PQError('A bot record uses the delta note');
+        if (!fields.bot) throw new PQError('A bot needs a reply mode and a rate limit');
+        checkBotSettings(fields.bot);
+    } else if (fields.bot) {
+        throw new PQError('Only a bot record carries bot settings');
+    }
     const out: number[] = [PQ_PROTOCOL.VERSION, GROUP_ADMIN_PROTOCOL];
     push(out, fields.parent);
     push(out, fields.groupId);
@@ -136,6 +179,11 @@ export function encodeAdminRecord(fields: DecodedAdmin): Uint8Array {
     }
     push(out, fields.subject);
     if (membersOmitted) push(out, parentGroupId);
+    if (botOp && fields.bot) {
+        out.push(fields.bot.mode);
+        pushU16(out, fields.bot.replies);
+        pushU16(out, fields.bot.seconds);
+    }
     const note = Uint8Array.from(out);
     if (note.length > 4096) {
         throw new PQError(membersOmitted
@@ -155,8 +203,14 @@ export function draftAdmin(state: RoomState | null, input: {
     mailbox?: Uint8Array;
     /** Required when creating a channel, and for every later note on that channel. */
     parentRoom?: RoomState | null;
+    /** Required for add-bot and set-bot. There is no default. */
+    bot?: BotSettings;
 }): Uint8Array {
     const subject = input.subject ?? new Uint8Array(32);
+    if (isBotOp(input.op)) {
+        if (!input.bot) throw new PQError('A bot needs a reply mode and a rate limit');
+        checkBotSettings(input.bot);
+    }
     const parentGroupId = channelParent(state, input);
     const decoded: DecodedAdmin = {
         parent: state?.headTxId ?? new Uint8Array(32),
@@ -172,6 +226,7 @@ export function draftAdmin(state: RoomState | null, input: {
         subject,
         membersOmitted: true,
         parentGroupId,
+        bot: input.bot,
     };
     const next = input.op === ADMIN_OP.CREATE
         ? {
@@ -185,6 +240,7 @@ export function draftAdmin(state: RoomState | null, input: {
             policy: decoded.policy,
             name: decoded.name,
             epoch: 1,
+            bots: [] as RoomBot[],
         }
         : expectNext(state, { ...decoded, owner: state?.owner ?? input.sender, epoch: state?.epoch ?? 1 }, input.sender);
     return encodeAdminRecord({
@@ -201,7 +257,15 @@ export function draftAdmin(state: RoomState | null, input: {
         subject,
         membersOmitted: true,
         parentGroupId: next.parentGroupId,
+        bot: isBotOp(input.op) ? input.bot : undefined,
     });
+}
+
+/** The bot mark, reply mode and rate limit for one account, or null when it is not a bot here. */
+export function roomBot(state: RoomState, account: Uint8Array): RoomBot | null {
+    requireLength('account', account, 32);
+    const found = (state.bots ?? []).find((item) => uint8ArrayEquals(item.account, account));
+    return found ? copyBot(found) : null;
 }
 
 export function reduceAdmin(events: readonly AdminEvent[], parentEvents?: readonly AdminEvent[]): ReduceAdminResult {
@@ -224,7 +288,7 @@ export function deliveryAuthorized(
     const record = accepted.find((item) => uint8ArrayEquals(item.txId, adminTxId));
     if (!record || !uint8ArrayEquals(record.sender, sender) || record.epoch !== epoch) return false;
     if (!contains(record.members, recipient)) return false;
-    if (record.op === ADMIN_OP.ADD_MEMBER || record.op === ADMIN_OP.ACCEPT_JOIN) {
+    if (record.op === ADMIN_OP.ADD_MEMBER || record.op === ADMIN_OP.ACCEPT_JOIN || record.op === ADMIN_OP.ADD_BOT) {
         return uint8ArrayEquals(record.subject, recipient);
     }
     return record.op === ADMIN_OP.REMOVE_MEMBER || record.op === ADMIN_OP.REKEY || record.op === ADMIN_OP.TRANSFER_OWNER
@@ -415,13 +479,7 @@ function channelParent(state: RoomState | null, input: {
         throw new PQError('Channel does not point at this parent room');
     }
     if (input.op === ADMIN_OP.TRANSFER_OWNER) throw new PQError('The group owner keeps the channel');
-    if (
-        input.op === ADMIN_OP.ADD_MEMBER
-        || input.op === ADMIN_OP.ACCEPT_JOIN
-        || input.op === ADMIN_OP.REQUEST_JOIN
-    ) {
-        if (!contains(input.parentRoom.members, subject)) throw new PQError('That person is not in the parent room');
-    }
+    checkChannelJoin(input.op, subject, input.parentRoom);
     return copy(current);
 }
 
@@ -482,13 +540,17 @@ function bindChannel(decoded: DecodedAdmin, sender: Uint8Array, parentState: Roo
         }
     }
     if (decoded.op === ADMIN_OP.TRANSFER_OWNER) throw new PQError('The group owner keeps the channel');
-    if (
-        decoded.op === ADMIN_OP.ADD_MEMBER
-        || decoded.op === ADMIN_OP.ACCEPT_JOIN
-        || decoded.op === ADMIN_OP.REQUEST_JOIN
-    ) {
-        if (!contains(parentState.members, decoded.subject)) throw new PQError('That person is not in the parent room');
-    }
+    checkChannelJoin(decoded.op, decoded.subject, parentState);
+}
+
+/** A channel takes people from its parent room. A bot there joins a channel only as a bot. */
+function checkChannelJoin(op: number, subject: Uint8Array, parentRoom: RoomState): void {
+    const joining = op === ADMIN_OP.ADD_MEMBER || op === ADMIN_OP.ACCEPT_JOIN || op === ADMIN_OP.REQUEST_JOIN;
+    if (!joining && op !== ADMIN_OP.ADD_BOT) return;
+    if (!contains(parentRoom.members, subject)) throw new PQError('That person is not in the parent room');
+    const parentBot = (parentRoom.bots ?? []).some((item) => uint8ArrayEquals(item.account, subject));
+    if (op === ADMIN_OP.ADD_BOT && !parentBot) throw new PQError('That account is not a bot in the parent room');
+    if (joining && parentBot) throw new PQError('A bot joins a channel only when added as a bot');
 }
 
 function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint8Array): Omit<RoomState, 'headTxId'> {
@@ -518,7 +580,9 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
     let epoch = state.epoch;
     let name = copy(state.name);
     let policy = state.policy;
+    let bots = (state.bots ?? []).map(copyBot);
     const subject = decoded.subject;
+    const isBot = (account: Uint8Array) => bots.some((item) => uint8ArrayEquals(item.account, account));
     if (decoded.op === ADMIN_OP.SET_NAME) {
         if (!privileged || !isZero(subject)) throw new PQError('Sender cannot rename the room');
         name = copy(decoded.name);
@@ -530,6 +594,7 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
         if (!contains(members, subject) || uint8ArrayEquals(subject, owner) || contains(admins, subject)) {
             throw new PQError('That person cannot be appointed');
         }
+        if (isBot(subject)) throw new PQError('A bot cannot be an admin');
         admins = canonicalSet([...admins, subject], 'admins', GROUP_ADMIN_MAX);
     } else if (decoded.op === ADMIN_OP.DISMISS_ADMIN) {
         if (!uint8ArrayEquals(sender, state.owner) || !contains(admins, subject)) {
@@ -540,6 +605,7 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
         if (!uint8ArrayEquals(sender, state.owner) || !contains(members, subject) || uint8ArrayEquals(subject, owner)) {
             throw new PQError('Ownership can move only from the owner to another member');
         }
+        if (isBot(subject)) throw new PQError('A bot cannot own the room');
         owner = copy(subject);
         admins = admins.filter((item) => !uint8ArrayEquals(item, subject));
         epoch = bump(epoch);
@@ -568,10 +634,23 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
         members = members.filter((item) => !uint8ArrayEquals(item, subject));
         admins = admins.filter((item) => !uint8ArrayEquals(item, subject));
         pending = pending.filter((item) => !uint8ArrayEquals(item, subject));
+        bots = bots.filter((item) => !uint8ArrayEquals(item.account, subject));
         epoch = bump(epoch);
     } else if (decoded.op === ADMIN_OP.REKEY) {
         if (!privileged || !isZero(subject)) throw new PQError('Sender cannot rotate the room key');
         epoch = bump(epoch);
+    } else if (decoded.op === ADMIN_OP.ADD_BOT) {
+        if (!privileged || contains(members, subject) || uint8ArrayEquals(subject, state.mailbox) || isZero(subject)) {
+            throw new PQError('Sender cannot add that bot');
+        }
+        const settings = requireBot(decoded);
+        members = canonicalSet([...members, subject], 'members', GROUP_MEMBER_MAX);
+        pending = pending.filter((item) => !uint8ArrayEquals(item, subject));
+        bots = sortBots([...bots, { account: copy(subject), ...settings }]);
+    } else if (decoded.op === ADMIN_OP.SET_BOT) {
+        if (!privileged || !isBot(subject)) throw new PQError('Sender cannot change that bot');
+        const settings = requireBot(decoded);
+        bots = bots.map((item) => (uint8ArrayEquals(item.account, subject) ? { account: copy(subject), ...settings } : item));
     } else {
         throw new PQError('Unknown room administration operation');
     }
@@ -588,7 +667,37 @@ function expectNext(state: RoomState | null, decoded: DecodedAdmin, sender: Uint
         policy,
         name,
         epoch,
+        bots,
     };
+}
+
+function isBotOp(op: number): boolean {
+    return op === ADMIN_OP.ADD_BOT || op === ADMIN_OP.SET_BOT;
+}
+
+function checkBotSettings(bot: BotSettings): void {
+    if (bot.mode !== BOT_MODE.MENTIONS && bot.mode !== BOT_MODE.EVERY_MESSAGE && bot.mode !== BOT_MODE.COMMANDS) {
+        throw new PQError('Bot reply mode must be mentions, every message, or commands');
+    }
+    for (const value of [bot.replies, bot.seconds]) {
+        if (!Number.isInteger(value) || value < 1 || value > 0xffff) {
+            throw new PQError('Bot rate limit must be from 1 through 65535');
+        }
+    }
+}
+
+function requireBot(decoded: DecodedAdmin): BotSettings {
+    if (!decoded.bot) throw new PQError('A bot needs a reply mode and a rate limit');
+    checkBotSettings(decoded.bot);
+    return { mode: decoded.bot.mode, replies: decoded.bot.replies, seconds: decoded.bot.seconds };
+}
+
+function sortBots(bots: RoomBot[]): RoomBot[] {
+    return bots.map(copyBot).sort((a, b) => compareBytes(a.account, b.account));
+}
+
+function copyBot(bot: RoomBot): RoomBot {
+    return { account: copy(bot.account), mode: bot.mode, replies: bot.replies, seconds: bot.seconds };
 }
 
 function body(decoded: DecodedAdmin, pending: Uint8Array[], members: Uint8Array[]): Omit<RoomState, 'headTxId'> {
@@ -603,6 +712,7 @@ function body(decoded: DecodedAdmin, pending: Uint8Array[], members: Uint8Array[
         policy: decoded.policy,
         name: copy(decoded.name),
         epoch: decoded.epoch,
+        bots: [],
     };
 }
 
@@ -650,6 +760,14 @@ function decodeAdmin(note: Uint8Array): DecodedAdmin {
     const subject = take(note, cursor, 32); cursor += 32;
     const parentGroupId = membersOmitted ? take(note, cursor, 32) : new Uint8Array(32);
     if (membersOmitted) cursor += 32;
+    let bot: BotSettings | undefined;
+    if (isBotOp(op)) {
+        if (!membersOmitted) throw new PQError('A bot record uses the delta note');
+        const settings = take(note, cursor, BOT_SETTINGS_SIZE);
+        cursor += BOT_SETTINGS_SIZE;
+        bot = { mode: settings[0], replies: readU16(settings, 1), seconds: readU16(settings, 3) };
+        checkBotSettings(bot);
+    }
     if (cursor !== note.length) throw new PQError('Administration record has trailing bytes');
     if (note.length > 4096) {
         throw new PQError(membersOmitted
@@ -678,6 +796,7 @@ function decodeAdmin(note: Uint8Array): DecodedAdmin {
         subject,
         membersOmitted,
         parentGroupId,
+        bot,
     };
 }
 

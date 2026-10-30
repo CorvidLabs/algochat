@@ -1,6 +1,6 @@
 # AlgoChat Protocol Specification
 
-**Version**: 1.5.0
+**Version**: 1.6.0
 **Status**: Stable
 
 ## 1. Overview
@@ -389,6 +389,26 @@ Delta length is `205 + N + 32 × A`. A create with an empty name and no admins i
 | 10 | decline join | owner or admin | Subject has a pending request. The request is dropped. |
 | 11 | remove member | owner or admin | Subject is a member and is not the owner. Epoch increases by 1. |
 | 12 | rekey | owner or admin | Subject is 32 zero bytes. Epoch increases by 1. |
+| 13 | add bot | owner or admin | Subject is not a member, is not the mailbox, and is not 32 zero bytes. The subject becomes a member marked as a bot, with the reply mode and rate limit in the note. A pending request from the subject is dropped. Epoch stays. Delta note only. |
+| 14 | set bot | owner or admin | Subject is a bot in this room. Replaces its reply mode and rate limit. Epoch stays. Delta note only. |
+
+##### Bots
+
+Only ops 13 and 14 carry bot settings, and only as a delta note. Five bytes follow the parent group id:
+
+| Bot `0x03` field | Offset | Bytes |
+| --- | ---: | ---: |
+| Reply mode | 205 + N + 32 × A | 1 |
+| Most replies in one window (big-endian) | 206 + N + 32 × A | 2 |
+| Window length in seconds (big-endian) | 208 + N + 32 × A | 2 |
+
+A bot note is `210 + N + 32 × A` bytes. Reply mode is 1 (when mentioned or replied to), 2 (every message), or 3 (its commands). Replies and seconds are each 1 through 65535. There is no default mode and no default limit: the owner or admin picks both. 5 replies per 60 seconds is a suggested preset for a client to offer, not a value a reader fills in. A full-list note with op 13 or 14 is rejected (`A bot record uses the delta note`). A bot note without the five bytes is truncated. A note with any other op that carries them has trailing bytes and is rejected. A writer rejects bot settings on any other op (`Only a bot record carries bot settings`).
+
+An account is a bot in a room only because an accepted op 13 says so. Nothing the account posts about itself makes it a bot, and a member who is already in the room cannot be marked later. The bot joins as soon as op 13 is accepted. It does not request, accept or decline. Folding keeps the room's bots sorted by account, each with its mode and limit. The rate limit is the most replies the bot sends in that room in any window of that many seconds; the bot enforces it, and members can check it against the record.
+
+A bot is a member for posting, delivery and removal. Remove (op 11) drops the bot and its settings with the membership. A bot cannot be appointed admin (`A bot cannot be an admin`) and cannot receive ownership (`A bot cannot own the room`). Op 13 from anyone other than the owner or an admin, or naming a member, the mailbox or 32 zero bytes, is rejected (`Sender cannot add that bot`). Op 14 from anyone other than the owner or an admin, or naming an account that is not a bot here, is rejected (`Sender cannot change that bot`). Bad settings are rejected (`Bot reply mode must be mentions, every message, or commands`, `Bot rate limit must be from 1 through 65535`). A writer that is asked for op 13 or 14 without settings fails (`A bot needs a reply mode and a rate limit`). These sentences are the same in all six libraries.
+
+A channel has its own bots. The owner or an admin of the channel adds a bot to each channel with its own op 13, with that channel's mode and limit. The subject must be a bot in the parent room at that point (`That account is not a bot in the parent room`). A plain add, accept or join request in a channel for an account that is a bot in the parent room is rejected (`A bot joins a channel only when added as a bot`).
 
 Admins must be members other than the owner. The mailbox must not appear as owner, admin or member. The owner cannot be removed. The owner must remain a member. Epoch starts at 1 and increases only for remove, rekey, and transfer. An increment past 4294967295 fails.
 
@@ -420,7 +440,7 @@ The decrypted offsets are the legacy membership offsets through byte 100, with a
 
 Cryptographic opening validates framing, version, protocol, session sender, handshake id, tag, action and positive epoch. It does **not** apply room authorization. The caller must compare the returned group id and mailbox with the intended room and separately call the delivery-authorization helper with that room's accepted records and authenticated transaction sender/recipient.
 
-The cited administration transaction must be an accepted record sent by this same sender. The epoch must match that record. The recipient must be a member after that record. Add and accept authorize delivery only to the subject. Remove authorizes delivery to every remaining member except the subject. Rekey and transfer authorize delivery to every remaining member, including the new owner after a transfer. Create does not authorize a delivery, because the creator generated the key locally. Set name, set policy, appoint, dismiss, request, and decline do not authorize a delivery.
+The cited administration transaction must be an accepted record sent by this same sender. The epoch must match that record. The recipient must be a member after that record. Add, accept and add bot authorize delivery only to the subject. Remove authorizes delivery to every remaining member except the subject. Rekey and transfer authorize delivery to every remaining member, including the new owner after a transfer. Create does not authorize a delivery, because the creator generated the key locally. Set name, set policy, appoint, dismiss, request, decline, and set bot do not authorize a delivery.
 
 Adding a member sends the current key only to that member and does not rotate the key. Consequently that member can decrypt retrievable earlier messages from the same epoch. The application generates, stores and distributes keys; the reducer does not generate or erase them. Removal, an explicit rekey, and an ownership transfer rotate the key and deliver the new key only to the members who remain. An owner or an admin may post that remove and pay for the new key. A removed person does not receive that key. Messages they already opened stay readable under the previous key. A later message uses the new epoch and does not open under the old key.
 
@@ -1045,4 +1065,5 @@ See [TEST-VECTORS.md](./TEST-VECTORS.md) for canonical test vectors that enable 
 | 1.2.1 | Capacity and fee change, not a new envelope. Same envelopes as 1.2. Note limit is 4096 bytes (standard plaintext 3954, PSK plaintext 3950). The scheme minimum covers the first 1024 note bytes; further bytes add the surcharge in section 10.3. |
 | 1.3.0 | Optional hybrid session. Protocol `0x04` is one handshake note. Protocol `0x05` is a message under that session key. Everyday and Extra lock also accept envelope version `0x02`, which binds the full header as payload associated data. Version `0x01` stays valid. `0x03` is not assigned. |
 | 1.4.0 | Group mailbox. Protocol `0x06` delivers a group key under a hybrid session. Protocol `0x07` is one note on that group's mailbox. Protocol `0x03` is the public room administration record. These ids were not in tag v1.3.0. |
+| 1.6.0 | Room bots. `0x03` op 13 adds a bot with a reply mode and a rate limit, and op 14 changes them. Five bytes follow the parent group id on those two ops only. A bot cannot be an admin or the owner. A channel adds each bot with its own op 13. Notes without ops 13 and 14 are unchanged. |
 | 1.5.0 | Delta room note. A new `0x03` note omits the member list (member count 65535) and names one subject. One room holds 256 people. A channel is another room with its own mailbox, key, and roster. The group owner creates it and keeps it. Full-list notes still open. |

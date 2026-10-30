@@ -22,6 +22,8 @@ public enum GroupAdmin {
         public let name: Data
         public let epoch: UInt32
         public let headTxID: Data
+        /// Members marked as bots in this room, sorted by account.
+        public let bots: [RoomBot]
 
         public init(
             groupID: Data,
@@ -34,7 +36,8 @@ public enum GroupAdmin {
             name: Data,
             epoch: UInt32,
             headTxID: Data,
-            parentGroupID: Data = Data(repeating: 0, count: 32)
+            parentGroupID: Data = Data(repeating: 0, count: 32),
+            bots: [RoomBot] = []
         ) {
             self.groupID = groupID
             self.mailbox = mailbox
@@ -47,8 +50,49 @@ public enum GroupAdmin {
             self.name = name
             self.epoch = epoch
             self.headTxID = headTxID
+            self.bots = bots
         }
     }
+
+    /// A bot's reply mode and rate limit in one room: `replies` per `seconds`.
+    public struct BotSettings: Sendable, Equatable {
+        public let mode: UInt8
+        public let replies: UInt16
+        public let seconds: UInt16
+
+        public init(mode: UInt8, replies: UInt16, seconds: UInt16) {
+            self.mode = mode
+            self.replies = replies
+            self.seconds = seconds
+        }
+    }
+
+    /// One member marked as a bot in a room.
+    public struct RoomBot: Sendable, Equatable {
+        public let account: Data
+        public let settings: BotSettings
+
+        public init(account: Data, settings: BotSettings) {
+            self.account = account
+            self.settings = settings
+        }
+    }
+
+    /// Adds a bot: an owner or admin marks it as a bot, with a reply mode and a rate limit.
+    public static let opAddBot: UInt8 = 13
+    /// Changes a bot's reply mode and rate limit.
+    public static let opSetBot: UInt8 = 14
+    /// Reply only when the bot is mentioned or replied to.
+    public static let botModeMentions: UInt8 = 1
+    /// Reply on every message.
+    public static let botModeEveryMessage: UInt8 = 2
+    /// Reply only to the bot's slash commands.
+    public static let botModeCommands: UInt8 = 3
+    /// Suggested safe preset: 5 replies per 60 seconds. A suggestion, never a default.
+    public static let botRatePresetReplies: UInt16 = 5
+    public static let botRatePresetSeconds: UInt16 = 60
+    /// Bytes a bot record adds after the parent group id: mode, replies, seconds.
+    public static let botSettingsSize = 5
 
     public struct Event: Sendable, Equatable {
         public let note: Data
@@ -147,9 +191,16 @@ public enum GroupAdmin {
         policy: UInt8? = nil,
         groupID: Data? = nil,
         mailbox: Data? = nil,
-        parentRoom: State? = nil
+        parentRoom: State? = nil,
+        bot: BotSettings? = nil
     ) throws -> Data {
         let chosenSubject = subject ?? Data(count: keySize)
+        if isBotOp(op) {
+            guard let bot else {
+                throw fail("A bot needs a reply mode and a rate limit")
+            }
+            try checkBotSettings(bot)
+        }
         let parent = state?.headTxID ?? Data(count: keySize)
         let chosenGroupID = groupID ?? state?.groupID ?? Data(count: keySize)
         let chosenMailbox = mailbox ?? state?.mailbox ?? Data(count: keySize)
@@ -176,7 +227,8 @@ public enum GroupAdmin {
                 pending: [],
                 policy: chosenPolicy,
                 name: chosenName,
-                epoch: 1
+                epoch: 1,
+                bots: []
             )
         } else {
             let decoded = Decoded(
@@ -192,7 +244,8 @@ public enum GroupAdmin {
                 members: state?.members ?? [],
                 subject: chosenSubject,
                 membersOmitted: true,
-                parentGroupID: parentGroupID
+                parentGroupID: parentGroupID,
+                bot: bot
             )
             next = try expectNext(state, decoded, sender)
         }
@@ -210,9 +263,16 @@ public enum GroupAdmin {
                 members: next.members,
                 subject: chosenSubject,
                 membersOmitted: true,
-                parentGroupID: next.parentGroupID
+                parentGroupID: next.parentGroupID,
+                bot: isBotOp(op) ? bot : nil
             )
         )
+    }
+
+    /// The bot mark, reply mode and rate limit for `account`, or nil when it is not a bot here.
+    public static func roomBot(state: State, account: Data) throws -> RoomBot? {
+        try requireCount("account", account, keySize)
+        return state.bots.first { $0.account == account }
     }
 
     /// Encodes one `0x03` note. `membersOmitted` writes the 65535 sentinel instead of the roster.
@@ -229,7 +289,8 @@ public enum GroupAdmin {
         members: [Data],
         subject: Data,
         membersOmitted: Bool = false,
-        parentGroupID: Data = Data(repeating: 0, count: 32)
+        parentGroupID: Data = Data(repeating: 0, count: 32),
+        bot: BotSettings? = nil
     ) throws -> Data {
         try encode(
             Decoded(
@@ -245,7 +306,8 @@ public enum GroupAdmin {
                 members: members,
                 subject: subject,
                 membersOmitted: membersOmitted,
-                parentGroupID: parentGroupID
+                parentGroupID: parentGroupID,
+                bot: bot
             )
         )
     }
@@ -278,7 +340,7 @@ public enum GroupAdmin {
         else {
             return false
         }
-        if record.op == Op.addMember || record.op == Op.acceptJoin {
+        if record.op == Op.addMember || record.op == Op.acceptJoin || record.op == opAddBot {
             return record.subject == recipient
         }
         if record.op == Op.removeMember {
@@ -436,6 +498,8 @@ public enum GroupAdmin {
         var membersOmitted: Bool = false
         /// Present on a delta note. Legacy full-list notes leave this as 32 zero bytes.
         var parentGroupID: Data = Data(count: 32)
+        /// Present only on an add-bot or set-bot note.
+        var bot: BotSettings?
     }
 
     private struct Body {
@@ -449,6 +513,7 @@ public enum GroupAdmin {
         var policy: UInt8
         var name: Data
         var epoch: UInt32
+        var bots: [RoomBot]
     }
 
     private struct Applied {
@@ -477,7 +542,7 @@ public enum GroupAdmin {
         static let rekey: UInt8 = 12
 
         static func known(_ op: UInt8) -> Bool {
-            op >= create && op <= rekey
+            op >= create && op <= opSetBot
         }
     }
 
@@ -561,11 +626,7 @@ public enum GroupAdmin {
         if op == Op.transferOwner {
             throw fail("The group owner keeps the channel")
         }
-        if op == Op.addMember || op == Op.acceptJoin || op == Op.requestJoin {
-            if !contains(parentRoom.members, subject) {
-                throw fail("That person is not in the parent room")
-            }
-        }
+        try checkChannelJoin(op, subject, parentRoom)
         return Data(current)
     }
 
@@ -615,7 +676,8 @@ public enum GroupAdmin {
             name: next.name,
             epoch: next.epoch,
             headTxID: head,
-            parentGroupID: next.parentGroupID
+            parentGroupID: next.parentGroupID,
+            bots: next.bots
         )
         return Applied(
             state: room,
@@ -670,6 +732,7 @@ public enum GroupAdmin {
         var epoch = state.epoch
         var name = Data(state.name)
         var policy = state.policy
+        var bots = state.bots
         let subject = decoded.subject
         if decoded.op == Op.setName {
             if !privileged || !isZero(subject) {
@@ -688,6 +751,9 @@ public enum GroupAdmin {
             if !contains(members, subject) || subject == owner || contains(admins, subject) {
                 throw fail("That person cannot be appointed")
             }
+            if isBot(bots, subject) {
+                throw fail("A bot cannot be an admin")
+            }
             admins = try canonicalSet(admins + [Data(subject)], label: "admins", max: adminMax)
         } else if decoded.op == Op.dismissAdmin {
             if sender != state.owner || !contains(admins, subject) {
@@ -697,6 +763,9 @@ public enum GroupAdmin {
         } else if decoded.op == Op.transferOwner {
             if sender != state.owner || !contains(members, subject) || subject == owner {
                 throw fail("Ownership can move only from the owner to another member")
+            }
+            if isBot(bots, subject) {
+                throw fail("A bot cannot own the room")
             }
             owner = Data(subject)
             admins = admins.filter { $0 != subject }
@@ -730,12 +799,28 @@ public enum GroupAdmin {
             members = members.filter { $0 != subject }
             admins = admins.filter { $0 != subject }
             pending = pending.filter { $0 != subject }
+            bots = bots.filter { $0.account != subject }
             epoch = try bump(epoch)
         } else if decoded.op == Op.rekey {
             if !privileged || !isZero(subject) {
                 throw fail("Sender cannot rotate the room key")
             }
             epoch = try bump(epoch)
+        } else if decoded.op == opAddBot {
+            if !privileged || contains(members, subject) || subject == state.mailbox || isZero(subject) {
+                throw fail("Sender cannot add that bot")
+            }
+            let settings = try requireBot(decoded)
+            members = try canonicalSet(members + [Data(subject)], label: "members", max: memberMax)
+            pending = pending.filter { $0 != subject }
+            bots.append(RoomBot(account: Data(subject), settings: settings))
+            bots.sort { compareBytes($0.account, $1.account) < 0 }
+        } else if decoded.op == opSetBot {
+            if !privileged || !isBot(bots, subject) {
+                throw fail("Sender cannot change that bot")
+            }
+            let settings = try requireBot(decoded)
+            bots = bots.map { $0.account == subject ? RoomBot(account: Data(subject), settings: settings) : $0 }
         } else {
             throw fail("Unknown room administration operation")
         }
@@ -753,8 +838,52 @@ public enum GroupAdmin {
             pending: pending,
             policy: policy,
             name: name,
-            epoch: epoch
+            epoch: epoch,
+            bots: bots
         )
+    }
+
+    private static func isBotOp(_ op: UInt8) -> Bool {
+        op == opAddBot || op == opSetBot
+    }
+
+    private static func checkBotSettings(_ bot: BotSettings) throws {
+        if bot.mode != botModeMentions && bot.mode != botModeEveryMessage && bot.mode != botModeCommands {
+            throw fail("Bot reply mode must be mentions, every message, or commands")
+        }
+        if bot.replies == 0 || bot.seconds == 0 {
+            throw fail("Bot rate limit must be from 1 through 65535")
+        }
+    }
+
+    private static func requireBot(_ decoded: Decoded) throws -> BotSettings {
+        guard let bot = decoded.bot else {
+            throw fail("A bot needs a reply mode and a rate limit")
+        }
+        try checkBotSettings(bot)
+        return bot
+    }
+
+    private static func isBot(_ bots: [RoomBot], _ account: Data) -> Bool {
+        bots.contains { $0.account == account }
+    }
+
+    /// A channel takes people from its parent room. A bot there joins a channel only as a bot.
+    private static func checkChannelJoin(_ op: UInt8, _ subject: Data, _ parentRoom: State) throws {
+        let joining = op == Op.addMember || op == Op.acceptJoin || op == Op.requestJoin
+        if !joining && op != opAddBot {
+            return
+        }
+        if !contains(parentRoom.members, subject) {
+            throw fail("That person is not in the parent room")
+        }
+        let parentBot = isBot(parentRoom.bots, subject)
+        if op == opAddBot && !parentBot {
+            throw fail("That account is not a bot in the parent room")
+        }
+        if joining && parentBot {
+            throw fail("A bot joins a channel only when added as a bot")
+        }
     }
 
     private static func bindChannel(_ decoded: Decoded, _ sender: Data, _ parentState: State?) throws {
@@ -775,11 +904,7 @@ public enum GroupAdmin {
         if decoded.op == Op.transferOwner {
             throw fail("The group owner keeps the channel")
         }
-        if decoded.op == Op.addMember || decoded.op == Op.acceptJoin || decoded.op == Op.requestJoin {
-            if !contains(parentState.members, decoded.subject) {
-                throw fail("That person is not in the parent room")
-            }
-        }
+        try checkChannelJoin(decoded.op, decoded.subject, parentState)
     }
 
     private static func body(_ decoded: Decoded, _ pending: [Data], _ members: [Data]) -> Body {
@@ -793,7 +918,8 @@ public enum GroupAdmin {
             pending: pending,
             policy: decoded.policy,
             name: Data(decoded.name),
-            epoch: decoded.epoch
+            epoch: decoded.epoch,
+            bots: []
         )
     }
 
@@ -837,6 +963,19 @@ public enum GroupAdmin {
         if !Op.known(fields.op) {
             throw fail("Unknown room administration operation")
         }
+        var botSettings: BotSettings?
+        if isBotOp(fields.op) {
+            if !fields.membersOmitted {
+                throw fail("A bot record uses the delta note")
+            }
+            guard let bot = fields.bot else {
+                throw fail("A bot needs a reply mode and a rate limit")
+            }
+            try checkBotSettings(bot)
+            botSettings = bot
+        } else if fields.bot != nil {
+            throw fail("Only a bot record carries bot settings")
+        }
         var out = Data()
         out.reserveCapacity(205 + name.count + admins.count * keySize)
         out.append(version)
@@ -863,6 +1002,11 @@ public enum GroupAdmin {
         out.append(fields.subject)
         if fields.membersOmitted {
             out.append(parentGroupID)
+        }
+        if let botSettings {
+            out.append(botSettings.mode)
+            appendU16(&out, Int(botSettings.replies))
+            appendU16(&out, Int(botSettings.seconds))
         }
         if out.count > ChatEnvelope.maxNoteSize {
             throw fail(fields.membersOmitted
@@ -908,6 +1052,20 @@ public enum GroupAdmin {
         }
         let subject = try take(bytes, &cursor, keySize)
         let parentGroupID = membersOmittedFlag ? try take(bytes, &cursor, keySize) : Data(count: keySize)
+        var bot: BotSettings?
+        if isBotOp(op) {
+            if !membersOmittedFlag {
+                throw fail("A bot record uses the delta note")
+            }
+            let settings = [UInt8](try take(bytes, &cursor, botSettingsSize))
+            let decoded = BotSettings(
+                mode: settings[0],
+                replies: UInt16(settings[1]) << 8 | UInt16(settings[2]),
+                seconds: UInt16(settings[3]) << 8 | UInt16(settings[4])
+            )
+            try checkBotSettings(decoded)
+            bot = decoded
+        }
         if cursor != bytes.count {
             throw fail("Administration record has trailing bytes")
         }
@@ -939,7 +1097,8 @@ public enum GroupAdmin {
             members: members,
             subject: subject,
             membersOmitted: membersOmittedFlag,
-            parentGroupID: parentGroupID
+            parentGroupID: parentGroupID,
+            bot: bot
         )
     }
 

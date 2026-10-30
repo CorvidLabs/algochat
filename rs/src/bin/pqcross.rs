@@ -9,7 +9,7 @@ use algochat::{
     initiate_pq_handshake, open_group_key_delivery, open_group_membership, open_group_message,
     open_pq_handshake_as_sender, reduce_admin, reduce_admin_with_parent, seal_group_key_delivery,
     seal_group_membership, seal_group_message, sender_may_post, AcceptedAdmin, AdminDraft,
-    AdminEvent, GroupMembership, PqSession, RoomState,
+    AdminEvent, BotSettings, GroupMembership, PqSession, RoomBot, RoomState,
 };
 use serde_json::{json, Value};
 
@@ -261,6 +261,10 @@ fn admin_draft(req: &Value) -> Result<Value, String> {
             None | Some(Value::Null) => None,
             Some(value) => Some(parse_state(value)?),
         },
+        bot: match req.get("bot") {
+            None | Some(Value::Null) => None,
+            Some(value) => Some(parse_bot(value)?),
+        },
     };
     let note = draft_admin(basis.as_ref(), &draft).map_err(|error| error.to_string())?;
     Ok(json!({ "note": hex::encode(note) }))
@@ -403,6 +407,31 @@ fn parse_state(value: &Value) -> Result<RoomState, String> {
         name: hex_bytes(&field(value, "name_hex")?)?,
         epoch: u32_field(value, "epoch")?,
         head_tx_id: bytes32(value, "head_tx_id")?,
+        bots: match value.get("bots") {
+            None | Some(Value::Null) => Vec::new(),
+            Some(Value::Array(items)) => items
+                .iter()
+                .map(|item| {
+                    Ok(RoomBot {
+                        account: bytes32(item, "account")?,
+                        settings: parse_bot(item)?,
+                    })
+                })
+                .collect::<Result<Vec<_>, String>>()?,
+            Some(_) => return Err("bad bots".to_string()),
+        },
+    })
+}
+
+fn parse_bot(value: &Value) -> Result<BotSettings, String> {
+    let wide = |name: &str| -> Result<u16, String> {
+        let number = u32_field(value, name)?;
+        u16::try_from(number).map_err(|_| format!("bad {name}"))
+    };
+    Ok(BotSettings {
+        mode: u8_field(value, "mode")?,
+        replies: wide("replies")?,
+        seconds: wide("seconds")?,
     })
 }
 
@@ -419,6 +448,12 @@ fn state_json(state: &RoomState) -> Value {
         "epoch": state.epoch,
         "head_tx_id": hex::encode(state.head_tx_id),
         "parent_group_id": hex::encode(state.parent_group_id),
+        "bots": state.bots.iter().map(|item| json!({
+            "account": hex::encode(item.account),
+            "mode": item.settings.mode,
+            "replies": item.settings.replies,
+            "seconds": item.settings.seconds,
+        })).collect::<Vec<_>>(),
     })
 }
 

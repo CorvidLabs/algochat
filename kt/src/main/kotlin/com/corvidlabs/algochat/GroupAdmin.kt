@@ -43,6 +43,21 @@ object GroupAdmin {
     private const val OP_DECLINE_JOIN = 10
     private const val OP_REMOVE_MEMBER = 11
     private const val OP_REKEY = 12
+    /** Adds a bot: an owner or admin marks it as a bot, with a reply mode and a rate limit. */
+    const val OP_ADD_BOT = 13
+    /** Changes a bot's reply mode and rate limit. */
+    const val OP_SET_BOT = 14
+    /** Reply only when the bot is mentioned or replied to. */
+    const val BOT_MODE_MENTIONS = 1
+    /** Reply on every message. */
+    const val BOT_MODE_EVERY_MESSAGE = 2
+    /** Reply only to the bot's slash commands. */
+    const val BOT_MODE_COMMANDS = 3
+    /** Suggested safe preset: 5 replies per 60 seconds. A suggestion, never a default. */
+    const val BOT_RATE_PRESET_REPLIES = 5
+    const val BOT_RATE_PRESET_SECONDS = 60
+    /** Bytes a bot record adds after the parent group id: mode, replies, seconds. */
+    const val BOT_SETTINGS_SIZE = 5
 
     private val secureRandom = SecureRandom()
 
@@ -55,9 +70,13 @@ object GroupAdmin {
         policy: Int? = null,
         groupId: ByteArray? = null,
         mailbox: ByteArray? = null,
-        parentRoom: RoomState? = null
+        parentRoom: RoomState? = null,
+        bot: BotSettings? = null
     ): ByteArray {
         val subjectBytes = subject?.copyOf() ?: ByteArray(32)
+        if (isBotOp(op)) {
+            checkBotSettings(bot ?: throw RoomAdminException("A bot needs a reply mode and a rate limit"))
+        }
         val parentGroupId = channelParent(state, op, sender, subjectBytes, groupId, mailbox, parentRoom)
         val decoded = DecodedAdmin(
             parent = state?.headTxId?.copyOf() ?: ByteArray(32),
@@ -72,7 +91,8 @@ object GroupAdmin {
             members = state?.members?.map { it.copyOf() } ?: emptyList(),
             subject = subjectBytes,
             membersOmitted = true,
-            parentGroupId = parentGroupId
+            parentGroupId = parentGroupId,
+            bot = bot
         )
         val next = if (op == OP_CREATE) {
             RoomBody(
@@ -85,7 +105,8 @@ object GroupAdmin {
                 pending = emptyList(),
                 policy = decoded.policy,
                 name = decoded.name,
-                epoch = 1
+                epoch = 1,
+                bots = emptyList()
             )
         } else {
             expectNext(
@@ -103,7 +124,8 @@ object GroupAdmin {
                     members = decoded.members,
                     subject = decoded.subject,
                     membersOmitted = true,
-                    parentGroupId = parentGroupId
+                    parentGroupId = parentGroupId,
+                    bot = bot
                 ),
                 sender
             )
@@ -122,9 +144,16 @@ object GroupAdmin {
                 members = next.members,
                 subject = subjectBytes,
                 membersOmitted = true,
-                parentGroupId = next.parentGroupId
+                parentGroupId = next.parentGroupId,
+                bot = if (isBotOp(op)) bot else null
             )
         )
+    }
+
+    /** The bot mark, reply mode and rate limit for [account], or null when it is not a bot here. */
+    fun roomBot(state: RoomState, account: ByteArray): RoomBot? {
+        requireLength("account", account, 32)
+        return state.bots.find { it.account.contentEquals(account) }?.let { RoomBot(it.account, it.settings) }
     }
 
     fun reduceAdmin(events: List<AdminEvent>, parentEvents: List<AdminEvent>? = null): ReduceAdminResult {
@@ -148,7 +177,7 @@ object GroupAdmin {
         if (!record.sender.contentEquals(sender) || record.epoch != epoch) return false
         if (!contains(record.members, recipient)) return false
         return when (record.op) {
-            OP_ADD_MEMBER, OP_ACCEPT_JOIN -> record.subject.contentEquals(recipient)
+            OP_ADD_MEMBER, OP_ACCEPT_JOIN, OP_ADD_BOT -> record.subject.contentEquals(recipient)
             OP_REMOVE_MEMBER -> !record.subject.contentEquals(recipient)
             OP_REKEY, OP_TRANSFER_OWNER -> true
             else -> false
@@ -201,7 +230,8 @@ object GroupAdmin {
         members: List<ByteArray>,
         subject: ByteArray,
         membersOmitted: Boolean = false,
-        parentGroupId: ByteArray = ByteArray(32)
+        parentGroupId: ByteArray = ByteArray(32),
+        bot: BotSettings? = null
     ): ByteArray {
         return encodeAdminRecord(
             DecodedAdmin(
@@ -217,7 +247,8 @@ object GroupAdmin {
                 members,
                 subject,
                 membersOmitted,
-                parentGroupId
+                parentGroupId,
+                bot
             )
         )
     }
@@ -302,8 +333,15 @@ object GroupAdmin {
         if (fields.policy != JOINING_INVITE && fields.policy != JOINING_ASK) {
             throw RoomAdminException("Joining rule must be invite-only or ask-to-join")
         }
-        if (fields.op !in OP_CREATE..OP_REKEY) {
+        if (fields.op !in OP_CREATE..OP_SET_BOT) {
             throw RoomAdminException("Unknown room administration operation")
+        }
+        val bot = fields.bot
+        if (isBotOp(fields.op)) {
+            if (!membersOmitted) throw RoomAdminException("A bot record uses the delta note")
+            checkBotSettings(bot ?: throw RoomAdminException("A bot needs a reply mode and a rate limit"))
+        } else if (bot != null) {
+            throw RoomAdminException("Only a bot record carries bot settings")
         }
         val out = ByteArrayOutputStream()
         out.write(PQProtocol.VERSION.toInt())
@@ -325,6 +363,11 @@ object GroupAdmin {
         }
         out.write(fields.subject)
         if (membersOmitted) out.write(parentGroupId)
+        if (bot != null) {
+            out.write(bot.mode)
+            writeU16(out, bot.replies)
+            writeU16(out, bot.seconds)
+        }
         val note = out.toByteArray()
         if (note.size > Protocol.MAX_NOTE_SIZE) {
             throw RoomAdminException(
@@ -371,7 +414,8 @@ object GroupAdmin {
             next.name,
             next.epoch,
             if (request) state!!.headTxId else event.txId,
-            next.parentGroupId
+            next.parentGroupId,
+            next.bots
         )
         return AppliedAdmin(
             advance = !request,
@@ -418,6 +462,7 @@ object GroupAdmin {
         var epoch = state.epoch
         var name = state.name.copyOf()
         var policy = state.policy
+        var bots = state.bots
         val subject = decoded.subject
         if (decoded.op == OP_SET_NAME) {
             if (!privileged || !isZero(subject)) throw RoomAdminException("Sender cannot rename the room")
@@ -430,6 +475,7 @@ object GroupAdmin {
             if (!contains(members, subject) || subject.contentEquals(owner) || contains(admins, subject)) {
                 throw RoomAdminException("That person cannot be appointed")
             }
+            if (isBot(bots, subject)) throw RoomAdminException("A bot cannot be an admin")
             admins = canonicalSet(admins + listOf(subject), "admins", ADMIN_MAX)
         } else if (decoded.op == OP_DISMISS_ADMIN) {
             if (!sender.contentEquals(state.owner) || !contains(admins, subject)) {
@@ -440,6 +486,7 @@ object GroupAdmin {
             if (!sender.contentEquals(state.owner) || !contains(members, subject) || subject.contentEquals(owner)) {
                 throw RoomAdminException("Ownership can move only from the owner to another member")
             }
+            if (isBot(bots, subject)) throw RoomAdminException("A bot cannot own the room")
             owner = subject.copyOf()
             admins = admins.filter { !it.contentEquals(subject) }
             epoch = bump(epoch)
@@ -468,10 +515,23 @@ object GroupAdmin {
             members = members.filter { !it.contentEquals(subject) }
             admins = admins.filter { !it.contentEquals(subject) }
             pending = pending.filter { !it.contentEquals(subject) }
+            bots = bots.filter { !it.account.contentEquals(subject) }
             epoch = bump(epoch)
         } else if (decoded.op == OP_REKEY) {
             if (!privileged || !isZero(subject)) throw RoomAdminException("Sender cannot rotate the room key")
             epoch = bump(epoch)
+        } else if (decoded.op == OP_ADD_BOT) {
+            if (!privileged || contains(members, subject) || subject.contentEquals(state.mailbox) || isZero(subject)) {
+                throw RoomAdminException("Sender cannot add that bot")
+            }
+            val settings = requireBot(decoded)
+            members = canonicalSet(members + listOf(subject), "members", MEMBER_MAX)
+            pending = pending.filter { !it.contentEquals(subject) }
+            bots = (bots + RoomBot(subject, settings)).sortedWith { left, right -> compareBytes(left.account, right.account) }
+        } else if (decoded.op == OP_SET_BOT) {
+            if (!privileged || !isBot(bots, subject)) throw RoomAdminException("Sender cannot change that bot")
+            val settings = requireBot(decoded)
+            bots = bots.map { if (it.account.contentEquals(subject)) RoomBot(subject, settings) else it }
         } else {
             throw RoomAdminException("Unknown room administration operation")
         }
@@ -487,8 +547,38 @@ object GroupAdmin {
             pending,
             policy,
             name,
-            epoch
+            epoch,
+            bots
         )
+    }
+
+    private fun isBotOp(op: Int): Boolean = op == OP_ADD_BOT || op == OP_SET_BOT
+
+    private fun checkBotSettings(bot: BotSettings) {
+        if (bot.mode != BOT_MODE_MENTIONS && bot.mode != BOT_MODE_EVERY_MESSAGE && bot.mode != BOT_MODE_COMMANDS) {
+            throw RoomAdminException("Bot reply mode must be mentions, every message, or commands")
+        }
+        if (bot.replies !in 1..0xffff || bot.seconds !in 1..0xffff) {
+            throw RoomAdminException("Bot rate limit must be from 1 through 65535")
+        }
+    }
+
+    private fun requireBot(decoded: DecodedAdmin): BotSettings {
+        val bot = decoded.bot ?: throw RoomAdminException("A bot needs a reply mode and a rate limit")
+        checkBotSettings(bot)
+        return bot
+    }
+
+    private fun isBot(bots: List<RoomBot>, account: ByteArray): Boolean = bots.any { it.account.contentEquals(account) }
+
+    /** A channel takes people from its parent room. A bot there joins a channel only as a bot. */
+    private fun checkChannelJoin(op: Int, subject: ByteArray, parentRoom: RoomState) {
+        val joining = op == OP_ADD_MEMBER || op == OP_ACCEPT_JOIN || op == OP_REQUEST_JOIN
+        if (!joining && op != OP_ADD_BOT) return
+        if (!contains(parentRoom.members, subject)) throw RoomAdminException("That person is not in the parent room")
+        val parentBot = isBot(parentRoom.bots, subject)
+        if (op == OP_ADD_BOT && !parentBot) throw RoomAdminException("That account is not a bot in the parent room")
+        if (joining && parentBot) throw RoomAdminException("A bot joins a channel only when added as a bot")
     }
 
     private fun body(decoded: DecodedAdmin, pending: List<ByteArray>, members: List<ByteArray>): RoomBody {
@@ -502,7 +592,8 @@ object GroupAdmin {
             pending.map { it.copyOf() },
             decoded.policy,
             decoded.name.copyOf(),
-            decoded.epoch
+            decoded.epoch,
+            emptyList()
         )
     }
 
@@ -562,6 +653,14 @@ object GroupAdmin {
         cursor += 32
         val parentGroupId = if (membersOmitted) take(note, cursor, 32) else ByteArray(32)
         if (membersOmitted) cursor += 32
+        var bot: BotSettings? = null
+        if (isBotOp(op)) {
+            if (!membersOmitted) throw RoomAdminException("A bot record uses the delta note")
+            val settings = take(note, cursor, BOT_SETTINGS_SIZE)
+            cursor += BOT_SETTINGS_SIZE
+            bot = BotSettings(settings[0].toInt() and 0xff, readU16(settings, 1), readU16(settings, 3))
+            checkBotSettings(bot)
+        }
         if (cursor != note.size) throw RoomAdminException("Administration record has trailing bytes")
         if (note.size > Protocol.MAX_NOTE_SIZE) {
             throw RoomAdminException(
@@ -589,7 +688,8 @@ object GroupAdmin {
             members,
             subject,
             membersOmitted,
-            parentGroupId
+            parentGroupId,
+            bot
         )
     }
 
@@ -691,9 +791,7 @@ object GroupAdmin {
             throw RoomAdminException("Channel does not point at this parent room")
         }
         if (op == OP_TRANSFER_OWNER) throw RoomAdminException("The group owner keeps the channel")
-        if (op == OP_ADD_MEMBER || op == OP_ACCEPT_JOIN || op == OP_REQUEST_JOIN) {
-            if (!contains(parentRoom.members, subject)) throw RoomAdminException("That person is not in the parent room")
-        }
+        checkChannelJoin(op, subject, parentRoom)
         return current
     }
 
@@ -711,9 +809,7 @@ object GroupAdmin {
             }
         }
         if (decoded.op == OP_TRANSFER_OWNER) throw RoomAdminException("The group owner keeps the channel")
-        if (decoded.op == OP_ADD_MEMBER || decoded.op == OP_ACCEPT_JOIN || decoded.op == OP_REQUEST_JOIN) {
-            if (!contains(parentState.members, decoded.subject)) throw RoomAdminException("That person is not in the parent room")
-        }
+        checkChannelJoin(decoded.op, decoded.subject, parentState)
     }
 
     private fun rejectMailboxOverlap(
@@ -899,7 +995,8 @@ class RoomState(
     name: ByteArray,
     val epoch: Int,
     headTxId: ByteArray,
-    parentGroupId: ByteArray = ByteArray(32)
+    parentGroupId: ByteArray = ByteArray(32),
+    bots: List<RoomBot> = emptyList()
 ) {
     val groupId: ByteArray = groupId.copyOf()
     val mailbox: ByteArray = mailbox.copyOf()
@@ -911,6 +1008,16 @@ class RoomState(
     val headTxId: ByteArray = headTxId.copyOf()
     /** 32 zero bytes when this room is not a channel. */
     val parentGroupId: ByteArray = parentGroupId.copyOf()
+    /** Members marked as bots in this room, sorted by account. */
+    val bots: List<RoomBot> = bots.map { RoomBot(it.account, it.settings) }
+}
+
+/** A bot's reply mode and rate limit in one room: [replies] per [seconds]. */
+data class BotSettings(val mode: Int, val replies: Int, val seconds: Int)
+
+/** One member marked as a bot in a room. */
+class RoomBot(account: ByteArray, val settings: BotSettings) {
+    val account: ByteArray = account.copyOf()
 }
 
 /** One confirmed administration note, in chain order once reduced. */
@@ -974,7 +1081,8 @@ private class DecodedAdmin(
     val members: List<ByteArray>,
     val subject: ByteArray,
     val membersOmitted: Boolean = false,
-    val parentGroupId: ByteArray = ByteArray(32)
+    val parentGroupId: ByteArray = ByteArray(32),
+    val bot: BotSettings? = null
 )
 
 private class RoomBody(
@@ -987,7 +1095,8 @@ private class RoomBody(
     val pending: List<ByteArray>,
     val policy: Int,
     val name: ByteArray,
-    val epoch: Int
+    val epoch: Int,
+    val bots: List<RoomBot>
 )
 
 private class AppliedAdmin(

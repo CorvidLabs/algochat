@@ -76,8 +76,16 @@ interface Request {
     events?: AdminWireEvent[];
     parent_events?: AdminWireEvent[];
     parent_room?: BasisState | null;
+    bot?: { mode: number; replies: number; seconds: number } | null;
     accepted?: AcceptedWire[];
     state?: BasisState | null;
+}
+
+interface WireBot {
+    account: string;
+    mode: number;
+    replies: number;
+    seconds: number;
 }
 
 interface BasisState {
@@ -92,6 +100,7 @@ interface BasisState {
     epoch: number;
     head_tx_id: string;
     parent_group_id?: string;
+    bots?: WireBot[];
 }
 
 interface AdminWireEvent {
@@ -313,6 +322,12 @@ function reviveRoom(state: BasisState | null | undefined): RoomState | null {
         name: fromHex(state.name_hex),
         epoch: state.epoch,
         headTxId: fromHex(state.head_tx_id),
+        bots: (state.bots ?? []).map((item) => ({
+            account: fromHex(item.account),
+            mode: item.mode,
+            replies: item.replies,
+            seconds: item.seconds,
+        })),
     };
 }
 
@@ -330,6 +345,12 @@ function snapRoom(state: RoomState | null): BasisState | null {
         epoch: state.epoch,
         head_tx_id: toHex(state.headTxId),
         parent_group_id: toHex(state.parentGroupId),
+        bots: (state.bots ?? []).map((item) => ({
+            account: toHex(item.account),
+            mode: item.mode,
+            replies: item.replies,
+            seconds: item.seconds,
+        })),
     };
 }
 
@@ -354,6 +375,7 @@ function adminDraft(req: Request): Record<string, unknown> {
         groupId: req.group_id ? fromHex(req.group_id) : undefined,
         mailbox: req.mailbox ? fromHex(req.mailbox) : undefined,
         parentRoom: req.parent_room ? reviveRoom(req.parent_room) ?? undefined : undefined,
+        bot: req.bot ?? undefined,
     });
     return { note: toHex(note) };
 }

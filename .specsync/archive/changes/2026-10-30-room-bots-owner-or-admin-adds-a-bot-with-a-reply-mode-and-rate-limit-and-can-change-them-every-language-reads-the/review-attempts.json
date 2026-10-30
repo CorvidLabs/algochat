@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "room-bots-owner-or-admin-adds-a-bot-with-a-reply-mode-and-rate-limit-and-can-change-them-every-language-reads-the",
+      "reviewer": "corvid-agent",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "5eee69226756a641e96c57153b1076ee3413b9ce",
+      "contract_digest": "d96d86d71e270f02e60805c86e7267c7df5d523652160e81e32ad061903132a8",
+      "execution_digest": "787d6c738a084ab1df6a982fa85ddada3819830a0796512ba4d898b5605a3e5f",
+      "workspace_digest": "d5f2c17a7a7288ce7f52cdf589ee7f627cf244090c193cd11a5772155338408a",
+      "timestamp": 1793323650
+    }
+  ]
+}
