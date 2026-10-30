@@ -12,6 +12,14 @@ from algochat.blockchain import (
     TransactionInfo,
 )
 from algochat.client import AlgoChat, AlgoChatConfig
+from algochat.crypto import encrypt_message
+from algochat.envelope import encode_envelope
+from algochat.hybrid_direct import ClassicalSendRefusedError
+from algochat.keys import public_key_from_bytes
+from algochat.psk_crypto import encrypt_psk_message
+from algochat.psk_envelope import encode_psk_envelope
+from algochat.psk_ratchet import derive_psk_at_counter
+from algochat.psk_state import advance_send_counter
 from algochat.envelope import decode_envelope
 from algochat.keys import public_key_to_bytes
 from algochat.models import MessageDirection
@@ -23,6 +31,35 @@ from algochat.types import (
     PublicKeyNotFoundError,
     UnverifiedKeyError,
 )
+
+
+
+def _legacy_encrypt(client: AlgoChat, message: str, recipient_public_key: bytes, psk: bytes | None = None) -> bytes:
+    """Builds a legacy 0x01 or 0x02 note, as AlgoChat 1.6.0 and earlier sent them.
+
+    AlgoChat no longer sends these (algochat#63): ``AlgoChat.encrypt`` refuses.
+    Tests build them here, with the low-level functions, to check reading.
+    """
+    recipient_key = public_key_from_bytes(recipient_public_key)
+    if psk is not None:
+        recipient_address = client._address_for_key(recipient_public_key)
+        state = client._get_psk_state(recipient_address, psk)
+        counter, new_state = advance_send_counter(state)
+        envelope = encrypt_psk_message(
+            message,
+            client._encryption_private_key,
+            client._encryption_public_key,
+            recipient_key,
+            derive_psk_at_counter(psk, counter),
+            counter,
+        )
+        client._set_psk_state(recipient_address, psk, new_state)
+        return encode_psk_envelope(envelope)
+    envelope = encrypt_message(
+        message, client._encryption_private_key, client._encryption_public_key, recipient_key
+    )
+    return encode_envelope(envelope)
+
 
 # ============================================================================
 # Mock Blockchain Clients
@@ -256,7 +293,7 @@ class TestEncryptDecrypt:
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
-        envelope = alice.encrypt("Hello Bob!", bob_pub)
+        envelope = _legacy_encrypt(alice, "Hello Bob!", bob_pub)
         assert isinstance(envelope, bytes)
         assert len(envelope) > 0
 
@@ -273,7 +310,7 @@ class TestEncryptDecrypt:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
         # Alice encrypts -> wire bytes
-        wire = alice.encrypt("Round trip!", bob_pub)
+        wire = _legacy_encrypt(alice, "Round trip!", bob_pub)
         assert isinstance(wire, bytes)
 
         # The wire bytes decode into a well-formed envelope
@@ -310,7 +347,7 @@ class TestEncryptDecrypt:
 
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
-        envelope = alice.encrypt("Hello Bob!", bob_pub)
+        envelope = _legacy_encrypt(alice, "Hello Bob!", bob_pub)
         # Alice can also decrypt (sender key is encrypted in envelope)
         plaintext = alice.decrypt(envelope, bob_pub)
         assert plaintext == "Hello Bob!"
@@ -336,7 +373,7 @@ class TestEncryptDecrypt:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
 
-        envelope = alice.encrypt("", bob_pub)
+        envelope = _legacy_encrypt(alice, "", bob_pub)
         plaintext = bob.decrypt(envelope, alice_pub)
         assert plaintext == ""
 
@@ -350,7 +387,7 @@ class TestEncryptDecrypt:
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
 
         message = "Hello 🌍 こんにちは"
-        envelope = alice.encrypt(message, bob_pub)
+        envelope = _legacy_encrypt(alice, message, bob_pub)
         plaintext = bob.decrypt(envelope, alice_pub)
         assert plaintext == message
 
@@ -450,7 +487,7 @@ class TestProcessTransaction:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
         # Alice encrypts a message for Bob
-        envelope = alice.encrypt("Hello Bob!", bob_pub)
+        envelope = _legacy_encrypt(alice, "Hello Bob!", bob_pub)
 
         # Seed Bob's key in Alice's cache so discover_key works
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
@@ -480,7 +517,7 @@ class TestProcessTransaction:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
         # Bob encrypts a message for Alice
-        envelope = bob.encrypt("Hi Alice!", alice_pub)
+        envelope = _legacy_encrypt(bob, "Hi Alice!", alice_pub)
 
         # Seed Bob's key in Alice's cache
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
@@ -538,7 +575,7 @@ class TestProcessTransaction:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
 
-        envelope = bob.encrypt("First contact!", alice_pub)
+        envelope = _legacy_encrypt(bob, "First contact!", alice_pub)
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
 
         assert len(await alice.conversations()) == 0
@@ -569,7 +606,7 @@ class TestProcessTransaction:
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
 
         for i in range(3):
-            envelope = bob.encrypt(f"Message {i}", alice_pub)
+            envelope = _legacy_encrypt(bob, f"Message {i}", alice_pub)
             tx = NoteTransaction(
                 txid=f"tx-{i}",
                 sender=BOB_ADDRESS,
@@ -594,7 +631,7 @@ class TestProcessTransaction:
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
 
-        envelope = bob.encrypt("Cached msg", alice_pub)
+        envelope = _legacy_encrypt(bob, "Cached msg", alice_pub)
         tx = NoteTransaction(
             txid="tx-cache",
             sender=BOB_ADDRESS,
@@ -618,7 +655,7 @@ class TestProcessTransaction:
 
         # Don't cache Bob's key — discovery will also fail (empty indexer)
 
-        envelope = bob.encrypt("No key!", public_key_to_bytes(alice._encryption_public_key))
+        envelope = _legacy_encrypt(bob, "No key!", public_key_to_bytes(alice._encryption_public_key))
         tx = NoteTransaction(
             txid="tx-nokey",
             sender=BOB_ADDRESS,
@@ -646,7 +683,7 @@ class TestProcessTransaction:
         # Seed Bob's key directly (no signature verification) → is_verified=False.
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
 
-        envelope = bob.encrypt("Unverified!", alice_pub)
+        envelope = _legacy_encrypt(bob, "Unverified!", alice_pub)
         tx = NoteTransaction(
             txid="tx-unverified",
             sender=BOB_ADDRESS,
@@ -669,7 +706,7 @@ class TestProcessTransaction:
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
 
-        envelope = bob.encrypt("OK by default", alice_pub)
+        envelope = _legacy_encrypt(bob, "OK by default", alice_pub)
         tx = NoteTransaction(
             txid="tx-default",
             sender=BOB_ADDRESS,
@@ -700,7 +737,7 @@ class TestSync:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
         await alice.public_key_cache.store(BOB_ADDRESS, bob_pub)
 
-        envelope = bob.encrypt("Synced message", alice_pub)
+        envelope = _legacy_encrypt(bob, "Synced message", alice_pub)
         indexer.add_transaction(NoteTransaction(
             txid="sync-tx-1",
             sender=BOB_ADDRESS,
@@ -878,7 +915,7 @@ class TestPSKEncryptDecryptClient:
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
-        encrypted = alice.encrypt("Hello PSK!", bob_pub, psk=TEST_PSK)
+        encrypted = _legacy_encrypt(alice, "Hello PSK!", bob_pub, psk=TEST_PSK)
         result = bob.decrypt(encrypted, alice_pub, psk=TEST_PSK)
         assert result == "Hello PSK!"
 
@@ -887,7 +924,7 @@ class TestPSKEncryptDecryptClient:
         """Alice can decrypt her own PSK message (bidirectional)."""
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
-        encrypted = alice.encrypt("Self-read", bob_pub, psk=TEST_PSK)
+        encrypted = _legacy_encrypt(alice, "Self-read", bob_pub, psk=TEST_PSK)
         result = alice.decrypt(encrypted, psk=TEST_PSK)
         assert result == "Self-read"
 
@@ -897,8 +934,8 @@ class TestPSKEncryptDecryptClient:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
         alice.add_psk_channel(BOB_ADDRESS, TEST_PSK)
 
-        alice.encrypt("msg1", bob_pub, psk=TEST_PSK)
-        alice.encrypt("msg2", bob_pub, psk=TEST_PSK)
+        _legacy_encrypt(alice, "msg1", bob_pub, psk=TEST_PSK)
+        _legacy_encrypt(alice, "msg2", bob_pub, psk=TEST_PSK)
 
         state = alice._psk_channels.get(bob_pub.hex())
         assert state is not None
@@ -910,7 +947,7 @@ class TestPSKEncryptDecryptClient:
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
 
-        encrypted = alice.encrypt("no replay", bob_pub, psk=TEST_PSK)
+        encrypted = _legacy_encrypt(alice, "no replay", bob_pub, psk=TEST_PSK)
 
         bob.decrypt(encrypted, alice_pub, psk=TEST_PSK)
 
@@ -922,7 +959,7 @@ class TestPSKEncryptDecryptClient:
         """A bad tag records nothing, so the same counter still opens."""
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
         alice_pub = public_key_to_bytes(alice._encryption_public_key)
-        encrypted = alice.encrypt("still good", bob_pub, psk=TEST_PSK)
+        encrypted = _legacy_encrypt(alice, "still good", bob_pub, psk=TEST_PSK)
         tampered = bytearray(encrypted)
         tampered[-1] ^= 0x01
         with pytest.raises(PSKDecryptionError):
@@ -938,13 +975,13 @@ class TestPSKEncryptDecryptClient:
         stored = alice.get_psk_state(bob_pub.hex())
         assert stored is not None
         stored.send_counter = 4294967295
-        alice.encrypt("last", bob_pub, psk=TEST_PSK)
+        _legacy_encrypt(alice, "last", bob_pub, psk=TEST_PSK)
         stored = alice.get_psk_state(bob_pub.hex())
         assert stored is not None
         assert stored.send_counter == 4294967295
         assert stored.send_exhausted
         with pytest.raises(PSKEncryptionError, match="exhausted"):
-            alice.encrypt("again", bob_pub, psk=TEST_PSK)
+            _legacy_encrypt(alice, "again", bob_pub, psk=TEST_PSK)
         stored = alice.get_psk_state(bob_pub.hex())
         assert stored is not None
         assert stored.send_counter == 4294967295
@@ -955,7 +992,7 @@ class TestPSKEncryptDecryptClient:
         """Decrypting a PSK message without a PSK raises an error."""
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
-        encrypted = alice.encrypt("secret", bob_pub, psk=TEST_PSK)
+        encrypted = _legacy_encrypt(alice, "secret", bob_pub, psk=TEST_PSK)
 
         with pytest.raises(PSKDecryptionError, match="No PSK"):
             bob.decrypt(encrypted)
@@ -968,7 +1005,7 @@ class TestPSKEncryptDecryptClient:
         messages = ["msg1", "msg2", "msg3"]
         encrypted_messages = []
         for msg in messages:
-            encrypted_messages.append(alice.encrypt(msg, bob_pub, psk=TEST_PSK))
+            encrypted_messages.append(_legacy_encrypt(alice, msg, bob_pub, psk=TEST_PSK))
 
         for i, enc in enumerate(encrypted_messages):
             result = bob.decrypt(enc, psk=TEST_PSK)
@@ -979,6 +1016,23 @@ class TestPSKEncryptDecryptClient:
         """Standard (non-PSK) encrypt/decrypt is unaffected."""
         bob_pub = public_key_to_bytes(bob._encryption_public_key)
 
-        encrypted = alice.encrypt("standard msg", bob_pub)
+        encrypted = _legacy_encrypt(alice, "standard msg", bob_pub)
         result = bob.decrypt(encrypted)
         assert result == "standard msg"
+
+
+
+class TestClassicalSendIsRefused:
+    """BASE-3 and ENCRYPT-2 (algochat#63): AlgoChat never sends 0x01 or 0x02."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("psk", [None, TEST_PSK])
+    async def test_encrypt_refuses_classical_and_psk(self, psk):
+        alice = await make_client(ALICE_SEED, ALICE_ADDRESS)
+        bob = await make_client(BOB_SEED, BOB_ADDRESS)
+        bob_pub = public_key_to_bytes(bob._encryption_public_key)
+        alice.add_psk_channel(BOB_ADDRESS, TEST_PSK, bob_pub)
+        before = alice.get_psk_state(BOB_ADDRESS)
+        with pytest.raises(ClassicalSendRefusedError, match="encrypt_hybrid"):
+            alice.encrypt("never classical", bob_pub, psk=psk)
+        assert alice.get_psk_state(BOB_ADDRESS) == before

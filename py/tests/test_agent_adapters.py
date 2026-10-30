@@ -185,6 +185,7 @@ async def test_reply_refuses_a_one_to_one_message_from_a_room_bot():
     await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60), other_bot=True)
     bot = await _bot(chain, clock)
     await bot.publish_key()
+    await bot.publish_pq_key()
     person = await _person(chain)
     other = await _person(chain, OTHER_BOT_SEED)
     hello = await _say(chain, person, PERSON_SEED, bot.address, "hi from a person")
@@ -373,6 +374,7 @@ async def test_serve_sends_only_what_the_policy_allows_to_the_webhook():
     room = await _room(chain, BotSettings(BOT_MODE_MENTIONS, 5, 60), other_bot=True)
     bot = await _bot(chain, clock)
     await bot.publish_key()
+    await bot.publish_pq_key()
     person = await _person(chain)
     other = await _person(chain, OTHER_BOT_SEED)
     await _say(chain, person, PERSON_SEED, bot.address, "private hello")
@@ -431,6 +433,7 @@ async def test_send_refuses_an_account_a_room_marks_as_a_bot():
     await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60), other_bot=True)
     bot = await _bot(chain, clock)
     await bot.publish_key()
+    await bot.publish_pq_key()
     await _person(chain, OTHER_BOT_SEED)
     # A fresh service, as on a new CLI run: no sync_rooms before send.
     service = AgentService(await _bot(chain, clock))
@@ -446,6 +449,7 @@ async def test_a_long_lived_service_reads_the_rooms_again_before_replying():
     room = await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60))
     bot = await _bot(chain, clock)
     await bot.publish_key()
+    await bot.publish_pq_key()
     service = AgentService(bot)
     # Room: the mode changes between read-rooms and reply-room.
     said = await room.post(PERSON_SEED, "plain words")

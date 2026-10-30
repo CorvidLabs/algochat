@@ -194,8 +194,8 @@ class TestParseKeyAnnouncement:
         assert result.public_key == enc_pub_bytes
         assert result.is_verified is True
 
-    def test_parses_key_with_invalid_signature(self):
-        """96-byte note with bad signature should be unverified."""
+    def test_rejects_key_with_invalid_signature(self):
+        """A 96-byte note whose signature fails is rejected, as in TS (algochat#63, KEYS-4.b)."""
         key = b"\xab" * 32
         bad_signature = b"\x00" * 64
         note = key + bad_signature
@@ -203,10 +203,7 @@ class TestParseKeyAnnouncement:
         # Use a valid address (correct checksum) but a signature that won't verify
         address = _encode_algorand_address(b"\x01" * 32)
 
-        result = _parse_key_announcement(note, address)
-        assert result is not None
-        assert result.public_key == key
-        assert result.is_verified is False
+        assert _parse_key_announcement(note, address) is None
 
 
 # ============================================================================
@@ -370,3 +367,124 @@ class TestAccountInfo:
         info = AccountInfo(address="ALICE", amount=1_000_000, min_balance=100_000)
         assert info.address == "ALICE"
         assert info.amount == 1_000_000
+
+
+# ============================================================================
+# discover_encryption_key matches TypeScript (algochat#63, AC5-AC7)
+# ============================================================================
+
+
+def _account(seed: bytes):
+    signer = Ed25519PrivateKey.from_private_bytes(seed)
+    address = _encode_algorand_address(signer.public_key().public_bytes_raw())
+    private, public = derive_keys_from_seed(seed)
+    return signer, address, private, public
+
+
+def _tx(txid: str, sender: str, receiver: str, note: bytes, round_: int) -> NoteTransaction:
+    return NoteTransaction(txid=txid, sender=sender, receiver=receiver, note=note, confirmed_round=round_, round_time=1_700_000_000 + round_)
+
+
+def _chat_note(private, public, to_public) -> bytes:
+    from algochat.crypto import encrypt_message
+    from algochat.envelope import encode_envelope
+
+    return encode_envelope(encrypt_message("hi", private, public, to_public))
+
+
+class TestDiscoveryMatchesTypeScript:
+    ALICE = bytes([0x11]) * 32
+    BOB = bytes([0x22]) * 32
+
+    @pytest.mark.asyncio
+    async def test_a_psk_self_note_is_never_read_as_a_key(self):
+        """AC5/AC7: the 0x0102 self-note that shifted the key by 6 bytes is skipped."""
+        from algochat.psk_crypto import encrypt_psk_message
+        from algochat.psk_envelope import encode_psk_envelope
+
+        _, alice, private, public = _account(self.ALICE)
+        psk_note = encode_psk_envelope(encrypt_psk_message("note to self", private, public, public, b"\x07" * 32, 0))
+        assert psk_note[:2] == b"\x01\x02" and len(psk_note) not in (32, 96)
+        indexer = MockIndexerClient()
+        indexer.add_transaction(_tx("psk-self", alice, alice, psk_note, 90))
+        assert await discover_encryption_key(indexer, alice) is None
+
+        # With a 0x01 message the account sent, its header key is used instead.
+        _, _, _, bob_public = _account(self.BOB)
+        indexer.add_transaction(_tx("to-bob", alice, "BOB", _chat_note(private, public, bob_public), 80))
+        found = await discover_encryption_key(indexer, alice)
+        assert found is not None and found.is_verified is False
+        assert found.public_key == public_key_to_bytes(public)
+
+    @pytest.mark.asyncio
+    async def test_a_rekeyed_account_falls_back_to_its_own_header_key(self):
+        """AC5/AC6/AC7: an announcement signed by another key is skipped, not trusted."""
+        _, alice, private, public = _account(self.ALICE)
+        other_signer = Ed25519PrivateKey.from_private_bytes(bytes([0x33]) * 32)
+        stale = b"\x44" * 32
+        forged = stale + sign_encryption_key(stale, other_signer)
+        _, _, _, bob_public = _account(self.BOB)
+        indexer = MockIndexerClient()
+        indexer.add_transaction(_tx("forged", alice, alice, forged, 90))
+        indexer.add_transaction(_tx("to-bob", alice, "BOB", _chat_note(private, public, bob_public), 80))
+        found = await discover_encryption_key(indexer, alice)
+        assert found is not None and found.is_verified is False
+        assert found.public_key == public_key_to_bytes(public)
+
+    @pytest.mark.asyncio
+    async def test_a_signed_announcement_wins_over_earlier_candidates(self):
+        signer, alice, private, public = _account(self.ALICE)
+        key = public_key_to_bytes(public)
+        _, _, _, bob_public = _account(self.BOB)
+        indexer = MockIndexerClient()
+        indexer.add_transaction(_tx("unsigned", alice, alice, b"\x55" * 32, 95))
+        indexer.add_transaction(_tx("to-bob", alice, "BOB", _chat_note(private, public, bob_public), 90))
+        indexer.add_transaction(_tx("signed", alice, alice, key + sign_encryption_key(key, signer), 80))
+        found = await discover_encryption_key(indexer, alice)
+        assert found is not None and found.is_verified is True and found.public_key == key
+
+    @pytest.mark.asyncio
+    async def test_the_first_unsigned_candidate_wins_without_a_signed_one(self):
+        _, alice, private, public = _account(self.ALICE)
+        _, _, _, bob_public = _account(self.BOB)
+        indexer = MockIndexerClient()
+        indexer.add_transaction(_tx("to-bob", alice, "BOB", _chat_note(private, public, bob_public), 95))
+        indexer.add_transaction(_tx("unsigned", alice, alice, b"\x55" * 32, 90))
+        found = await discover_encryption_key(indexer, alice)
+        assert found.public_key == public_key_to_bytes(public) and found.is_verified is False
+
+    @pytest.mark.asyncio
+    async def test_other_self_note_sizes_and_hybrid_headers_are_not_keys(self):
+        """Q2: only 32- or 96-byte self-notes and 0x01 headers count; never 0x04/0x05."""
+        from algochat.pq import (
+            derive_mlkem_keypair,
+            encode_pq_key_announcement,
+            initiate_pq_session,
+        )
+
+        signer, alice, _, public = _account(self.ALICE)
+        _, _, _, bob_public = _account(self.BOB)
+        bob_kem = derive_mlkem_keypair(self.BOB)
+        handshake, _ = initiate_pq_session(public, bob_public, bob_kem.encaps_key, derive_mlkem_keypair(self.ALICE).encaps_key)
+        indexer = MockIndexerClient()
+        indexer.add_transaction(_tx("acpq", alice, alice, encode_pq_key_announcement(derive_mlkem_keypair(self.ALICE).encaps_key, signer), 99))
+        indexer.add_transaction(_tx("handshake", alice, "BOB", handshake, 98))
+        indexer.add_transaction(_tx("64", alice, alice, b"\x66" * 64, 97))
+        indexer.add_transaction(_tx("33", alice, alice, b"\x66" * 33, 96))
+        assert await discover_encryption_key(indexer, alice) is None
+
+    @pytest.mark.asyncio
+    async def test_search_depth_defaults_to_every_transaction(self):
+        class Recording(MockIndexerClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self.limits: list[int | None] = []
+
+            async def search_transactions(self, address, after_round=None, limit=None):
+                self.limits.append(limit)
+                return await super().search_transactions(address, after_round, limit)
+
+        indexer = Recording()
+        await discover_encryption_key(indexer, "ALICE")
+        await discover_encryption_key(indexer, "ALICE", search_depth=5)
+        assert indexer.limits == [None, 5]

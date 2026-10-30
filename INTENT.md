@@ -7,14 +7,14 @@ I want two people to send encrypted notes on Algorand payments, readable only by
 
 <!-- hi:index -->
 - [account](hi/account.md): ACCOUNT (3 criteria)
-- [agent](hi/agent.md): AGENT (36 criteria)
+- [agent](hi/agent.md): AGENT (40 criteria)
 - [base](hi/base.md): BASE (5 criteria)
 - [encrypt](hi/encrypt.md): ENCRYPT (3 criteria)
 - [godot](hi/godot.md): GODOT (9 criteria)
 - [group](hi/group.md): GROUP (35 criteria)
 - [honest](hi/honest.md): HONEST (2 criteria)
 - [key](hi/key.md): KEY (11 criteria)
-- [keys](hi/keys.md): KEYS (11 criteria)
+- [keys](hi/keys.md): KEYS (12 criteria)
 - [message](hi/message.md): MESSAGE (15 criteria)
 - [private](hi/private.md): PRIVATE (9 criteria)
 - [psk](hi/psk.md): PSK (11 criteria)

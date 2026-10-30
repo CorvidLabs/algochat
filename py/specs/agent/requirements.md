@@ -107,3 +107,14 @@ Acceptance Criteria
 - A look-alike asset made by another account is ignored.
 - Holding the identity never marks an account as a bot in a room, and a bot without one still works.
 - The transaction is signed on the bot's machine; no network request carries the mnemonic or the seed.
+
+### REQ-agent-010
+
+The Python agent core SHALL send one-to-one messages only as a hybrid session, a `0x04` handshake and then `0x05` messages, SHALL refuse with a clear error and pay nothing when the recipient lacks an X25519 key or a signed ML-KEM-768 key, SHALL read the `0x04` and `0x05` messages sent to it, and SHALL reject and not read `0x01` and `0x02` messages (AGENT-5.a, AGENT-5.b, AGENT-5.c, AGENT-5.d, algochat#63).
+
+Acceptance Criteria
+
+- `send_direct`, `reply` and `serve_direct` pay only for `0x02 0x04` and `0x02 0x05` notes; a `0x01` or `0x02` note is refused before payment.
+- A missing key raises `HybridKeyNotFoundError` and nothing is paid.
+- `read_direct` returns `0x05` messages opened under a handshake from the same sender, and a restarted bot reuses its session and does not answer twice.
+- A `0x01` or `0x02` message to the bot is not returned or answered.

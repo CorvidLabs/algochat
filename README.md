@@ -8,7 +8,7 @@ End-to-end encrypted messages carried as notes on Algorand payments. One protoco
 
 This is the public specification and the language implementations. It is not a chat app. [Raven](https://corvidlabs.xyz/raven/) is the CorvidLabs app. Everyday chat still belongs in Signal or Matrix. AlgoChat is the niche where the message is tied to a transaction that anyone can verify and nobody can edit.
 
-**Want a bot in your rooms?** [Run your own bot](py/docs/run-your-own-bot.md) with the Python agent. What is new in 1.6.0 is in [CHANGELOG.md](CHANGELOG.md).
+**Want a bot in your rooms?** [Run your own bot](py/docs/run-your-own-bot.md) with the Python agent. What is new in 1.6.1 is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Libraries
 
@@ -63,13 +63,13 @@ Fenced `mermaid` blocks render on GitHub. The Pages site renders the same fences
 
 ## Versions and requirements
 
-This repository is the source for the protocol and all six libraries. Archived language repositories stay archived. Protocol **1.6.0** is the specification version; each library has its own package version. The table records the versions and requirements declared by this source tree, not registry publication status.
+This repository is the source for the protocol and all six libraries. Archived language repositories stay archived. Protocol **1.6.0** is the specification version, and **1.6.1** is the current release; each library has its own package version. The table records the versions and requirements declared by this source tree, not registry publication status.
 
 | Library | Package | Package version / tag | Declared language and runtime |
 | --- | --- | --- | --- |
-| Swift | package `algochat`, product `AlgoChat` | `1.6.0` / `v1.6.0` | [Swift tools 6.0+](Package.swift) |
+| Swift | package `algochat`, product `AlgoChat` | `1.6.1` / `v1.6.1` | [Swift tools 6.0+](Package.swift) |
 | TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | [Node.js 18.0.0+; TypeScript `^5.7.0` for development](ts/package.json) |
-| Python | `py-algochat` | `0.5.0` | [Python 3.10+](py/pyproject.toml) |
+| Python | `py-algochat` | `0.6.0` | [Python 3.10+](py/pyproject.toml) |
 | Rust | `algochat` | `0.6.0` | [Rust 1.85+; edition 2021](rs/Cargo.toml) |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | [Kotlin 2.1.20; JDK 17 toolchain](kt/build.gradle.kts) |
 | Go | `github.com/CorvidLabs/algochat/go` | `0.5.0` / `go/v0.5.0` | [Go 1.25.0+](go/go.mod) |

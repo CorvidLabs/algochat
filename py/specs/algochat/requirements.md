@@ -56,3 +56,12 @@ Acceptance Criteria
 - Standard and PSK size tests accept 882 and 878 byte plaintexts, encode the new maxima to exactly 4096 bytes, and reject one extra byte before encoding.
 - Fee tests at minimum fee 1000 expect 1000, 1098, and 1308 microAlgos for notes of 1024, 2000, and 4096 bytes.
 
+### REQ-algochat-007
+
+The Python library SHALL send one-to-one messages only as hybrid `0x04` and `0x05` notes, SHALL refuse to build a `0x01` or `0x02` note, SHALL refuse without falling back when the recipient lacks an X25519 key or a signed ML-KEM-768 key, and SHALL discover X25519 keys as the TypeScript library does (BASE-3, ENCRYPT-2, KEYS-4.b, KEYS-4.d, algochat#63).
+
+Acceptance Criteria
+
+- `AlgoChat.encrypt` raises `ClassicalSendRefusedError` with or without a PSK and leaves PSK state unchanged.
+- `AlgoChat.encrypt_hybrid` returns a `0x04` and a `0x05` note, which the sender's `sync` and the recipient read back.
+- A `0x02` self-note, a 96-byte announcement with a bad signature, other self-note sizes, `ACPQ` notes and `0x04` headers are never returned as an X25519 key; the account's own `0x01` header key is used instead.

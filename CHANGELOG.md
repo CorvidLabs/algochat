@@ -2,6 +2,33 @@
 
 Protocol releases of this repository. Each library keeps its own package version. Earlier releases are described on the [releases page](https://github.com/CorvidLabs/algochat/releases). `ts/CHANGELOG.md` and `swift/CHANGELOG.md` are the archived per-language histories from before the monorepo.
 
+## 1.6.1 - 2026-10-30
+
+Python one-to-one messages are hybrid only (#63). The wire format is unchanged: protocol 1.6.0.
+
+| Library | Version |
+| --- | --- |
+| Protocol and Swift | 1.6.1, tag `v1.6.1` (protocol specification 1.6.0) |
+| TypeScript `@corvidlabs/ts-algochat` | 0.12.0 |
+| Python `py-algochat` | 0.6.0 |
+| Rust `algochat` | 0.6.0 |
+| Kotlin `com.corvidlabs:kt-algochat` | 0.5.0 |
+| Go `github.com/CorvidLabs/algochat/go` | 0.5.0, tag `go/v0.5.0` |
+
+### Python: hybrid-only one-to-one messages (#63)
+
+- The bot sends a `0x04` handshake, then `0x05` messages, and never `0x01` or `0x02`. It reuses its session, and a restarted bot finds it again on chain instead of paying for a new handshake.
+- When the other account has not published an encryption key and a signed ML-KEM-768 key, sending stops with `HybridKeyNotFoundError` and pays nothing. It never falls back to a classical note.
+- The bot reads `0x04` and `0x05` messages sent to it. It rejects `0x01` and `0x02` messages and does not read or answer them.
+- The plain library sends hybrid too: `AlgoChat.encrypt_hybrid` returns the notes to pay, and `process_transaction` and `sync` read them. `AlgoChat.encrypt` now refuses with `ClassicalSendRefusedError`. Reading older `0x01` and `0x02` notes with the plain library still works.
+- `discover_encryption_key` finds keys the way TypeScript does. Only a 32- or 96-byte note an account sends itself counts as a key announcement, so a `0x02` note to itself is no longer read as a key. A 96-byte announcement whose signature fails is rejected, not used unverified. Otherwise the key in the header of the account's own `0x01` messages is used, as for a rekeyed account. It searches the whole history by default; `search_depth` limits it.
+
+### Breaking changes
+
+- Python: `AlgoChat.encrypt` raises `ClassicalSendRefusedError` instead of returning a `0x01` or `0x02` note. Use `AlgoChat.encrypt_hybrid`.
+- Python: the bot no longer answers `0x01` or `0x02` messages. People need a client that sends hybrid messages, and the bot needs its ML-KEM-768 key published (the `publish-keys` command, or `AgentCore.publish_pq_key`).
+- Python: `send_direct` and `reply` raise `HybridKeyNotFoundError` (still a `LookupError`) when the other account lacks either key.
+
 ## 1.6.0 - 2026-10-30
 
 Room bots, and a self-hosted bot in Python.

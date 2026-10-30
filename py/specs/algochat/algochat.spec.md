@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 8
+version: 9
 status: active
 files:
   - src/algochat/__init__.py
@@ -13,6 +13,7 @@ files:
   - src/algochat/pq.py
   - src/algochat/group_admin.py
   - src/algochat/http_clients.py
+  - src/algochat/hybrid_direct.py
   - src/algochat/psk_crypto.py
   - src/algochat/psk_envelope.py
   - src/algochat/psk_exchange.py
@@ -149,9 +150,18 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `AccountInfo` | Models an Algorand account balance and related node response data. |
 | `AlgodClient` | Defines asynchronous node operations for parameters, accounts, submission, and confirmation. |
 | `IndexerClient` | Defines asynchronous note-transaction lookup for an Algorand address. |
-| `discover_encryption_key` | Returns the first valid key announcement in indexer result order for an address. |
+| `discover_encryption_key` | Finds an address's X25519 key as TypeScript's `paginatedKeyDiscovery` does: only notes the address sent, in indexer order; a 32- or 96-byte self-note is an announcement; the first 96-byte one that verifies wins; a 96-byte one that fails is skipped; otherwise the first unsigned 32-byte announcement or `0x01` header sender key is returned unverified. Other self-notes and `0x04`/`0x05` headers are never keys. `search_depth` (default `None`, every transaction) limits the search. |
+| `discover_pq_encaps_key` | The first `ACPQ` self-announcement of an address whose Ed25519 signature verifies, or `None`. |
+| `HybridDirect` | One account's hybrid one-to-one sessions: `ingest` records a `0x04` to or from it (oldest first, idempotent), `open` opens a `0x05` under a session from a handshake the same account paid for, `seal` returns the `0x04` (when no session matches the peer's current keys) and `0x05` notes to pay, `forget` drops an outbound session. |
+| `HybridOpened` | One opened hybrid message: `content`, `peer` address, and `sent` (true for the account's own note). |
+| `MIN_PROTOCOL_ID` | `0x03`: the lowest one-to-one protocol id the library sends (BASE-3). |
+| `is_hybrid_direct_note` | True for a note starting `0x02 0x04` or `0x02 0x05`. |
+| `require_hybrid_note` | Raises `ClassicalSendRefusedError` unless the note is a well-formed `0x04` handshake or `0x05` message. |
+| `HybridPeerKeys` | A peer's X25519 key, signed ML-KEM-768 encapsulation key, and whether the X25519 key is verified. |
+| `HybridKeyNotFoundError` | `PublicKeyNotFoundError` and `LookupError`: the recipient lacks an X25519 key or a signed ML-KEM-768 key, so nothing is sent. |
+| `ClassicalSendRefusedError` | `EncryptionError`: a `0x01` or `0x02` note was about to be built or paid for. |
 | `AlgoChatConfig` | Configures the high-level client, keys, transport clients, caches, and queue. |
-| `AlgoChat` | Coordinates encrypted sending, receiving, discovery, storage, and queued delivery. |
+| `AlgoChat` | Coordinates encrypted sending, receiving, discovery, storage, and queued delivery. Sends one-to-one messages only as hybrid notes: `encrypt_hybrid(message, address)` returns the `0x04` (when needed) and `0x05` notes to pay, after `discover_hybrid_keys`, reusing a session it finds on chain. `encrypt` raises `ClassicalSendRefusedError`. `process_transaction` and `sync` read `0x04`/`0x05` (handshakes first) as well as older `0x01`/`0x02`. Hybrid needs `from_seed`. |
 | `PSK_VERSION` | Defines the PSK envelope version marker as `0x01`. |
 | `PSK_PROTOCOL_ID` | Defines the PSK protocol discriminator as `0x02`. |
 | `PSK_HEADER_SIZE` | Defines the PSK fixed header length as 130 bytes. |
@@ -227,7 +237,7 @@ The PSK v1.1 surface covers wire constants, hierarchical ratchet derivation, hyb
 
 ### Hybrid ML-KEM session exports
 
-`src/algochat/pq.py` implements the shipped low-level protocol 1.3.0 session API. It is re-exported through `algochat.__init__`; the high-level client does not automatically orchestrate PQ handshakes/data. The 29 public exports are:
+`src/algochat/pq.py` implements the shipped low-level protocol 1.3.0 session API. It is re-exported through `algochat.__init__`. `src/algochat/hybrid_direct.py` and `AlgoChat.encrypt_hybrid` build one-to-one hybrid handshakes and data on top of it (algochat#63). The 29 public exports are:
 
 | Export | Contract |
 |---|---|
@@ -284,6 +294,8 @@ The following additional constants are public in `algochat.pq` but are not root-
 7. A note payment fee is one minimum fee plus the consensus surcharge for bytes past 1024. With a minimum fee of 1000 microAlgos, notes of 1024, 2000, and 4096 bytes cost 1000, 1098, and 1308 microAlgos. This library does not add a Falcon signer.
 8. `build_payment` and `sign_payment` produce the transaction id and signed bytes `py-algorand-sdk` produces for the same payment, so algod accepts them unchanged.
 9. `AlgoChat.process_transaction` fills `reply_context` from a section 9.2 reply payload (`replyTo.txid` and `replyTo.preview`) and returns the reply's own text as `content`.
+10. The library never sends a `0x01` or `0x02` note: `AlgoChat.encrypt` refuses, and every note `encrypt_hybrid` returns is checked to be `0x02 0x04` or `0x02 0x05` (BASE-3, ENCRYPT-2, algochat#63). Without both hybrid keys it raises `HybridKeyNotFoundError` and builds nothing.
+11. Key discovery matches TypeScript: a self-note counts as an X25519 announcement only at 32 or 96 bytes, a 96-byte announcement whose signature fails is never used, and otherwise the header key of the account's own `0x01` messages is the unverified candidate (KEYS-4.b, KEYS-4.d).
 
 ## Behavioral Examples
 
@@ -309,6 +321,8 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 | Authentication failure | Ciphertext, associated data, key material, or signature is invalid | Raise the existing protocol error |
 | Replay | A PSK receive counter was already processed or is outside the accepted window | Reject the message and preserve valid state |
 | Missing key or message | Storage, queue, or transport lookup cannot resolve the requested item | Return or raise the existing explicit absence result |
+| No hybrid key | `encrypt_hybrid` to an address without an X25519 key or a signed ML-KEM-768 key | Raise `HybridKeyNotFoundError`; nothing is built |
+| Classical send | `AlgoChat.encrypt`, or a non-hybrid note at the hybrid send check | Raise `ClassicalSendRefusedError` |
 | Message too large | Plaintext exceeds 3954 bytes (standard) or 3950 bytes (PSK) | Reject before a transaction is built |
 
 ## Dependencies
@@ -329,6 +343,7 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 | 2026-10-16 | Raise the AlgoChat note ceiling to 4096 bytes. Standard plaintext max is 3954. PSK plaintext max is 3950. Note fees add the consensus surcharge above 1024 bytes on top of one minimum fee. |
 | 6 | 2026-10-29 | Library payments and HTTP clients so a bot can send by itself: `build_payment`, `sign_payment`, `send_payment`, `SignedPayment`, `HttpAlgodClient`, `HttpIndexerClient`, `HttpError`. `process_transaction` keeps a reply's context (algochat#44). |
 | 7 | 2026-10-29 | `NoteTransaction.intra_round_offset`, read from the indexer, so room messages and records order within a round (algochat#45). |
+| 9 | 2026-10-30 | Hybrid-only one-to-one sending: `hybrid_direct.py`, `AlgoChat.encrypt_hybrid`, `discover_hybrid_keys`, hybrid reads in `process_transaction` and `sync`; `AlgoChat.encrypt` refuses; key discovery matches TypeScript (algochat#63). |
 | 8 | 2026-10-30 | Asset transactions for the bot's Raven identity NFT: `build_asset_create`, `build_asset_config` (signed by `sign_payment`, fees as `py-algorand-sdk` computes them), and the asset reads on `HttpAlgodClient` and `HttpIndexerClient` (algochat#59). |
 
 ## Corrected Model and Discovery Contracts
@@ -336,4 +351,4 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 - `DiscoveredKey` stores an X25519 public key and its Ed25519 verification state; it does not store an address or source transaction.
 - `SendOptions` configures confirmation and indexer waits, their timeouts, and optional reply context; it does not publish keys.
 - `SendResult` stores the transaction identifier and resulting sent `Message`; it does not expose a confirmed-round field.
-- `discover_encryption_key` returns the first valid key announcement in indexer result order and does not promise latest-key ordering.
+- `discover_encryption_key` returns the first verified 96-byte announcement in indexer result order, else the first unverified candidate, and does not promise latest-key ordering.

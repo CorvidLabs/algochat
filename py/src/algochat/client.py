@@ -27,9 +27,16 @@ from .blockchain import (
     NoteTransaction,
     discover_encryption_key,
 )
-from .crypto import decrypt_message, encrypt_message
-from .envelope import decode_envelope, encode_envelope, is_chat_message
-from .keys import derive_keys_from_seed, public_key_from_bytes, public_key_to_bytes
+from .crypto import decrypt_message
+from .envelope import decode_envelope, is_chat_message
+from .hybrid_direct import (
+    ClassicalSendRefusedError,
+    HybridDirect,
+    HybridKeyNotFoundError,
+    HybridPeerKeys,
+    discover_pq_encaps_key,
+)
+from .keys import derive_keys_from_seed, public_key_to_bytes
 from .models import (
     Conversation,
     DiscoveredKey,
@@ -37,10 +44,11 @@ from .models import (
     MessageDirection,
     ReplyContext,
 )
-from .psk_crypto import decrypt_psk_message, encrypt_psk_message
-from .psk_envelope import decode_psk_envelope, encode_psk_envelope, is_psk_message
+from .pq import derive_mlkem_keypair, is_pq_handshake, is_pq_message
+from .psk_crypto import decrypt_psk_message
+from .psk_envelope import decode_psk_envelope, is_psk_message
 from .psk_ratchet import derive_psk_at_counter
-from .psk_state import PSKState, advance_send_counter, record_receive, validate_counter
+from .psk_state import PSKState, record_receive, validate_counter
 from .queue import SendQueue
 from .storage import (
     EncryptionKeyStorage,
@@ -137,6 +145,10 @@ class AlgoChat:
         # The PublicKeyCache only stores raw bytes, so verification status is kept
         # here to avoid hardcoding is_verified=True for cached keys.
         self._verification_status: dict[str, bool] = {}
+        # Hybrid one-to-one sessions (algochat#63). Set by from_seed, which has
+        # the seed the ML-KEM-768 key derives from.
+        self._hybrid: HybridDirect | None = None
+        self._hybrid_recovered: set[str] = set()
 
     @classmethod
     async def from_seed(
@@ -178,7 +190,7 @@ class AlgoChat:
         )
         await key_storage.store(encryption_private_bytes, address, False)
 
-        return cls(
+        chat = cls(
             address=address,
             ed25519_public_key=ed25519_public_key,
             encryption_private_key=encryption_private_key,
@@ -189,6 +201,10 @@ class AlgoChat:
             key_storage=key_storage,
             message_cache=message_cache,
         )
+        chat._hybrid = HybridDirect(
+            address, encryption_private_key, encryption_public_key, derive_mlkem_keypair(seed)
+        )
+        return chat
 
     @property
     def address(self) -> str:
@@ -261,51 +277,73 @@ class AlgoChat:
                 "Set allow_unverified_keys=True to use it anyway."
             )
 
+    @property
+    def hybrid(self) -> HybridDirect:
+        """The hybrid one-to-one sessions of this account (needs :meth:`from_seed`)."""
+        if self._hybrid is None:
+            raise RuntimeError("Build the client with AlgoChat.from_seed to use hybrid messages")
+        return self._hybrid
+
+    async def discover_hybrid_keys(self, address: str) -> HybridPeerKeys:
+        """The X25519 and signed ML-KEM-768 keys ``address`` published.
+
+        Raises:
+            HybridKeyNotFoundError: when either key is missing. Nothing falls
+                back to a classical note.
+            UnverifiedKeyError: when the X25519 key is unverified and
+                unverified keys are not allowed.
+        """
+        key = await self.discover_key(address)
+        if key is None:
+            raise HybridKeyNotFoundError(
+                f"{address} has not published an encryption key, so no hybrid message "
+                "can be sent; AlgoChat never falls back to a classical 0x01 or 0x02 note"
+            )
+        self._ensure_key_usable(address, key)
+        encaps_key = await discover_pq_encaps_key(self._indexer, address)
+        if encaps_key is None:
+            raise HybridKeyNotFoundError(
+                f"{address} has not published a signed ML-KEM-768 key, so no hybrid message "
+                "can be sent; AlgoChat never falls back to a classical 0x01 or 0x02 note"
+            )
+        return HybridPeerKeys(key.public_key, encaps_key, key.is_verified)
+
+    async def encrypt_hybrid(self, message: str, address: str) -> list[bytes]:
+        """The notes that carry ``message`` to ``address``: a ``0x04`` handshake when needed, then ``0x05``.
+
+        Pay them in order. Refuses with :class:`HybridKeyNotFoundError` before
+        building anything when ``address`` lacks either hybrid key.
+        """
+        keys = await self.discover_hybrid_keys(address)
+        hybrid = self.hybrid
+        if not hybrid.has_session(address) and address not in self._hybrid_recovered:
+            # Reuse a session this account already opened on chain, so a restart
+            # does not pay for a new handshake. Oldest first: the newest one wins.
+            history = await self._indexer.search_transactions_between(self._address, address)
+            for tx in sorted(history, key=lambda item: (item.confirmed_round, item.intra_round_offset)):
+                hybrid.ingest(tx)
+            self._hybrid_recovered.add(address)
+        return hybrid.seal(address, message, keys)
+
     def encrypt(
         self,
         message: str,
         recipient_public_key: bytes,
         psk: bytes | None = None,
     ) -> bytes:
-        """Encrypts a message for a recipient.
+        """Refused: AlgoChat no longer sends everyday ``0x01`` or extra-lock ``0x02`` notes.
 
-        Args:
-            message: The plaintext message.
-            recipient_public_key: Recipient's X25519 public key (32 bytes).
-            psk: Optional pre-shared key (32 bytes). If provided, uses PSK v1.1 protocol.
+        Leif's rule (algochat#63, BASE-3 and ENCRYPT-2): classical is never
+        sent. Use :meth:`encrypt_hybrid`. Reading ``0x01`` and ``0x02`` notes
+        with :meth:`decrypt` and :meth:`process_transaction` is unchanged.
 
-        Returns:
-            Encoded envelope bytes.
+        Raises:
+            ClassicalSendRefusedError: always.
         """
-        recipient_key = public_key_from_bytes(recipient_public_key)
-
-        if psk is not None:
-            # Use PSK v1.1 protocol
-            recipient_address = self._address_for_key(recipient_public_key)
-            state = self._get_psk_state(recipient_address, psk)
-            counter, new_state = advance_send_counter(state)
-            current_psk = derive_psk_at_counter(psk, counter)
-
-            envelope = encrypt_psk_message(
-                message,
-                self._encryption_private_key,
-                self._encryption_public_key,
-                recipient_key,
-                current_psk,
-                counter,
-            )
-
-            self._set_psk_state(recipient_address, psk, new_state)
-            return encode_psk_envelope(envelope)
-
-        envelope = encrypt_message(
-            message,
-            self._encryption_private_key,
-            self._encryption_public_key,
-            recipient_key,
+        raise ClassicalSendRefusedError(
+            "AlgoChat sends only hybrid 0x04 and 0x05 one-to-one notes, never 0x01 or 0x02; "
+            "use AlgoChat.encrypt_hybrid"
         )
-
-        return encode_envelope(envelope)
 
     def decrypt(
         self,
@@ -441,6 +479,13 @@ class AlgoChat:
 
     async def process_transaction(self, tx: NoteTransaction) -> Message | None:
         """Processes a transaction and extracts any chat message."""
+        if self._hybrid is not None and is_pq_handshake(bytes(tx.note or b"")):
+            # A handshake carries no text; it opens the session for later 0x05 notes.
+            self._hybrid.ingest(tx)
+            return None
+        if self._hybrid is not None and is_pq_message(bytes(tx.note or b"")):
+            return await self._process_hybrid(tx)
+
         # Check if this is a chat message (standard or PSK)
         is_standard = is_chat_message(tx.note)
         is_psk = is_psk_message(tx.note)
@@ -493,6 +538,30 @@ class AlgoChat:
                     preview=opened.reply_to_preview or "",
                 )
 
+        return await self._record(tx, direction, other_address, content, reply_context)
+
+    async def _process_hybrid(self, tx: NoteTransaction) -> Message | None:
+        opened = self.hybrid.open(tx)
+        if opened is None:
+            return None
+        direction = MessageDirection.SENT if opened.sent else MessageDirection.RECEIVED
+        content = "" if opened.content is None else opened.content.text
+        reply_context = None
+        if opened.content is not None and opened.content.reply_to_id:
+            reply_context = ReplyContext(
+                message_id=opened.content.reply_to_id,
+                preview=opened.content.reply_to_preview or "",
+            )
+        return await self._record(tx, direction, opened.peer, content, reply_context)
+
+    async def _record(
+        self,
+        tx: NoteTransaction,
+        direction: MessageDirection,
+        other_address: str,
+        content: str,
+        reply_context: ReplyContext | None,
+    ) -> Message:
         # Create message
         timestamp = datetime.fromtimestamp(tx.round_time, tz=timezone.utc)
 
@@ -533,6 +602,10 @@ class AlgoChat:
 
         # Get transactions for our address
         txs = await self._indexer.search_transactions(self._address, limit=100)
+        if self._hybrid is not None:
+            # Open hybrid sessions oldest first, before the 0x05 notes that use them.
+            for tx in reversed(txs):
+                self._hybrid.ingest(tx)
 
         for tx in txs:
             message = await self.process_transaction(tx)

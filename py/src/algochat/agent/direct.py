@@ -1,8 +1,10 @@
 """
 One-to-one messages for the agent core (AGENT-5).
 
-The bot reads AlgoChat ``0x01`` messages sent to its own address and replies
-from its own account. Message text follows PROTOCOL.md section 9: plain
+The bot reads hybrid AlgoChat messages sent to its own address (a ``0x04``
+handshake, then ``0x05`` messages) and replies from its own account the same
+way. It never sends ``0x01`` or ``0x02`` and does not read them
+(algochat#63). Message text follows PROTOCOL.md section 9: plain
 UTF-8 text, a ``{"text": ...}`` object, or a ``{"text": ..., "replyTo": ...}``
 reply. The bot's replies use the section 9.2 form.
 """

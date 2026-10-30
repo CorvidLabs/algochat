@@ -199,6 +199,7 @@ async def test_a_direct_reply_counts_a_refill_but_the_notice_only_goes_in_a_room
     room = await _room(chain, bytes([0x44]) * 32, EVERY)
     bot = await _bot(chain, clock)
     await bot.publish_key()
+    await bot.publish_pq_key()
     await bot.sync_rooms()
     person = await _person(chain)
 

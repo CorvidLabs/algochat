@@ -2,10 +2,12 @@
 AGENT-5 on LocalNet: a bot reads one-to-one messages and replies by itself.
 
 People write their messages with each implementation's own tool (TypeScript,
-Go, Rust, Python, Kotlin), the notes go on a real local chain, and the bot
-reads and answers them with ``AgentCore.serve_direct``. Every implementation
-then opens every bot note, as recipient and as sender. Swift reads the same
-confirmed notes through ``swift test`` (its tool needs macOS 26).
+Go, Rust, Python, Kotlin) as hybrid ``0x04`` handshakes and ``0x05`` messages,
+the notes go on a real local chain, and the bot reads and answers them with
+``AgentCore.serve_direct``. Every implementation then opens every bot note,
+as recipient and as sender. One-to-one messages are hybrid only
+(algochat#63), so Swift on Linux, which cannot run ML-KEM-768 before
+macOS 26, no longer replays these notes here.
 
 Run with ``ALGOCHAT_REQUIRE_LOCALNET=1`` so a missing network or tool fails
 instead of skipping. Build the tools first (see ``tests/cross_tools.py``).
@@ -14,16 +16,16 @@ Accounts are throwaway and funded only by the local KMD dispenser.
 
 from __future__ import annotations
 
-import json
 import os
 
 import pytest
 
-from algochat.agent import AgentAccount, AgentCore, DirectMessage
+from algochat.agent import AgentAccount, AgentCore, DirectMessage, encode_reply
 from algochat.client import AlgoChatConfig
 from algochat.models import MessageDirection
+from algochat.pq import is_pq_handshake
 
-from .cross_tools import MESH, Tool, ToolError, ToolMissing, swift_replay
+from .cross_tools import MESH, Tool, ToolError, ToolMissing
 from .localnet_support import (
     LocalnetAlgod,
     LocalnetIndexer,
@@ -73,20 +75,33 @@ async def _core(account: SigningAccount, algod, indexer) -> AgentCore:
     return await AgentCore.create(AgentAccount.from_seed(account.seed), _config(), algod, indexer)
 
 
-def _read_everywhere(tools: dict[str, Tool], writer_seed: bytes, reader_seed: bytes, note: bytes, text: str) -> None:
-    """Every tool opens ``note`` as both parties and must get exactly ``text``.
+def _read_everywhere(
+    tools: dict[str, Tool], writer_seed: bytes, reader_seed: bytes, handshake: bytes, note: bytes, text: str
+) -> None:
+    """Every tool opens the ``0x05`` ``note`` under ``handshake`` as both parties.
 
-    For a section 9.2 reply ``text`` is the reply's own text: each implementation
-    parses the JSON payload rather than showing it raw.
+    ``text`` is the exact plaintext: for a section 9.2 reply, its JSON payload.
     """
     for lang, tool in tools.items():
         try:
-            tool.ask("read01", aliceSeed=writer_seed.hex(), bobSeed=reader_seed.hex(), note=note.hex(), text=text)
+            tool.ask(
+                "read",
+                aliceSeed=writer_seed.hex(),
+                bobSeed=reader_seed.hex(),
+                handshake=handshake.hex(),
+                message=note.hex(),
+                text=text,
+            )
         except ToolError as error:
             raise AssertionError(f"{lang} could not open the note as {text!r}: {error}") from None
 
 
-async def test_bot_reads_and_answers_every_language_and_every_language_reads_the_bot(tmp_path):
+async def _publish_keys(core: AgentCore, indexer) -> None:
+    await indexer.wait_for_indexer(await core.publish_key(), 30)
+    await indexer.wait_for_indexer(await core.publish_pq_key(), 30)
+
+
+async def test_bot_reads_and_answers_every_language_and_every_language_reads_the_bot():
     algod, indexer = LocalnetAlgod(), LocalnetIndexer()
     source = dispenser()
     bot_account, person_account = SigningAccount.generate(), SigningAccount.generate()
@@ -98,17 +113,18 @@ async def test_bot_reads_and_answers_every_language_and_every_language_reads_the
         bot = await _core(bot_account, algod, indexer)
         person = await _core(person_account, algod, indexer)
         for core in (bot, person):
-            txid = await core.publish_key()
-            await indexer.wait_for_indexer(txid, 30)
+            await _publish_keys(core, indexer)
         assert await bot.publish_key() is None, "a second publish of the same key is skipped"
 
-        # 1. Each language writes a message to the bot; it goes on chain from the person.
-        asked: dict[str, tuple[str, str]] = {}
+        # 1. Each language writes a hybrid message to the bot: a 0x04 handshake, then 0x05.
+        asked: dict[str, tuple[str, str, bytes]] = {}
         for lang, tool in tools.items():
             text = f"hello from {lang} \u2713 \u00f1 \U0001f680"
-            note = bytes.fromhex(tool.ask("write01", aliceSeed=person_account.seed.hex(), bobSeed=bot_account.seed.hex(), text=text)["note"])
-            info = await send_payment(algod, person_account, bot.address, 0, note)
-            asked[info.txid] = (lang, text)
+            written = tool.ask("write", aliceSeed=person_account.seed.hex(), bobSeed=bot_account.seed.hex(), text=text)
+            handshake = bytes.fromhex(written["handshake"])
+            await send_payment(algod, person_account, bot.address, 0, handshake)
+            info = await send_payment(algod, person_account, bot.address, 0, bytes.fromhex(written["message"]))
+            asked[info.txid] = (lang, text, handshake)
         await indexer.wait_for_indexer(info.txid, 30)
 
         # 2. The bot reads them all, oldest first, and answers each one itself.
@@ -118,7 +134,7 @@ async def test_bot_reads_and_answers_every_language_and_every_language_reads_the
 
         served = await bot.serve_direct(answer)
         assert [r.message.txid for r in served] == list(asked)
-        assert [r.message.text for r in served] == [text for _, text in asked.values()]
+        assert [r.message.text for r in served] == [text for _, text, _ in asked.values()]
         assert all(r.reply_txid and r.error is None for r in served)
         assert await bot.serve_direct(answer) == [], "nothing is answered twice"
 
@@ -139,37 +155,26 @@ async def test_bot_reads_and_answers_every_language_and_every_language_reads_the
             assert got.reply_context.preview == result.message.text
 
         # 5. Every language opens every bot note from the chain, as person and as bot.
-        record = {"bot_seed": bot_account.seed.hex(), "person_seed": person_account.seed.hex(), "notes": []}
-        bot_notes = [(r.reply_txid, r.message, f"bot heard: {r.message.text}") for r in served]
-        bot_notes.append((plain_txid, None, "a plain note from the bot \U0001f916"))
-        for txid, cited, text in bot_notes:
+        # The bot sent only 0x04 and 0x05 notes, and reused its one session.
+        bot_sent = sorted(
+            (tx for tx in await indexer.search_transactions(bot.address) if tx.sender == bot.address and tx.receiver == person.address),
+            key=lambda tx: (tx.confirmed_round, tx.intra_round_offset),
+        )
+        assert {bytes(tx.note)[:2] for tx in bot_sent} == {b"\x02\x04", b"\x02\x05"}
+        handshakes = [tx for tx in bot_sent if is_pq_handshake(bytes(tx.note))]
+        assert len(handshakes) == 1, "the bot reuses its session to the person"
+        bot_notes = [
+            (r.reply_txid, encode_reply(f"bot heard: {r.message.text}", r.message.txid, r.message.text)) for r in served
+        ]
+        bot_notes.append((plain_txid, "a plain note from the bot \U0001f916"))
+        for txid, text in bot_notes:
             tx = await indexer.get_transaction(txid)
             assert tx.sender == bot.address and tx.receiver == person.address
-            _read_everywhere(tools, bot_account.seed, person_account.seed, tx.note, text)
-            record["notes"].append({
-                "name": txid,
-                "note": tx.note.hex(),
-                "text": text,
-                "reply_to": cited.txid if cited else None,
-                "reply_preview": cited.text if cited else None,
-            })
+            _read_everywhere(tools, bot_account.seed, person_account.seed, bytes(handshakes[0].note), tx.note, text)
         # The person's messages too, as each language wrote them.
-        for txid, (lang, text) in asked.items():
+        for txid, (_lang, text, handshake) in asked.items():
             tx = await indexer.get_transaction(txid)
-            _read_everywhere(tools, person_account.seed, bot_account.seed, tx.note, text)
-            record["notes"].append({"name": f"{lang}:{txid}", "note": tx.note.hex(), "text": text, "reply_to": None, "reply_preview": None})
-
-        # 6. Swift opens the same confirmed notes.
-        record_path, done_path = tmp_path / "dm-record.json", tmp_path / "dm-done"
-        record_path.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
-        try:
-            run = swift_replay(record_path, done_path)
-        except ToolMissing as error:
-            if REQUIRED:
-                pytest.fail(str(error))
-            pytest.skip(str(error))
-        assert run.returncode == 0, (run.stdout + run.stderr)[-4000:]
-        assert done_path.read_text().strip() == str(len(record["notes"])), "the Swift replay test did not run"
+            _read_everywhere(tools, person_account.seed, bot_account.seed, handshake, tx.note, text)
     finally:
         for tool in tools.values():
             tool.close()
@@ -185,7 +190,7 @@ async def test_bot_reads_a_long_history_across_indexer_pages():
     bot = await _core(bot_account, algod, indexer)
     person = await _core(person_account, algod, indexer)
     for core in (bot, person):
-        await indexer.wait_for_indexer(await core.publish_key(), 30)
+        await _publish_keys(core, indexer)
 
     from algochat import http_clients
 
