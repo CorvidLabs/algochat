@@ -7,10 +7,11 @@
   "title": "Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64)",
   "description": "Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64)",
   "kind": "documentation",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "34eb8622d50f58c5e31cf7eee8729924b0a460f6",
   "created_at": 1793387504,
-  "updated_at": 1793387515,
+  "updated_at": 1793403259,
   "affected_specs": [
     "release"
   ],
@@ -30,7 +31,7 @@
   "dependencies": [],
   "answers": {
     "architecture_risk": "no",
-    "constraints": "Docs only: no protocol, crypto or package-manifest change (those are in #64). Leif's rule: AlgoChat and Raven use protocol 0x03 and up only. Definition approval, review and finalize are Leif's; this record is a draft.",
+    "constraints": "Docs only: no protocol, crypto or package-manifest change (those are in #64). Leif's rule: AlgoChat and Raven use protocol 0x03 and up only. Merges after #64.",
     "public_contract": "no"
   }
 }

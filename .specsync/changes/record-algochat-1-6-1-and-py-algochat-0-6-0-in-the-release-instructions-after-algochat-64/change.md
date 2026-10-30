@@ -1,6 +1,6 @@
 ---
 id: record-algochat-1-6-1-and-py-algochat-0-6-0-in-the-release-instructions-after-algochat-64
-state: draft
+state: implementing
 type: documentation
 base_commit: 34eb8622d50f58c5e31cf7eee8729924b0a460f6
 ---
