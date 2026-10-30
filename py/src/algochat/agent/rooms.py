@@ -295,14 +295,18 @@ class RoomTrack:
         return {tx.txid for tx in self.own_messages()} | set(self.sent_at)
 
     def post_times(self) -> list[float]:
-        """When the bot posted here since it was last added: local time when this
-        core sent it, otherwise the block time, so a restart keeps the count."""
+        """When the bot posted here since it was last added, in chain time.
+
+        A post's block time once the bot has read it, so a restart keeps the
+        count; until then, the chain time this core recorded when it sent it.
+        """
         joined = self.joined_at()
         times = dict(self.sent_at)
         for tx in self.own_messages():
             if joined is not None and _position(tx) <= joined:
+                times.pop(tx.txid, None)
                 continue
-            times.setdefault(tx.txid, float(tx.round_time))
+            times[tx.txid] = float(tx.round_time)
         return list(times.values())
 
     def latest_command_list(self) -> str | None:

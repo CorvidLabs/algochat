@@ -182,7 +182,7 @@ async def test_notes_from_non_members_and_copied_notes_are_ignored():
 @pytest.mark.asyncio
 async def test_after_another_member_is_removed_the_bot_uses_the_new_key():
     chain = Ledger()
-    room, _ = await _room(chain)
+    room, _ = await _room(chain, BOT_MODE_EVERY_MESSAGE)
     bot = await _bot(chain)
     await bot.sync_rooms()
     removed = await room.admin(OWNER_SEED, OP_REMOVE_MEMBER, subject=public_key(PERSON_SEED))

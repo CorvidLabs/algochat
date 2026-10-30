@@ -49,6 +49,16 @@ SKIP_NOT_A_COMMAND = "not-a-command"
 """Commands mode, and the message is not one of the bot's declared commands."""
 SKIP_RATE_LIMIT = "rate-limit"
 """Answering would go over the room's rate limit for the bot."""
+SKIP_TO_BOT = "to-bot"
+"""The one-to-one message would go to an account one of the bot's rooms marks as a bot (AGENT-8.c)."""
+
+
+class PolicySkip(PermissionError):
+    """The reply policy keeps the bot silent. ``reason`` is one of the ``SKIP_*`` values."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(f"The reply policy keeps the bot silent here ({reason})")
+        self.reason = reason
 
 _COMMAND_PATTERN = re.compile(r"^/([^\s@/]+)(?:@(\S+))?(?:\s+(.*))?$", re.DOTALL)
 _NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
@@ -205,8 +215,10 @@ __all__ = [
     "SKIP_NOT_MENTIONED",
     "SKIP_NO_MODE",
     "SKIP_RATE_LIMIT",
+    "SKIP_TO_BOT",
     "BotCommand",
     "CommandCall",
+    "PolicySkip",
     "RoomText",
     "check_bot_name",
     "command_call",

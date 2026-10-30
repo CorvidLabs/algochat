@@ -70,6 +70,38 @@ def _answer(message: RoomMessage) -> str:
     return f"heard: {message.text}"
 
 
+async def _block_time(harness: Harness, ticker) -> int:
+    """Adds one empty block (a 0-ALGO self-payment with a short note) and returns its block time."""
+    tx = await harness.pay(ticker.seed, ticker.address, b"tick")
+    return tx.round_time
+
+
+async def _catch_up(harness: Harness, ticker) -> None:
+    """Adds empty blocks until block time is level with the host's clock.
+
+    In dev mode a block's time is the host's clock, but at most 25 s after the
+    block before it, so after an idle spell the chain runs behind the host and
+    each new block jumps 25 s. Levelling it first keeps a step's blocks a few
+    seconds apart in chain time, which is the time the bot counts (AGENT-8.b).
+    """
+    for _ in range(20_000):
+        if await _block_time(harness, ticker) >= time.time() - 2:
+            return
+    pytest.fail("LocalNet block time did not catch up with the host clock")
+
+
+async def _wait_out_window(harness: Harness, ticker, mailbox, bot_address: str, seconds: int) -> None:
+    """Waits until the bot's last post in ``mailbox`` is more than ``seconds`` old in chain time."""
+    txs = await harness.indexer.search_transactions(mailbox.address)
+    target = max(tx.round_time for tx in txs if tx.sender == bot_address) + seconds + 1
+    while True:
+        await _catch_up(harness, ticker)
+        now = await _block_time(harness, ticker)
+        if now >= target:
+            return
+        await asyncio.sleep(target - now)
+
+
 def _reply(text: str, txid: str) -> str:
     return json.dumps({"text": text, "replyTo": {"txid": txid, "preview": "..."}}, separators=(",", ":"))
 
@@ -83,6 +115,7 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
         other_bot_account = await harness.account()
         bot_account = await harness.account()
         mailbox = await harness.account()
+        ticker = await harness.account()
 
         bot = await _core(bot_account, harness, name="helper", commands=COMMANDS)
         other_bot = await _core(other_bot_account, harness, name="other")
@@ -90,7 +123,8 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
         for core in (bot, other_bot, person):
             await harness.indexer.wait_for_indexer(await core.publish_key(), 30)
 
-        # 1. A room with an admin, another bot, and our bot in mentions mode: 2 replies per 20 s.
+        # 1. A room with an admin, another bot, and our bot in mentions mode: 2 replies per 60 s.
+        # A wide window, counted in chain time, so a slow indexer or slow tools cannot open it early.
         room = harness.room(mailbox)
         await room.admin(owner.seed, OP_CREATE, name="policy \u2713")
         await room.admin(owner.seed, OP_ADD_MEMBER, subject=public_key(member.seed))
@@ -99,11 +133,13 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
             owner.seed, OP_ADD_BOT, subject=public_key(other_bot_account.seed), bot=BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60)
         )
         add = await room.admin(
-            owner.seed, OP_ADD_BOT, subject=public_key(bot_account.seed), bot=BotSettings(BOT_MODE_MENTIONS, 2, 20)
+            owner.seed, OP_ADD_BOT, subject=public_key(bot_account.seed), bot=BotSettings(BOT_MODE_MENTIONS, 2, 60)
         )
         await room.deliver(owner.seed, bot_account.seed, add)
         [joined] = await bot.sync_rooms()
-        assert (joined.bot.mode, joined.bot.replies, joined.bot.seconds) == (BOT_MODE_MENTIONS, 2, 20)
+        assert (joined.bot.mode, joined.bot.replies, joined.bot.seconds) == (BOT_MODE_MENTIONS, 2, 60)
+
+        await _catch_up(harness, ticker)
 
         # 2. Mentions mode: only @helper counts, at most 2 replies, never to the other bot.
         await harness.write("ts", room, owner, "good morning everyone \u2600")
@@ -120,9 +156,7 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
             ("@helper hello from a bot", SKIP_FROM_BOT, False),
         ]
         first = served[1].txid
-        for r in served:
-            if r.txid:
-                await _bot_note(harness, room, bot_account, r.txid, _answer(r.message), f"bot:{r.txid}")
+        answered = [r for r in served if r.txid]
 
         # 3. A restarted bot counts its replies from their block times: a reply to it waits.
         restarted = await _core(bot_account, harness, name="helper", commands=COMMANDS)
@@ -131,22 +165,21 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
         assert [(r.message.text, r.message.reply_to, r.message.mentioned, r.skipped) for r in served] == [
             ("thanks", first, True, SKIP_RATE_LIMIT)
         ]
+        # Every language opens the step 2 replies, after the restart check so their time is not in the window.
+        for r in answered:
+            await _bot_note(harness, room, bot_account, r.txid, _answer(r.message), f"bot:{r.txid}")
         # After the window, a reply to the bot's message counts as a mention.
-        last = max(tx.round_time for tx in await harness.indexer.search_transactions(mailbox.address) if tx.sender == bot.address)
-        await asyncio.sleep(max(0.0, last + 21 - time.time()))
+        await _wait_out_window(harness, ticker, mailbox, bot.address, 60)
         await harness.write("go", room, member, _reply("thanks again", first))
         served = await restarted.serve_rooms(_answer)
         assert [(r.message.text, r.skipped) for r in served] == [("thanks again", None)]
         await _bot_note(harness, room, bot_account, served[0].txid, "heard: thanks again", "bot:reply-mention")
 
-        # 4. The admin switches the bot to commands, 4 per 30 s: it posts its list, then answers commands.
-        # Wait until its earlier replies are out of a 30 s window, so the count starts at zero.
-        last = max(tx.round_time for tx in await harness.indexer.search_transactions(mailbox.address) if tx.sender == bot.address)
-        await asyncio.sleep(max(0.0, last + 31 - time.time()))
-        await room.admin(member.seed, OP_SET_BOT, subject=public_key(bot_account.seed), bot=BotSettings(BOT_MODE_COMMANDS, 4, 30))
-        harness.reduce_everywhere(room)
+        # 4. The admin switches the bot to commands, 4 per 60 s: it posts its list, then answers commands.
+        # Wait until its earlier replies are out of a 60 s window, so the count starts at zero.
+        await _wait_out_window(harness, ticker, mailbox, bot.address, 60)
+        await room.admin(member.seed, OP_SET_BOT, subject=public_key(bot_account.seed), bot=BotSettings(BOT_MODE_COMMANDS, 4, 60))
         [listed] = await restarted.declare_commands()
-        await _bot_note(harness, room, bot_account, listed, restarted.command_list, "bot:command-list")
         await harness.write("ts", room, owner, "/echo hi from ts \u2713")
         await harness.write("go", room, member, "hello, no command")
         await harness.write("rs", room, owner, "/help@helper")
@@ -158,8 +191,7 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
             ("/help@helper", None),
             ("/echo@other not for this bot", SKIP_NOT_A_COMMAND),
         ]
-        await _bot_note(harness, room, bot_account, served[0].txid, "echo: hi from ts \u2713", "bot:echo")
-        await _bot_note(harness, room, bot_account, served[2].txid, restarted.command_list, "bot:help")
+        commanded = served
         assert restarted.command_list.startswith("Commands for @helper:\n/echo - Repeat your text")
         # A fresh core sees its current list on chain and does not post it again.
         fresh = await _core(bot_account, harness, name="helper", commands=COMMANDS)
@@ -168,6 +200,11 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
         await harness.write("kt", room, member, "/echo fifth")
         served = await fresh.serve_rooms(_answer)
         assert [(r.message.text, r.skipped) for r in served] == [("/echo fourth", None), ("/echo fifth", SKIP_RATE_LIMIT)]
+        # Every language opens the step 4 posts, after the rate checks so their time is not in the window.
+        harness.reduce_everywhere(room)
+        await _bot_note(harness, room, bot_account, listed, restarted.command_list, "bot:command-list")
+        await _bot_note(harness, room, bot_account, commanded[0].txid, "echo: hi from ts \u2713", "bot:echo")
+        await _bot_note(harness, room, bot_account, commanded[2].txid, restarted.command_list, "bot:help")
         await _bot_note(harness, room, bot_account, served[0].txid, "echo: fourth", "bot:echo-4")
 
         # 5. The owner switches it to every message, 10 per 60 s: everyone but the other bot is answered.

@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import inspect
 import logging
+import math
 import os
 import time
-from collections.abc import Awaitable, Callable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
@@ -60,7 +61,9 @@ from .policy import (
     SKIP_NOT_A_COMMAND,
     SKIP_NOT_MENTIONED,
     SKIP_RATE_LIMIT,
+    SKIP_TO_BOT,
     BotCommand,
+    PolicySkip,
     check_bot_name,
     command_call,
     command_list_text,
@@ -108,7 +111,7 @@ class AgentCore:
         *,
         name: str | None = None,
         commands: Sequence[BotCommand] = (),
-        clock: Callable[[], float] = time.time,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         # ``AgentAccount`` already proves its address and public key come from
         # its seed; also require the chat client's signing key to be that key.
@@ -118,7 +121,10 @@ class AgentCore:
         self._operator_commands = {command.name for command in commands}
         self._commands = declared_commands(commands)
         self._command_list = command_list_text(self._commands, self._name)
+        # Monotonic seconds, used only for the time since the bot last saw a
+        # block; never compared with block times (see _chain_now).
         self._clock = clock
+        self._chain_anchor: tuple[float, float] | None = None
         self._account = account
         self._chat = chat
         self._algod: AlgodClient | None = None
@@ -145,7 +151,7 @@ class AgentCore:
         *,
         name: str | None = None,
         commands: Sequence[BotCommand] = (),
-        clock: Callable[[], float] = time.time,
+        clock: Callable[[], float] = time.monotonic,
     ) -> AgentCore:
         """Builds the core for ``account`` on the operator's algod and indexer clients.
 
@@ -180,7 +186,7 @@ class AgentCore:
         *,
         name: str | None = None,
         commands: Sequence[BotCommand] = (),
-        clock: Callable[[], float] = time.time,
+        clock: Callable[[], float] = time.monotonic,
     ) -> AgentCore:
         """Loads the bot's mnemonic from its env var or local file, then builds the core."""
         try:
@@ -268,17 +274,35 @@ class AgentCore:
         return await self._pay(self.address, key + signature)
 
     async def send_direct(self, address: str, text: str) -> str:
-        """Sends ``text`` to ``address`` as a one-to-one message. Returns the txid."""
+        """Sends ``text`` to ``address`` as a one-to-one message. Returns the txid.
+
+        Reads the bot's rooms first and refuses with :class:`PolicySkip` when
+        any of them marks ``address`` as a bot (AGENT-8.c), before paying.
+        """
         if address == self.address:
             raise ValueError("The bot does not message itself")
+        await self._refuse_bot(address, SKIP_TO_BOT)
         key = await self._chat.discover_key(address)
         if key is None:
             raise LookupError(f"{address} has not published an encryption key")
         self._chat._ensure_key_usable(address, key)
         return await self._pay(address, self._chat.encrypt(text, key.public_key))
 
+    async def _refuse_bot(self, address: str, reason: str) -> None:
+        await self.sync_rooms()
+        if public_key_from_address(address) in self._known_bots():
+            raise PolicySkip(reason)
+
     async def reply(self, message: DirectMessage, text: str) -> str:
-        """Replies to ``message`` with a section 9.2 reply. Returns the txid."""
+        """Replies to ``message`` with a section 9.2 reply. Returns the txid.
+
+        Reads the bot's rooms first and refuses with :class:`PolicySkip` when
+        any of them marks the sender as a bot (AGENT-8.c), before paying.
+        """
+        await self._refuse_bot(message.sender, SKIP_FROM_BOT)
+        return await self._reply(message, text)
+
+    async def _reply(self, message: DirectMessage, text: str) -> str:
         key = await self._chat.discover_key(message.sender)
         if key is None:
             raise LookupError(f"{message.sender} has not published an encryption key")
@@ -329,6 +353,7 @@ class AgentCore:
         found = await indexer.search_transactions(
             self.address, after_round=self._cursor, limit=None
         )
+        self._saw(found)
         received: list[DirectMessage] = []
         for tx in sorted(found, key=lambda item: item.confirmed_round):
             if tx.txid in self._seen:
@@ -369,7 +394,7 @@ class AgentCore:
                     results.append(DirectReply(message, None))
                     continue
                 results.append(
-                    DirectReply(message, await self.reply(message, str(answer)))
+                    DirectReply(message, await self._reply(message, str(answer)))
                 )
             except Exception as error:  # noqa: BLE001 - one bad message must not stop the others
                 self._answered.add(message.txid)
@@ -443,6 +468,7 @@ class AgentCore:
         found = await indexer.search_transactions(
             self.address, after_round=self._inbox_cursor, limit=None
         )
+        self._saw(found)
         for tx in sorted(found, key=_chain_order):
             if tx.txid in self._inbox_seen:
                 continue
@@ -462,11 +488,11 @@ class AgentCore:
 
     async def _refresh(self, track: RoomTrack) -> None:
         _, indexer = self._clients()
-        track.ingest(
-            await indexer.search_transactions(
-                track.mailbox, after_round=track.cursor, limit=None
-            )
+        found = await indexer.search_transactions(
+            track.mailbox, after_round=track.cursor, limit=None
         )
+        self._saw(found)
+        track.ingest(found)
 
     def _authorize(self, tracks: list[RoomTrack]) -> None:
         keep: list[KeyDelivery] = []
@@ -665,18 +691,46 @@ class AgentCore:
         found.discard(self._bot_key)
         return found
 
+    def _saw(self, transactions: Iterable[NoteTransaction]) -> None:
+        """Moves the bot's view of chain time forward to the newest block time it read."""
+        newest = max((float(tx.round_time) for tx in transactions), default=None)
+        if newest is None:
+            return
+        now = self._chain_now()
+        if now is None or newest > now:
+            self._chain_anchor = (newest, self._clock())
+
+    def _chain_now(self) -> float | None:
+        """Chain time now, in block-time seconds, or None before the bot read any block.
+
+        It is the newest block time the bot has read plus the monotonic time
+        since it read it. The host's wall clock is never compared with block
+        times, so a node whose clock differs from the host's (AGENT-8.b) keeps
+        the same rate limit before and after a restart.
+        """
+        if self._chain_anchor is None:
+            return None
+        block_time, read_at = self._chain_anchor
+        return block_time + max(0.0, self._clock() - read_at)
+
     def _rate_ok(self, track: RoomTrack) -> bool:
         state = track.state
         settings = None if state is None else room_bot(state, self._bot_key)
         if settings is None:
             return False
-        return within_rate(
-            track.post_times(), self._clock(), settings.replies, settings.seconds
-        )
+        now = self._chain_now()
+        if now is None:
+            # No block read yet, so no post of the bot's is known either.
+            return True
+        return within_rate(track.post_times(), now, settings.replies, settings.seconds)
 
     def _skip_reason(self, track: RoomTrack, message: RoomMessage) -> str | None:
-        """Why the room's current record keeps the bot silent on ``message``, or None."""
-        if message.from_bot:
+        """Why the room's current record keeps the bot silent on ``message``, or None.
+
+        Uses the bot marks from the rooms as last read, not the snapshot taken
+        when the message was opened, so a sender marked since then is a bot.
+        """
+        if public_key_from_address(message.sender) in self._known_bots():
             return SKIP_FROM_BOT
         state = track.state
         settings = None if state is None else room_bot(state, self._bot_key)
@@ -734,22 +788,53 @@ class AgentCore:
         )
         txid = await self._pay(track.mailbox, note)
         track.next_counter[epoch] = counter + 1
-        track.sent_at[txid] = self._clock()
+        # Chain time, like the block times a restarted bot counts. Until the
+        # bot reads its post's own block time, count it as just posted.
+        now = self._chain_now()
+        track.sent_at[txid] = math.inf if now is None else now
         return txid
 
-    async def send_room(
-        self, room: Room | RoomMessage | tuple[bytes, str], text: str
-    ) -> str:
-        """Posts ``text`` in a room or channel the bot is active in. Returns the txid."""
+    @staticmethod
+    def _check_room_text(text: str) -> None:
         if not text:
             raise ValueError("A room message needs text")
         if text == LEAVE_NOTICE:
             raise ValueError("Use leave_room to leave a room")
-        return await self._post(self._track(room), text)
+
+    async def send_room(
+        self, room: Room | RoomMessage | tuple[bytes, str], text: str
+    ) -> str:
+        """Posts ``text`` in a room or channel the bot is active in. Returns the txid.
+
+        Reads the room again first. Refuses with :class:`PolicySkip` when the
+        room gives the bot no mode or the rate window is full (AGENT-8.a,
+        AGENT-8.b); the post counts toward that window.
+        """
+        self._check_room_text(text)
+        await self.sync_rooms()
+        track = self._track(room)
+        state = track.state
+        if state is None or room_bot(state, self._bot_key) is None:
+            raise PolicySkip(SKIP_NO_MODE)
+        if not self._rate_ok(track):
+            raise PolicySkip(SKIP_RATE_LIMIT)
+        return await self._post(track, text)
 
     async def reply_room(self, message: RoomMessage, text: str) -> str:
-        """Answers ``message`` in the room it was posted in. Returns the txid."""
-        return await self.send_room(message, text)
+        """Answers ``message`` in the room it was posted in. Returns the txid.
+
+        Reads the room again first, so a mode, limit or bot mark set since
+        ``message`` was read applies. Refuses with :class:`PolicySkip` when the
+        reply policy keeps the bot silent on ``message`` (AGENT-8); the reply
+        counts toward the same rate window as every other post there.
+        """
+        self._check_room_text(text)
+        await self.sync_rooms()
+        track = self._track(message)
+        skipped = self._skip_reason(track, message)
+        if skipped is not None:
+            raise PolicySkip(skipped)
+        return await self._post(track, text)
 
     async def serve_rooms(self, handler: RoomHandler) -> list[RoomReply]:
         """Reads new room messages and answers them the way each room's record says.
@@ -775,6 +860,7 @@ class AgentCore:
             if skipped is not None:
                 results.append(RoomReply(message, None, skipped=skipped))
                 continue
+            answer: str | Awaitable[str | None] | None
             try:
                 if (
                     message.command is not None
@@ -789,9 +875,15 @@ class AgentCore:
                 if not answer:
                     results.append(RoomReply(message, None))
                     continue
-                results.append(
-                    RoomReply(message, await self.reply_room(message, str(answer)))
-                )
+                reply_text = str(answer)
+                self._check_room_text(reply_text)
+                # read_rooms read the rooms on this pass; check again in case
+                # an earlier reply on this pass filled the window.
+                skipped = self._skip_reason(track, message)
+                if skipped is not None:
+                    results.append(RoomReply(message, None, skipped=skipped))
+                    continue
+                results.append(RoomReply(message, await self._post(track, reply_text)))
             except Exception as error:  # noqa: BLE001 - one bad message must not stop the others
                 results.append(RoomReply(message, None, type(error).__name__))
         return results

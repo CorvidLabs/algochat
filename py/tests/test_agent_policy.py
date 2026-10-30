@@ -8,8 +8,10 @@ No test touches a network.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
+import time
 
 import pytest
 
@@ -19,9 +21,11 @@ from algochat.agent import (
     SKIP_NOT_A_COMMAND,
     SKIP_NOT_MENTIONED,
     SKIP_RATE_LIMIT,
+    SKIP_TO_BOT,
     AgentAccount,
     AgentCore,
     BotCommand,
+    PolicySkip,
     RoomMessage,
 )
 from algochat.agent.policy import (
@@ -66,14 +70,18 @@ class Ledger(Chain):
 
 
 class Clock:
-    """Follows the in-memory chain's block time (one second per round), plus ``now`` seconds."""
+    """A fake monotonic clock: ``now`` seconds have passed since the test began.
+
+    The bot only uses it for the time since it last read a block; the
+    in-memory chain gives each round one second of block time.
+    """
 
     def __init__(self, chain: Chain) -> None:
         self.chain = chain
         self.now = 0.0
 
     def __call__(self) -> float:
-        return 1_800_000_000.0 + self.chain.round + self.now
+        return self.now
 
 
 async def _bot(chain: Chain, clock: Clock, **kwargs) -> AgentCore:
@@ -373,6 +381,133 @@ async def test_the_command_list_waits_when_the_limit_is_full():
     assert _read(room, txid, chain) == bot.command_list
 
 
+@pytest.mark.asyncio
+async def test_a_chain_clock_behind_the_host_keeps_the_limit_across_a_restart():
+    # Block times four hours behind the host's wall clock, and no fake clock:
+    # the bot must take "now" from the chain, not from time.time().
+    chain = Ledger()
+    chain.time_base = int(time.time()) - 4 * 3600
+    room = await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 2, 60))
+    bot = await AgentCore.create(AgentAccount.from_seed(BOT_SEED), CONFIG, chain, chain)
+    await bot.sync_rooms()
+    for text in ("one", "two", "three"):
+        await room.post(PERSON_SEED, text)
+    assert [r.skipped for r in await bot.serve_rooms(_echo)] == [None, None, SKIP_RATE_LIMIT]
+    restarted = await AgentCore.create(AgentAccount.from_seed(BOT_SEED), CONFIG, chain, chain)
+    await room.post(PERSON_SEED, "four")
+    assert [r.skipped for r in await restarted.serve_rooms(_echo)] == [SKIP_RATE_LIMIT]
+    assert len(_bot_posts(chain, room)) == 2
+
+
+@pytest.mark.asyncio
+async def test_a_chain_clock_ahead_of_the_host_opens_the_window_again():
+    chain = Ledger()
+    chain.time_base = int(time.time()) + 4 * 3600
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 1, 60))
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    await room.post(PERSON_SEED, "one")
+    await room.post(PERSON_SEED, "two")
+    assert [r.skipped for r in await bot.serve_rooms(_echo)] == [None, SKIP_RATE_LIMIT]
+    restarted = await _bot(chain, clock)
+    # A minute passes on the host and on the chain alike.
+    clock.now += 61
+    chain.time_base += 61
+    await room.post(PERSON_SEED, "three")
+    assert [r.skipped for r in await restarted.serve_rooms(_echo)] == [None]
+
+
+@pytest.mark.asyncio
+async def test_reply_room_refuses_what_the_policy_skips_and_posts_nothing():
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_MENTIONS, 5, 60))
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    await room.post(PERSON_SEED, "no mention here")
+    [message] = await bot.read_rooms()
+    with pytest.raises(PolicySkip) as refused:
+        await bot.reply_room(message, "hi")
+    assert refused.value.reason == SKIP_NOT_MENTIONED
+    assert isinstance(refused.value, PermissionError)
+    assert _bot_posts(chain, room) == []
+
+
+@pytest.mark.asyncio
+async def test_reply_room_reads_the_room_again_and_follows_a_mode_change():
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60))
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    await room.post(PERSON_SEED, "plain words")
+    [message] = await bot.read_rooms()
+    # An admin switches the bot to commands mode after the bot read the message.
+    await room.admin(OWNER_SEED, OP_SET_BOT, subject=public_key(BOT_SEED), bot=BotSettings(BOT_MODE_COMMANDS, 5, 60))
+    with pytest.raises(PolicySkip) as refused:
+        await bot.reply_room(message, "too late")
+    assert refused.value.reason == SKIP_NOT_A_COMMAND
+    assert _bot_posts(chain, room) == []
+
+
+@pytest.mark.asyncio
+async def test_reply_room_decides_from_bot_from_the_rooms_not_the_message():
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60), other_bot=True)
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    await room.post(OTHER_BOT_SEED, "beep")
+    [message] = await bot.read_rooms()
+    assert message.from_bot
+    unmarked = dataclasses.replace(message, from_bot=False)
+    with pytest.raises(PolicySkip) as refused:
+        await bot.reply_room(unmarked, "hello bot")
+    assert refused.value.reason == SKIP_FROM_BOT
+    assert _bot_posts(chain, room) == []
+
+
+@pytest.mark.asyncio
+async def test_send_room_and_reply_room_count_against_one_window():
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 2, 60))
+    bot = await _bot(chain, clock)
+    [joined] = await bot.sync_rooms()
+    await bot.send_room(joined, "first")
+    await room.post(PERSON_SEED, "hello")
+    [message] = await bot.read_rooms()
+    await bot.reply_room(message, "second")
+    with pytest.raises(PolicySkip) as refused:
+        await bot.send_room(joined, "third")
+    assert refused.value.reason == SKIP_RATE_LIMIT
+    with pytest.raises(PolicySkip) as refused:
+        await bot.reply_room(message, "third again")
+    assert refused.value.reason == SKIP_RATE_LIMIT
+    # A restarted bot counts both posts too.
+    restarted = await _bot(chain, clock)
+    await restarted.sync_rooms()
+    with pytest.raises(PolicySkip):
+        await restarted.send_room(joined, "fourth")
+    clock.now += 61
+    await restarted.send_room(joined, "after the window")
+    assert len(_bot_posts(chain, room)) == 3
+
+
+@pytest.mark.asyncio
+async def test_send_room_refuses_a_room_that_gives_the_bot_no_mode():
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, None)
+    bot = await _bot(chain, clock)
+    [joined] = await bot.sync_rooms()
+    with pytest.raises(PolicySkip) as refused:
+        await bot.send_room(joined, "hi")
+    assert refused.value.reason == SKIP_NO_MODE
+    assert _bot_posts(chain, room) == []
+
+
 # --- AGENT-8.c: one-to-one messages from a bot ---------------------------------
 
 
@@ -410,3 +545,28 @@ async def test_a_fresh_core_reads_its_rooms_before_answering_one_to_one():
     assert [(m.message.text, m.reply_txid, m.skipped) for m in served] == [
         ("hi from a bot", None, SKIP_FROM_BOT)
     ]
+
+
+@pytest.mark.asyncio
+async def test_send_direct_and_reply_refuse_a_room_bot_before_paying():
+    chain = Ledger()
+    clock = Clock(chain)
+    await _room(chain, BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60), other_bot=True)
+    bot = await _bot(chain, clock)
+    await bot.publish_key()
+    other = await _person(chain, OTHER_BOT_SEED)
+    await _say(chain, other, OTHER_BOT_SEED, bot.address, "hi from a bot")
+    # A fresh core, no sync_rooms first: both calls read the rooms themselves.
+    fresh = await _bot(chain, clock)
+    [message] = await fresh.read_direct()
+    before = len(chain.txs)
+    with pytest.raises(PolicySkip) as refused:
+        await fresh.send_direct(address(OTHER_BOT_SEED), "hello")
+    assert refused.value.reason == SKIP_TO_BOT
+    with pytest.raises(PolicySkip) as refused:
+        await fresh.reply(message, "hello")
+    assert refused.value.reason == SKIP_FROM_BOT
+    assert len(chain.txs) == before
+    # A person in the same room is still messaged.
+    await _person(chain)
+    assert await fresh.send_direct(address(PERSON_SEED), "hello person")

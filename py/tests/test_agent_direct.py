@@ -74,6 +74,8 @@ class Chain(AlgodClient, IndexerClient):
         self.round = 10
         self.txs: list[NoteTransaction] = []
         self.submitted = 0
+        self.time_base = 1_800_000_000
+        """Block time of round 0; each later round is one second later."""
 
     def _params(self) -> SuggestedParams:
         return SuggestedParams(1000, 1000, self.round, self.round + 1000, "dockernet-v1", bytes(32))
@@ -91,7 +93,7 @@ class Chain(AlgodClient, IndexerClient):
             receiver=address_from_public_key(txn["rcv"]),
             note=txn.get("note", b""),
             confirmed_round=self.round,
-            round_time=1_800_000_000 + self.round,
+            round_time=self.time_base + self.round,
         )
         self.txs.append(tx)
         return tx
