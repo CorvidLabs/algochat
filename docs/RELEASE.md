@@ -2,7 +2,7 @@
 
 A green **Release qualification / complete** check means the candidate passed the
 seven hosted lanes below. It does not authorize a release, establish historical
-provenance, or prove registry permissions. Protocol **1.6.0** and each library's
+provenance, or prove registry permissions. Protocol **1.6.0** (the specification version), release **1.6.1**, and each library's
 package version are distinct. The [package version table](#package-versions-and-distribution) records the release set; the language/runtime requirements are below.
 
 ## Candidate and evidence
@@ -110,27 +110,31 @@ claim another author's historical actions or fabricate human implementation acce
 
 ## Package versions and distribution
 
-`CorvidLabs/algochat` is the source. Archived language repositories stay archived. Protocol tag `v1.6.0` is the Swift package tag. The Go module tag is `go/v0.5.0`. Both are cut from the merge commit of this release change. Tags `v1.5.0` and `go/v0.4.0` are the previous release, on commit `5c4e51f7bf49bb26c4cab6368c142cc8c04344aa`. Tags `v1.4.0` and `go/v0.3.0` are the release before that. Tags `v1.3.0` and `go/v0.2.0` remain on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`. Further registry publication or deployment, beyond the existing TypeScript GitHub Packages workflow, still requires that workflow's own dispatch.
+> **Pending:** the 1.6.1 rows below describe [algochat#64](https://github.com/CorvidLabs/algochat/pull/64), which is not merged or tagged yet. Until it merges and tag `v1.6.1` exists, the latest release is 1.6.0: tag `v1.6.0` and `go/v0.5.0` on `7d7b280`, with Python `0.5.0`.
+
+`CorvidLabs/algochat` is the source. Archived language repositories stay archived. Release 1.6.1 keeps protocol specification **1.6.0**; the wire format does not change. Repository tag `v1.6.1` is the Swift package tag, cut from the merge commit of the 1.6.1 change. Go does not change in 1.6.1, so the Go module tag stays `go/v0.5.0`. Tags `v1.6.0` and `go/v0.5.0` are the previous release, on commit `7d7b280ae027b55502a3d16d72ab7afac3f93043`. Tags `v1.5.0` and `go/v0.4.0` are the release before that, on commit `5c4e51f7bf49bb26c4cab6368c142cc8c04344aa`. Tags `v1.4.0` and `go/v0.3.0` are older. Tags `v1.3.0` and `go/v0.2.0` remain on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`. Further registry publication or deployment, beyond the existing TypeScript GitHub Packages workflow, still requires that workflow's own dispatch.
 
 | Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
-| Protocol and Swift | package `algochat`, product `AlgoChat` | repository tag `v1.6.0` | this repository |
+| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.6.1` / repository tag `v1.6.1` (pending; protocol specification 1.6.0) | this repository |
 | TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | GitHub Packages for this repository |
-| Python | `py-algochat` | `0.5.0` | PyPI; source version only until a publisher is configured |
+| Python | `py-algochat` | `0.6.0` (pending #64; `0.5.0` in 1.6.0) | PyPI; source version only until a publisher is configured |
 | Rust | `algochat` | `0.6.0` | crates.io; source version only until a publisher is configured |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | GitHub Packages for this repository |
 | Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.5.0` | this repository |
 
-Distribution observations checked on **2026-10-18**:
+Distribution observations checked on **2026-10-30**, after the 1.6.0 tag:
 
 - The [1.3.0 release](https://github.com/CorvidLabs/algochat/releases/tag/v1.3.0) exists and describes the [Go tag](https://github.com/CorvidLabs/algochat/tree/go/v0.2.0) on the same commit. Its notes say Python, Rust, and Kotlin packages were not uploaded in that release.
+- The [public npm registry](https://registry.npmjs.org/@corvidlabs%2fts-algochat) has `@corvidlabs/ts-algochat` versions `0.1.1` through `0.4.0`, with `latest` = `0.4.0`. It does not have source version `0.12.0`.
+- GitHub Packages metadata lists TypeScript [`0.12.0`](https://github.com/orgs/CorvidLabs/packages/npm/ts-algochat/1475087846), created 2026-10-30 by a manual `Publish npm` workflow run on `7d7b280` ([run 41087000341](https://github.com/CorvidLabs/algochat/actions/runs/41087000341)), and earlier versions including `0.10.0` and `0.9.0`. The package repository association is still archived `CorvidLabs/ts-algochat`.
 - The [PyPI metadata endpoint](https://pypi.org/pypi/py-algochat/json) returned HTTP 404. Use the monorepo source installation in the Python README.
-- The [crates.io registry](https://crates.io/crates/algochat/0.2.1) reports latest version `0.2.1` from the archived Rust repository, rather than source version `0.3.0`. Use the monorepo git dependency for the current implementation.
-- GitHub Packages metadata lists TypeScript [`0.9.0`](https://github.com/orgs/CorvidLabs/packages/npm/ts-algochat/1403579758), with package repository association still set to archived `CorvidLabs/ts-algochat`.
-- GitHub Packages metadata lists Kotlin [`0.2.0`](https://github.com/CorvidLabs/kt-algochat/packages/3318797?version=0.2.0), associated with archived `CorvidLabs/kt-algochat`. That metadata does not establish availability at the intended monorepo Maven endpoint or artifact equivalence to current source.
+- The [crates.io registry](https://crates.io/crates/algochat/0.2.1) reports latest version `0.2.1` from the archived Rust repository, rather than source version `0.6.0`. Use a checkout path dependency for the current implementation, as the Rust README says.
+- GitHub Packages metadata lists Kotlin [`0.2.0`](https://github.com/CorvidLabs/kt-algochat/packages/3318797?version=0.2.0) only, associated with archived `CorvidLabs/kt-algochat`. That metadata does not establish availability at the intended monorepo Maven endpoint or artifact equivalence to current source.
+- The [Go module proxy](https://proxy.golang.org/github.com/!corvid!labs/algochat/go/@v/list) lists `v0.2.0` through `v0.5.0`. `@latest` is `v0.5.0`, from tag `go/v0.5.0` at `7d7b280`.
 - Authenticated remote installs, artifact-to-source provenance, and registry-side publisher bindings were not verified. There is no root PyPI, crates.io, or Kotlin publishing workflow. Qualification does not configure those external bindings; the TypeScript manual publishing workflow's presence is not a publication receipt.
 
-The 2026-10-18 observations above describe the registries before the 1.4.0 source bump. The old coordinate `com.corvidlabs:algochat:0.2.0` was a documentation error. Apps using archived `swift-algochat` `0.4.0` retain that repository URL until migrated. Source is protocol `1.6.0`, Kotlin `com.corvidlabs:kt-algochat:0.5.0`, and Go `go get github.com/CorvidLabs/algochat/go@v0.5.0`. A root tag `v1.6.0` does not select that nested module. Tags `v1.5.0` and `go/v0.4.0` remain the previous release. What changed is in [CHANGELOG.md](../CHANGELOG.md).
+The old coordinate `com.corvidlabs:algochat:0.2.0` was a documentation error. Apps using archived `swift-algochat` `0.4.0` retain that repository URL until migrated. Source is protocol `1.6.0`, Kotlin `com.corvidlabs:kt-algochat:0.5.0`, and Go `go get github.com/CorvidLabs/algochat/go@v0.5.0`. A root tag `v1.6.1` or `v1.6.0` does not select that nested module. Tag `v1.6.0` is the previous release; `go/v0.5.0` carries over unchanged. What changed is in [CHANGELOG.md](../CHANGELOG.md).
 
 Runtime gaps recorded for this release: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not the runners used for qualification. Swift hybrid qualification covers macOS 26 only; its APIs declare availability on Apple OS 26 platforms. Linux builds the Swift library without ML-KEM.
 

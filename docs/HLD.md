@@ -637,7 +637,7 @@ The big choices, and where they are recorded:
 | Deterministic PSK key schedule with a 200-counter window | Works with out-of-order delivery; the price is no forward secrecy and a 100-message session blast radius | [PROTOCOL.md §8.1](../PROTOCOL.md#81-psk-ratchet-mechanism), [SECURITY.md](../SECURITY.md#psk-known-limitations) |
 | Falcon-1024 lives only at the account layer; import defaults to Ed25519 | Quantum-resistant payment authorization without moving existing wallets or changing envelopes | [PROTOCOL.md §4.3](../PROTOCOL.md#43-algorand-account-identity), [hi/account.md](../hi/account.md) |
 | 1.2.1 raises the ceiling to 4,096 bytes without changing classical envelopes; 1.3 adds hybrid ids `0x04` and `0x05` | The earlier 1.2 account-agility change deferred PQ-KEM; the later hybrid contract is now in section 5.7. PQ multisig remains outside these envelopes | [PROTOCOL.md §14](../PROTOCOL.md#14-version-history), [§5.7](../PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) |
-| Say plainly that there is no forward secrecy | Honesty about what the chain keeps forever | [hi/honest.md](../hi/honest.md) `HONEST-2`, [PROTOCOL.md §11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), [.specsync/changes/](https://github.com/CorvidLabs/algochat/tree/main/.specsync/changes) |
+| Say plainly that there is no forward secrecy | Honesty about what the chain keeps forever | [hi/honest.md](../hi/honest.md) `HONEST-2`, [PROTOCOL.md §11.1](../PROTOCOL.md#111-forward-secrecy--not-provided), [.specsync/archive/changes/](https://github.com/CorvidLabs/algochat/tree/main/.specsync/archive/changes) |
 
 
 ## 10. Open questions found while writing this

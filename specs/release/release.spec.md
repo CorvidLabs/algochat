@@ -1,6 +1,6 @@
 ---
 module: release
-version: 8
+version: 9
 status: active
 files:
   - scripts/release/packages.py
@@ -112,3 +112,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-28 | release-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
 | 2026-10-28 | prepare-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
 | 2026-10-30 | release-protocol-1-6-0-and-the-library-versions: Release protocol 1.6.0 and the library versions |
+| 2026-10-30 | record-algochat-1-6-1-and-py-algochat-0-6-0-in-the-release-instructions-after-algochat-64: Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64) |
