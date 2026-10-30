@@ -54,3 +54,16 @@ Acceptance Criteria
 - The bot reads room and channel messages in chain order and replies in plain text with its own account. A message is answered at most once, also after a restart; messages from before it joined, from non-members and copied notes are not answered.
 - After another member is removed the bot uses the new key. After the bot is removed it stops in the room and its channels; after it leaves it posts a notice and stays out, also after a restart.
 - Messages written by every implementation are read, and every implementation reads the bot's room notes and reduces the room chains the same way.
+
+### REQ-agent-006
+
+The Python agent core SHALL reply in each room only as the room's record says: in the reply mode the owner or an admin chose, within the rate limit set there, never to another bot, and with its own declared slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f).
+
+Acceptance Criteria
+
+- Mentions mode answers `@` and the bot's name or address, and replies to one of the bot's messages; every-message mode answers everything; commands mode answers only commands the bot declared.
+- The bot posts at most the record's number of messages in that room in any window of its length, also across a restart; a message over the limit is skipped, not queued.
+- The bot never answers an account a room's record marks as a bot, in rooms or one-to-one.
+- A mode or limit change by the owner or an admin applies from the next message the bot handles.
+- In commands mode the bot posts its command list once (again only when the list changes), as plain room text every implementation reads, and answers `/help` with it.
+- A bot added as a plain member has no mode and does not reply.

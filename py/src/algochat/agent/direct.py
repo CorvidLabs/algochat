@@ -39,6 +39,9 @@ class DirectReply:
     error: str | None = None
     """Why handling failed, when it did. The message is not retried."""
 
+    skipped: str | None = None
+    """Why the bot stayed silent by policy: ``from-bot`` when the sender is a bot in one of its rooms."""
+
 
 def reply_preview(text: str) -> str:
     """The preview carried in a reply, cut the way the TypeScript library cuts it."""
