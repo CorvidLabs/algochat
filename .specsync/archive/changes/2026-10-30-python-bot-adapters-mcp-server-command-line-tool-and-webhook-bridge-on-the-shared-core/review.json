@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-adapters-mcp-server-command-line-tool-and-webhook-bridge-on-the-shared-core",
+  "reviewer": "corvid-agent",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "eac707e45abcdd67fc015ad5698f883b883983e8",
+  "contract_digest": "142276ca7cf84e7ad757b163cd987cf9afeb40bd16e54fa6e3d88acf8f0f1aea",
+  "execution_digest": "7e373dbd5f3cb49234c6b0415d9c1f90a4c9c1bb58f7d3ebf334d9f7187e8f53",
+  "workspace_digest": "3df8356b4f1278ba65c7fb702102acb6296d85480bab1e7c0b2952c51ab0a1b1",
+  "timestamp": 1793325341
+}

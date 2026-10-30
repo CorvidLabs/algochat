@@ -39,29 +39,29 @@ def _acl_entries(fd: int) -> bool:
     return "system.posix_acl_access" in names
 
 
-def _check_open_file(fd: int, file_path: Path) -> None:
-    """Refuses an opened mnemonic file that is not owner-only. Reads nothing."""
+def _check_open_file(fd: int, file_path: Path, label: str) -> None:
+    """Refuses an opened secret file that is not owner-only. Reads nothing."""
     info = os.fstat(fd)
     if not stat.S_ISREG(info.st_mode):
-        raise AgentConfigError(f"Bot mnemonic path is not a regular file: {file_path}")
+        raise AgentConfigError(f"{label} path is not a regular file: {file_path}")
     if info.st_mode & 0o077:
         raise AgentConfigError(
-            f"Bot mnemonic file {file_path} is accessible by group or others "
+            f"{label} file {file_path} is accessible by group or others "
             f"(mode {stat.S_IMODE(info.st_mode):o}); run chmod 600 on it"
         )
     geteuid = getattr(os, "geteuid", None)
     if geteuid is not None and info.st_uid not in (geteuid(), 0):
         raise AgentConfigError(
-            f"Bot mnemonic file {file_path} is owned by another user (uid {info.st_uid}); "
+            f"{label} file {file_path} is owned by another user (uid {info.st_uid}); "
             "it must be owned by the user running the bot or by root"
         )
     if _acl_entries(fd):
         raise AgentConfigError(
-            f"Bot mnemonic file {file_path} has a POSIX ACL that may grant other users access; "
+            f"{label} file {file_path} has a POSIX ACL that may grant other users access; "
             "remove it with setfacl -b and chmod 600"
         )
     if info.st_size > _MAX_FILE_SIZE:
-        raise AgentConfigError(f"Bot mnemonic file is too large: {file_path}")
+        raise AgentConfigError(f"{label} file is too large: {file_path}")
 
 
 def _read_fd(fd: int) -> bytes:
@@ -78,6 +78,19 @@ def _read_fd(fd: int) -> bytes:
 
 def read_mnemonic_file(path: str | os.PathLike[str]) -> str:
     """Reads the bot mnemonic from a local file on the bot host.
+
+    Same checks as :func:`read_owner_only_file`.
+
+    Raises:
+        AgentConfigError: As :func:`read_owner_only_file`, with ``Bot mnemonic`` in the message.
+    """
+    return read_owner_only_file(path, "Bot mnemonic")
+
+
+def read_owner_only_file(path: str | os.PathLike[str], label: str) -> str:
+    """Reads a short secret from a local file on the bot host (the mnemonic, a webhook secret).
+
+    ``label`` names the secret in error messages, for example ``"Bot mnemonic"``.
 
     Design choice, following the ``ssh`` private-key rule: the file must be a
     regular file with no group or other permission bits (like ``chmod 600``),
@@ -98,15 +111,15 @@ def read_mnemonic_file(path: str | os.PathLike[str]) -> str:
     try:
         fd = os.open(file_path, flags)
     except FileNotFoundError:
-        raise AgentConfigError(f"Bot mnemonic file not found: {file_path}") from None
+        raise AgentConfigError(f"{label} file not found: {file_path}") from None
     except OSError as error:
         raise AgentConfigError(
-            f"Bot mnemonic file cannot be opened: {file_path} ({error.strerror or type(error).__name__})"
+            f"{label} file cannot be opened: {file_path} ({error.strerror or type(error).__name__})"
         ) from None
     data: bytes | None = None
     failure: str | None = None
     try:
-        _check_open_file(fd, file_path)
+        _check_open_file(fd, file_path, label)
         data = _read_fd(fd)
     except OSError as error:
         data = None
@@ -115,10 +128,10 @@ def read_mnemonic_file(path: str | os.PathLike[str]) -> str:
         os.close(fd)
     # Raise outside the except blocks so no exception chain carries file bytes.
     if data is None:
-        raise AgentConfigError(f"Bot mnemonic file cannot be read: {file_path} ({failure})")
+        raise AgentConfigError(f"{label} file cannot be read: {file_path} ({failure})")
     if len(data) > _MAX_FILE_SIZE:
         data = None
-        raise AgentConfigError(f"Bot mnemonic file is too large: {file_path}")
+        raise AgentConfigError(f"{label} file is too large: {file_path}")
     text: str | None
     try:
         text = data.decode("utf-8").strip()
@@ -126,9 +139,9 @@ def read_mnemonic_file(path: str | os.PathLike[str]) -> str:
         text = None
     data = None
     if text is None:
-        raise AgentConfigError(f"Bot mnemonic file is not valid UTF-8: {file_path}")
+        raise AgentConfigError(f"{label} file is not valid UTF-8: {file_path}")
     if not text:
-        raise AgentConfigError(f"Bot mnemonic file is empty: {file_path}")
+        raise AgentConfigError(f"{label} file is empty: {file_path}")
     return text
 
 

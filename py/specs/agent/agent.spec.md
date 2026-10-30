@@ -1,15 +1,21 @@
 ---
 module: agent
-version: 4
+version: 5
 status: active
 files:
   - src/algochat/agent/__init__.py
+  - src/algochat/agent/__main__.py
   - src/algochat/agent/account.py
+  - src/algochat/agent/cli.py
   - src/algochat/agent/config.py
   - src/algochat/agent/core.py
   - src/algochat/agent/direct.py
+  - src/algochat/agent/mcp.py
   - src/algochat/agent/policy.py
   - src/algochat/agent/rooms.py
+  - src/algochat/agent/runtime.py
+  - src/algochat/agent/service.py
+  - src/algochat/agent/webhook.py
 
 db_tables: []
 depends_on: [algochat]
@@ -19,7 +25,7 @@ depends_on: [algochat]
 
 ## Purpose
 
-Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). It joins the rooms and channels an owner or admin adds it to, reads and replies there, and stops when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g). In each room it replies only in the mode the room's record holds, within the rate limit there, never to another bot, and it declares its own slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f). Later changes add the MCP, CLI and webhook adapters on top of `AgentCore`.
+Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). It joins the rooms and channels an owner or admin adds it to, reads and replies there, and stops when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g). In each room it replies only in the mode the room's record holds, within the rate limit there, never to another bot, and it declares its own slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f). An agent plugs in through an MCP server, a command-line tool or a webhook bridge, all three on the same `AgentCore`; the MCP server has a tool for every command-line command, and the webhook bridge sends readable text only to the same machine or to a secured address over authenticated HTTPS (AGENT-1.a, AGENT-1.c, AGENT-1.e).
 
 ## Public API
 
@@ -61,6 +67,17 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 | `SKIP_TO_BOT` | `"to-bot"`: `send_direct` to an account one of the bot's rooms marks as a bot. |
 | `PolicySkip` | `PermissionError` raised by `send_room`, `reply_room`, `send_direct` and `reply` when the reply policy keeps the bot silent; `reason` is one of the `SKIP_*` values. |
 | `LEAVE_NOTICE` | The plain text the bot posts when it leaves: `"I left this room. An owner or admin can remove me to rotate the room key."` |
+| `COMMANDS` | The shared commands, in order: `address`, `publish-keys`, `send`, `read`, `reply`, `rooms`, `read-rooms`, `reply-room`, `declare-commands`, `leave-room`, `serve`. The CLI has one subcommand and the MCP server one tool for each (AGENT-1.e). |
+| `AgentCommand` | Frozen dataclass of one shared command: CLI `name`, `description`, `params` (each a name, a kind `string`, `boolean` or `integer`, a description and whether it is required) and `run`; `tool_name` is the name with `-` as `_`, and `input_schema` its JSON Schema (no extra properties). |
+| `AgentService` | Runs the shared commands on one `AgentCore`: `run(name, arguments)` by CLI or tool name. It keeps the messages it read, so `reply` and `reply-room` find one by transaction id (reading again first when it is not known). |
+| `CommandError` | `ValueError` subclass for bad arguments, an unknown message, or a reply the reply policy refuses. |
+| `WebhookBridge` | Async callable used as a `serve_direct` or `serve_rooms` handler: posts the message as JSON to the operator's URL and returns the reply text. Built with the URL, the shared secret or `None`, and an optional SSL context. |
+| `WebhookError` | `RuntimeError` subclass: the URL is not allowed, or the webhook refused, failed or answered in another shape. |
+| `check_webhook_url` | Allows `http` or `https` to a loopback host (`localhost` or a loopback IP), or `https` to another host only with a shared secret. Refuses credentials in the URL and any link-local, unspecified or cloud metadata host (169.254.0.0/16, fe80::/10, 0.0.0.0, ::, their IPv4-mapped forms, fd00:ec2::254, 100.100.100.200, metadata.google.internal), even over https with a secret. Returns the URL or raises `WebhookError` (AGENT-1.c). |
+| `load_webhook_secret` | The shared secret from `ALGOCHAT_WEBHOOK_SECRET` or the owner-only file named by `ALGOCHAT_WEBHOOK_SECRET_FILE`; `None` when neither is set. Both set, under 32 characters, or an unsafe file raise `AgentConfigError` without the secret in the message. |
+| `verify_signature` | For the operator's receiver: whether `X-AlgoChat-Signature` is the HMAC-SHA256 `sha256=<hex>` of `"<timestamp>." + body` under the secret, with the timestamp within 300 seconds. |
+| `SECRET_ENV` | `"ALGOCHAT_WEBHOOK_SECRET"`. |
+| `SECRET_FILE_ENV` | `"ALGOCHAT_WEBHOOK_SECRET_FILE"`. |
 
 `AgentCore` methods for one-to-one messages (AGENT-5):
 
@@ -118,6 +135,40 @@ Module internals of `algochat.agent.policy`, used by `AgentCore` and not exporte
 | `is_command_list` | Whether a text has that shape. |
 | `within_rate` | Whether one more post at `now` keeps at most `replies` posts in the last `seconds` seconds. |
 
+Adapters (AGENT-1.a, AGENT-1.c, AGENT-1.e). The CLI, the MCP server and the webhook bridge sit on `AgentCore` through `AgentService` and `COMMANDS`, so the CLI and the MCP server offer the same commands with the same parameters by construction.
+
+| Command (MCP tool) | Parameters | Result |
+|---|---|---|
+| `address` | none | The bot's `address` and `name`. |
+| `publish-keys` (`publish_keys`) | `force` | `encryption_key_txid` and `pq_key_txid`, each `None` when already on chain. |
+| `send` | `to`, `text` | The `txid` of a one-to-one message. |
+| `read` | none | One-to-one messages not yet answered: `txid`, `sender`, `text`, `reply_to`, `confirmed_round`, `from_bot`. |
+| `reply` | `txid`, `text` | The reply `txid`. Refused for a sender a room marks as a bot (AGENT-8.c). |
+| `rooms` | none | Each room and channel: `group_id` (hex), `mailbox`, `name`, `epoch`, `status`, `is_channel`, `parent_group_id`, and the bot's `mode`, `replies`, `seconds`. |
+| `read-rooms` (`read_rooms`) | none | New room messages with `mentioned`, `command`, `from_bot` and `skipped`, the reason the reply policy keeps the bot silent, or `None`. |
+| `reply-room` (`reply_room`) | `txid`, `text` | The reply `txid`. Refused when the room's mode, rate limit or bot mark keeps the bot silent (AGENT-8). |
+| `declare-commands` (`declare_commands`) | none | `command_list` and the `txids` posted. |
+| `leave-room` (`leave_room`) | `group_id` (hex), `mailbox` | The leave notice `txids`. |
+| `serve` | `webhook` | One pass of `serve_direct` and `serve_rooms` with a `WebhookBridge`: per message its `txid`, `reply_txid`, `error` and `skipped`. |
+
+- CLI: `algochat-agent` (also `python -m algochat.agent`) takes `--name`, a repeatable `--command NAME=DESCRIPTION`, then one subcommand per command with `--param` flags (`--group-id` for `group_id`). `serve` runs until stopped, one pass every `--interval` seconds (default 5), or once with `--once`. `mcp` runs the MCP server. Each command prints its result as JSON; an error prints one `error: <Type>: <message>` line to stderr and exits 1.
+- MCP server: JSON-RPC 2.0, one message per line on stdin and stdout. `initialize` (protocol versions `2025-06-18`, `2025-03-26`, `2024-11-05`), `ping`, `tools/list` and `tools/call`. A tool's result is its JSON as text; a `CommandError` or other failure is a result with `isError`. Notifications get no answer; bad JSON, bad requests, unknown methods and bad parameters get the JSON-RPC errors -32700, -32600, -32601 and -32602. The bot is built on the first tool call.
+- Webhook request: `POST` of JSON with `type` (`direct` or `room`), `txid`, `sender`, `text`, `reply_to`, `confirmed_round`, and for rooms `group_id`, `mailbox`, `is_channel`, `mentioned`, `command`; headers `X-AlgoChat-Timestamp` and, with a secret, `X-AlgoChat-Signature`. Only messages the reply policy allows reach it. The answer is `{"reply": "<text>"}`, `{"reply": null}`, an empty body or HTTP 204; at most 65536 bytes, 15 seconds.
+- Settings for the CLI and MCP server come from the environment: the mnemonic (`ALGOCHAT_AGENT_MNEMONIC` or `ALGOCHAT_AGENT_MNEMONIC_FILE`), `ALGOCHAT_ALGOD_URL`, `ALGOCHAT_ALGOD_TOKEN`, `ALGOCHAT_INDEXER_URL`, `ALGOCHAT_INDEXER_TOKEN`, the webhook secret, and `ALGOCHAT_WEBHOOK_CA_FILE` for a private CA.
+
+Module internals used by the adapters and not exported from `algochat.agent`:
+
+| Name | Contract |
+|---|---|
+| `config.read_owner_only_file` | The owner-only file reader behind `read_mnemonic_file` and the webhook secret file, with the label in its messages. |
+| `AgentCore.room_skip_reason` | The `SKIP_*` reason the room's current record and the bot's recent posts keep it silent on a `RoomMessage`, or `None`. |
+| `AgentCore.is_known_bot` | Whether any of the bot's rooms marks an address as a bot. |
+| `webhook.is_loopback_host`, `webhook.is_link_local_or_metadata`, `webhook.sign`, `webhook.direct_payload`, `webhook.room_payload` | The loopback test, the signature, and the request bodies. |
+| `service.Param`, `service.check_arguments`, `service.command_by_name`, `service.to_json` | A command parameter, argument checks (unknown or mistyped ones refused), lookup by CLI or tool name, and JSON for results. |
+| `runtime.build_core`, `runtime.webhook_factory`, `runtime.parse_command` | Build the bot and its webhook bridges from the environment, and read `NAME=DESCRIPTION`. |
+| `mcp.McpServer` | The MCP server on an async factory of `AgentService`. |
+| `cli.main`, `cli.build_parser` | The command-line tool. |
+
 `src/algochat/agent/wordlist.txt` is the bundled 2048-word BIP-39 English list (SHA-256 `2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda`).
 
 ## Invariants
@@ -145,6 +196,10 @@ Module internals of `algochat.agent.policy`, used by `AgentCore` and not exporte
 21. Every post the bot makes in a room counts toward the rate limit there: replies, `/help` answers and command lists. The leave notice is the one exception, because the bot posts nothing there after it. A post is made only when fewer than `replies` posts fall in the last `seconds` seconds. The window is counted in chain time: "now" is the newest block time the bot has read plus the monotonic time since it read it, and each post counts at its block time (or, until the bot reads that block, the chain time when it sent it). The host's wall clock is never compared with block times, so a node whose clock differs from the host's keeps the same limit, and a restart does not reset it. `send_room`, `reply_room` and `serve_rooms` count against the same window. A message over the limit is skipped, not queued.
 22. The command list is plain room text that every implementation reads. The bot posts it only in commands mode, and only when its latest list there since it was last added is different, so a restart posts nothing new.
 23. The bot's own replies stay plain room text (Raven shows room text as it is); it reads section 9.2 replies from members only to know when they reply to it.
+24. The CLI and the MCP server are built from the same `COMMANDS`: every CLI command has an MCP tool with the same parameters, and the reverse (AGENT-1.e).
+25. Replies through any adapter follow the reply policy: `reply-room` refuses what `serve_rooms` would skip, `reply` refuses a sender a room marks as a bot, `send` refuses an account a room marks as a bot and posts nothing; each reads the rooms again first, so a long-lived MCP server follows a mode change or a new bot, and `serve` sends the webhook only the messages the policy allows. The adapters post no room message except replies, command lists and the leave notice (design choice).
+26. The webhook bridge sends readable text only to a loopback host, or over `https` with the certificate checked to another host when a shared secret signs every request. Proxies in the environment are ignored and redirects refused (AGENT-1.c; signing, proxies and redirects are design choices).
+27. The CLI and the MCP server have no default network: without `ALGOCHAT_ALGOD_URL` and `ALGOCHAT_INDEXER_URL` they stop with an error. They use only keys signed by their account. Their output and errors never contain the mnemonic or the webhook secret.
 
 ## Behavioral Examples
 
@@ -182,6 +237,18 @@ And a message from another bot in the room is skipped as from a bot
 Given an admin changes the bot to commands mode with op 14
 When serve_rooms runs
 Then the bot posts its command list once, answers "/echo hi" and "/help", and skips "hello" and "/echo@other"
+
+Given the bot is in mentions mode in a room
+When an MCP client calls reply_room on a message that does not mention the bot
+Then the tool result is an error naming not-mentioned and nothing is posted
+
+Given ALGOCHAT_WEBHOOK_SECRET is set and a receiver listens on 127.0.0.1
+When `algochat-agent serve --webhook http://127.0.0.1:PORT/hook --once` runs
+Then the receiver gets each message the policy allows, signed, and the bot posts its replies
+And a message from another bot never reaches the receiver
+
+Given a webhook URL http://example.com/hook
+Then check_webhook_url refuses it: readable text goes over plain http only to this machine
 ```
 
 ## Error Cases
@@ -207,6 +274,11 @@ Then the bot posts its command list once, answers "/echo hi" and "/help", and sk
 | Bad name or command | `name` or a `BotCommand` breaks its pattern, a command repeats, or the list is over 4026 bytes | Raise `ValueError` when the core or command is built |
 | Policy skip | A room message the mode, the bot mark or the rate limit rules out | No handler call and no post; `RoomReply.skipped` says why; the message is handled |
 | Room handler failure | A `serve_rooms` handler or send raises | Record the error type in `RoomReply.error`, mark answered, go on |
+| Policy refusal | `reply` or `reply-room` on a message the reply policy keeps silent, or an unknown txid | Raise `CommandError` (MCP: `isError` result; CLI: exit 1) and post nothing |
+| Bad arguments | An unknown parameter, a missing required one, or a wrong type | Raise `CommandError`; MCP `tools/call` with an unknown tool answers -32602 |
+| Webhook not allowed | Plain http to another machine, https to another machine without a secret, credentials in the URL, a link-local, unspecified or cloud metadata host | Raise `WebhookError` before any request |
+| Webhook failure | A non-2xx answer, a redirect, a bad certificate, a timeout, over 65536 bytes or another shape | The bridge raises `WebhookError`; the core records it as the message's error and goes on |
+| Missing settings | No algod or indexer URL, or no mnemonic | CLI and MCP stop with `AgentConfigError`, never echoing a secret |
 
 ## Dependencies
 
@@ -223,3 +295,4 @@ Then the bot posts its command list once, answers "/echo hi" and "/help", and sk
 | 2 | 2026-10-29 | One-to-one messages: the bot publishes its key, reads messages to it and replies by itself (algochat#44, AGENT-5). |
 | 3 | 2026-10-29 | Rooms and channels: the bot joins when added, reads and replies, and stops when removed or when it leaves (algochat#45, AGENT-6, AGENT-7). |
 | 4 | 2026-10-29 | Reply policy from the room record: mode, rate limit, mentions, never another bot, declared slash commands (algochat#46, AGENT-8). |
+| 5 | 2026-10-29 | MCP server, command-line tool and webhook bridge on the shared core; an MCP tool for every CLI command; webhook text only to this machine or authenticated HTTPS (algochat#47, AGENT-1.a, AGENT-1.c, AGENT-1.e). |
