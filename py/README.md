@@ -172,6 +172,7 @@ algochat-agent reply-room --txid TXID --text "hello"
 | `send`, `read`, `reply` | One-to-one messages. `reply` refuses an account a room marks as a bot. |
 | `rooms`, `read-rooms` (`read_rooms`), `reply-room` (`reply_room`) | Rooms and channels. `reply-room` refuses what the room's mode or rate limit keeps silent, and other bots. |
 | `declare-commands` (`declare_commands`), `leave-room` (`leave_room`) | Posts the command list where it is due; leaves a room. |
+| `identity`, `make-identity` (`make_identity`) | Shows, or makes and updates, the bot's own Raven identity NFT (`--emoji` or `--nft ASSET_ID`). |
 | `serve` | Answers new messages through a webhook (`--once`, or every `--interval` seconds). |
 
 Every command prints JSON. `algochat-agent mcp` runs the MCP server over stdio; an MCP client starts it like this:
@@ -200,6 +201,10 @@ The bridge ignores proxy settings and refuses redirects. It also refuses link-lo
 ### Funding and the out-of-funds warning
 
 You host the bot and fund its own wallet, which pays every fee; the bot sends no payments or tips. `algochat-agent funds` (MCP tool `funds`, `AgentCore.check_funds()`) shows the balance, what one reply costs and how many replies are left. When fewer than about 100 replies' worth of fees remain, the bot posts one short warning in the room where that happened, and not again until you refill the wallet. See [docs/operator-guide.md](docs/operator-guide.md).
+
+### The bot's Raven identity NFT
+
+`algochat-agent --name helper make-identity --emoji 🦊` (or `--nft ASSET_ID` for an NFT the bot's wallet holds) gives the bot its own Raven identity: the same 1-of-1 `RAVEN` asset a person makes in Raven, with its `@name` as the public name. The bot's wallet pays (the fee plus 0.1 Algo the asset locks) and signs it on its machine. Asking again updates the same asset, and there are no custom pictures: only an emoji or an NFT. Having one never makes an account a bot. `algochat-agent identity` shows it the way Raven reads it. See [docs/operator-guide.md](docs/operator-guide.md).
 
 ## Encrypted Key Storage
 

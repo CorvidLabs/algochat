@@ -56,6 +56,19 @@ from .account import AgentAccount, address_from_public_key, public_key_from_addr
 from .config import AgentConfigError, load_agent_mnemonic
 from .direct import DirectMessage, DirectReply, encode_reply
 from .funds import LOW_FUNDS_NOTICE, FundsStatus, reply_fee
+from .identity import (
+    IDENTITY_MIN_BALANCE,
+    AssetAlgod,
+    AssetIndexer,
+    Identity,
+    IdentityError,
+    IdentityPicture,
+    IdentityResult,
+    make_identity,
+    nft_picture,
+    own_identity_asset,
+    read_identity,
+)
 from .policy import (
     HELP_COMMAND,
     SKIP_FROM_BOT,
@@ -260,6 +273,64 @@ class AgentCore:
             algod, self._account.seed, self.address, receiver, 0, note
         )
         return info.txid
+
+    def _asset_clients(self) -> tuple[AssetAlgod, AssetIndexer]:
+        algod, indexer = self._clients()
+        if not isinstance(algod, AssetAlgod) or not isinstance(indexer, AssetIndexer):
+            raise TypeError("The identity NFT needs algod and indexer clients that read assets (the HTTP clients do)")
+        return algod, indexer
+
+    async def identity(self) -> Identity | None:
+        """The bot's Raven identity NFT, read from the indexer the way Raven reads it, or None (AGENT-2.b).
+
+        Only an asset the bot created with unit ``RAVEN`` counts, and only a
+        note the bot wrote that names its own address. A look-alike someone
+        else made is ignored. Having one never makes the bot a bot in any room
+        (AGENT-2.e): rooms read only their own record.
+        """
+        _, indexer = self._asset_clients()
+        return await read_identity(indexer, self.address)
+
+    async def make_identity(self, *, emoji: str | None = None, nft: int | None = None) -> IdentityResult:
+        """Makes the bot's own Raven identity NFT, or updates the one it has (AGENT-2.a to AGENT-2.d, AGENT-2.f).
+
+        The picture is ``emoji`` (one emoji) or ``nft`` (the id of an NFT the
+        bot's wallet holds now), never a link. With neither, an existing
+        identity keeps its picture and only its name is rewritten. The public
+        name is the bot's ``@name``; a bot run without one keeps the name
+        already on its NFT. The bot's wallet pays, and the key signs here.
+        """
+        if emoji is not None and nft is not None:
+            raise IdentityError("Give an emoji or an NFT for the picture, not both")
+        algod, indexer = self._asset_clients()
+        existing = await own_identity_asset(algod, self.address)
+        current = await read_identity(indexer, self.address) if existing is not None else None
+        if current is not None and current.asset_id != existing:
+            current = None
+        if emoji is not None:
+            picture = IdentityPicture.of_emoji(emoji)
+        elif nft is not None:
+            picture = await nft_picture(algod, self.address, nft)
+        elif current is not None and current.picture in ("emoji", "collectible"):
+            picture = IdentityPicture(
+                current.picture, media_url=current.media_url, source_asset_id=current.source_asset_id, emoji=current.emoji
+            )
+            if picture.kind == "collectible" and picture.source_asset_id is not None:
+                # The NFT it showed must still be in the bot's wallet.
+                picture = await nft_picture(algod, self.address, picture.source_asset_id)
+        else:
+            raise IdentityError("Pick the picture: an emoji or an NFT the bot's wallet holds")
+        name = self._name if self._name is not None else (current.name if current is not None else None)
+        params = await algod.get_suggested_params()
+        info = await algod.get_account_info(self.address)
+        fee = max(params.min_fee, 1000)
+        needed = fee + (IDENTITY_MIN_BALANCE if existing is None else 0)
+        if info.amount - info.min_balance < needed:
+            raise IdentityError(
+                f"The bot's wallet needs {needed} microAlgos free for this "
+                f"(it has {max(0, info.amount - info.min_balance)}); the operator should fund it first"
+            )
+        return await make_identity(algod, self._account.seed, self.address, picture, name)
 
     async def publish_key(self, force: bool = False) -> str | None:
         """Publishes the bot's encryption key, signed by its account.

@@ -1,6 +1,6 @@
 ---
 module: agent
-version: 6
+version: 7
 status: active
 files:
   - src/algochat/agent/__init__.py
@@ -11,6 +11,7 @@ files:
   - src/algochat/agent/core.py
   - src/algochat/agent/direct.py
   - src/algochat/agent/funds.py
+  - src/algochat/agent/identity.py
   - src/algochat/agent/mcp.py
   - src/algochat/agent/policy.py
   - src/algochat/agent/rooms.py
@@ -26,7 +27,7 @@ depends_on: [algochat]
 
 ## Purpose
 
-Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). It joins the rooms and channels an owner or admin adds it to, reads and replies there, and stops when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g). In each room it replies only in the mode the room's record holds, within the rate limit there, never to another bot, and it declares its own slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f). An agent plugs in through an MCP server, a command-line tool or a webhook bridge, all three on the same `AgentCore`; the MCP server has a tool for every command-line command, and the webhook bridge sends readable text only to the same machine or to a secured address over authenticated HTTPS (AGENT-1.a, AGENT-1.c, AGENT-1.e). The operator hosts the bot and funds its wallet, which pays every fee; when fewer than about 100 replies' worth of fees remain, the bot posts a short warning once, in the room where it reached that level, and not again until the wallet is refilled (AGENT-1.d, AGENT-3, AGENT-3.a). This version sends no payments or tips: every bot transaction carries no amount (AGENT-9). `docs/operator-guide.md` is the operator guide.
+Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account, loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). It joins the rooms and channels an owner or admin adds it to, reads and replies there, and stops when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g). In each room it replies only in the mode the room's record holds, within the rate limit there, never to another bot, and it declares its own slash commands (AGENT-8, AGENT-8.b, AGENT-8.c, AGENT-8.d, AGENT-8.e, AGENT-8.f). An agent plugs in through an MCP server, a command-line tool or a webhook bridge, all three on the same `AgentCore`; the MCP server has a tool for every command-line command, and the webhook bridge sends readable text only to the same machine or to a secured address over authenticated HTTPS (AGENT-1.a, AGENT-1.c, AGENT-1.e). The operator hosts the bot and funds its wallet, which pays every fee; when fewer than about 100 replies' worth of fees remain, the bot posts a short warning once, in the room where it reached that level, and not again until the wallet is refilled (AGENT-1.d, AGENT-3, AGENT-3.a). The operator can give the bot its own Raven identity NFT from the command line or MCP, paid by the bot's wallet and signed on its machine: the same 1-of-1 `RAVEN` asset a person makes in Raven, whose picture is one emoji or an NFT the bot's wallet holds (never an uploaded picture or a link) and whose public name is the bot's `@name`. A bot has at most one; asking again updates it. Having it never makes an account a bot, and a bot without one works the same (AGENT-2, AGENT-2.a to AGENT-2.f). This version sends no payments or tips: every bot payment carries no amount (AGENT-9). `docs/operator-guide.md` is the operator guide.
 
 ## Public API
 
@@ -70,8 +71,12 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 | `LOW_FUNDS_REPLIES` | 100: the bot warns when fewer than this many replies' worth of fees remain (AGENT-3.a). |
 | `LOW_FUNDS_NOTICE` | The plain text of the warning: `"I'm running low on funds for fees. My operator needs to refill my wallet."` |
 | `FundsStatus` | Frozen dataclass of the bot's wallet in microAlgos: `balance`, `min_balance`, `fee_per_reply`; properties `spendable` (balance above the minimum balance, never below 0), `threshold` (`fee_per_reply` x `LOW_FUNDS_REPLIES`), `replies_left` and `low` (`spendable < threshold`). |
+| `Identity` | Frozen dataclass of a Raven identity as Raven reads it: `address`, `asset_id`, `txid` of the note it came from, `picture` (`"emoji"` or `"collectible"`), `emoji`, `media_url`, `source_asset_id` and `name` (`None` when absent); `to_json()`. |
+| `IdentityPicture` | Frozen dataclass of the picture to write: `kind`, `media_url`, `source_asset_id`, `emoji`. `IdentityPicture.of_emoji(text)` checks the emoji. |
+| `IdentityResult` | Frozen dataclass of a make or update: `asset_id`, `txid`, `minted` (`True` for a new asset, `False` for an update) and the `note` written. |
+| `IdentityError` | `ValueError` subclass: the picture is not one emoji or not an NFT the bot holds, both or neither picture was given, or the wallet cannot pay. Nothing is sent. |
 | `LEAVE_NOTICE` | The plain text the bot posts when it leaves: `"I left this room. An owner or admin can remove me to rotate the room key."` |
-| `COMMANDS` | The shared commands, in order: `address`, `publish-keys`, `send`, `read`, `reply`, `rooms`, `read-rooms`, `reply-room`, `declare-commands`, `leave-room`, `funds`, `serve`. The CLI has one subcommand and the MCP server one tool for each (AGENT-1.e). |
+| `COMMANDS` | The shared commands, in order: `address`, `publish-keys`, `send`, `read`, `reply`, `rooms`, `read-rooms`, `reply-room`, `declare-commands`, `leave-room`, `funds`, `identity`, `make-identity`, `serve`. The CLI has one subcommand and the MCP server one tool for each (AGENT-1.e). |
 | `AgentCommand` | Frozen dataclass of one shared command: CLI `name`, `description`, `params` (each a name, a kind `string`, `boolean` or `integer`, a description and whether it is required) and `run`; `tool_name` is the name with `-` as `_`, and `input_schema` its JSON Schema (no extra properties). |
 | `AgentService` | Runs the shared commands on one `AgentCore`: `run(name, arguments)` by CLI or tool name. It keeps the messages it read, so `reply` and `reply-room` find one by transaction id (reading again first when it is not known). |
 | `CommandError` | `ValueError` subclass for bad arguments, an unknown message, or a reply the reply policy refuses. |
@@ -106,6 +111,42 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 
 - `check_funds`: Reads the bot's balance and minimum balance from algod and the network's minimum fee, and returns a `FundsStatus`. Seeing the wallet not low counts as a refill, so the next drop warns again.
 - After every room post through `send_room`, `reply_room` or `serve_rooms`, the bot checks its funds. When they are low and no notice is current, it posts `LOW_FUNDS_NOTICE` in that same room. A one-to-one reply also checks funds (a refill seen there re-arms the notice), but the notice itself goes only in a room. A failed funds check is logged by error type and never blocks the reply.
+
+`AgentCore` methods for the bot's Raven identity NFT (AGENT-2, AGENT-2.a to AGENT-2.f). Both need algod and indexer clients with the asset reads the library's HTTP clients have (`AssetAlgod`, `AssetIndexer`); others raise `TypeError`:
+
+- `identity`: The bot's identity read from the indexer the way Raven reads it: the newest undeleted asset the bot created with unit `RAVEN`, then the newest asset-config note on it that the bot itself sent and that names the bot's address in `properties.raven.address`. Returns an `Identity` or `None`.
+- `make_identity(emoji=None, nft=None)`: Makes the identity, or updates the one the bot has. `emoji` is one emoji; `nft` is the id of an NFT the bot's wallet holds now. With neither, an existing identity keeps its picture (an NFT picture must still be held) and only the name is rewritten. The name is the bot's `name`; a core without one keeps the name already on the identity. When algod shows no `RAVEN` asset created by the bot, it sends one asset create: total 1, decimals 0, unit `RAVEN`, asset name `Raven identity`, URL the picture's link (empty for an emoji), manager the bot, no reserve, freeze or clawback, and the note. Otherwise it sends one asset config on that asset that keeps the bot as manager and carries the new note. Before sending it checks that the spendable balance covers the fee, plus the 0.1 ALGO minimum balance the new asset locks when minting. Signs on the bot's machine, waits for confirmation, and returns an `IdentityResult` with the created asset id read from the confirmed transaction.
+
+Module internals of `algochat.agent.identity`, used by `AgentCore` and not exported from `algochat.agent`:
+
+| Name | Contract |
+|---|---|
+| `IDENTITY_UNIT_NAME` | `"RAVEN"`. |
+| `IDENTITY_FALLBACK_NAME` | `"Raven identity"`, the asset name (a bot has no `.algo` name). |
+| `IDENTITY_MIN_BALANCE` | 100000 microAlgos, the minimum balance a created asset locks. |
+| `is_one_emoji` | Raven's `identityEmoji` rule (raven#614), so both sides count one emoji the same way: a string of at most 32 UTF-8 bytes, made only of Extended_Pictographic code points, Emoji_Component code points, ZWJ, VS16 and the keycap mark, that is exactly one extended grapheme cluster (UAX #29, as `Intl.Segmenter` counts it), with at least one pictograph or keycap mark, or exactly two regional indicators. Nothing is trimmed. The Extended_Pictographic table is the one V8/ICU uses. |
+| `check_emoji` | Returns the text unchanged when `is_one_emoji` accepts it; otherwise raises `IdentityError` (text, a link, several emoji, spaces around it, or over 32 bytes). |
+| `identity_display_name` | Raven's name rule: control characters become spaces, runs of white space collapse, the ends are trimmed and the result is cut to 32 UTF-8 bytes on a character boundary; empty is `None`. |
+| `nft_picture_pointer` | The link Raven shows for an NFT, worked out from its on-chain URL without fetching anything: an ARC-19 `template-ipfs://{ipfscid:1:raw:reserve:sha2-256}` (or `dag-pb`) URL becomes `ipfs://` and the CID of the reserve address; an IPFS link becomes `ipfs://<cid>/<path>`; another `http(s)` link to an image or media file stays as it is. `None` when nothing fits in 96 bytes. |
+| `nft_picture` | Checks that the bot holds at least one unit of the asset, that it is a picture NFT the way Raven counts one (0 decimals and a total of 1, or up to 100000 with a media URL) and not the bot's own identity, and returns its `IdentityPicture`. |
+| `build_identity_note` | Raven's ARC-69 note as a dict, in Raven's key order. An NFT picture: `{"standard":"arc69","description":"Raven identity picture","media_url":...,"properties":{"raven":{"address":...,"picture":"collectible","sourceAssetId":...,"name":...}}}`. An emoji: the same without `media_url`, with `"picture":"emoji","emoji":...` in place of `sourceAssetId`. `name` is left out when there is none. |
+| `encode_identity_note` | That note as compact UTF-8 JSON (non-ASCII kept as UTF-8); over 1024 bytes raises `IdentityError`. |
+| `decode_identity_note` | Parses a note back as Raven's `decodeIdentityNote` does; `None` for anything that is not an ARC-69 Raven note naming an address with a valid picture. An emoji note needs `is_one_emoji` and is refused whole when it carries a `media_url` (even empty), `sourceAssetId` or `sourceName`; any other picture needs a non-empty `media_url`. |
+| `ASSET_URL_MAX_BYTES` | 96, the longest asset URL. |
+| `NAME_MAX_BYTES` | 32, the longest public name. |
+| `EMOJI_MAX_BYTES` | 32, the longest emoji. |
+| `PICTURE_COLLECTIBLE` | `"collectible"`, an NFT picture. |
+| `PICTURE_EMOJI` | `"emoji"`, an emoji picture. |
+| `ipfs_link_pointer` | `ipfs://<cid>` (with any path) for an `ipfs://` link, a bare CID or an `https` gateway link under `/ipfs/`, query and fragment dropped, else `None` (Raven's `ipfsLinkPointer`). |
+| `is_media_url` | Whether an `http(s)` link points at an image or media file (by extension or an `#i` fragment). |
+| `AssetAlgod` | Protocol of the algod calls identity needs: suggested params, submit, wait for confirmation, pending transaction, created assets, an asset holding and asset params. `HttpAlgodClient` has them. |
+| `AssetIndexer` | Protocol of the indexer reads Raven makes: `account_created_assets` and `asset_config_history`. `HttpIndexerClient` has them. |
+| `newest_identity_asset` | The newest undeleted `RAVEN` asset id in a created-assets list, or `None`. |
+| `read_identity` | The read behind `AgentCore.identity`, on the indexer. |
+| `own_identity_asset` | The bot's `RAVEN` asset id from algod, so a quick second call cannot mint twice. |
+| `make_identity` | The build, sign, send and wait behind `AgentCore.make_identity`. |
+
+`algochat.transaction` adds `build_asset_create` and `build_asset_config` (canonical msgpack, the same bytes as `py-algorand-sdk`), signed by `sign_payment`. `HttpAlgodClient` adds `pending_transaction`, `account_created_assets`, `asset_holding` and `asset_params`; `HttpIndexerClient` adds `account_created_assets` and `asset_config_history` (`/v2/transactions?asset-id=...&tx-type=acfg`, every page). None is exported from `algochat`.
 
 Module internals of `algochat.agent.rooms`, used by `AgentCore` and not exported from `algochat.agent`:
 
@@ -159,6 +200,8 @@ Adapters (AGENT-1.a, AGENT-1.c, AGENT-1.e). The CLI, the MCP server and the webh
 | `declare-commands` (`declare_commands`) | none | `command_list` and the `txids` posted (a low-funds notice included). |
 | `leave-room` (`leave_room`) | `group_id` (hex), `mailbox` | The leave notice `txids` (a low-funds notice included). |
 | `funds` | none | `balance`, `min_balance`, `spendable`, `fee_per_reply`, `threshold`, `replies_left` and `low`. |
+| `identity` | none | `address` and `identity`, the bot's identity as Raven reads it (`asset_id`, `address`, `picture`, `emoji`, `media_url`, `source_asset_id`, `name`, `txid`) or `None`. |
+| `make-identity` (`make_identity`) | `emoji`, `nft` (integer) | Makes or updates the bot's identity: `asset_id`, `txid`, `minted`, `picture`, `emoji`, `media_url`, `source_asset_id` and `name`. Refused, with nothing sent, for anything but one emoji or an NFT the bot holds, for both, or when the wallet cannot pay. |
 | `serve` | `webhook` | One pass of `serve_direct` and `serve_rooms` with a `WebhookBridge`: per message its `txid`, `reply_txid`, `error` and `skipped`, and for rooms `low_funds_notice`. |
 
 - CLI: `algochat-agent` (also `python -m algochat.agent`) takes `--name`, a repeatable `--command NAME=DESCRIPTION`, then one subcommand per command with `--param` flags (`--group-id` for `group_id`). `serve` runs until stopped, one pass every `--interval` seconds (default 5), or once with `--once`. `mcp` runs the MCP server. Each command prints its result as JSON; an error prints one `error: <Type>: <message>` line to stderr and exits 1.
@@ -215,7 +258,15 @@ Module internals used by the adapters and not exported from `algochat.agent`:
 28. One reply's worth of fees is the fee of a payment carrying the largest note (`MAX_NOTE_SIZE` bytes) at the network's minimum fee, and only the balance above the account's minimum balance counts, so the estimate errs toward warning early (design choice). The warning comes when `spendable < 100 x fee_per_reply` (AGENT-3.a).
 29. The bot checks its wallet after every room post except the notice itself: replies, `send_room`, the command list and the leave notice (checked before it stops posting there). It posts `LOW_FUNDS_NOTICE` once per drop, in the room whose post took it low (or the first room it posts in while low), and in no other room, until it sees the wallet not low again (AGENT-3.a). The notice is posted even when the rate limit there is full, and counts toward the limit after (design choice).
 30. A core that has not checked its wallet yet (a restart, or a new CLI run) finds its latest notice in any room since it was last added. That notice is current unless the spendable balance today plus the fees of every note the bot sent after it reaches the threshold, which can only happen if the wallet was refilled, because the bot spends nothing but fees (design choice).
-31. The bot sends no payments or tips: every transaction it sends carries amount 0 (AGENT-9). Only the operator funds the wallet (AGENT-3).
+31. The bot sends no payments or tips: every payment it sends carries amount 0, and it sends no asset transfers (AGENT-9). Only the operator funds the wallet (AGENT-3).
+32. The bot's identity is the same kind of asset a person makes in Raven: a 1-of-1 `RAVEN` asset the bot created, managed by the bot, with no reserve, freeze or clawback, and a Raven ARC-69 note (AGENT-2.b).
+33. A bot has at most one identity: `make_identity` mints only when algod shows no undeleted `RAVEN` asset created by the bot, and otherwise updates the newest one with an asset config. Repeated calls, from one core or separate CLI runs, never create a second (AGENT-2.d).
+34. The picture is one emoji or an NFT the bot's wallet holds when the note is written. No command or method takes a picture link or an uploaded image; a link given as the emoji is refused (AGENT-2.c, design rule from Leif). An emoji counts as one exactly when Raven's `identityEmoji` counts it as one, and an emoji note is the shared format: `picture` `"emoji"` and `emoji`, with no `media_url`, `sourceAssetId` or `sourceName`; an identity minted with an emoji has an empty asset URL.
+35. The public name is the bot's `@name` cut to 32 bytes the way Raven cuts it (AGENT-2.c).
+36. Only an asset the account created, and only a note that account sent naming its own address, count as its identity; a look-alike made by anyone else is ignored (AGENT-2.b).
+37. Holding an identity changes nothing about who is a bot: rooms mark bots only by their own record, the note carries no bot flag, and every other part of the core works the same with or without one (AGENT-2.e).
+38. The identity is signed on the bot's machine with the key from the env var or local file; no request carries the mnemonic or the seed (AGENT-2.f, AGENT-4).
+39. The minimum balance the identity locks is not spendable, so the low-funds check, which counts only the balance above the minimum balance, already leaves it out.
 
 ## Behavioral Examples
 
@@ -268,6 +319,22 @@ When it replies in room A and that reply takes it below the threshold
 Then it posts LOW_FUNDS_NOTICE once in room A, and its next replies in A and B carry no notice
 And after the operator refills the wallet, the next drop posts one new notice, in the room where it happened
 
+Given a funded bot named helper with no identity
+When the operator runs `algochat-agent --name helper make-identity --emoji 🦊`
+Then the bot's wallet creates one RAVEN asset (total 1, decimals 0, manager the bot) whose note shows 🦊 and the name helper
+And Raven, reading the bot's created assets and notes, shows that picture and name
+
+Given that bot holds an NFT with asset id 42
+When the operator runs `make-identity --nft 42`, then `make-identity --emoji 🐦`
+Then both update the same asset; the bot still created exactly one RAVEN asset
+
+Given someone else creates a RAVEN asset whose note names the bot's address
+When anyone reads the bot's identity
+Then that asset is ignored
+
+Given the operator runs `make-identity --emoji https://example.com/me.png`
+Then it fails with IdentityError and nothing is sent
+
 Given a webhook URL http://example.com/hook
 Then check_webhook_url refuses it: readable text goes over plain http only to this machine
 ```
@@ -301,6 +368,8 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | Bad arguments | An unknown parameter, a missing required one, or a wrong type | Raise `CommandError`; MCP `tools/call` with an unknown tool answers -32602 |
 | Webhook not allowed | Plain http to another machine, https to another machine without a secret, credentials in the URL, a link-local, unspecified or cloud metadata host | Raise `WebhookError` before any request |
 | Webhook failure | A non-2xx answer, a redirect, a bad certificate, a timeout, over 65536 bytes or another shape | The bridge raises `WebhookError`; the core records it as the message's error and goes on |
+| Bad identity picture | `make_identity` with a link, text or several emoji as the emoji, an NFT the bot does not hold, a fungible or non-picture asset, an NFT whose URL gives no picture link, both pictures, or no picture and no identity yet | Raise `IdentityError` (CLI exit 1, MCP `isError`); nothing is sent |
+| Identity not affordable | The spendable balance is below the fee, plus 0.1 ALGO when minting | Raise `IdentityError` naming the amount needed; nothing is sent |
 | Missing settings | No algod or indexer URL, or no mnemonic | CLI and MCP stop with `AgentConfigError`, never echoing a secret |
 
 ## Dependencies
@@ -308,6 +377,7 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 - Python 3.10 or newer
 - `cryptography` for Ed25519 public key derivation
 - The `algochat` module's `group`, `group_admin` and `pq` functions for section 5.8 rooms and hybrid sessions
+- The `algochat` module's `build_asset_create`, `build_asset_config`, `sign_payment` and the HTTP clients' asset reads for the identity NFT
 - The `algochat` module's `AlgoChat`, `AlgoChatConfig`, `AlgodClient`, `IndexerClient`, `EncryptionKeyStorage`, `MessageCache`, `send_payment`, and `sign_encryption_key`
 
 ## Change Log
@@ -319,4 +389,5 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | 3 | 2026-10-29 | Rooms and channels: the bot joins when added, reads and replies, and stops when removed or when it leaves (algochat#45, AGENT-6, AGENT-7). |
 | 4 | 2026-10-29 | Reply policy from the room record: mode, rate limit, mentions, never another bot, declared slash commands (algochat#46, AGENT-8). |
 | 6 | 2026-10-29 | Out-of-funds notice: the operator funds the wallet, the bot warns once in the room where fewer than about 100 replies' worth of fees remain, until refilled; the `funds` command; no payments or tips; operator guide (algochat#48, AGENT-1.d, AGENT-3, AGENT-3.a, AGENT-4, AGENT-9). |
+| 7 | 2026-10-30 | The bot's own Raven identity NFT: `identity` and `make-identity` on the CLI and MCP; one 1-of-1 `RAVEN` asset per bot, paid by its wallet and signed on its machine; an emoji or a held NFT as the picture and the `@name` as its name; asking again updates it; a look-alike is ignored and it never makes an account a bot (algochat#59, AGENT-2, AGENT-2.a to AGENT-2.f). |
 | 5 | 2026-10-29 | MCP server, command-line tool and webhook bridge on the shared core; an MCP tool for every CLI command; webhook text only to this machine or authenticated HTTPS (algochat#47, AGENT-1.a, AGENT-1.c, AGENT-1.e). |

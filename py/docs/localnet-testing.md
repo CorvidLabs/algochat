@@ -2,8 +2,8 @@
 
 The agent tests in `tests/test_agent_localnet.py`,
 `tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py`,
-`tests/test_agent_policy_localnet.py`, `tests/test_agent_adapters_localnet.py` and
-`tests/test_agent_funds_localnet.py` run against a real local
+`tests/test_agent_policy_localnet.py`, `tests/test_agent_adapters_localnet.py`,
+`tests/test_agent_funds_localnet.py` and `tests/test_agent_identity_localnet.py` run against a real local
 Algorand network: algod, kmd and the indexer. They check what mocks cannot,
 such as whether algod accepts transactions signed with the key loaded from the
 bot's mnemonic, and whether a message the bot sends is read back by another
@@ -130,3 +130,14 @@ Other endpoints can be set with `ALGOCHAT_LOCALNET_ALGOD_URL`,
   the policy allows and posts its answers. The command posts the command list
   and leaves the room. Every implementation, Swift included, opens every note
   and reduces the chain, and nothing the processes print carries the key.
+- The bot's Raven identity NFT (`tests/test_agent_identity_localnet.py`): the
+  bot mints a 1-of-1 `RAVEN` asset with an emoji, switches it to an NFT
+  another account made and sent it, to an ARC-19 NFT and back to an emoji, and
+  it stays one asset, read back from the indexer the way Raven reads it. A
+  link, two emoji and an NFT it does not hold are refused; another account's
+  look-alike is ignored; the identity's holder, added to a room as a plain
+  member, is not a bot, and a bot with no identity answers it. The CLI and the
+  MCP server make, update and show it. Every HTTP request is recorded, and none
+  carries the key. The indexer must allow `asset-id` and `tx-type` searches
+  (AlgoKit's localnet does; `scripts/native-localnet.sh` starts it with
+  `--enable-all-parameters`).

@@ -20,6 +20,7 @@ from typing import Any
 
 from .core import AgentCore
 from .direct import DirectMessage
+from .identity import IdentityError
 from .policy import PolicySkip
 from .rooms import Room, RoomMessage
 from .webhook import WebhookBridge
@@ -263,6 +264,29 @@ async def _funds(service: AgentService, _: dict[str, Any]) -> Any:
     }
 
 
+async def _identity(service: AgentService, _: dict[str, Any]) -> Any:
+    found = await service.core.identity()
+    return {"address": service.core.address, "identity": None if found is None else found.to_json()}
+
+
+async def _make_identity(service: AgentService, args: dict[str, Any]) -> Any:
+    try:
+        made = await service.core.make_identity(emoji=args.get("emoji"), nft=args.get("nft"))
+    except IdentityError as error:
+        raise CommandError(str(error)) from None
+    raven = made.note["properties"]["raven"]
+    return {
+        "asset_id": made.asset_id,
+        "txid": made.txid,
+        "minted": made.minted,
+        "picture": raven["picture"],
+        "emoji": raven.get("emoji"),
+        "media_url": made.note.get("media_url"),
+        "source_asset_id": raven.get("sourceAssetId"),
+        "name": raven.get("name"),
+    }
+
+
 async def _declare_commands(service: AgentService, _: dict[str, Any]) -> Any:
     core = service.core
     return {"command_list": core.command_list, "txids": await core.declare_commands()}
@@ -359,6 +383,22 @@ COMMANDS: tuple[AgentCommand, ...] = (
         "Show the bot's balance, what one reply costs and whether fewer than 100 replies' worth of fees remain.",
         (),
         _funds,
+    ),
+    AgentCommand(
+        "identity",
+        "Show the bot's Raven identity NFT the way Raven reads it, or null when it has none.",
+        (),
+        _identity,
+    ),
+    AgentCommand(
+        "make-identity",
+        "Make the bot's Raven identity NFT, paid by its wallet, or update the one it has. "
+        "The picture is one emoji or an NFT the bot's wallet holds; the name is the bot's @name.",
+        (
+            Param("emoji", "string", "One emoji to show as the bot's picture"),
+            Param("nft", "integer", "Asset id of an NFT the bot's wallet holds, to show as its picture"),
+        ),
+        _make_identity,
     ),
     AgentCommand(
         "serve",

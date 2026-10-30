@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-raven-identity-nft",
+  "implementation_commit": "2c4eea858c1c5b62b40fba7c8b7cf580bf3f61a3",
+  "implementation_tree": "5c5fc84132ce13c3e54d84911a639e07274bfe33",
+  "contract_digest": "fdc8f30541f89029acda661c3dd07edcf09243a2e8a74e02e7d04fe01455c4e3",
+  "workspace_digest": "ab28c35f7eccee89589915e9cd5239cda6a41570bd60f9a9cc7e5d032a891ef6",
+  "closing_digest": "a67fa273e8bdb0a761d8ae211f0d6d4a7b3474c421f38261f42e2b7cb8f13011",
+  "review_digest": "049961feb6bc85b3e5c3c58bfc15b6c1f8e9d0cb8f9b2e0cc1dbbf9f0a95b98d",
+  "finalization_digest": "04a70fc34eda388d74f10b7e3fc690ad6528f3c71702a0f9016b874c3d8bfa37",
+  "timestamp": 1793370800
+}

@@ -1,5 +1,5 @@
 """
-Algorand payment transactions: build, sign and send.
+Algorand payment and asset transactions: build, sign and send.
 
 AlgoChat messages are payment transactions whose note is the envelope
 (PROTOCOL.md section 10.1). This module builds one in canonical msgpack,
@@ -8,6 +8,12 @@ signs it with an Ed25519 seed, and submits it through any
 
 Only the fields a payment needs are encoded. Canonical encoding means sorted
 keys and no empty values, so the transaction id matches algod's.
+
+The agent's Raven identity NFT (AGENT-2) also needs an asset create and an
+asset config. :func:`build_asset_create` and :func:`build_asset_config`
+encode exactly the fields those need, in the same canonical form, so they are
+signed by :func:`sign_payment` like a payment. They are not exported from the
+package root.
 """
 
 from __future__ import annotations
@@ -111,8 +117,97 @@ def build_payment(
     }
 
 
+def _flat_fee(txn: dict[str, Any], params: SuggestedParams) -> int:
+    """The minimum fee, or the per-byte fee on the signed size when that is higher."""
+    fee = max(params.min_fee, 1000)
+    if params.fee > 0:
+        size = len(_pack({"sig": b"\x00" * 64, "txn": {**txn, "fee": params.fee}}))  # as algosdk estimates it
+        fee = max(fee, params.fee * size)
+    return fee
+
+
+def _asset_note(note: bytes) -> bytes:
+    if len(note) > 1024:
+        raise TransactionError(f"Note is {len(note)} bytes; an asset transaction allows 1024")
+    return note
+
+
+def build_asset_create(
+    sender: str,
+    *,
+    total: int,
+    decimals: int,
+    unit_name: str,
+    asset_name: str,
+    url: str,
+    manager: str,
+    note: bytes,
+    params: SuggestedParams,
+) -> dict[str, Any]:
+    """An asset create (``acfg`` with no asset id) with no reserve, freeze or clawback.
+
+    Algorand allows 8 bytes of unit name, 32 of asset name and 96 of url; longer
+    values are refused here rather than by algod.
+    """
+    if total < 1:
+        raise TransactionError("An asset needs a total of at least 1")
+    if not 0 <= decimals <= 19:
+        raise TransactionError("Decimals must be 0 to 19")
+    for field, value, limit in (("unit name", unit_name, 8), ("asset name", asset_name, 32), ("url", url, 96)):
+        if len(value.encode()) > limit:
+            raise TransactionError(f"The asset {field} is over {limit} bytes")
+    txn: dict[str, Any] = {
+        "apar": {
+            "an": asset_name,
+            "au": url,
+            "dc": decimals,
+            "m": _decode_algorand_address(manager),
+            "t": total,
+            "un": unit_name,
+        },
+        "fv": params.first_valid,
+        "gen": params.genesis_id,
+        "gh": params.genesis_hash,
+        "lv": params.last_valid,
+        "note": _asset_note(note),
+        "snd": _decode_algorand_address(sender),
+        "type": "acfg",
+    }
+    txn["fee"] = _flat_fee(txn, params)
+    return txn
+
+
+def build_asset_config(
+    sender: str,
+    asset_id: int,
+    *,
+    manager: str,
+    note: bytes,
+    params: SuggestedParams,
+) -> dict[str, Any]:
+    """An asset config that keeps ``manager`` and leaves reserve, freeze and clawback empty.
+
+    Only the manager can send it. Its note is the part a reconfigure rewrites.
+    """
+    if asset_id < 1:
+        raise TransactionError("An asset config needs the asset id")
+    txn: dict[str, Any] = {
+        "apar": {"m": _decode_algorand_address(manager)},
+        "caid": asset_id,
+        "fv": params.first_valid,
+        "gen": params.genesis_id,
+        "gh": params.genesis_hash,
+        "lv": params.last_valid,
+        "note": _asset_note(note),
+        "snd": _decode_algorand_address(sender),
+        "type": "acfg",
+    }
+    txn["fee"] = _flat_fee(txn, params)
+    return txn
+
+
 def sign_payment(seed: bytes, txn: dict[str, Any]) -> SignedPayment:
-    """Signs ``txn`` with the Ed25519 ``seed`` of its sender."""
+    """Signs ``txn`` (a payment or an asset transaction) with the Ed25519 ``seed`` of its sender."""
     key = Ed25519PrivateKey.from_private_bytes(seed)
     if key.public_key().public_bytes_raw() != txn["snd"]:
         raise TransactionError("The signing key does not belong to the sender")

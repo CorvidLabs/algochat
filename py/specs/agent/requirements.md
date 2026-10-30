@@ -6,7 +6,7 @@ spec: agent.spec.md
 
 ### REQ-agent-001
 
-The Python agent core SHALL build a bot's own Algorand account from its 25-word mnemonic (the wallet half of AGENT-2; the Raven identity NFT half is out of scope for this module).
+The Python agent core SHALL build a bot's own Algorand account from its 25-word mnemonic (the wallet half of AGENT-2; REQ-agent-009 is the identity NFT half).
 
 Acceptance Criteria
 
@@ -92,3 +92,18 @@ Acceptance Criteria
 - A failed funds check never blocks a reply.
 - Every transaction the bot sends carries no amount.
 - The operator guide explains self-hosting, funding and keeping the key in an env var or local file that is never committed.
+
+### REQ-agent-009
+
+The Python agent core SHALL let the operator give the bot its own Raven identity NFT from the command line or MCP, paid by the bot's wallet, the same kind of identity NFT a person makes in Raven, with an emoji or an NFT the bot's wallet holds as its picture and its `@name` as its public name, at most one per bot, and SHALL NOT let it make an account a bot or need the bot's 25 words to leave its machine (AGENT-2, AGENT-2.a, AGENT-2.b, AGENT-2.c, AGENT-2.d, AGENT-2.e, AGENT-2.f).
+
+Acceptance Criteria
+
+- `make-identity` on the CLI and the `make_identity` MCP tool mint a 1-of-1 `RAVEN` asset from the bot's own account, and `identity` shows it.
+- The asset and its ARC-69 note have Raven's shape, so Raven reads its picture and name like anyone else's.
+- The picture is one emoji or an NFT the bot's wallet holds; a link, text, several emoji or an NFT it does not hold is refused, and no custom picture can be set.
+- The public name is the bot's `@name`, cut to 32 bytes.
+- Asking again updates the same asset; the bot never creates a second.
+- A look-alike asset made by another account is ignored.
+- Holding the identity never marks an account as a bot in a room, and a bot without one still works.
+- The transaction is signed on the bot's machine; no network request carries the mnemonic or the seed.

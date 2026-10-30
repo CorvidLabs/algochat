@@ -188,7 +188,8 @@ start() {
     grep -q 'FINISHED Pipeline round' "$DIR/conduit.log" 2>/dev/null && break
     sleep 1
   done
-  pgrep -f "$DIR/indexer/algorand-indexer" >/dev/null || nohup "$DIR/indexer/algorand-indexer" daemon \
+  # --enable-all-parameters as AlgoKit's localnet runs it, so asset and tx-type searches work.
+  pgrep -f "$DIR/indexer/algorand-indexer" >/dev/null || nohup "$DIR/indexer/algorand-indexer" daemon --enable-all-parameters \
     --data-dir "$DIR/indexer-data" --server 127.0.0.1:8980 --postgres "$PG_CONN" --token "$TOKEN" >"$DIR/indexer.log" 2>&1 &
   wait_http "http://127.0.0.1:8980/health" "X-Indexer-API-Token: $TOKEN"
   log "running: algod http://127.0.0.1:4001, kmd http://127.0.0.1:4002, indexer http://127.0.0.1:8980 (token: 64 x 'a')"
