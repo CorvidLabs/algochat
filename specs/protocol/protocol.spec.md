@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 16
+version: 17
 status: stable
 files:
   - PROTOCOL.md
@@ -58,3 +58,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-28 | Delta `0x03` notes omit the member list so one room can hold 256 people. Full-list notes still open. A channel is a separate room that names its parent group. Key deliveries stay separate payments of at most 16. |
 | 2026-10-28 | a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by: A room note records one added or removed person so a room can hold 256 people, and a channel is another room owned by the group owner |
 | 2026-10-28 | prepare-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
+| 2026-10-30 | room-bots-owner-or-admin-adds-a-bot-with-a-reply-mode-and-rate-limit-and-can-change-them-every-language-reads-the: Room bots: owner or admin adds a bot with a reply mode and rate limit, and can change them; every language reads the record the same way |

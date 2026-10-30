@@ -7,10 +7,11 @@
   "title": "Room bots: owner or admin adds a bot with a reply mode and rate limit, and can change them; every language reads the record the same way",
   "description": "Room bots: owner or admin adds a bot with a reply mode and rate limit, and can change them; every language reads the record the same way",
   "kind": "feature",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "8e165d5a399fd0e5b94fe2998a07f2a43f448328",
   "created_at": 1793286692,
-  "updated_at": 1793286698,
+  "updated_at": 1793323082,
   "affected_specs": [
     "protocol"
   ],
