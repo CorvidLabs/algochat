@@ -7,10 +7,11 @@
   "title": "Release protocol 1.6.0 and the library versions",
   "description": "Release protocol 1.6.0 and the library versions",
   "kind": "documentation",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "67072f2cc9841bca5c51bc490642cfc99247a40c",
   "created_at": 1793373692,
-  "updated_at": 1793373700,
+  "updated_at": 1793374462,
   "affected_specs": [
     "release",
     "protocol"

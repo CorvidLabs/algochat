@@ -1,4 +1,50 @@
 {
-  "approvals": [],
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "corvid-agent",
+      "timestamp": 1793373870,
+      "digest": "7de5ebc7652f20d107fb5675e870175dce4880d35e68e3d8d3aa4ccced9e2301",
+      "note": "Leif (0xLeif) asked for the AlgoChat 1.6.0 release PR, docs, tag and release in chat on 2026-10-30 9:18 AM MDT (t762u); recorded by corvid-agent, not as Leif.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "release-protocol-1-6-0-and-the-library-versions",
+        "title": "Release protocol 1.6.0 and the library versions",
+        "description": "Release protocol 1.6.0 and the library versions",
+        "kind": "documentation",
+        "affected_specs": [
+          "protocol",
+          "release"
+        ],
+        "affected_paths": [
+          "CHANGELOG.md",
+          "PROTOCOL.md",
+          "docs/PROTOCOL-FLOWS.md",
+          "docs/RELEASE.md",
+          "kt/build.gradle.kts",
+          "py/docs/run-your-own-bot.md",
+          "py/pyproject.toml",
+          "rs/Cargo.toml",
+          "ts/package.json"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "Source names protocol 1.6.0 with Swift 1.6.0 TypeScript 0.12.0 Python 0.5.0 Rust 0.6.0 Kotlin 0.5.0 and Go 0.5.0, and the changelog and docs describe what 1.6.0 adds."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "constraints": "No registry publish from this change; publish workflows run only by their own trigger. v1.5.0 and go/v0.4.0 stay the previous release. No wire change. Qualification still does not publish packages.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "f3343d47a93881937d9e511d98de70cc1ff8fd4a1b91c0a59b1cb86292445fa4",
+        "release": "63000284fba8862e217820dbd7e871648c4200990b05254de0aa70c696b676d3"
+      }
+    }
+  ],
   "reopenings": []
 }

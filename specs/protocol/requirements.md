@@ -49,6 +49,7 @@ PROTOCOL.md section 5.8 SHALL specify group membership as protocol `0x06`, a gro
 - Section 5.8 states both headers, the 101-byte legacy plaintext, and the 133-byte action 5 plaintext.
 - The identifier table lists `0x03`, `0x06`, and `0x07`, says tag v1.4.0 includes them, and says tag v1.3.0 does not.
 - Version history names 1.5.0 as the delta room note: member count 65535, 256 people, and channels the group owner keeps.
+- Version history names 1.6.0 as room bots, `0x03` ops 13 and 14, listed after 1.5.0.
 - Section 5.8.4 names rounds 46313 through 46322 and stays a historical membership record.
 - Document the existing wire offsets, AAD and key derivations for protocols `0x03` through `0x07`, with source-grounded diagrams and explicit application responsibilities for authorization and replay tracking.
 - Distinguish merged implementation behavior, normative requirements, historical reported evidence and released-version boundaries; validate documentation and obtain independent review.

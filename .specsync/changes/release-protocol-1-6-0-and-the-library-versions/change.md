@@ -1,6 +1,6 @@
 ---
 id: release-protocol-1-6-0-and-the-library-versions
-state: draft
+state: implementing
 type: documentation
 base_commit: 67072f2cc9841bca5c51bc490642cfc99247a40c
 ---
