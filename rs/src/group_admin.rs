@@ -39,6 +39,37 @@ const OP_ACCEPT_JOIN: u8 = 9;
 const OP_DECLINE_JOIN: u8 = 10;
 const OP_REMOVE_MEMBER: u8 = 11;
 const OP_REKEY: u8 = 12;
+/// Adds a bot: an owner or admin marks it as a bot, with a reply mode and a rate limit.
+pub const OP_ADD_BOT: u8 = 13;
+/// Changes a bot's reply mode and rate limit.
+pub const OP_SET_BOT: u8 = 14;
+
+/// Reply only when the bot is mentioned or replied to.
+pub const BOT_MODE_MENTIONS: u8 = 1;
+/// Reply on every message.
+pub const BOT_MODE_EVERY_MESSAGE: u8 = 2;
+/// Reply only to the bot's slash commands.
+pub const BOT_MODE_COMMANDS: u8 = 3;
+/// Suggested safe preset: 5 replies per 60 seconds. A suggestion, never a default.
+pub const BOT_RATE_PRESET_REPLIES: u16 = 5;
+pub const BOT_RATE_PRESET_SECONDS: u16 = 60;
+/// Bytes a bot record adds after the parent group id: mode, replies, seconds.
+pub const BOT_SETTINGS_SIZE: usize = 5;
+
+/// A bot's reply mode and rate limit in one room: `replies` per `seconds`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BotSettings {
+    pub mode: u8,
+    pub replies: u16,
+    pub seconds: u16,
+}
+
+/// One member marked as a bot in a room.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RoomBot {
+    pub account: [u8; 32],
+    pub settings: BotSettings,
+}
 
 /// Failure whose text is the administration sentence, with no prefix.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -64,6 +95,8 @@ pub struct RoomState {
     pub name: Vec<u8>,
     pub epoch: u32,
     pub head_tx_id: [u8; 32],
+    /// Members marked as bots in this room, sorted by account.
+    pub bots: Vec<RoomBot>,
 }
 
 /// One confirmed administration payment.
@@ -114,6 +147,8 @@ pub struct AdminDraft {
     pub mailbox: Option<[u8; 32]>,
     /// Required when creating a channel, and for every later note on that channel.
     pub parent_room: Option<RoomState>,
+    /// Required for add-bot and set-bot. There is no default.
+    pub bot: Option<BotSettings>,
 }
 
 /// Room key recovered from a 227-byte action-5 note.
@@ -143,6 +178,8 @@ struct Decoded {
     members_omitted: bool,
     /// Present on a delta note. A legacy full-list note leaves this as 32 zero bytes.
     parent_group_id: [u8; 32],
+    /// Present only on an add-bot or set-bot note.
+    bot: Option<BotSettings>,
 }
 
 struct Body {
@@ -156,6 +193,7 @@ struct Body {
     policy: u8,
     name: Vec<u8>,
     epoch: u32,
+    bots: Vec<RoomBot>,
 }
 
 struct Applied {
@@ -173,6 +211,12 @@ pub fn draft_admin(
     input: &AdminDraft,
 ) -> Result<Vec<u8>, GroupAdminError> {
     let subject = input.subject.unwrap_or([0u8; 32]);
+    if is_bot_op(input.op) {
+        let bot = input
+            .bot
+            .ok_or_else(|| fail("A bot needs a reply mode and a rate limit"))?;
+        check_bot_settings(&bot)?;
+    }
     let parent_group_id = channel_parent(state, input, &subject)?;
     let group_id = input
         .group_id
@@ -203,6 +247,7 @@ pub fn draft_admin(
             policy,
             name,
             epoch: 1,
+            bots: Vec::new(),
         }
     } else {
         let decoded = Decoded {
@@ -219,6 +264,7 @@ pub fn draft_admin(
             subject,
             members_omitted: true,
             parent_group_id,
+            bot: input.bot,
         };
         expect_next(state, &decoded, &input.sender)?
     };
@@ -236,7 +282,17 @@ pub fn draft_admin(
         subject,
         members_omitted: true,
         parent_group_id: next.parent_group_id,
+        bot: if is_bot_op(input.op) { input.bot } else { None },
     })
+}
+
+/// The bot mark, reply mode and rate limit for `account`, or `None` when it is not a bot here.
+pub fn room_bot(state: &RoomState, account: &[u8; 32]) -> Option<RoomBot> {
+    state
+        .bots
+        .iter()
+        .find(|item| item.account == *account)
+        .copied()
 }
 
 /// Reduce confirmed records. Order is round, then offset, then transaction id.
@@ -277,7 +333,7 @@ pub fn delivery_authorized(
         return false;
     }
     match record.op {
-        OP_ADD_MEMBER | OP_ACCEPT_JOIN => record.subject == *recipient,
+        OP_ADD_MEMBER | OP_ACCEPT_JOIN | OP_ADD_BOT => record.subject == *recipient,
         OP_REMOVE_MEMBER => record.subject != *recipient,
         OP_REKEY | OP_TRANSFER_OWNER => true,
         _ => false,
@@ -537,11 +593,7 @@ fn channel_parent(
     if input.op == OP_TRANSFER_OWNER {
         return Err(fail("The group owner keeps the channel"));
     }
-    if matches!(input.op, OP_ADD_MEMBER | OP_ACCEPT_JOIN | OP_REQUEST_JOIN)
-        && !contains(&parent.members, subject)
-    {
-        return Err(fail("That person is not in the parent room"));
-    }
+    check_channel_join(input.op, subject, parent)?;
     Ok(current)
 }
 
@@ -616,6 +668,7 @@ fn expect_next(
         policy: state.policy,
         name: state.name.clone(),
         epoch: state.epoch,
+        bots: state.bots.clone(),
     };
     apply_op(&mut body, state, decoded, sender)?;
     reject_mailbox_overlap(&state.mailbox, &body.members, &body.admins, &body.owner)?;
@@ -664,6 +717,7 @@ fn expect_create(
         policy: decoded.policy,
         name: decoded.name.clone(),
         epoch: decoded.epoch,
+        bots: Vec::new(),
     })
 }
 
@@ -695,12 +749,61 @@ fn bind_channel(
     if decoded.op == OP_TRANSFER_OWNER {
         return Err(fail("The group owner keeps the channel"));
     }
-    if matches!(decoded.op, OP_ADD_MEMBER | OP_ACCEPT_JOIN | OP_REQUEST_JOIN)
-        && !contains(&parent_state.members, &decoded.subject)
-    {
+    check_channel_join(decoded.op, &decoded.subject, parent_state)
+}
+
+/// A channel takes people from its parent room. A bot there joins a channel only as a bot.
+fn check_channel_join(
+    op: u8,
+    subject: &[u8; 32],
+    parent: &RoomState,
+) -> Result<(), GroupAdminError> {
+    let joining = matches!(op, OP_ADD_MEMBER | OP_ACCEPT_JOIN | OP_REQUEST_JOIN);
+    if !joining && op != OP_ADD_BOT {
+        return Ok(());
+    }
+    if !contains(&parent.members, subject) {
         return Err(fail("That person is not in the parent room"));
     }
+    let parent_bot = room_bot(parent, subject).is_some();
+    if op == OP_ADD_BOT && !parent_bot {
+        return Err(fail("That account is not a bot in the parent room"));
+    }
+    if joining && parent_bot {
+        return Err(fail("A bot joins a channel only when added as a bot"));
+    }
     Ok(())
+}
+
+fn is_bot_op(op: u8) -> bool {
+    op == OP_ADD_BOT || op == OP_SET_BOT
+}
+
+fn check_bot_settings(bot: &BotSettings) -> Result<(), GroupAdminError> {
+    if !matches!(
+        bot.mode,
+        BOT_MODE_MENTIONS | BOT_MODE_EVERY_MESSAGE | BOT_MODE_COMMANDS
+    ) {
+        return Err(fail(
+            "Bot reply mode must be mentions, every message, or commands",
+        ));
+    }
+    if bot.replies == 0 || bot.seconds == 0 {
+        return Err(fail("Bot rate limit must be from 1 through 65535"));
+    }
+    Ok(())
+}
+
+fn require_bot(decoded: &Decoded) -> Result<BotSettings, GroupAdminError> {
+    let bot = decoded
+        .bot
+        .ok_or_else(|| fail("A bot needs a reply mode and a rate limit"))?;
+    check_bot_settings(&bot)?;
+    Ok(bot)
+}
+
+fn is_bot(bots: &[RoomBot], account: &[u8; 32]) -> bool {
+    bots.iter().any(|item| item.account == *account)
 }
 
 fn apply_op(
@@ -734,6 +837,9 @@ fn apply_op(
             {
                 return Err(fail("That person cannot be appointed"));
             }
+            if is_bot(&body.bots, &subject) {
+                return Err(fail("A bot cannot be an admin"));
+            }
             body.admins = insert_sorted(&body.admins, subject, "admins", ADMIN_MAX)?;
         }
         OP_DISMISS_ADMIN => {
@@ -748,6 +854,9 @@ fn apply_op(
                 return Err(fail(
                     "Ownership can move only from the owner to another member",
                 ));
+            }
+            if is_bot(&body.bots, &subject) {
+                return Err(fail("A bot cannot own the room"));
             }
             body.owner = subject;
             body.admins.retain(|item| *item != subject);
@@ -790,6 +899,7 @@ fn apply_op(
             body.members.retain(|item| *item != subject);
             body.admins.retain(|item| *item != subject);
             body.pending.retain(|item| *item != subject);
+            body.bots.retain(|item| item.account != subject);
             body.epoch = bump(body.epoch)?;
         }
         OP_REKEY => {
@@ -797,6 +907,34 @@ fn apply_op(
                 return Err(fail("Sender cannot rotate the room key"));
             }
             body.epoch = bump(body.epoch)?;
+        }
+        OP_ADD_BOT => {
+            if !privileged
+                || contains(&body.members, &subject)
+                || subject == state.mailbox
+                || is_zero(&subject)
+            {
+                return Err(fail("Sender cannot add that bot"));
+            }
+            let settings = require_bot(decoded)?;
+            body.members = insert_sorted(&body.members, subject, "members", MEMBER_MAX)?;
+            body.pending.retain(|item| *item != subject);
+            body.bots.push(RoomBot {
+                account: subject,
+                settings,
+            });
+            body.bots.sort_by_key(|item| item.account);
+        }
+        OP_SET_BOT => {
+            if !privileged || !is_bot(&body.bots, &subject) {
+                return Err(fail("Sender cannot change that bot"));
+            }
+            let settings = require_bot(decoded)?;
+            for item in body.bots.iter_mut() {
+                if item.account == subject {
+                    item.settings = settings;
+                }
+            }
         }
         _ => return Err(fail("Unknown room administration operation")),
     }
@@ -828,9 +966,23 @@ fn encode_admin(fields: &Decoded) -> Result<Vec<u8>, GroupAdminError> {
     if fields.policy != JOINING_INVITE && fields.policy != JOINING_ASK {
         return Err(fail("Joining rule must be invite-only or ask-to-join"));
     }
-    if !(OP_CREATE..=OP_REKEY).contains(&fields.op) {
+    if !(OP_CREATE..=OP_SET_BOT).contains(&fields.op) {
         return Err(fail("Unknown room administration operation"));
     }
+    let bot = if is_bot_op(fields.op) {
+        if !fields.members_omitted {
+            return Err(fail("A bot record uses the delta note"));
+        }
+        let bot = fields
+            .bot
+            .ok_or_else(|| fail("A bot needs a reply mode and a rate limit"))?;
+        check_bot_settings(&bot)?;
+        Some(bot)
+    } else if fields.bot.is_some() {
+        return Err(fail("Only a bot record carries bot settings"));
+    } else {
+        None
+    };
     let name_len =
         u8::try_from(name.len()).map_err(|_| fail("Room name is longer than 64 bytes"))?;
     let admin_count = u16::try_from(admins.len()).map_err(|_| fail("Too many admins"))?;
@@ -864,6 +1016,11 @@ fn encode_admin(fields: &Decoded) -> Result<Vec<u8>, GroupAdminError> {
     out.extend_from_slice(&fields.subject);
     if fields.members_omitted {
         out.extend_from_slice(&fields.parent_group_id);
+    }
+    if let Some(bot) = bot {
+        out.push(bot.mode);
+        out.extend_from_slice(&bot.replies.to_be_bytes());
+        out.extend_from_slice(&bot.seconds.to_be_bytes());
     }
     if out.len() > MAX_NOTE_SIZE {
         return Err(fail(if fields.members_omitted {
@@ -913,6 +1070,21 @@ fn decode_admin(note: &[u8]) -> Result<Decoded, GroupAdminError> {
     } else {
         [0u8; 32]
     };
+    let bot = if is_bot_op(op) {
+        if !members_omitted {
+            return Err(fail("A bot record uses the delta note"));
+        }
+        let settings = cursor.take(BOT_SETTINGS_SIZE)?;
+        let bot = BotSettings {
+            mode: settings[0],
+            replies: u16::from_be_bytes([settings[1], settings[2]]),
+            seconds: u16::from_be_bytes([settings[3], settings[4]]),
+        };
+        check_bot_settings(&bot)?;
+        Some(bot)
+    } else {
+        None
+    };
     if cursor.at != note.len() {
         return Err(fail("Administration record has trailing bytes"));
     }
@@ -949,6 +1121,7 @@ fn decode_admin(note: &[u8]) -> Result<Decoded, GroupAdminError> {
         subject,
         members_omitted,
         parent_group_id,
+        bot,
     })
 }
 
@@ -1015,6 +1188,7 @@ fn into_room(body: Body, head_tx_id: [u8; 32]) -> RoomState {
         name: body.name,
         epoch: body.epoch,
         head_tx_id,
+        bots: body.bots,
     }
 }
 
@@ -1175,6 +1349,16 @@ mod tests {
             name: hex::decode(value["name_hex"].as_str().unwrap()).unwrap(),
             epoch: u32::try_from(value["epoch"].as_u64().unwrap()).unwrap(),
             head_tx_id: hex32_str(value["head_tx_id"].as_str().unwrap()),
+            bots: match value.get("bots") {
+                Some(Value::Array(items)) => items
+                    .iter()
+                    .map(|item| RoomBot {
+                        account: hex32_str(item["account"].as_str().unwrap()),
+                        settings: bot_from(item),
+                    })
+                    .collect(),
+                _ => Vec::new(),
+            },
         })
     }
 
@@ -1193,6 +1377,7 @@ mod tests {
             group_id: optional_bytes(&value["group_id"]),
             mailbox: optional_bytes(&value["mailbox"]),
             parent_room: revive(&value["parent_room"]),
+            bot: optional_bot(&value["bot"]),
         }
     }
 
@@ -1365,6 +1550,7 @@ mod tests {
                 group_id: Some(group_id),
                 mailbox: Some(mailbox),
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1389,6 +1575,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1416,6 +1603,7 @@ mod tests {
                 group_id: Some(group_id),
                 mailbox: Some(mailbox),
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1431,6 +1619,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1540,6 +1729,7 @@ mod tests {
             subject: [0u8; 32],
             members_omitted: false,
             parent_group_id: [0u8; 32],
+            bot: None,
         })
         .unwrap_err();
         assert!(too_big.to_string().contains("too large"), "{too_big}");
@@ -1558,6 +1748,7 @@ mod tests {
             subject: [0u8; 32],
             members_omitted: false,
             parent_group_id: [0u8; 32],
+            bot: None,
         })
         .unwrap();
         let legacy_room = reduce_admin(&[event(legacy.clone(), owner, 10, 0)]);
@@ -1574,6 +1765,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1597,6 +1789,7 @@ mod tests {
                     group_id: Some(person(900)),
                     mailbox: Some(person(901)),
                     parent_room: None,
+                    bot: None,
                 },
             )
             .unwrap(),
@@ -1618,6 +1811,7 @@ mod tests {
                     group_id: None,
                     mailbox: None,
                     parent_room: None,
+                    bot: None,
                 },
             )
             .unwrap();
@@ -1660,6 +1854,7 @@ mod tests {
                 group_id: Some(parent_id),
                 mailbox: Some(parent_mail),
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1679,6 +1874,7 @@ mod tests {
                     group_id: None,
                     mailbox: None,
                     parent_room: None,
+                    bot: None,
                 },
             )
             .unwrap();
@@ -1707,6 +1903,7 @@ mod tests {
                 group_id: Some(channel_id),
                 mailbox: Some(channel_mail),
                 parent_room: parent.state.clone(),
+                bot: None,
             },
         )
         .unwrap_err();
@@ -1726,6 +1923,7 @@ mod tests {
                 group_id: Some(channel_id),
                 mailbox: Some(channel_mail),
                 parent_room: parent.state.clone(),
+                bot: None,
             },
         )
         .unwrap();
@@ -1755,6 +1953,7 @@ mod tests {
                     group_id: None,
                     mailbox: None,
                     parent_room: parent.state.clone(),
+                    bot: None,
                 },
             )
             .unwrap();
@@ -1780,6 +1979,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: parent.state.clone(),
+                bot: None,
             },
         )
         .unwrap_err();
@@ -1795,6 +1995,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: parent.state.clone(),
+                bot: None,
             },
         )
         .unwrap_err();
@@ -1814,6 +2015,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: None,
+                bot: None,
             },
         )
         .unwrap();
@@ -1844,6 +2046,7 @@ mod tests {
                 group_id: None,
                 mailbox: None,
                 parent_room: parent.state.clone(),
+                bot: None,
             },
         )
         .unwrap();
@@ -2035,5 +2238,281 @@ mod tests {
             .unwrap();
         header.extend_from_slice(&sealed);
         header
+    }
+
+    fn bot_from(value: &Value) -> BotSettings {
+        BotSettings {
+            mode: u8::try_from(value["mode"].as_u64().unwrap()).unwrap(),
+            replies: u16::try_from(value["replies"].as_u64().unwrap()).unwrap(),
+            seconds: u16::try_from(value["seconds"].as_u64().unwrap()).unwrap(),
+        }
+    }
+
+    fn optional_bot(value: &Value) -> Option<BotSettings> {
+        if value.is_null() {
+            None
+        } else {
+            Some(bot_from(value))
+        }
+    }
+
+    fn bots_vector() -> Value {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../vectors/group-admin-bots-v1.json"
+        );
+        let text = std::fs::read_to_string(path).unwrap_or_else(|error| panic!("{path}: {error}"));
+        serde_json::from_str(&text).unwrap()
+    }
+
+    fn snap_bots(state: &RoomState) -> Value {
+        let mut value = snap_parent(state);
+        value["bots"] = Value::Array(
+            state
+                .bots
+                .iter()
+                .map(|item| {
+                    serde_json::json!({
+                        "account": hex::encode(item.account),
+                        "mode": item.settings.mode,
+                        "replies": item.settings.replies,
+                        "seconds": item.settings.seconds,
+                    })
+                })
+                .collect(),
+        );
+        value
+    }
+
+    fn bots_reduce(value: &Value, name: &str) -> ReduceAdminResult {
+        let item = &value["reductions"][name];
+        let events: Vec<AdminEvent> = item["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(event_from)
+            .collect();
+        match item.get("parent_events") {
+            Some(Value::Array(parent)) => {
+                let parent: Vec<AdminEvent> = parent.iter().map(event_from).collect();
+                reduce_admin_with_parent(&events, &parent)
+            }
+            _ => reduce_admin(&events),
+        }
+    }
+
+    #[test]
+    fn group_admin_bots_vector() {
+        let value = bots_vector();
+        let constants = &value["constants"];
+        assert_eq!(constants["op_add_bot"], u64::from(OP_ADD_BOT));
+        assert_eq!(constants["op_set_bot"], u64::from(OP_SET_BOT));
+        assert_eq!(constants["mode_mentions"], u64::from(BOT_MODE_MENTIONS));
+        assert_eq!(
+            constants["mode_every_message"],
+            u64::from(BOT_MODE_EVERY_MESSAGE)
+        );
+        assert_eq!(constants["mode_commands"], u64::from(BOT_MODE_COMMANDS));
+        assert_eq!(constants["settings_size"], BOT_SETTINGS_SIZE as u64);
+        assert_eq!(
+            constants["preset_replies"],
+            u64::from(BOT_RATE_PRESET_REPLIES)
+        );
+        assert_eq!(
+            constants["preset_seconds"],
+            u64::from(BOT_RATE_PRESET_SECONDS)
+        );
+        for draft in value["drafts"].as_array().unwrap() {
+            let name = draft["name"].as_str().unwrap();
+            let state = revive(&draft["basis_state"]);
+            let note = draft_admin(state.as_ref(), &draft_from(draft))
+                .unwrap_or_else(|error| panic!("{name}: {error}"));
+            assert_eq!(hex::encode(note), draft["note"].as_str().unwrap(), "{name}");
+        }
+        for draft in value["draft_errors"].as_array().unwrap() {
+            let name = draft["name"].as_str().unwrap();
+            if draft["wide_integer"].as_bool() == Some(true) {
+                // BotSettings takes u16, so a value above 65535 cannot reach the draft at all.
+                let bot = &draft["bot"];
+                let fits = |key: &str| u16::try_from(bot[key].as_u64().unwrap()).is_ok();
+                assert!(!(fits("replies") && fits("seconds")), "{name} fits in u16");
+                continue;
+            }
+            let state = revive(&draft["basis_state"]);
+            let error = draft_admin(state.as_ref(), &draft_from(draft))
+                .expect_err(name)
+                .to_string();
+            let wanted = draft["error_includes"].as_str().unwrap();
+            assert!(
+                error.to_lowercase().contains(&wanted.to_lowercase()),
+                "{name}: {error}"
+            );
+        }
+        for (name, item) in value["reductions"].as_object().unwrap() {
+            let got = bots_reduce(&value, name);
+            let rejected: Vec<(String, String)> = got
+                .rejected
+                .iter()
+                .map(|r| (hex::encode(r.tx_id), r.reason.clone()))
+                .collect();
+            let wanted: Vec<(String, String)> = item["rejected"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|r| {
+                    (
+                        r["tx_id"].as_str().unwrap().to_string(),
+                        r["reason"].as_str().unwrap().to_string(),
+                    )
+                })
+                .collect();
+            assert_eq!(rejected, wanted, "{name}");
+            let ops: Vec<u64> = got.accepted.iter().map(|a| u64::from(a.op)).collect();
+            let wanted_ops: Vec<u64> = item["accepted"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|a| a["op"].as_u64().unwrap())
+                .collect();
+            assert_eq!(ops, wanted_ops, "{name}");
+            let state = got.state.as_ref().map_or(Value::Null, snap_bots);
+            assert_eq!(state, item["state"], "{name}");
+        }
+        for check in value["checks"]["delivery_authorized"].as_array().unwrap() {
+            let got = bots_reduce(&value, check["reduction"].as_str().unwrap());
+            let allowed = delivery_authorized(
+                &got.accepted,
+                &hex32_str(check["admin_tx_id"].as_str().unwrap()),
+                &hex32_str(check["sender"].as_str().unwrap()),
+                &hex32_str(check["recipient"].as_str().unwrap()),
+                u32::try_from(check["epoch"].as_u64().unwrap()).unwrap(),
+            );
+            assert_eq!(Value::Bool(allowed), check["allowed"], "{check}");
+        }
+        for check in value["checks"]["room_bot"].as_array().unwrap() {
+            let got = bots_reduce(&value, check["reduction"].as_str().unwrap());
+            let found = room_bot(
+                got.state.as_ref().unwrap(),
+                &hex32_str(check["account"].as_str().unwrap()),
+            );
+            assert_eq!(
+                found.map(|b| b.settings),
+                optional_bot(&check["bot"]),
+                "{check}"
+            );
+        }
+    }
+
+    /// AGENT-7.c: removing a bot is ordinary op 11 with a new room key, and the bot is dropped
+    /// from the room's channels with op 11 on each channel.
+    #[test]
+    fn a_removed_bot_is_dropped_from_the_room_and_its_channels() {
+        let value = bots_vector();
+        let checks = value["checks"]["channel_departures"].as_array().unwrap();
+        assert!(!checks.is_empty());
+        for check in checks {
+            let channel = bots_reduce(&value, check["channel"].as_str().unwrap());
+            let parent = bots_reduce(&value, check["parent"].as_str().unwrap());
+            let got: Vec<String> = channel_departures(
+                channel.state.as_ref().unwrap(),
+                parent.state.as_ref().unwrap(),
+            )
+            .unwrap()
+            .iter()
+            .map(hex::encode)
+            .collect();
+            let wanted: Vec<String> = check["departures"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|d| d.as_str().unwrap().to_string())
+                .collect();
+            assert_eq!(got, wanted, "{check}");
+        }
+        for name in ["parent_bot_removed", "channel_bot_removed"] {
+            let got = bots_reduce(&value, name);
+            assert_eq!(got.accepted.last().unwrap().op, OP_REMOVE_MEMBER, "{name}");
+            let state = got.state.as_ref().unwrap();
+            assert_eq!(state.epoch, 2, "{name}");
+            assert!(state.bots.is_empty(), "{name}");
+        }
+    }
+
+    /// AGENT-7.b: key announcement, chat note, text flag, join request and self op 13 never mark a bot.
+    #[test]
+    fn nothing_an_account_posts_about_itself_marks_it_as_a_bot() {
+        let value = bots_vector();
+        let account = [5u8; 32];
+        let self_sent = value["reductions"]["self_posts_are_not_a_bot"]["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|e| e["sender"].as_str() == Some(hex::encode(account).as_str()))
+            .count();
+        assert_eq!(self_sent, 5);
+        let got = bots_reduce(&value, "self_posts_are_not_a_bot");
+        let state = got.state.as_ref().unwrap();
+        assert!(state.members.contains(&account));
+        assert!(state.bots.is_empty());
+        assert!(room_bot(state, &account).is_none());
+        assert!(got.accepted.iter().all(|a| a.op != OP_ADD_BOT));
+        let reason = |tx: &str| {
+            got.rejected
+                .iter()
+                .find(|r| hex::encode(r.tx_id) == tx.repeat(32))
+                .map(|r| r.reason.clone())
+        };
+        assert_eq!(reason("57").as_deref(), Some("Sender cannot add that bot"));
+        for tx in ["54", "55", "56"] {
+            assert_eq!(
+                reason(tx).as_deref(),
+                Some("Not a room administration record"),
+                "{tx}"
+            );
+        }
+    }
+
+    #[test]
+    fn bot_settings_ride_only_on_bot_records() {
+        let preset = BotSettings {
+            mode: BOT_MODE_MENTIONS,
+            replies: BOT_RATE_PRESET_REPLIES,
+            seconds: BOT_RATE_PRESET_SECONDS,
+        };
+        let base = Decoded {
+            parent: [0u8; 32],
+            group_id: [7u8; 32],
+            mailbox: [9u8; 32],
+            epoch: 1,
+            op: OP_ADD_MEMBER,
+            name: Vec::new(),
+            policy: JOINING_INVITE,
+            owner: [1u8; 32],
+            admins: Vec::new(),
+            members: Vec::new(),
+            subject: [5u8; 32],
+            members_omitted: true,
+            parent_group_id: [0u8; 32],
+            bot: Some(preset),
+        };
+        let error = encode_admin(&base).unwrap_err().to_string();
+        assert!(error.contains("Only a bot record"), "{error}");
+        let mut missing = base.clone();
+        missing.op = OP_ADD_BOT;
+        missing.bot = None;
+        let error = encode_admin(&missing).unwrap_err().to_string();
+        assert!(error.contains("needs a reply mode"), "{error}");
+        let mut full = base.clone();
+        full.op = OP_ADD_BOT;
+        full.members_omitted = false;
+        let error = encode_admin(&full).unwrap_err().to_string();
+        assert!(error.contains("delta note"), "{error}");
+        let mut ok = base.clone();
+        ok.op = OP_ADD_BOT;
+        let note = encode_admin(&ok).unwrap();
+        assert_eq!(note.len(), 205 + BOT_SETTINGS_SIZE);
+        assert_eq!(&note[note.len() - BOT_SETTINGS_SIZE..], &[1, 0, 5, 0, 60]);
+        let decoded = decode_admin(&note).unwrap();
+        assert_eq!(decoded.bot, Some(preset));
     }
 }

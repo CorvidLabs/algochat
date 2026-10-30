@@ -101,9 +101,7 @@ uses macOS 26 or newer and a separate Linux lane; older declared minima are not 
 | `PQCross` | executable `pqcross` | `AlgoChat` | Cross-language hybrid/PSK fixture adapter; reports unavailable ML-KEM on Linux |
 | `AlgoChatTests` | test target | `AlgoChat` | swift-testing suites for crypto, envelopes, models, queue, storage, indexer and localnet integration |
 
-`swift-docc-plugin` is a package dependency retained for documentation generation; the nested standalone docs workflow is historical. swift-algorand is held below
-0.4.0 because 0.4.0 made `AlgorandConfiguration` factories throwing, which swift-algokit 0.0.2 does not compile
-against (comment in `Package.swift`).
+`swift-docc-plugin` is a package dependency retained for documentation generation; the nested standalone docs workflow is historical. swift-algokit 0.1.0 and swift-algorand 0.4.0 are the minima. `AlgorandConfiguration.localnet()`, `testnet()`, and `mainnet()` throw, and `AlgoKit(network:)` propagates that error.
 
 ```mermaid
 flowchart TB

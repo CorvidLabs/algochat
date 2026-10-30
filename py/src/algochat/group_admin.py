@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
@@ -43,6 +43,21 @@ OP_ACCEPT_JOIN = 9
 OP_DECLINE_JOIN = 10
 OP_REMOVE_MEMBER = 11
 OP_REKEY = 12
+# Owner or admin adds a bot, marked as a bot with its reply mode and rate limit.
+OP_ADD_BOT = 13
+# Owner or admin changes a bot's reply mode and rate limit.
+OP_SET_BOT = 14
+
+# How a bot replies in one room. There is no default; the admin picks one.
+BOT_MODE_MENTIONS = 1
+BOT_MODE_EVERY_MESSAGE = 2
+BOT_MODE_COMMANDS = 3
+# Suggested safe preset: 5 replies per 60 seconds. A suggestion, never a default.
+BOT_RATE_PRESET_REPLIES = 5
+BOT_RATE_PRESET_SECONDS = 60
+# Bytes a bot record adds after the parent group id: mode, replies, seconds.
+BOT_SETTINGS_SIZE = 5
+_BOT_MODES = frozenset({BOT_MODE_MENTIONS, BOT_MODE_EVERY_MESSAGE, BOT_MODE_COMMANDS})
 
 _KNOWN_OPS = frozenset(
     {
@@ -58,10 +73,35 @@ _KNOWN_OPS = frozenset(
         OP_DECLINE_JOIN,
         OP_REMOVE_MEMBER,
         OP_REKEY,
+        OP_ADD_BOT,
+        OP_SET_BOT,
     }
 )
 _ZERO_ID = bytes(32)
 _NOTE_LIMIT = 4096
+
+
+@dataclass(frozen=True)
+class BotSettings:
+    """A bot's reply mode and rate limit in one room: ``replies`` per ``seconds``."""
+
+    mode: int
+    replies: int
+    seconds: int
+
+
+@dataclass(frozen=True)
+class RoomBot:
+    """One member marked as a bot in a room, with its settings there."""
+
+    account: bytes
+    mode: int
+    replies: int
+    seconds: int
+
+    @property
+    def settings(self) -> BotSettings:
+        return BotSettings(self.mode, self.replies, self.seconds)
 
 
 @dataclass
@@ -80,6 +120,8 @@ class RoomState:
     head_tx_id: bytes
     # 32 zero bytes when this room is not a channel.
     parent_group_id: bytes = _ZERO_ID
+    # Members marked as bots in this room, sorted by account.
+    bots: list[RoomBot] = field(default_factory=list)
 
 
 @dataclass
@@ -150,6 +192,8 @@ class _Decoded:
     members_omitted: bool = False
     # Present on a delta note. Legacy full-list notes leave this as 32 zero bytes.
     parent_group_id: bytes = _ZERO_ID
+    # Present only on an add-bot or set-bot note.
+    bot: BotSettings | None = None
 
 
 @dataclass
@@ -164,6 +208,7 @@ class _Public:
     policy: int
     name: bytes
     epoch: int
+    bots: list[RoomBot] = field(default_factory=list)
 
 
 def draft_admin(
@@ -176,13 +221,19 @@ def draft_admin(
     group_id: bytes | None = None,
     mailbox: bytes | None = None,
     parent_room: RoomState | None = None,
+    bot: BotSettings | None = None,
 ) -> bytes:
     """Encode the only public note that ``op`` may append to ``state``.
 
     The note omits the member list. ``parent_room`` is required when creating
-    a channel and on every later note for that channel.
+    a channel and on every later note for that channel. ``bot`` is required for
+    add-bot and set-bot; there is no default.
     """
     subject_bytes = _ZERO_ID if subject is None else bytes(subject)
+    if _is_bot_op(op):
+        if bot is None:
+            raise PQError("A bot needs a reply mode and a rate limit")
+        _check_bot_settings(bot)
     sender_bytes = bytes(sender)
     parent_group_id = _channel_parent(
         state,
@@ -245,6 +296,7 @@ def draft_admin(
             subject=subject_bytes,
             members_omitted=True,
             parent_group_id=bytes(parent_group_id),
+            bot=bot,
         )
         nxt = _expect_next(state, proposed, sender_bytes)
     return _encode_admin_record(
@@ -262,8 +314,15 @@ def draft_admin(
             subject=subject_bytes,
             members_omitted=True,
             parent_group_id=bytes(nxt.parent_group_id),
+            bot=bot if _is_bot_op(op) else None,
         )
     )
+
+
+def room_bot(state: RoomState, account: bytes) -> RoomBot | None:
+    """The bot mark, reply mode and rate limit for ``account``, or None when it is not a bot here."""
+    _require_length("account", account, 32)
+    return next((item for item in state.bots if item.account == bytes(account)), None)
 
 
 def reduce_admin(
@@ -309,7 +368,7 @@ def delivery_authorized(
         return False
     if not _contains(record.members, recipient):
         return False
-    if _op_is(record.op, OP_ADD_MEMBER) or _op_is(record.op, OP_ACCEPT_JOIN):
+    if _op_is(record.op, OP_ADD_MEMBER) or _op_is(record.op, OP_ACCEPT_JOIN) or _op_is(record.op, OP_ADD_BOT):
         return record.subject == recipient
     if _op_is(record.op, OP_REMOVE_MEMBER):
         return record.subject != recipient
@@ -370,6 +429,7 @@ def encode_admin_record(
     *,
     members_omitted: bool = False,
     parent_group_id: bytes | None = None,
+    bot: BotSettings | None = None,
 ) -> bytes:
     """Encode one 0x03 note. Omitted members use the 65535 sentinel."""
     return _encode_admin_record(
@@ -387,6 +447,7 @@ def encode_admin_record(
             subject=bytes(subject),
             members_omitted=members_omitted,
             parent_group_id=_ZERO_ID if parent_group_id is None else bytes(parent_group_id),
+            bot=bot,
         )
     )
 
@@ -493,6 +554,7 @@ def _apply_admin(
         epoch=nxt.epoch,
         head_tx_id=head,
         parent_group_id=bytes(nxt.parent_group_id),
+        bots=list(nxt.bots),
     )
     record = AcceptedAdmin(
         tx_id=bytes(event.tx_id),
@@ -535,7 +597,12 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
     epoch = state.epoch
     name = bytes(state.name)
     policy = state.policy
+    bots = list(state.bots)
     subject = decoded.subject
+
+    def is_bot(account: bytes) -> bool:
+        return any(item.account == account for item in bots)
+
     if _op_is(decoded.op, OP_SET_NAME):
         if not privileged or not _is_zero(subject):
             raise PQError("Sender cannot rename the room")
@@ -549,6 +616,8 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
             raise PQError("Only the owner appoints an admin")
         if not _contains(members, subject) or subject == owner or _contains(admins, subject):
             raise PQError("That person cannot be appointed")
+        if is_bot(subject):
+            raise PQError("A bot cannot be an admin")
         admins = _canonical_set([*admins, subject], "admins", GROUP_ADMIN_MAX)
     elif _op_is(decoded.op, OP_DISMISS_ADMIN):
         if sender != state.owner or not _contains(admins, subject):
@@ -557,6 +626,8 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
     elif _op_is(decoded.op, OP_TRANSFER_OWNER):
         if sender != state.owner or not _contains(members, subject) or subject == owner:
             raise PQError("Ownership can move only from the owner to another member")
+        if is_bot(subject):
+            raise PQError("A bot cannot own the room")
         owner = bytes(subject)
         admins = [item for item in admins if item != subject]
         epoch = _bump(epoch)
@@ -589,11 +660,37 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
         members = [item for item in members if item != subject]
         admins = [item for item in admins if item != subject]
         pending = [item for item in pending if item != subject]
+        bots = [item for item in bots if item.account != subject]
         epoch = _bump(epoch)
     elif _op_is(decoded.op, OP_REKEY):
         if not privileged or not _is_zero(subject):
             raise PQError("Sender cannot rotate the room key")
         epoch = _bump(epoch)
+    elif _op_is(decoded.op, OP_ADD_BOT):
+        if (
+            not privileged
+            or _contains(members, subject)
+            or subject == state.mailbox
+            or _is_zero(subject)
+        ):
+            raise PQError("Sender cannot add that bot")
+        settings = _require_bot(decoded)
+        members = _canonical_set([*members, subject], "members", GROUP_MEMBER_MAX)
+        pending = [item for item in pending if item != subject]
+        bots = sorted(
+            [*bots, RoomBot(bytes(subject), settings.mode, settings.replies, settings.seconds)],
+            key=lambda item: item.account,
+        )
+    elif _op_is(decoded.op, OP_SET_BOT):
+        if not privileged or not is_bot(subject):
+            raise PQError("Sender cannot change that bot")
+        settings = _require_bot(decoded)
+        bots = [
+            RoomBot(bytes(subject), settings.mode, settings.replies, settings.seconds)
+            if item.account == subject
+            else item
+            for item in bots
+        ]
     else:
         raise PQError("Unknown room administration operation")
     _reject_mailbox_overlap(state.mailbox, members, admins, owner)
@@ -610,7 +707,27 @@ def _expect_next(state: RoomState | None, decoded: _Decoded, sender: bytes) -> _
         policy=policy,
         name=name,
         epoch=epoch,
+        bots=bots,
     )
+
+
+def _is_bot_op(op: object) -> bool:
+    return _op_is(op, OP_ADD_BOT) or _op_is(op, OP_SET_BOT)
+
+
+def _check_bot_settings(bot: BotSettings) -> None:
+    if type(bot.mode) is not int or bot.mode not in _BOT_MODES:
+        raise PQError("Bot reply mode must be mentions, every message, or commands")
+    for value in (bot.replies, bot.seconds):
+        if type(value) is not int or value < 1 or value > 0xFFFF:
+            raise PQError("Bot rate limit must be from 1 through 65535")
+
+
+def _require_bot(decoded: _Decoded) -> BotSettings:
+    if decoded.bot is None:
+        raise PQError("A bot needs a reply mode and a rate limit")
+    _check_bot_settings(decoded.bot)
+    return BotSettings(decoded.bot.mode, decoded.bot.replies, decoded.bot.seconds)
 
 
 def _body(decoded: _Decoded, pending: list[bytes], members: list[bytes]) -> _Public:
@@ -659,6 +776,15 @@ def _encode_admin_record(fields: _Decoded) -> bytes:
         raise PQError("Joining rule must be invite-only or ask-to-join")
     if type(fields.op) is not int or fields.op not in _KNOWN_OPS:
         raise PQError("Unknown room administration operation")
+    bot_op = _is_bot_op(fields.op)
+    if bot_op:
+        if not members_omitted:
+            raise PQError("A bot record uses the delta note")
+        if fields.bot is None:
+            raise PQError("A bot needs a reply mode and a rate limit")
+        _check_bot_settings(fields.bot)
+    elif fields.bot is not None:
+        raise PQError("Only a bot record carries bot settings")
     out = bytearray()
     out += bytes([PQ_VERSION, GROUP_ADMIN_PROTOCOL])
     out += parent
@@ -680,6 +806,10 @@ def _encode_admin_record(fields: _Decoded) -> bytes:
     out += subject
     if members_omitted:
         out += parent_group_id
+    if bot_op and fields.bot is not None:
+        out.append(fields.bot.mode)
+        out += fields.bot.replies.to_bytes(2, "big")
+        out += fields.bot.seconds.to_bytes(2, "big")
     if len(out) > _NOTE_LIMIT:
         raise PQError(
             "Administration record exceeds 4096 bytes"
@@ -735,6 +865,18 @@ def _decode_admin(note: bytes) -> _Decoded:
         cursor += 32
     else:
         parent_group_id = bytes(32)
+    bot: BotSettings | None = None
+    if _is_bot_op(op):
+        if not members_omitted:
+            raise PQError("A bot record uses the delta note")
+        settings = _take(note, cursor, BOT_SETTINGS_SIZE)
+        cursor += BOT_SETTINGS_SIZE
+        bot = BotSettings(
+            settings[0],
+            int.from_bytes(settings[1:3], "big"),
+            int.from_bytes(settings[3:5], "big"),
+        )
+        _check_bot_settings(bot)
     if cursor != len(note):
         raise PQError("Administration record has trailing bytes")
     if len(note) > _NOTE_LIMIT:
@@ -764,6 +906,7 @@ def _decode_admin(note: bytes) -> _Decoded:
         subject=subject,
         members_omitted=members_omitted,
         parent_group_id=parent_group_id,
+        bot=bot,
     )
 
 
@@ -884,9 +1027,7 @@ def _channel_parent(
         raise PQError("Channel does not point at this parent room")
     if _op_is(op, OP_TRANSFER_OWNER):
         raise PQError("The group owner keeps the channel")
-    joining = _op_is(op, OP_ADD_MEMBER) or _op_is(op, OP_ACCEPT_JOIN) or _op_is(op, OP_REQUEST_JOIN)
-    if joining and not _contains(parent_room.members, subject):
-        raise PQError("That person is not in the parent room")
+    _check_channel_join(op, subject, parent_room)
     return bytes(current)
 
 
@@ -903,13 +1044,21 @@ def _bind_channel(decoded: _Decoded, sender: bytes, parent_state: RoomState | No
             raise PQError("A channel has its own mailbox and group id")
     if _op_is(decoded.op, OP_TRANSFER_OWNER):
         raise PQError("The group owner keeps the channel")
-    joining = (
-        _op_is(decoded.op, OP_ADD_MEMBER)
-        or _op_is(decoded.op, OP_ACCEPT_JOIN)
-        or _op_is(decoded.op, OP_REQUEST_JOIN)
-    )
-    if joining and not _contains(parent_state.members, decoded.subject):
+    _check_channel_join(decoded.op, decoded.subject, parent_state)
+
+
+def _check_channel_join(op: int, subject: bytes, parent_room: RoomState) -> None:
+    """A channel takes people from its parent room. A bot there joins a channel only as a bot."""
+    joining = _op_is(op, OP_ADD_MEMBER) or _op_is(op, OP_ACCEPT_JOIN) or _op_is(op, OP_REQUEST_JOIN)
+    if not joining and not _op_is(op, OP_ADD_BOT):
+        return
+    if not _contains(parent_room.members, subject):
         raise PQError("That person is not in the parent room")
+    parent_bot = any(item.account == subject for item in parent_room.bots)
+    if _op_is(op, OP_ADD_BOT) and not parent_bot:
+        raise PQError("That account is not a bot in the parent room")
+    if joining and parent_bot:
+        raise PQError("A bot joins a channel only when added as a bot")
 
 
 def _reject_mailbox_overlap(

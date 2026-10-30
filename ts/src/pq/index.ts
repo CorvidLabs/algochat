@@ -48,6 +48,9 @@ export {
 } from './group.js';
 export {
     ADMIN_OP,
+    BOT_MODE,
+    BOT_RATE_PRESET,
+    BOT_SETTINGS_SIZE,
     GROUP_ADMIN_MAX,
     GROUP_ADMIN_PROTOCOL,
     GROUP_DELIVER_ACTION,
@@ -65,10 +68,13 @@ export {
     openGroupKeyDelivery,
     pendingKeyDeliveries,
     reduceAdmin,
+    roomBot,
     sealGroupKeyDelivery,
     senderMayPost,
     type AcceptedAdmin,
     type AdminEvent,
+    type BotSettings,
     type ReduceAdminResult,
+    type RoomBot,
     type RoomState,
 } from './group-admin.js';

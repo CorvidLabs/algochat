@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "lift-the-swift-algorand-pin-now-that-algokit-0-1-0-builds-against-0-4",
+  "slug": "lift-the-swift-algorand-pin-now-that-algokit-0-1-0-builds-against-0-4",
+  "title": "Lift the swift-algorand pin now that AlgoKit 0.1.0 builds against 0.4",
+  "description": "Lift the swift-algorand pin now that AlgoKit 0.1.0 builds against 0.4",
+  "kind": "bug_fix",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "8e165d5a399fd0e5b94fe2998a07f2a43f448328",
+  "created_at": 1793324352,
+  "updated_at": 1793325595,
+  "affected_specs": [],
+  "affected_paths": [
+    "Package.swift",
+    "Package.resolved",
+    "swift/Sources/AlgoChatCLI/AlgoChatCLI.swift",
+    "swift/Tests/AlgoChatTests",
+    "swift/docs/HLD.md"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol specs do not change. swift-algokit 0.1.0 already propagates the throwing AlgorandConfiguration factories, so algochat can depend on swift-algorand 0.4.0. swift/docs/HLD.md records the new minima.",
+  "acceptance_criteria": [
+    "swift package resolve selects swift-algokit 0.1.0 and swift-algorand 0.4.0, and swift build --build-tests succeeds. AlgoChat(network:) and the CLI localnet configuration still compile, with try on the throwing factories."
+  ],
+  "selected_artifacts": [
+    "context",
+    "testing",
+    "tasks",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

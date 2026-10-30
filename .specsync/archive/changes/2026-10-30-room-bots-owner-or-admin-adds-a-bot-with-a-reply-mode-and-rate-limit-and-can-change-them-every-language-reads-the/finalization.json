@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "room-bots-owner-or-admin-adds-a-bot-with-a-reply-mode-and-rate-limit-and-can-change-them-every-language-reads-the",
+  "implementation_commit": "5eee69226756a641e96c57153b1076ee3413b9ce",
+  "implementation_tree": "38bd63d72f1675bab4386478f5af56ae486a5f96",
+  "contract_digest": "d96d86d71e270f02e60805c86e7267c7df5d523652160e81e32ad061903132a8",
+  "workspace_digest": "d5f2c17a7a7288ce7f52cdf589ee7f627cf244090c193cd11a5772155338408a",
+  "closing_digest": "47a19b9c8dd0699e8ed328680f653ec1a54999f5aa4f76ebc7604443a4b65dc0",
+  "review_digest": "8225b43ff6306768eb1f4b9055e63d8607af66285f6e5f0f08d9dcba5012ef5f",
+  "finalization_digest": "5c9a1412755aa3202c5dcf575f51b395fee7985000d3687371af77cd613f8cff",
+  "timestamp": 1793323655
+}

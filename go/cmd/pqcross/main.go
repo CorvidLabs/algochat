@@ -54,6 +54,7 @@ type request struct {
 	Accepted         []acceptedWire `json:"accepted"`
 	State            *basisWire     `json:"state"`
 	ParentRoom       *basisWire     `json:"parent_room"`
+	Bot              *botWire       `json:"bot"`
 }
 
 // flexString accepts a JSON string or null. Null is the same as an omitted field.
@@ -74,17 +75,26 @@ func (f *flexString) UnmarshalJSON(data []byte) error {
 
 // basisWire is the public room roster. admin_op is the room operation because op is the command.
 type basisWire struct {
-	GroupID       string   `json:"group_id"`
-	Mailbox       string   `json:"mailbox"`
-	Owner         string   `json:"owner"`
-	Admins        []string `json:"admins"`
-	Members       []string `json:"members"`
-	Pending       []string `json:"pending"`
-	Policy        int      `json:"policy"`
-	NameHex       string   `json:"name_hex"`
-	Epoch         uint32   `json:"epoch"`
-	HeadTxID      string   `json:"head_tx_id"`
-	ParentGroupID string   `json:"parent_group_id"`
+	GroupID       string    `json:"group_id"`
+	Mailbox       string    `json:"mailbox"`
+	Owner         string    `json:"owner"`
+	Admins        []string  `json:"admins"`
+	Members       []string  `json:"members"`
+	Pending       []string  `json:"pending"`
+	Policy        int       `json:"policy"`
+	NameHex       string    `json:"name_hex"`
+	Epoch         uint32    `json:"epoch"`
+	HeadTxID      string    `json:"head_tx_id"`
+	ParentGroupID string    `json:"parent_group_id"`
+	Bots          []botWire `json:"bots"`
+}
+
+// botWire is a bot's reply mode and rate limit. Account is set only inside a room state.
+type botWire struct {
+	Account string `json:"account,omitempty"`
+	Mode    int    `json:"mode"`
+	Replies int    `json:"replies"`
+	Seconds int    `json:"seconds"`
 }
 
 type eventWire struct {
@@ -623,6 +633,9 @@ func adminDraft(req request) (map[string]any, error) {
 		GroupID: groupID,
 		Mailbox: mailbox,
 	}
+	if req.Bot != nil {
+		draft.Bot = &algochat.BotSettings{Mode: req.Bot.Mode, Replies: req.Bot.Replies, Seconds: req.Bot.Seconds}
+	}
 	if req.NameUTF8 != nil {
 		draft.Name = []byte(*req.NameUTF8)
 		draft.HasName = true
@@ -893,7 +906,19 @@ func reviveRoom(state *basisWire) (*algochat.RoomState, error) {
 			return nil, err
 		}
 	}
+	var bots []algochat.RoomBot
+	for _, item := range state.Bots {
+		account, err := hex.DecodeString(item.Account)
+		if err != nil {
+			return nil, err
+		}
+		bots = append(bots, algochat.RoomBot{
+			Account:     account,
+			BotSettings: algochat.BotSettings{Mode: item.Mode, Replies: item.Replies, Seconds: item.Seconds},
+		})
+	}
 	return &algochat.RoomState{
+		Bots:          bots,
 		GroupID:       groupID,
 		Mailbox:       mailbox,
 		Owner:         owner,
@@ -921,7 +946,21 @@ func snapRoom(state *algochat.RoomState) basisWire {
 		Epoch:         state.Epoch,
 		HeadTxID:      hex.EncodeToString(state.HeadTxID),
 		ParentGroupID: hex.EncodeToString(parentOrZero(state.ParentGroupID)),
+		Bots:          snapBots(state.Bots),
 	}
+}
+
+func snapBots(bots []algochat.RoomBot) []botWire {
+	out := make([]botWire, 0, len(bots))
+	for _, item := range bots {
+		out = append(out, botWire{
+			Account: hex.EncodeToString(item.Account),
+			Mode:    item.Mode,
+			Replies: item.Replies,
+			Seconds: item.Seconds,
+		})
+	}
+	return out
 }
 
 func parentOrZero(value []byte) []byte {

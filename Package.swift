@@ -19,10 +19,9 @@ let package = Package(
         .executable(name: "pqcross", targets: ["PQCross"])
     ],
     dependencies: [
-        .package(url: "https://github.com/CorvidLabs/swift-algokit.git", from: "0.0.2"),
-        // swift-algorand 0.4.0 made AlgorandConfiguration factories throwing, which does not
-        // compile against swift-algokit 0.0.2. Hold the transitive pin below 0.4.0 until AlgoKit updates.
-        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", "0.2.0" ..< "0.4.0"),
+        .package(url: "https://github.com/CorvidLabs/swift-algokit.git", from: "0.1.0"),
+        // AlgoKit 0.1.0 builds against swift-algorand 0.4, whose configuration factories throw.
+        .package(url: "https://github.com/CorvidLabs/swift-algorand.git", from: "0.4.0"),
         .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         .package(url: "https://github.com/CorvidLabs/swift-cli.git", from: "0.1.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.0")

@@ -358,9 +358,46 @@ private enum PQCross {
             policy: try optionalByte(object, "policy"),
             groupID: try optionalHex(object, "group_id"),
             mailbox: try optionalHex(object, "mailbox"),
-            parentRoom: try roomState(object["parent_room"], name: "parent_room")
+            parentRoom: try roomState(object["parent_room"], name: "parent_room"),
+            bot: try botSettings(object["bot"], name: "bot")
         )
         return ["note": hexEncode(note)]
+    }
+
+    static func botSettings(_ value: Any?, name: String) throws -> GroupAdmin.BotSettings? {
+        guard let value, !(value is NSNull) else {
+            return nil
+        }
+        guard let fields = objectFields(value) else {
+            throw ChatError.invalidEnvelope("\(name) must be an object")
+        }
+        func wide(_ key: String) throws -> UInt16 {
+            let number = try uint32Value(fields[key], name: key)
+            guard number <= UInt32(UInt16.max) else {
+                throw ChatError.invalidEnvelope("bad \(key)")
+            }
+            return UInt16(number)
+        }
+        return GroupAdmin.BotSettings(
+            mode: try byteValue(fields["mode"], name: "mode"),
+            replies: try wide("replies"),
+            seconds: try wide("seconds")
+        )
+    }
+
+    static func roomBots(_ value: Any?) throws -> [GroupAdmin.RoomBot] {
+        guard let value, !(value is NSNull) else {
+            return []
+        }
+        guard let items = value as? [Any] else {
+            throw ChatError.invalidEnvelope("bots must be a list")
+        }
+        return try items.map { item in
+            guard let fields = objectFields(item), let settings = try botSettings(item, name: "bot") else {
+                throw ChatError.invalidEnvelope("bad bot")
+            }
+            return GroupAdmin.RoomBot(account: try hexDecode(try string(fields, "account")), settings: settings)
+        }
     }
 
     static func adminReduce(_ object: [String: Any]) throws -> [String: Any] {
@@ -452,7 +489,8 @@ private enum PQCross {
             name: try hexDecode(try string(fields, "name_hex")),
             epoch: try uint32Value(fields["epoch"], name: "epoch"),
             headTxID: try hexDecode(try string(fields, "head_tx_id")),
-            parentGroupID: try optionalHex(fields, "parent_group_id") ?? Data(count: 32)
+            parentGroupID: try optionalHex(fields, "parent_group_id") ?? Data(count: 32),
+            bots: try roomBots(fields["bots"])
         )
     }
 
@@ -475,6 +513,14 @@ private enum PQCross {
             "epoch": epoch,
             "head_tx_id": hexEncode(state.headTxID),
             "parent_group_id": hexEncode(state.parentGroupID),
+            "bots": state.bots.map { bot in
+                [
+                    "account": hexEncode(bot.account),
+                    "mode": Int(bot.settings.mode),
+                    "replies": Int(bot.settings.replies),
+                    "seconds": Int(bot.settings.seconds),
+                ] as [String: Any]
+            },
         ] as [String: Any]
     }
 

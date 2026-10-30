@@ -37,14 +37,17 @@ from .group import (
 from .group_admin import (
     AcceptedAdmin,
     AdminEvent,
+    BotSettings,
     GroupKeyDelivery,
     ReduceAdminResult,
     RejectedAdmin,
+    RoomBot,
     RoomState,
     delivery_authorized,
     draft_admin,
     open_group_key_delivery,
     reduce_admin,
+    room_bot,
     seal_group_key_delivery,
     sender_may_post,
 )
@@ -350,4 +353,8 @@ __all__ = [
     "delivery_authorized",
     "seal_group_key_delivery",
     "open_group_key_delivery",
+    # Room bots (ops 13 and 14)
+    "BotSettings",
+    "RoomBot",
+    "room_bot",
 ]

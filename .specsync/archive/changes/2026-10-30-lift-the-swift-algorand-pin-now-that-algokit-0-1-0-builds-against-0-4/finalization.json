@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "lift-the-swift-algorand-pin-now-that-algokit-0-1-0-builds-against-0-4",
+  "implementation_commit": "82f7d58e5e88ef0a501ad723892384cf9f61a0eb",
+  "implementation_tree": "1661e432d22df625c278b4383362fc622552cfe8",
+  "contract_digest": "32de72cd3a2e852f7db699ec82608ea098c79d60836b4f7a11aca71dabcbbda7",
+  "workspace_digest": "b261432bd4bf4e39fcfabe7b8e04847a702c516a52dd6b31faa5293f81f836ec",
+  "closing_digest": "a9e8c5dc0759110192044ffaa8138f0a88c26844605d77a70205f8d283ba988c",
+  "review_digest": "627055fb1ef6bb197660286a01b255b4842be028007305ddf0e2bfc0b824f7b5",
+  "finalization_digest": "5f840cdc41146124bbca399db84f27d61a9c45635282853002e6a80a09092885",
+  "timestamp": 1793325545
+}
