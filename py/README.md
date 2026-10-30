@@ -63,6 +63,27 @@ result = decrypt_message(decoded, recipient_private, recipient_public)
 print(result.text)  # "Hello, World!"
 ```
 
+## Agent core (bots)
+
+`algochat.agent` is the shared core for a self-hosted AlgoChat bot. The bot has its own Algorand account, loaded from its 25-word mnemonic. Keep that mnemonic on the machine that runs the bot, in one of:
+
+- `ALGOCHAT_AGENT_MNEMONIC`: the mnemonic itself, or
+- `ALGOCHAT_AGENT_MNEMONIC_FILE`: the path of a local file that only its owner can read (`chmod 600`), owned by the user that runs the bot (or root), with no POSIX ACL. Any other file is refused.
+
+Set only one of the two; setting both is refused.
+
+Never commit the mnemonic. The repository ignores `*.mnemonic` and `.algochat-agent/`; add the same lines to your bot project's `.gitignore`. You supply the algod and indexer clients, and you fund the bot's own wallet.
+
+```python
+from algochat import AlgoChatConfig
+from algochat.agent import AgentCore
+
+core = await AgentCore.from_environment(AlgoChatConfig.localnet(), algod, indexer)
+print(core.address)  # the bot's own address
+```
+
+Replies, rooms, reply modes, and the MCP, CLI, and webhook adapters come in later releases.
+
 ## Encrypted Key Storage
 
 Private encryption keys can be persisted to disk with at-rest encryption using

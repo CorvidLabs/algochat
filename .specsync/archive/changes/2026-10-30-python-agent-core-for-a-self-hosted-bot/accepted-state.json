@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "python-agent-core-for-a-self-hosted-bot",
+  "slug": "python-agent-core-for-a-self-hosted-bot",
+  "title": "Python agent core for a self-hosted bot",
+  "description": "Python agent core for a self-hosted bot",
+  "kind": "feature",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "8e165d5a399fd0e5b94fe2998a07f2a43f448328",
+  "created_at": 1793283371,
+  "updated_at": 1793323641,
+  "affected_specs": [],
+  "affected_paths": [
+    ".gitignore",
+    "py/README.md",
+    "py/docs/localnet-testing.md",
+    "py/pyproject.toml",
+    "py/scripts/native-localnet.sh",
+    "py/specs/agent",
+    "py/src/algochat/agent",
+    "py/tests/localnet_support.py",
+    "py/tests/test_agent.py",
+    "py/tests/test_agent_localnet.py"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and vectors do not change. This change adds the Python agent module and its own module spec under py/specs/agent. Wire bytes are untouched.",
+  "acceptance_criteria": [
+    "AGENT-1, AGENT-1.b, AGENT-1.d, AGENT-4 and the wallet half of AGENT-2 in hi/agent.md, as scoped by algochat#43 (AGENT-2's Raven identity NFT half is out of scope, see plan.md): algochat.agent builds the bot's own Algorand account from its 25-word mnemonic, read only from ALGOCHAT_AGENT_MNEMONIC or an owner-only local file named by ALGOCHAT_AGENT_MNEMONIC_FILE; AgentCore binds an AlgoChat client to that account on operator-supplied algod and indexer clients; unit tests use mocks and public non-secret seeds only; localnet integration tests use throwaway accounts funded from the local network's own KMD wallet only."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}
