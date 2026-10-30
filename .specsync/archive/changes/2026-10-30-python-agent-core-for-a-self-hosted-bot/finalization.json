@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-agent-core-for-a-self-hosted-bot",
+  "implementation_commit": "7ceaa06efd9f6e180d5f4b4109504290557b4102",
+  "implementation_tree": "e755741828a1c7dfb2fab26435d656ae70258f05",
+  "contract_digest": "cd2e1c9b76b16885f1018947e1ebcb5373fbf79a363e49f052ce05651ba06d05",
+  "workspace_digest": "c686b8e97b8233401995e5ffc1b6fb9106236ba907086600deb4acc6d0441258",
+  "closing_digest": "8159c67ab0a3ab59a85ad07d67362cb1fe2f7fbf85eaf78c955522e67a849752",
+  "review_digest": "cf021f066c639e27361cbae59e9cdd99cf25dd2b3cf416c487fdc1b286511478",
+  "finalization_digest": "68ba0faad22536fc3b363a82c8b3082ebebd050e555230f556084c3f35eda59d",
+  "timestamp": 1793323641
+}
