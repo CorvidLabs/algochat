@@ -1,0 +1,38 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "corvid-agent",
+      "timestamp": 1793374531,
+      "digest": "920369683abbfabef795e43c23e0c26ca76680b37fbc02074d3571c81e96c346",
+      "note": "Leif (0xLeif) asked for the AlgoChat 1.6.0 release in chat on 2026-10-30 9:18 AM MDT (t762u). This only covers the version-label paths; recorded by corvid-agent, not as Leif.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "cover-the-1-6-0-version-labels-in-the-release-scripts",
+        "title": "Cover the 1.6.0 version labels in the release scripts",
+        "description": "Cover the 1.6.0 version labels in the release scripts",
+        "kind": "documentation",
+        "affected_specs": [],
+        "affected_paths": [
+          "TEST-VECTORS.md",
+          "scripts/release/packages.py",
+          "scripts/release/qualify.py",
+          "scripts/release/test_release.py"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "These files only carry the 1.6.0 version labels. The protocol contract is already in the archived release change.",
+        "acceptance_criteria": [
+          "The test vector header and release scripts name the 1.6.0 library versions."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
+  "reopenings": []
+}
