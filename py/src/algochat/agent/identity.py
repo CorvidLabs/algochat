@@ -178,7 +178,8 @@ def nft_picture_pointer(url: str, reserve: str | None = None) -> str | None:
     return trimmed if _utf8_len(trimmed) <= ASSET_URL_MAX_BYTES else None
 
 
-# Extended_Pictographic (Unicode 15.1 emoji-data.txt), as ranges.
+# Extended_Pictographic as ranges: Unicode emoji-data.txt, the same set
+# ``\p{Extended_Pictographic}`` matches in V8/ICU (Node 20, Chrome).
 _PICTOGRAPHIC = (
     (0x00A9, 0x00A9), (0x00AE, 0x00AE), (0x203C, 0x203C), (0x2049, 0x2049),
     (0x2122, 0x2122), (0x2139, 0x2139), (0x2194, 0x2199), (0x21A9, 0x21AA),
@@ -204,8 +205,11 @@ _PICTOGRAPHIC = (
 _ZWJ = 0x200D
 _VS16 = 0xFE0F
 _KEYCAP = 0x20E3
-_BLACK_FLAG = 0x1F3F4
-_TAG_END = 0xE007F
+# Emoji_Component code points other than ZWJ, VS16 and the keycap mark.
+_COMPONENT = (
+    (0x0023, 0x0023), (0x002A, 0x002A), (0x0030, 0x0039), (0x1F1E6, 0x1F1FF),
+    (0x1F3FB, 0x1F3FF), (0x1F9B0, 0x1F9B3), (0xE0020, 0xE007F),
+)
 
 
 def _pictographic(cp: int) -> bool:
@@ -216,58 +220,78 @@ def _regional(cp: int) -> bool:
     return 0x1F1E6 <= cp <= 0x1F1FF
 
 
-def _modifier(cp: int) -> bool:
-    return 0x1F3FB <= cp <= 0x1F3FF
+def _emoji_part(cp: int) -> bool:
+    """Raven's ``EMOJI_PART``: Extended_Pictographic, Emoji_Component, ZWJ, VS16 or the keycap mark."""
+    return cp in (_ZWJ, _VS16, _KEYCAP) or _pictographic(cp) or any(low <= cp <= high for low, high in _COMPONENT)
 
 
-def _tag(cp: int) -> bool:
-    return 0xE0020 <= cp <= 0xE007E
+def _extend(cp: int) -> bool:
+    """Grapheme_Cluster_Break=Extend among emoji parts: VS16, the keycap mark, skin tones and tags."""
+    return cp in (_VS16, _KEYCAP) or 0x1F3FB <= cp <= 0x1F3FF or 0xE0020 <= cp <= 0xE007F
 
 
-def _one_emoji(cps: list[int]) -> bool:
-    """Whether the code points are exactly one emoji grapheme.
+def _grapheme_count(cps: list[int]) -> int:
+    """Extended grapheme clusters (UAX #29) in a string of emoji parts only.
 
-    A flag (two regional indicators), a keycap, a tag flag such as England's,
-    or one pictograph with an optional VS16 and skin tone, joined to more of
-    the same by zero-width joiners.
+    Among these code points the rules that apply are GB9 (no break before
+    Extend or ZWJ), GB11 (an emoji, Extend*, ZWJ, then an emoji stay joined),
+    GB12/GB13 (regional indicators pair up) and GB999 (break otherwise), so this
+    counts what ``Intl.Segmenter`` counts for them.
     """
-    if not cps:
+    count = 0
+    regional_run = 0
+    for index, cp in enumerate(cps):
+        joined = False
+        if index > 0:
+            prev = cps[index - 1]
+            if _extend(cp) or cp == _ZWJ:
+                joined = True
+            elif _pictographic(cp) and prev == _ZWJ:
+                back = index - 2
+                while back >= 0 and _extend(cps[back]):
+                    back -= 1
+                joined = back >= 0 and _pictographic(cps[back])
+            elif _regional(cp) and _regional(prev) and regional_run % 2 == 1:
+                joined = True
+        if not joined:
+            count += 1
+        regional_run = regional_run + 1 if _regional(cp) else 0
+    return count
+
+
+def is_one_emoji(value: object) -> bool:
+    """Raven's ``identityEmoji`` rule: whether ``value`` is exactly one emoji.
+
+    One grapheme cluster of at most 32 UTF-8 bytes, made only of emoji code
+    points, with at least one pictograph or keycap mark, or a two-letter flag.
+    Nothing is trimmed or repaired.
+    """
+    if not isinstance(value, str) or not value:
         return False
-    if len(cps) == 2 and all(_regional(cp) for cp in cps):
-        return True
-    if cps[-1] == _KEYCAP and len(cps) in (2, 3) and chr(cps[0]) in "0123456789#*":
-        return len(cps) == 2 or cps[1] == _VS16
-    if cps[0] == _BLACK_FLAG and len(cps) >= 3 and cps[-1] == _TAG_END:
-        return all(_tag(cp) for cp in cps[1:-1])
-    index = 0
-    while True:
-        if index >= len(cps) or not _pictographic(cps[index]):
-            return False
-        index += 1
-        if index < len(cps) and cps[index] == _VS16:
-            index += 1
-        if index < len(cps) and _modifier(cps[index]):
-            index += 1
-        if index == len(cps):
-            return True
-        if cps[index] != _ZWJ:
-            return False
-        index += 1
+    if _utf8_len(value) > EMOJI_MAX_BYTES:
+        return False
+    cps = [ord(c) for c in value]
+    if not all(_emoji_part(cp) for cp in cps):
+        return False
+    if _grapheme_count(cps) != 1:
+        return False
+    flag = len(cps) == 2 and all(_regional(cp) for cp in cps)
+    return flag or any(_pictographic(cp) or cp == _KEYCAP for cp in cps)
 
 
 def check_emoji(value: str) -> str:
-    """Returns ``value`` (surrounding whitespace removed) when it is one emoji of at most 32 UTF-8 bytes.
+    """Returns ``value`` unchanged when it is one emoji the way Raven counts one.
 
-    Raises :class:`IdentityError` for text, a link, more than one emoji, or anything longer.
+    Raises :class:`IdentityError` for text, a link, more than one emoji, spaces
+    around it, or more than 32 UTF-8 bytes.
     """
-    emoji = value.strip() if isinstance(value, str) else ""
-    if not emoji:
+    if not isinstance(value, str) or not value:
         raise IdentityError("Give one emoji for the picture")
-    if _utf8_len(emoji) > EMOJI_MAX_BYTES:
+    if _utf8_len(value) > EMOJI_MAX_BYTES:
         raise IdentityError(f"That emoji is over {EMOJI_MAX_BYTES} bytes; pick a single emoji")
-    if not _one_emoji([ord(c) for c in emoji]):
+    if not is_one_emoji(value):
         raise IdentityError("The picture must be exactly one emoji, not text, a link or several emoji")
-    return emoji
+    return value
 
 
 # --- the note -------------------------------------------------------------------
@@ -318,7 +342,11 @@ def encode_identity_note(note: dict[str, Any]) -> bytes:
 
 
 def decode_identity_note(note: bytes | None) -> dict[str, Any] | None:
-    """A Raven identity note, or None. An emoji note needs one valid emoji; any other needs a ``media_url``."""
+    """A Raven identity note, or None, as Raven's ``decodeIdentityNote`` reads it.
+
+    An emoji note needs one emoji and no ``media_url``, ``sourceAssetId`` or
+    ``sourceName``; any other needs a ``media_url``.
+    """
     if not note:
         return None
     try:
@@ -332,9 +360,11 @@ def decode_identity_note(note: bytes | None) -> dict[str, Any] | None:
     if not isinstance(raven, dict) or not isinstance(raven.get("address"), str):
         return None
     if raven.get("picture") == PICTURE_EMOJI:
-        try:
-            raven["emoji"] = check_emoji(raven.get("emoji") if isinstance(raven.get("emoji"), str) else "")
-        except IdentityError:
+        # Raven refuses an emoji note that carries a link or a source, so there
+        # is never anything to fetch for it, and checks the emoji as it is.
+        if "media_url" in parsed or "sourceAssetId" in raven or "sourceName" in raven:
+            return None
+        if not is_one_emoji(raven.get("emoji")):
             return None
     elif not isinstance(parsed.get("media_url"), str) or not parsed["media_url"]:
         return None
@@ -555,6 +585,7 @@ __all__ = [
     "identity_display_name",
     "ipfs_link_pointer",
     "is_media_url",
+    "is_one_emoji",
     "make_identity",
     "newest_identity_asset",
     "nft_picture",

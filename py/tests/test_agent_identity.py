@@ -148,13 +148,22 @@ def test_an_oversized_name_read_back_is_trimmed_not_trusted():
     assert decode_identity_note(raw.encode())["properties"]["raven"]["name"] == "x" * 32
 
 
+# Raven's own accepted cases (identity-asset.spec.ts in raven#614), plus a tag flag and a family.
 @pytest.mark.parametrize(
     "emoji",
-    ["\U0001f98a", "\u2764\ufe0f", "\U0001f44d\U0001f3fd", "\U0001f469\u200d\U0001f4bb", "\U0001f1fa\U0001f1f8", "1\ufe0f\u20e3",
-     "\U0001f3f4\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f", "\U0001f468\u200d\U0001f469\u200d\U0001f467\u200d\U0001f466"],
+    ["\U0001f98a", "\u2764\ufe0f", "\U0001f44d\U0001f3fd", "\U0001f469\u200d\U0001f4bb",
+     "\U0001f468\u200d\U0001f469\u200d\U0001f467\u200d\U0001f466", "\U0001f3f3\ufe0f\u200d\U0001f308",
+     "\U0001f1fa\U0001f1f8", "1\ufe0f\u20e3", "\u00a9\ufe0f", "#\u20e3", "\u2605",
+     "\U0001f3f4\U000e0067\U000e0062\U000e0065\U000e006e\U000e0067\U000e007f"],
 )
 def test_one_emoji_is_accepted(emoji):
     assert check_emoji(emoji) == emoji
+
+
+def test_ravens_edge_cases_count_the_same_here():
+    """Raven's identityEmoji (V8) accepts a lone keycap mark and a trailing joiner; so does the bot."""
+    assert check_emoji("\u20e3") == "\u20e3"
+    assert check_emoji("\U0001f98a\u200d") == "\U0001f98a\u200d"
 
 
 @pytest.mark.parametrize(
@@ -169,6 +178,15 @@ def test_one_emoji_is_accepted(emoji):
         "",
         "\U0001f468\u200d" * 8 + "\U0001f466",  # one joined sequence over 32 bytes
         "\u200d\U0001f98a",
+        "\U0001f98aa",  # emoji and text
+        " \U0001f98a",  # nothing is trimmed, as in Raven
+        "\U0001f98a\n",
+        "\U0001f1fa\U0001f1f8\U0001f1ec",  # a flag and half of another
+        "1",  # a digit alone is not an emoji
+        "\U0001f3fb",  # a skin tone alone
+        "\U0001f98a\u0301",  # a combining mark is not an emoji part
+        "\U0001f98a\ufe0e",  # text presentation selector
+        "\u200d".join(["\U0001f469"] * 6),  # Raven's oversized case
     ],
 )
 def test_a_link_text_or_several_emoji_are_refused(value):
@@ -188,6 +206,38 @@ def test_decode_reads_only_raven_notes():
     assert decode_identity_note(json.dumps(no_media).encode()) is None
     bad_emoji = {"standard": "arc69", "properties": {"raven": {"address": BOT, "picture": "emoji", "emoji": "hi"}}}
     assert decode_identity_note(json.dumps(bad_emoji).encode()) is None
+
+
+def _emoji_note(raven: dict, **extra) -> bytes:
+    body = {"standard": "arc69", **extra, "properties": {"raven": {"address": BOT, "picture": "emoji", "emoji": "\U0001f98a", **raven}}}
+    body["properties"]["raven"] = {k: v for k, v in body["properties"]["raven"].items() if v is not None}
+    return json.dumps(body, ensure_ascii=False).encode()
+
+
+def test_an_emoji_note_from_another_client_is_read_name_optional():
+    assert decode_identity_note(_emoji_note({}))["properties"]["raven"] == {"address": BOT, "picture": "emoji", "emoji": "\U0001f98a"}
+
+
+# Raven's refusals (identity-asset.spec.ts and identity-emoji.integration.ts in raven#614).
+@pytest.mark.parametrize(
+    "note",
+    [
+        _emoji_note({}, media_url="ipfs://bafyx"),
+        _emoji_note({}, media_url=""),
+        _emoji_note({"sourceAssetId": 7}),
+        _emoji_note({"sourceName": "lf.algo"}),
+        _emoji_note({"emoji": "\U0001f98a\U0001f438"}),
+        _emoji_note({"emoji": "fox"}),
+        _emoji_note({"emoji": "https://example.com/a.png"}),
+        _emoji_note({"emoji": None}),
+        _emoji_note({"emoji": 1}),
+        _emoji_note({"emoji": " \U0001f98a"}),
+        _emoji_note({"emoji": "\u200d".join(["\U0001f469"] * 6)}),
+        _emoji_note({"address": None}),
+    ],
+)
+def test_an_emoji_note_that_breaks_the_shared_format_is_refused(note):
+    assert decode_identity_note(note) is None
 
 
 def test_nft_links_become_raven_pointers_and_nothing_is_fetched():

@@ -25,7 +25,7 @@ Custom picture uploads or links, `.algo` names, deleting an identity, payments a
 
 ## Risks
 
-Raven's current reader needs `media_url`; emoji identities show in Raven once the shared emoji format lands there (the parallel Raven emoji work). An NFT whose picture lives only behind ARC-3 JSON at a long URL may have no pointer that fits 96 bytes and is refused. An indexer that disables `asset-id`/`tx-type` searches cannot read identities (public indexers and AlgoKit enable them).
+Raven's released reader needs `media_url`; emoji identities show in Raven once raven#614 (the shared emoji format, checked here against its head d38c9a24) is released. Raven in Safari matches `\p{Extended_Pictographic}` with JavaScriptCore's narrower table, so a few rare symbols (for example U+2605) that Raven in Chrome and the bot accept would not show there. An NFT whose picture lives only behind ARC-3 JSON at a long URL may have no pointer that fits 96 bytes and is refused. An indexer that disables `asset-id`/`tx-type` searches cannot read identities (public indexers and AlgoKit enable them).
 
 ## Constraints consulted
 

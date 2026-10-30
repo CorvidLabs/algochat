@@ -100,7 +100,9 @@ algochat-agent --name helper identity                      # show it, as Raven r
 
 The MCP tools are `make_identity` (`emoji` or `nft`) and `identity`.
 
-- The picture is one emoji or an NFT the bot's wallet holds. There are no
+- The picture is one emoji or an NFT the bot's wallet holds. One emoji means
+  exactly what Raven counts as one (a flag, a keycap, a skin tone or a joined
+  family is one; spaces around it are not trimmed). There are no
   custom pictures: a link, text, several emoji, an NFT it does not hold or a
   token that is not a picture NFT is refused and nothing is sent. To show an
   NFT, send it to the bot's address first (the bot must opt in to it, which
@@ -110,6 +112,8 @@ The MCP tools are `make_identity` (`emoji` or `nft`) and `identity`.
 - A bot has one identity. Running `make-identity` again updates the same
   asset. With neither `--emoji` nor `--nft` it keeps the picture and refreshes
   the name.
+- Minted with an emoji, the asset has no URL. Algorand fixes an asset's URL
+  when it is made, so switching later only rewrites the note, as in Raven.
 - The first time costs the fee plus 0.1 Algo, which the asset keeps locked in
   the wallet as minimum balance; updates cost only the fee. `funds` already
   leaves the locked amount out.
