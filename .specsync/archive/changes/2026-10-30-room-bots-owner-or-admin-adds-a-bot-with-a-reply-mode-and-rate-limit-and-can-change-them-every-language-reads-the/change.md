@@ -1,6 +1,6 @@
 ---
 id: room-bots-owner-or-admin-adds-a-bot-with-a-reply-mode-and-rate-limit-and-can-change-them-every-language-reads-the
-state: implementing
+state: archived
 type: feature
 base_commit: 8e165d5a399fd0e5b94fe2998a07f2a43f448328
 ---
