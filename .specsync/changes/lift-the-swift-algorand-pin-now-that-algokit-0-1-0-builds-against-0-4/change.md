@@ -1,6 +1,6 @@
 ---
 id: lift-the-swift-algorand-pin-now-that-algokit-0-1-0-builds-against-0-4
-state: draft
+state: implementing
 type: bug_fix
 base_commit: 8e165d5a399fd0e5b94fe2998a07f2a43f448328
 ---
