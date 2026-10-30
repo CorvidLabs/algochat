@@ -7,10 +7,11 @@
   "title": "Python bot reads one-to-one messages and replies by itself",
   "description": "Python bot reads one-to-one messages and replies by itself",
   "kind": "feature",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "5b92d0a172670ff3fb87273b7db7681bdae6cdf5",
   "created_at": 1793288546,
-  "updated_at": 1793288705,
+  "updated_at": 1793323721,
   "affected_specs": [],
   "affected_paths": [
     "py/specs/agent",

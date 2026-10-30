@@ -1,4 +1,45 @@
 {
-  "approvals": [],
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "corvid-agent",
+      "timestamp": 1793323720,
+      "digest": "fee3e402658bc39b190c5249aa2d615123488ff06280211c9d3c40f132d52fe8",
+      "note": "Leif (0xLeif) authorized approving all SpecSync changes on algochat #49-#56 in chat on 2026-10-29 7:13 PM MDT; recorded by corvid-agent, not as Leif.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "python-bot-reads-one-to-one-messages-and-replies-by-itself",
+        "title": "Python bot reads one-to-one messages and replies by itself",
+        "description": "Python bot reads one-to-one messages and replies by itself",
+        "kind": "feature",
+        "affected_specs": [],
+        "affected_paths": [
+          "py/README.md",
+          "py/docs",
+          "py/specs/agent",
+          "py/specs/algochat",
+          "py/src/algochat/__init__.py",
+          "py/src/algochat/agent",
+          "py/src/algochat/client.py",
+          "py/src/algochat/http_clients.py",
+          "py/src/algochat/transaction.py",
+          "py/tests",
+          "swift/Tests/AlgoChatTests/AgentDirectLocalnetTests.swift"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The protocol spec and vectors do not change. Replies use the existing section 9.2 reply payload and 0x01 notes. This change adds library payments, HTTP clients and one-to-one bot methods, with the Python module specs under py/specs updated in place. Wire bytes are untouched.",
+        "acceptance_criteria": [
+          "AGENT-5 in hi/agent.md, as scoped by algochat#44: the Python bot publishes its signed key, reads one-to-one messages to it across every indexer page, and replies by itself through the library's own payment path with a section 9.2 reply; a message is answered at most once, also after a restart; messages written by TypeScript, Go, Rust, Python and Kotlin are read on localnet, and every implementation including Swift (through a recorded-notes swift test on Linux) reads the bot's replies; unit tests use public non-secret seeds and no network; localnet tests use throwaway accounts funded only from the local KMD wallet."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
   "reopenings": []
 }
