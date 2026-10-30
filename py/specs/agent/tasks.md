@@ -9,7 +9,7 @@ spec: agent.spec.md
 - [x] Add `AgentCore` bound to the bot's own account (algochat#43).
 - [x] Localnet integration tests and a Docker-free localnet script (algochat#43).
 - [x] Review fixes: fd-based key-file checks (owner, mode, ACL), no secrets in traceback locals or pickles, seed/field consistency, algosdk word prefixes, pinned localnet downloads (algochat#43).
-- [ ] One-to-one read and reply (algochat#44).
+- [x] One-to-one read and reply, with library payments and HTTP clients (algochat#44).
 - [ ] Rooms, channels, and removal (algochat#45).
 - [ ] Reply policy from the room record (algochat#46).
 - [ ] MCP server, CLI, and webhook bridge (algochat#47).

@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-reads-one-to-one-messages-and-replies-by-itself",
+  "reviewer": "corvid-agent",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "d5e87e4451b03843288d34299cff95b9e031b6c4",
+  "contract_digest": "fee3e402658bc39b190c5249aa2d615123488ff06280211c9d3c40f132d52fe8",
+  "execution_digest": "95c26b48e749239beee5795d4609c5c271070a8eee248b89beee656cc731666f",
+  "workspace_digest": "4ea8cdb60c40fd7dc4382836b7a0457f2cdbbb5f406375472473c02aa8effecf",
+  "timestamp": 1793323793
+}

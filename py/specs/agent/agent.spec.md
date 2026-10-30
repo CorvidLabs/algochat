@@ -1,12 +1,13 @@
 ---
 module: agent
-version: 1
+version: 2
 status: active
 files:
   - src/algochat/agent/__init__.py
   - src/algochat/agent/account.py
   - src/algochat/agent/config.py
   - src/algochat/agent/core.py
+  - src/algochat/agent/direct.py
 
 db_tables: []
 depends_on: [algochat]
@@ -16,7 +17,7 @@ depends_on: [algochat]
 
 ## Purpose
 
-Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). Later changes add one-to-one replies, rooms, reply policy, and the MCP, CLI and webhook adapters on top of `AgentCore`.
+Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, AGENT-1.b, AGENT-1.d). The bot has its own Algorand account (the wallet half of AGENT-2; the bot's own Raven identity NFT is not built here), loaded from a 25-word mnemonic that lives in an environment variable or a local file on the bot host and is never committed (AGENT-4). The bot reads one-to-one messages to it and replies by itself, sending through the library's own payment path (AGENT-5). Later changes add rooms, reply policy, and the MCP, CLI and webhook adapters on top of `AgentCore`.
 
 ## Public API
 
@@ -32,7 +33,21 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 | `mnemonic_to_seed` | Decodes a classic 25-word Algorand mnemonic (BIP-39 English words, 11-bit little-endian packing, SHA-512/256 checksum word) to the 32-byte Ed25519 seed, case- and whitespace-insensitive. Each word may be the full word or, like `py-algorand-sdk`, a unique prefix of 4 or more letters. |
 | `address_from_public_key` | Encodes a 32-byte Ed25519 public key as a 58-character Algorand address with its 4-byte SHA-512/256 checksum. |
 | `AgentAccount` | Frozen dataclass whose only fields are the bot's own `address` and `ed25519_public_key`. `AgentAccount(address, ed25519_public_key, seed)` re-derives the public key and address from the 32-byte seed and raises `AgentConfigError` on any mismatch. The seed is a private non-field attribute read through the `seed` property, so `repr`, `str`, `dataclasses.asdict`, `vars` and equality never expose it; pickling raises `TypeError`. `from_mnemonic` and `from_seed` build it. |
-| `AgentCore` | One bot: holds its `AgentAccount` and an `AlgoChat` client bound to that address and Ed25519 key. `create` and `from_environment` take operator-supplied algod and indexer clients; properties `account`, `address`, `chat`; `repr` shows only the address. |
+| `AgentCore` | One bot: holds its `AgentAccount` and an `AlgoChat` client bound to that address and Ed25519 key. `create` and `from_environment` take operator-supplied algod and indexer clients; properties `account`, `address`, `chat`, `encryption_public_key` (32 raw bytes); `repr` shows only the address. |
+| `DirectHandler` | Type of a `serve_direct` handler: `DirectMessage` to `str`, `None`, or an awaitable of either. |
+| `DirectMessage` | Frozen dataclass: `txid`, `sender`, `text`, `confirmed_round`, and `reply_to` when the message is itself a reply. |
+| `DirectReply` | Frozen dataclass: the `message`, the `reply_txid` or `None`, and an `error` type name or `None`. |
+| `encode_reply` | Compact section 9.2 reply JSON with UTF-8 text. |
+| `reply_preview` | The quoted original: up to 80 characters, else the first 77 and `...`. |
+| `REPLY_PREVIEW_CHARS` | 80, the longest preview kept whole. |
+
+`AgentCore` methods for one-to-one messages (AGENT-5):
+
+- `publish_key`: Publishes the bot's X25519 key signed by its account (a self-payment). Skips and returns `None` when the same verified key is already on chain, unless `force`.
+- `send_direct`: Sends a one-to-one message to an address that has a usable published key. Returns the transaction id.
+- `read_direct`: Returns one-to-one messages to the bot it has not answered, oldest first, each once per core. Reads every indexer page after its cursor.
+- `reply`: Answers a `DirectMessage` with a section 9.2 reply (`{"text","replyTo":{"txid","preview"}}`) and marks it answered.
+- `serve_direct`: Reads new messages and replies with a sync or async handler's text. `None` or empty sends nothing. A failing handler or send is reported by error type and not retried. Returns one `DirectReply` per message.
 
 `src/algochat/agent/wordlist.txt` is the bundled 2048-word BIP-39 English list (SHA-256 `2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda`).
 
@@ -42,9 +57,12 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 2. The mnemonic is read only from the explicit path, the environment, or a local file. Nothing in this module writes it, logs it, or sends it. No `AgentConfigError` message, argument or chained exception contains the phrase, any run of its words, the file bytes, or the seed, and no frame on its traceback holds them in a local.
 3. A mnemonic file is refused unless it is owner-only (no group or other permission bit), owned by the effective user or root, and has no POSIX access ACL (design choice, like `ssh` private keys). Symlinks are followed and the target is checked. The checks use `fstat` on the opened descriptor, and only that descriptor is read.
 4. `AgentCore` only accepts an `AlgoChat` client whose address and Ed25519 public key are the bot's own. An `AgentAccount`'s address and public key always match its seed.
-5. `AgentCore` makes no network call of its own and has no default endpoint; the operator supplies the algod and indexer clients.
+5. `AgentCore` has no default endpoint. It reaches the network only through the algod and indexer clients the operator supplies.
 6. The repository `.gitignore` ignores `*.mnemonic` and `.algochat-agent/`.
 7. Only Ed25519 accounts are supported in this version.
+8. A message the bot answered on chain is never answered again, also after a restart: a reply the bot sent names the message it answers.
+9. Notes the bot cannot open (not AlgoChat, no published key, wrong key) are skipped, and so are its own notes, key publishes, and empty text.
+10. The bot refuses to message itself and only sends to a key that `AlgoChat` accepts (verified unless the operator allows unverified keys).
 
 ## Behavioral Examples
 
@@ -56,6 +74,11 @@ Then core.address is that mnemonic's Algorand address and core.chat is bound to 
 Given ALGOCHAT_AGENT_MNEMONIC_FILE names a file with mode 644
 When the mnemonic is loaded
 Then AgentConfigError says to chmod 600 and does not contain any mnemonic word
+
+Given a person sent the bot "hello bot"
+When serve_direct runs with a handler that returns "hello human"
+Then the person receives "hello human" with replyTo naming "hello bot"
+And a restarted bot does not answer "hello bot" again
 ```
 
 ## Error Cases
@@ -69,15 +92,20 @@ Then AgentConfigError says to chmod 600 and does not contain any mnemonic word
 | Bad mnemonic | Wrong count, unknown word, bad padding, or checksum mismatch | Raise `AgentConfigError` without echoing the phrase |
 | Mismatched account | `AgentAccount` fields do not come from its seed | Raise `AgentConfigError` |
 | Wrong client | `AgentCore` gets an `AlgoChat` client for another address | Raise `ValueError` |
+| No clients | A core built without `create` reads or sends | Raise `RuntimeError` naming `AgentCore.create` |
+| No key | `send_direct` or `reply` to an address without a published key | Raise `LookupError` |
+| Self | `send_direct` to the bot's own address | Raise `ValueError` |
+| Handler failure | A `serve_direct` handler or send raises | Record the error type in `DirectReply.error`, mark answered, go on |
 
 ## Dependencies
 
 - Python 3.10 or newer
 - `cryptography` for Ed25519 public key derivation
-- The `algochat` module's `AlgoChat`, `AlgoChatConfig`, `AlgodClient`, `IndexerClient`, `EncryptionKeyStorage`, and `MessageCache`
+- The `algochat` module's `AlgoChat`, `AlgoChatConfig`, `AlgodClient`, `IndexerClient`, `EncryptionKeyStorage`, `MessageCache`, `send_payment`, and `sign_encryption_key`
 
 ## Change Log
 
 | Version | Date | Changes |
 |---|---|---|
 | 1 | 2026-10-29 | Agent core: the bot's own account from a 25-word mnemonic in an env var or local file, and `AgentCore` (algochat#43). Review fixes: fd-based owner/ACL file checks, both-variables check before `path`, seed kept out of fields and pickles with a seed/field consistency check, no secrets in traceback locals, algosdk word prefixes. |
+| 2 | 2026-10-29 | One-to-one messages: the bot publishes its key, reads messages to it and replies by itself (algochat#44, AGENT-5). |

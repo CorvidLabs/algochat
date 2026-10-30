@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 5
+version: 6
 status: active
 files:
   - src/algochat/__init__.py
@@ -12,6 +12,7 @@ files:
   - src/algochat/models.py
   - src/algochat/pq.py
   - src/algochat/group_admin.py
+  - src/algochat/http_clients.py
   - src/algochat/psk_crypto.py
   - src/algochat/psk_envelope.py
   - src/algochat/psk_exchange.py
@@ -21,6 +22,7 @@ files:
   - src/algochat/queue.py
   - src/algochat/signature.py
   - src/algochat/storage.py
+  - src/algochat/transaction.py
   - src/algochat/types.py
 
 db_tables: []
@@ -195,6 +197,15 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `KEY_DERIVATION_INFO` | Supplies the fixed `x25519-key` HKDF context for seed derivation. |
 | `ENCRYPTION_INFO_PREFIX` | Domain-separates standard message encryption with `AlgoChatV1`. |
 | `SENDER_KEY_INFO_PREFIX` | Domain-separates sender-key wrapping with `AlgoChatV1-SenderKey`. |
+| `build_payment` | Builds the fields of one payment as algod expects them: amount, `payment_fee` for the note, the suggested validity window, genesis id and hash, and both addresses. A note over 4096 bytes or a negative amount raises `TransactionError`. |
+| `sign_payment` | Signs a payment with the sender's 32-byte Ed25519 seed. Canonical msgpack (sorted keys, empty values left out) gives the same transaction id algod computes. A seed that is not the sender's raises `TransactionError`. |
+| `SignedPayment` | A signed payment: its transaction id, the signed bytes to submit, and its fee. |
+| `send_payment` | Builds, signs, submits and confirms one payment through any `AlgodClient`. A transaction id from algod that differs from the local one raises `TransactionError`. No Algorand SDK is needed. |
+| `HttpAlgodClient` | `AlgodClient` over algod's REST API with the standard library. The operator gives an `http://` or `https://` URL and a token; there is no default endpoint and the token is never in `repr` or errors. Confirmation waits poll the pending endpoint and fail on a pool error or after the given rounds. |
+| `HttpIndexerClient` | `IndexerClient` over the indexer's REST API. Payments with a note, newest first as the indexer lists them. With a `limit` a search returns one page; without one it follows the indexer's next tokens and returns every match after `after_round`. |
+| `VALIDITY_ROUNDS` | 1000: a payment is valid from the suggested first round for this many rounds. |
+| `INDEXER_PAGE_LIMIT` | 1000: the page size an unlimited indexer search asks for. |
+| `HttpError` | An algod or indexer request that answered with an HTTP error. Carries the status and body, never the token. |
 
 #### Standard Protocol and Models
 
@@ -269,6 +280,8 @@ The following additional constants are public in `algochat.pq` but are not root-
 5. Blockchain, queue, and client abstractions preserve asynchronous ordering and do not silently discard protocol errors.
 6. A standard plaintext is at most 3954 bytes and a PSK plaintext is at most 3950 bytes. Those maxima encode to a 4096-byte note. One extra byte is rejected before a transaction is built. Headers stay 126 and 130 bytes, and the Poly1305 tag stays 16 bytes. Standard decode rejects fewer than 142 bytes and PSK decode rejects fewer than 146. Exactly those lengths remain long enough to parse. A note longer than 4096 bytes is rejected before plaintext is returned, including an authenticated oversized PQ note. Plaintexts of 882 and 878 bytes still encrypt, and those notes stay at most 1024 bytes.
 7. A note payment fee is one minimum fee plus the consensus surcharge for bytes past 1024. With a minimum fee of 1000 microAlgos, notes of 1024, 2000, and 4096 bytes cost 1000, 1098, and 1308 microAlgos. This library does not add a Falcon signer.
+8. `build_payment` and `sign_payment` produce the transaction id and signed bytes `py-algorand-sdk` produces for the same payment, so algod accepts them unchanged.
+9. `AlgoChat.process_transaction` fills `reply_context` from a section 9.2 reply payload (`replyTo.txid` and `replyTo.preview`) and returns the reply's own text as `content`.
 
 ## Behavioral Examples
 
@@ -312,6 +325,7 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 | 2026-07-13 | CHG-0004-replace-generic-python-algochat-export-descriptions-with-precise-implementation: Replace generic Python AlgoChat export descriptions with precise implementation-backed contracts |
 | 2026-07-13 | CHG-0007-correct-python-algochat-contract-rows-fixture-evidence-and-free-text-agent-gui: Correct Python AlgoChat contract rows, fixture evidence, and free-text agent guidance |
 | 2026-10-16 | Raise the AlgoChat note ceiling to 4096 bytes. Standard plaintext max is 3954. PSK plaintext max is 3950. Note fees add the consensus surcharge above 1024 bytes on top of one minimum fee. |
+| 6 | 2026-10-29 | Library payments and HTTP clients so a bot can send by itself: `build_payment`, `sign_payment`, `send_payment`, `SignedPayment`, `HttpAlgodClient`, `HttpIndexerClient`, `HttpError`. `process_transaction` keeps a reply's context (algochat#44). |
 
 ## Corrected Model and Discovery Contracts
 

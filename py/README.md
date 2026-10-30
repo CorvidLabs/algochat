@@ -82,7 +82,29 @@ core = await AgentCore.from_environment(AlgoChatConfig.localnet(), algod, indexe
 print(core.address)  # the bot's own address
 ```
 
-Replies, rooms, reply modes, and the MCP, CLI, and webhook adapters come in later releases.
+### One-to-one replies
+
+The bot sends with its own account; no separate wallet tool is needed. `HttpAlgodClient` and `HttpIndexerClient` speak the node and indexer APIs with the standard library. There is no default endpoint: pass yours.
+
+```python
+from algochat import AlgoChatConfig, HttpAlgodClient, HttpIndexerClient
+from algochat.agent import AgentCore
+
+algod = HttpAlgodClient("http://127.0.0.1:4001", "<algod token>")
+indexer = HttpIndexerClient("http://127.0.0.1:8980", "<indexer token>")
+core = await AgentCore.from_environment(AlgoChatConfig.localnet(), algod, indexer)
+await core.publish_key()  # once; skipped when the same key is already on chain
+
+def answer(message):
+    return f"You said: {message.text}"  # return None to stay silent
+
+for result in await core.serve_direct(answer):
+    print(result.message.sender, result.reply_txid, result.error)
+```
+
+Call `serve_direct` on a timer. Each message is answered once, also after a restart: the bot finds its own earlier replies on chain. Replies use the reply format in PROTOCOL.md section 9.2, so every AlgoChat client shows what they answer. A handler that raises is reported in `result.error` and not retried. Each reply costs the bot one transaction fee.
+
+Rooms, reply modes, and the MCP, CLI, and webhook adapters come in later releases.
 
 ## Encrypted Key Storage
 
