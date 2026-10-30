@@ -7,11 +7,11 @@
   "title": "Python bot replies by the room record: mode, rate limit, mentions, never another bot, declared slash commands",
   "description": "Python bot replies by the room record: mode, rate limit, mentions, never another bot, declared slash commands",
   "kind": "feature",
-  "state": "verifying",
+  "state": "accepted",
   "canonical_applied": true,
   "base_commit": "e32b4671829c9d82d32271392b44feda973b5716",
   "created_at": 1793291695,
-  "updated_at": 1793324130,
+  "updated_at": 1793324597,
   "affected_specs": [],
   "affected_paths": [
     "py/specs/agent",

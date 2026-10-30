@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-replies-by-the-room-record-mode-rate-limit-mentions-never-another-bot-declared-slash-commands",
+  "implementation_commit": "1d1d706dc620de9380e017542a2af4b13ab0611c",
+  "implementation_tree": "4aef4a4dbd96aa7c4a186bc662ccbc1ae5fc2237",
+  "contract_digest": "6aca93ce773013b3f3a83174e707d2f379c93a096d4ac66ca4029edd1ce5230a",
+  "workspace_digest": "e8bcb3527d7d0771f90e0d11c24209db5eabe937315c6010c49331fe2d746c88",
+  "closing_digest": "54511316fad448c2b5b33716434f69ae58a479e5483023191df6d60bc0311246",
+  "review_digest": "6c2b3ff9dfdae285829ca4d46b67e22c7ae7d193c969810f297bdd1669db328c",
+  "finalization_digest": "4ed05887edb0bff04941d077ab7bc8be823e0fdd3a45d41e272ecf5d5e626e6a",
+  "timestamp": 1793324597
+}
