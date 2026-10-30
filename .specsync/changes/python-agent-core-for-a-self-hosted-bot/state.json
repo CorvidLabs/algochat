@@ -7,10 +7,11 @@
   "title": "Python agent core for a self-hosted bot",
   "description": "Python agent core for a self-hosted bot",
   "kind": "feature",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "8e165d5a399fd0e5b94fe2998a07f2a43f448328",
   "created_at": 1793283371,
-  "updated_at": 1793283412,
+  "updated_at": 1793323079,
   "affected_specs": [],
   "affected_paths": [
     ".gitignore",
