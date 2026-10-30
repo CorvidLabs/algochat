@@ -1,4 +1,42 @@
 {
-  "approvals": [],
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "corvid-agent",
+      "timestamp": 1793370784,
+      "digest": "fdc8f30541f89029acda661c3dd07edcf09243a2e8a74e02e7d04fe01455c4e3",
+      "note": "Leif (0xLeif) confirmed AGENT-2.a to AGENT-2.f and asked for this PR to be finished through the full SpecSync cycle (t758s8899, t759u, 2026-10-30); recorded by corvid-agent, not as Leif.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "python-bot-raven-identity-nft",
+        "title": "Python bot Raven identity NFT",
+        "description": "Python bot Raven identity NFT",
+        "kind": "feature",
+        "affected_specs": [],
+        "affected_paths": [
+          "INTENT.md",
+          "hi/agent.md",
+          "py/README.md",
+          "py/docs",
+          "py/scripts",
+          "py/specs",
+          "py/src/algochat",
+          "py/tests"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The protocol spec and vectors do not change. The identity NFT is an ordinary Algorand asset with Raven's ARC-69 note, outside the AlgoChat message protocol; no message or room bytes change. The Python module specs under py/specs are updated in place.",
+        "acceptance_criteria": [
+          "AGENT-2 and AGENT-2.a to AGENT-2.f in hi/agent.md, as scoped by algochat#59: the operator gives the bot its own Raven identity NFT from the command line or MCP and the bot's own wallet pays for it; it is the same 1-of-1 RAVEN asset with Raven's ARC-69 note that a person makes in Raven, so Raven shows it like anyone else's; its picture is one emoji or an NFT the bot's wallet holds (never a custom picture or link) and its public name is the bot's @name, and either can change later without a second NFT; a bot has only one, and asking again updates it; having it never makes an account a bot, and a bot without one still works; the bot's 25 words never leave its machine; on localnet the bot mints with an emoji, switches to a held NFT, an ARC-19 NFT and back, always the same asset, read back the way Raven reads it, a look-alike by another creator is ignored, a link, two emoji and an NFT not held are refused, the holder added to a room as a plain member is not a bot and a bot with no identity answers it, the CLI and MCP make and show it, and no recorded HTTP request carries the mnemonic or seed; encoded transactions match py-algorand-sdk byte for byte; unit tests use public non-secret seeds and an in-memory ledger only."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    }
+  ],
   "reopenings": []
 }

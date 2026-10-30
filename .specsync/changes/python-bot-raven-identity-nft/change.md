@@ -1,6 +1,6 @@
 ---
 id: python-bot-raven-identity-nft
-state: draft
+state: implementing
 type: feature
 base_commit: e0810da99cdf485e19b1645d538040c78de242b0
 ---

@@ -7,10 +7,11 @@
   "title": "Python bot Raven identity NFT",
   "description": "Python bot Raven identity NFT",
   "kind": "feature",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "e0810da99cdf485e19b1645d538040c78de242b0",
   "created_at": 1793368603,
-  "updated_at": 1793368627,
+  "updated_at": 1793370791,
   "affected_specs": [],
   "affected_paths": [
     "py/specs",
