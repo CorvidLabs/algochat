@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "python-bot-reads-one-to-one-messages-and-replies-by-itself",
+  "slug": "python-bot-reads-one-to-one-messages-and-replies-by-itself",
+  "title": "Python bot reads one-to-one messages and replies by itself",
+  "description": "Python bot reads one-to-one messages and replies by itself",
+  "kind": "feature",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "5b92d0a172670ff3fb87273b7db7681bdae6cdf5",
+  "created_at": 1793288546,
+  "updated_at": 1793323807,
+  "affected_specs": [],
+  "affected_paths": [
+    "py/specs/agent",
+    "py/specs/algochat",
+    "py/src/algochat/agent",
+    "py/src/algochat/transaction.py",
+    "py/src/algochat/http_clients.py",
+    "py/src/algochat/client.py",
+    "py/src/algochat/__init__.py",
+    "py/tests",
+    "py/README.md",
+    "py/docs",
+    "swift/Tests/AlgoChatTests/AgentDirectLocalnetTests.swift"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "The protocol spec and vectors do not change. Replies use the existing section 9.2 reply payload and 0x01 notes. This change adds library payments, HTTP clients and one-to-one bot methods, with the Python module specs under py/specs updated in place. Wire bytes are untouched.",
+  "acceptance_criteria": [
+    "AGENT-5 in hi/agent.md, as scoped by algochat#44: the Python bot publishes its signed key, reads one-to-one messages to it across every indexer page, and replies by itself through the library's own payment path with a section 9.2 reply; a message is answered at most once, also after a restart; messages written by TypeScript, Go, Rust, Python and Kotlin are read on localnet, and every implementation including Swift (through a recorded-notes swift test on Linux) reads the bot's replies; unit tests use public non-secret seeds and no network; localnet tests use throwaway accounts funded only from the local KMD wallet."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "no"
+  }
+}

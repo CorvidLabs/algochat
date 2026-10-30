@@ -1,6 +1,6 @@
 ---
 id: python-bot-reads-one-to-one-messages-and-replies-by-itself
-state: implementing
+state: archived
 type: feature
 base_commit: 5b92d0a172670ff3fb87273b7db7681bdae6cdf5
 ---

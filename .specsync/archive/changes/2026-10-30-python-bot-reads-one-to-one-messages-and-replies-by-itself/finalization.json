@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-reads-one-to-one-messages-and-replies-by-itself",
+  "implementation_commit": "d5e87e4451b03843288d34299cff95b9e031b6c4",
+  "implementation_tree": "5b39c38d3e4be63a20b3388a0e7b1920e3ae8476",
+  "contract_digest": "fee3e402658bc39b190c5249aa2d615123488ff06280211c9d3c40f132d52fe8",
+  "workspace_digest": "4ea8cdb60c40fd7dc4382836b7a0457f2cdbbb5f406375472473c02aa8effecf",
+  "closing_digest": "4e844ce57e02342de33fe65afc4d61324cc4acbdce4aab38a42e9007f5f7c690",
+  "review_digest": "f0f3e0690e89f68666f103098eb52f84c964abf1997ee1dddda6414cbac47be8",
+  "finalization_digest": "d0e9ba48c1ad6c5d835f4cbe20fd7aabf24385d3c7696ea7e39f54dd40406b8e",
+  "timestamp": 1793323799
+}
