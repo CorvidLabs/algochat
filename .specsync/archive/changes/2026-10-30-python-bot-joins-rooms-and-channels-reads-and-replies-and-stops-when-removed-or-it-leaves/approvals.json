@@ -1,0 +1,50 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "corvid-agent",
+      "timestamp": 1793323864,
+      "digest": "1f51e9bd250b6698821e087a187d18ed4b8d3973fc220ad07863601c157ceee4",
+      "note": "Leif (0xLeif) authorized approving all SpecSync changes on algochat #49-#56 in chat on 2026-10-29 7:13 PM MDT; recorded by corvid-agent, not as Leif.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "python-bot-joins-rooms-and-channels-reads-and-replies-and-stops-when-removed-or-it-leaves",
+        "title": "Python bot joins rooms and channels, reads and replies, and stops when removed or it leaves",
+        "description": "Python bot joins rooms and channels, reads and replies, and stops when removed or it leaves",
+        "kind": "feature",
+        "affected_specs": [],
+        "affected_paths": [
+          "py/README.md",
+          "py/docs",
+          "py/specs/agent",
+          "py/specs/algochat",
+          "py/src/algochat/agent",
+          "py/src/algochat/blockchain.py",
+          "py/src/algochat/http_clients.py",
+          "py/tests",
+          "swift/Tests/AlgoChatTests/AgentRoomsLocalnetTests.swift"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The protocol spec and vectors do not change. The bot uses the existing section 5.8 handshakes, key deliveries, 0x03 records and 0x07 room messages; leaving is a plain-text room message because the protocol has no self-leave op. This change adds room methods to the Python agent core, with the Python module specs under py/specs updated in place. Wire bytes are untouched.",
+        "acceptance_criteria": [
+          "AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d and AGENT-7.g in hi/agent.md, as scoped by algochat#45: the Python bot joins a room or channel as soon as an owner or admin adds it and an authorized key reaches it, with no request or accept; a key from an account that may not deliver it is ignored; it reads room and channel messages in chain order and replies in plain text with its own account; a message is answered at most once, also after a restart, and nothing from before it joined; after another member is removed it uses the new key; after it is removed it stops in the room and its channels; after it leaves it posts a notice and stays out, also after a restart; room messages written by TypeScript, Go, Rust, Python and Kotlin are read on localnet, and every implementation including Swift (through a recorded-notes swift test on Linux) opens the bot's room notes and reduces the room chains the same way; unit tests use public non-secret seeds and no network; localnet tests use throwaway accounts funded only from the local KMD wallet."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793324048,
+      "digest": "6b758d390926100f80ba0e764f9b46621d94cfe59921b7eaf09188bf99317d5a",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

@@ -16,6 +16,7 @@ exception is raised.
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import hmac
 from dataclasses import dataclass
@@ -177,6 +178,20 @@ class _Seed:
 
     def __reduce__(self) -> NoReturn:
         raise TypeError("The bot seed cannot be pickled")
+
+
+def public_key_from_address(address: str) -> bytes:
+    """Decodes an Algorand address to its 32-byte public key, checking the checksum."""
+    if not isinstance(address, str) or len(address) != 58:
+        raise ValueError("An Algorand address is 58 characters")
+    try:
+        raw = base64.b32decode(address + "======")
+    except (ValueError, binascii.Error) as error:
+        raise ValueError("An Algorand address is base32") from error
+    public_key, checksum = raw[:_SEED_SIZE], raw[_SEED_SIZE:]
+    if _sha512_256(public_key)[-_CHECKSUM_SIZE:] != checksum:
+        raise ValueError("Algorand address checksum does not match")
+    return public_key
 
 
 @dataclass(frozen=True, init=False)

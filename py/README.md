@@ -104,7 +104,26 @@ for result in await core.serve_direct(answer):
 
 Call `serve_direct` on a timer. Each message is answered once, also after a restart: the bot finds its own earlier replies on chain. Replies use the reply format in PROTOCOL.md section 9.2, so every AlgoChat client shows what they answer. A handler that raises is reported in `result.error` and not retried. Each reply costs the bot one transaction fee.
 
-Rooms, reply modes, and the MCP, CLI, and webhook adapters come in later releases.
+### Rooms and channels
+
+An owner or admin adds the bot to a room or channel (in Raven, or with any AlgoChat library) and the bot joins as soon as the room key reaches it; it never asks to join. Publish its post-quantum key once so their client can hand it the key:
+
+```python
+await core.publish_pq_key()  # once; skipped when the same key is already on chain
+
+for room in await core.sync_rooms():
+    print(room.name, room.status, room.is_channel)
+
+def answer(message):
+    return f"You said: {message.text}"  # return None to stay silent
+
+for result in await core.serve_rooms(answer):
+    print(result.message.mailbox, result.txid, result.error)
+```
+
+Call `serve_rooms` on a timer. Replies are plain text, as Raven shows room messages. Each message is answered once, also after a restart, and nothing from before the bot joined is answered. When the owner or an admin removes the bot it stops in that room and in the room's channels. `await core.leave_room(room)` posts a short notice and stops; only an owner or admin can remove the bot and rotate the room key.
+
+Reply modes and the MCP, CLI, and webhook adapters come in later releases.
 
 ## Encrypted Key Storage
 

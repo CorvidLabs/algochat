@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-joins-rooms-and-channels-reads-and-replies-and-stops-when-removed-or-it-leaves",
+  "implementation_commit": "45825f5db3eb9da789c3aa81ff2d04a4e31d73ba",
+  "implementation_tree": "35f3f61441a34ca7a9f007c255bcdb4e94f56b77",
+  "contract_digest": "1f51e9bd250b6698821e087a187d18ed4b8d3973fc220ad07863601c157ceee4",
+  "workspace_digest": "2870da76fee2db33f685ac61c960b87d22472ccbaead3a44fc1e4c505fc649fc",
+  "closing_digest": "6b758d390926100f80ba0e764f9b46621d94cfe59921b7eaf09188bf99317d5a",
+  "review_digest": "71cd35068582108b81a98d0cc9245af33caef069a3c30e127e98231dd429b858",
+  "finalization_digest": "fb7463b277713ce3f454e57ff1668e3689b7ba846c5b1a453e25cd4b0d037d0d",
+  "timestamp": 1793324048
+}

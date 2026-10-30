@@ -43,3 +43,14 @@ Acceptance Criteria
 - The bot replies with its own account through the library's payment path, as a section 9.2 reply naming the message.
 - A message is answered at most once, also after a restart. Unreadable notes, its own notes and key publishes are skipped.
 - Messages written by every implementation are read, and every implementation reads the bot's replies.
+
+### REQ-agent-005
+
+The Python agent core SHALL join the rooms and channels an owner or admin adds it to, read and reply there, and stop when it is removed or leaves (AGENT-6, AGENT-7, AGENT-7.c, AGENT-7.d, AGENT-7.g).
+
+Acceptance Criteria
+
+- The bot joins as soon as it is added and an authorized key reaches it, with no join request or accept. A key from an account that may not deliver it, or citing a record that does not add the bot, is ignored.
+- The bot reads room and channel messages in chain order and replies in plain text with its own account. A message is answered at most once, also after a restart; messages from before it joined, from non-members and copied notes are not answered.
+- After another member is removed the bot uses the new key. After the bot is removed it stops in the room and its channels; after it leaves it posts a notice and stays out, also after a restart.
+- Messages written by every implementation are read, and every implementation reads the bot's room notes and reduces the room chains the same way.

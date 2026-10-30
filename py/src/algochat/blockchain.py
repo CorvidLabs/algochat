@@ -150,6 +150,9 @@ class NoteTransaction:
     round_time: int
     """Timestamp of the block (Unix time)."""
 
+    intra_round_offset: int = 0
+    """Position of the transaction inside its round. Rooms order notes by round, then offset."""
+
 
 @dataclass
 class SuggestedParams:

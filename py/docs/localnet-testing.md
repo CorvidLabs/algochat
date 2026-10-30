@@ -1,7 +1,7 @@
 # Localnet integration tests
 
-The agent tests in `tests/test_agent_localnet.py` and
-`tests/test_agent_direct_localnet.py` run against a real local
+The agent tests in `tests/test_agent_localnet.py`,
+`tests/test_agent_direct_localnet.py` and `tests/test_agent_rooms_localnet.py` run against a real local
 Algorand network: algod, kmd and the indexer. They check what mocks cannot,
 such as whether algod accepts transactions signed with the key loaded from the
 bot's mnemonic, and whether a message the bot sends is read back by another
@@ -61,7 +61,8 @@ ALGOCHAT_LOCALNET_ALGOD_DATA="$HOME/.cache/algochat-localnet/net/data" \
 
 ### Every language
 
-`tests/test_agent_direct_localnet.py` has people write to the bot with the
+`tests/test_agent_direct_localnet.py` and `tests/test_agent_rooms_localnet.py`
+have people write to the bot with the
 TypeScript, Go, Rust, Python and Kotlin implementations, and has every
 implementation read the bot's replies. Build their tools first, from the
 repository root:
@@ -74,7 +75,8 @@ repository root:
 ```
 
 Swift reads the same confirmed notes by running
-`swift test --filter AgentDirectLocalnetTests` on a recorded file, because its
+`swift test --filter AgentDirectLocalnetTests` (and `AgentRoomsLocalnetTests`
+for room notes and room chains) on a recorded file, because its
 own tool needs macOS 26. The test checks that the Swift test ran rather than
 skipped. With `ALGOCHAT_REQUIRE_LOCALNET=1` a missing tool or toolchain fails
 the run.
@@ -99,3 +101,12 @@ Other endpoints can be set with `ALGOCHAT_LOCALNET_ALGOD_URL`,
   one itself with a reply that names it, and a restarted bot answers nothing.
   Every implementation, Swift included, opens every note as both parties. A
   second test reads more messages than one indexer page.
+- Rooms and channels (`tests/test_agent_rooms_localnet.py`): an owner adds the
+  bot to a room and a channel with op 13 and it joins without a request or
+  accept; a key handed over by a plain member is ignored. The bot answers a
+  room message written by each implementation and a channel message, and a
+  restarted bot answers nothing. After a member is removed it answers under the
+  new key; it leaves the channel and stays out after a restart; after the owner
+  removes it from the room it answers nothing in the room or its channel.
+  Every implementation, Swift included, opens every room note and reduces both
+  room chains to the same state.

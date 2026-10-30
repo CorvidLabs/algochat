@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 6
+version: 7
 status: active
 files:
   - src/algochat/__init__.py
@@ -144,7 +144,7 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `SendQueue` | Manages asynchronous persistence and delivery of pending outgoing messages. |
 | `AlgorandConfig` | Configures algod and indexer connection endpoints and credentials. |
 | `TransactionInfo` | Records a submitted transaction identifier and confirmation round. |
-| `NoteTransaction` | Models a blockchain payment transaction carrying note bytes. |
+| `NoteTransaction` | Models a blockchain payment transaction carrying note bytes; `intra_round_offset` (default 0) is its position in the round, from the indexer's `intra-round-offset`. |
 | `SuggestedParams` | Models fee, round, genesis, and flat-fee transaction parameters. |
 | `AccountInfo` | Models an Algorand account balance and related node response data. |
 | `AlgodClient` | Defines asynchronous node operations for parameters, accounts, submission, and confirmation. |
@@ -326,6 +326,7 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 | 2026-07-13 | CHG-0007-correct-python-algochat-contract-rows-fixture-evidence-and-free-text-agent-gui: Correct Python AlgoChat contract rows, fixture evidence, and free-text agent guidance |
 | 2026-10-16 | Raise the AlgoChat note ceiling to 4096 bytes. Standard plaintext max is 3954. PSK plaintext max is 3950. Note fees add the consensus surcharge above 1024 bytes on top of one minimum fee. |
 | 6 | 2026-10-29 | Library payments and HTTP clients so a bot can send by itself: `build_payment`, `sign_payment`, `send_payment`, `SignedPayment`, `HttpAlgodClient`, `HttpIndexerClient`, `HttpError`. `process_transaction` keeps a reply's context (algochat#44). |
+| 7 | 2026-10-29 | `NoteTransaction.intra_round_offset`, read from the indexer, so room messages and records order within a round (algochat#45). |
 
 ## Corrected Model and Discovery Contracts
 

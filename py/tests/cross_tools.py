@@ -116,19 +116,25 @@ class ToolError(RuntimeError):
         self.lang = lang
 
 
-def swift_replay(record_path: Path, done_path: Path) -> subprocess.CompletedProcess[str]:
-    """Runs the Swift LocalNet replay test on ``record_path``.
+def swift_replay(
+    record_path: Path,
+    done_path: Path,
+    suite: str = "AgentDirectLocalnetTests",
+    env_prefix: str = "ALGOCHAT_DM_LOCALNET",
+) -> subprocess.CompletedProcess[str]:
+    """Runs a Swift LocalNet replay test suite on ``record_path``.
 
+    The suite reads ``<env_prefix>_RECORD`` and writes ``<env_prefix>_DONE``.
     The test writes ``done_path`` as its last step, so a skipped or filtered-out
     test cannot pass for a run.
     """
     if shutil.which("swift") is None:
         raise ToolMissing("swift: needs a Swift 6 toolchain on PATH")
     env = dict(os.environ)
-    env["ALGOCHAT_DM_LOCALNET_RECORD"] = str(record_path)
-    env["ALGOCHAT_DM_LOCALNET_DONE"] = str(done_path)
+    env[f"{env_prefix}_RECORD"] = str(record_path)
+    env[f"{env_prefix}_DONE"] = str(done_path)
     return subprocess.run(
-        ["swift", "test", "--filter", "AgentDirectLocalnetTests"],
+        ["swift", "test", "--filter", suite],
         cwd=ROOT / "swift",
         env=env,
         capture_output=True,
