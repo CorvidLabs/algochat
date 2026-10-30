@@ -39,11 +39,17 @@ export ALGOCHAT_INDEXER_TOKEN=...    # if your indexer needs one
 
 ## 4. Fund it and publish its keys
 
+Every `algochat-agent` command, including `address` and `funds`, needs the bot's 25 words from step 2 and both URLs from step 3. Without the URLs it stops with "Set ALGOCHAT_ALGOD_URL and ALGOCHAT_INDEXER_URL"; without the words it stops with "No bot mnemonic". Set them in every shell where you run the bot.
+
 ```bash
 algochat-agent --name helper address        # the address to send Algo to
 algochat-agent funds                        # balance, cost of one reply, replies left
 algochat-agent --name helper publish-keys   # once; skipped if already on chain
 ```
+
+Run `publish-keys` before anyone adds the bot to a room. Adding a bot sends it the room key in a hybrid-session `0x06` note, so the owner's client needs the bot's published post-quantum key to hand that key over ([PROTOCOL.md section 5.8](../../PROTOCOL.md#58-group-mailbox-protocols-0x03-0x06-and-0x07)). It publishes the bot's signed encryption key and its post-quantum key in one go.
+
+`--name` and `--command` are not saved anywhere. Pass the same ones on every run.
 
 The bot's wallet pays every fee it spends. It never sends Algo, payments or tips. When fewer than about 100 replies' worth of fees remain, it posts one short warning in the room where that happened, and not again until you refill it.
 
@@ -76,28 +82,39 @@ Pick one way to plug in your bot's brain.
 **Your own Python code:**
 
 ```python
+import asyncio
+
 from algochat import AlgoChatConfig, HttpAlgodClient, HttpIndexerClient
 from algochat.agent import AgentCore, BotCommand
 
-algod = HttpAlgodClient("http://127.0.0.1:4001", "<algod token>")
-indexer = HttpIndexerClient("http://127.0.0.1:8980", "<indexer token>")
-core = await AgentCore.from_environment(
-    AlgoChatConfig.localnet(), algod, indexer,
-    name="helper",
-    commands=[BotCommand("echo", "Repeat your text")],
-)
 
 def answer(message):
     return f"You said: {message.text}"  # return None to stay silent
 
-await core.serve_rooms(answer)   # call on a timer; serve_direct does the same for one-to-one
+
+async def main():
+    algod = HttpAlgodClient("http://127.0.0.1:4001", "<algod token>")
+    indexer = HttpIndexerClient("http://127.0.0.1:8980", "<indexer token>")
+    core = await AgentCore.from_environment(
+        AlgoChatConfig.localnet(), algod, indexer,
+        name="helper",
+        commands=[BotCommand("echo", "Repeat your text")],
+    )
+    while True:
+        await core.serve_rooms(answer)  # serve_direct does the same for one-to-one
+        await asyncio.sleep(5)
+
+
+asyncio.run(main())
 ```
 
 **A webhook to your own service:**
 
 ```bash
-algochat-agent --name helper serve --webhook http://localhost:8080/bot
+algochat-agent --name helper --command "echo=Repeat your text" serve --webhook http://localhost:8080/bot
 ```
+
+`serve` needs `--webhook`; the command has no reply logic of its own. Pass every `--command` the bot declares, or a room in commands mode only gets `/help`. It answers every 5 seconds by default (`--interval`), or once with `--once`.
 
 Readable text only goes to this machine, or over https to another address with a shared secret. See the [Python README](../README.md#mcp-server-command-line-and-webhook) for the request format and signature check.
 

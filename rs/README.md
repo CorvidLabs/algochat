@@ -17,6 +17,10 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 - `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
 - Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. The source version does not establish crates.io availability. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
+## Migrating to 0.6.0
+
+0.6.0 (protocol 1.6.0) adds room bots, and two public structs gained a field: `RoomState` has `bots: Vec<RoomBot>` and `AdminDraft` has `bot: Option<BotSettings>`. Code that builds either struct with a struct literal must set the new field, usually `bots: Vec::new()` and `bot: None`. See the [1.6.0 changelog](../CHANGELOG.md#160---2026-10-30).
+
 ## Installation
 
 The crate version in `Cargo.toml` is **0.6.0**. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`. Until 0.6.0 is published, depend on a checkout path:
