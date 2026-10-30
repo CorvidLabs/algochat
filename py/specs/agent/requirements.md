@@ -78,3 +78,17 @@ Acceptance Criteria
 - Every CLI command has an MCP tool with the same parameters.
 - The webhook bridge sends readable text only to a loopback address, or over HTTPS with a checked certificate and a signed request to another address.
 - The adapters keep the reply policy and never print the bot's key.
+
+### REQ-agent-008
+
+The Python agent core SHALL spend only from the bot's own operator-funded wallet, SHALL warn once, in the room where it reached that level, when fewer than about 100 replies' worth of fees remain, and not again until the wallet is refilled, and SHALL send no payments or tips (AGENT-1.d, AGENT-3, AGENT-3.a, AGENT-4, AGENT-9).
+
+Acceptance Criteria
+
+- Every fee comes out of the bot's own account, which only the operator funds.
+- When a room post leaves fewer than 100 replies' worth of fees, the bot posts one short notice in that room and in no other room.
+- While the wallet stays low, no further notice is posted, also after a restart or in a new CLI run.
+- After the operator refills the wallet, the next drop posts one new notice, in the room where it happened.
+- A failed funds check never blocks a reply.
+- Every transaction the bot sends carries no amount.
+- The operator guide explains self-hosting, funding and keeping the key in an env var or local file that is never committed.

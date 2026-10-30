@@ -2,7 +2,8 @@
 
 The agent tests in `tests/test_agent_localnet.py`,
 `tests/test_agent_direct_localnet.py`, `tests/test_agent_rooms_localnet.py`,
-`tests/test_agent_policy_localnet.py` and `tests/test_agent_adapters_localnet.py` run against a real local
+`tests/test_agent_policy_localnet.py`, `tests/test_agent_adapters_localnet.py` and
+`tests/test_agent_funds_localnet.py` run against a real local
 Algorand network: algod, kmd and the indexer. They check what mocks cannot,
 such as whether algod accepts transactions signed with the key loaded from the
 bot's mnemonic, and whether a message the bot sends is read back by another

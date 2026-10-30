@@ -13,4 +13,4 @@ spec: agent.spec.md
 - [x] Rooms, channels, and removal (algochat#45).
 - [x] Reply policy from the room record (algochat#46).
 - [x] MCP server, CLI, and webhook bridge (algochat#47).
-- [ ] Out-of-funds warning and operator guide (algochat#48).
+- [x] Out-of-funds warning and operator guide (algochat#48).

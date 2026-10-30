@@ -197,6 +197,10 @@ ok = verify_signature(secret, headers["X-AlgoChat-Timestamp"], body, headers["X-
 
 The bridge ignores proxy settings and refuses redirects. It also refuses link-local, unspecified and cloud metadata hosts (such as 169.254.169.254 or metadata.google.internal), even over https with a secret.
 
+### Funding and the out-of-funds warning
+
+You host the bot and fund its own wallet, which pays every fee; the bot sends no payments or tips. `algochat-agent funds` (MCP tool `funds`, `AgentCore.check_funds()`) shows the balance, what one reply costs and how many replies are left. When fewer than about 100 replies' worth of fees remain, the bot posts one short warning in the room where that happened, and not again until you refill the wallet. See [docs/operator-guide.md](docs/operator-guide.md).
+
 ## Encrypted Key Storage
 
 Private encryption keys can be persisted to disk with at-rest encryption using

@@ -72,7 +72,7 @@ def test_every_cli_command_has_an_mcp_tool_with_the_same_parameters():
     del cli[MCP_COMMAND]  # the server itself
     tools = {t["name"]: set(t["inputSchema"]["properties"]) for t in tool_list()}
     assert {name.replace("-", "_"): params for name, params in cli.items()} == tools
-    assert len(tools) == len(COMMANDS) == 11
+    assert len(tools) == len(COMMANDS) == 12
     for tool in tool_list():
         command = next(c for c in COMMANDS if c.tool_name == tool["name"])
         assert tool["inputSchema"]["required"] == [p.name for p in command.params if p.required]

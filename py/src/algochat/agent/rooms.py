@@ -155,6 +155,8 @@ class RoomReply:
     """The exception type name when the handler or the send failed."""
     skipped: str | None = None
     """Why the reply policy kept the bot silent (one of the ``SKIP_*`` values), if it did."""
+    low_funds_notice: str | None = None
+    """The txid of the low-funds notice the bot posted after this reply, if it posted one."""
 
 
 @dataclass
@@ -319,6 +321,20 @@ class RoomTrack:
             opened = self.open_text(tx)
             if opened is not None and is_command_list(opened[0]):
                 found = opened[0]
+        return found
+
+    def last_text_since_join(self, text: str) -> NoteTransaction | None:
+        """The bot's latest message here since it was last added whose text is exactly ``text``."""
+        joined = self.joined_at()
+        found = None
+        for tx in self.own_messages():
+            if joined is not None and _position(tx) <= joined:
+                continue
+            if found is not None and _position(tx) <= _position(found):
+                continue
+            opened = self.open_text(tx)
+            if opened is not None and opened[0] == text:
+                found = tx
         return found
 
     def open_text(self, tx: NoteTransaction) -> tuple[str, int, int] | None:

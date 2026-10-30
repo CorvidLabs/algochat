@@ -11,7 +11,10 @@ to, reads and replies there, and stops when removed or when it leaves
 the room's record holds, never answers another bot, and declares its own
 slash commands (AGENT-8). The MCP server, the CLI (``algochat-agent``) and the
 webhook bridge share one list of commands on top of :class:`AgentCore`
-(AGENT-1.a, AGENT-1.c, AGENT-1.e).
+(AGENT-1.a, AGENT-1.c, AGENT-1.e). The operator funds the bot's wallet,
+which pays its fees; when fewer than about 100 replies' worth remain, the bot
+warns once in the room where that happened, until refilled (AGENT-3,
+AGENT-3.a). The first version sends no payments or tips (AGENT-9).
 """
 
 from .account import AgentAccount, address_from_public_key, mnemonic_to_seed
@@ -24,6 +27,7 @@ from .config import (
 )
 from .core import AgentCore, DirectHandler, RoomHandler
 from .direct import DirectMessage, DirectReply, encode_reply, reply_preview
+from .funds import LOW_FUNDS_NOTICE, LOW_FUNDS_REPLIES, FundsStatus
 from .policy import (
     SKIP_FROM_BOT,
     SKIP_NO_MODE,
@@ -59,6 +63,8 @@ from .webhook import (
 __all__ = [
     "COMMANDS",
     "LEAVE_NOTICE",
+    "LOW_FUNDS_NOTICE",
+    "LOW_FUNDS_REPLIES",
     "MNEMONIC_ENV",
     "MNEMONIC_FILE_ENV",
     "ROOM_ACTIVE",
@@ -84,6 +90,7 @@ __all__ = [
     "DirectHandler",
     "DirectMessage",
     "DirectReply",
+    "FundsStatus",
     "PolicySkip",
     "Room",
     "RoomHandler",

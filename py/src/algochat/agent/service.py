@@ -238,16 +238,29 @@ async def _reply_room(service: AgentService, args: dict[str, Any]) -> Any:
         message = service._room.get(txid)
     if message is None:
         raise CommandError(f"No unanswered room message {txid}")
-    # core.reply_room reads the rooms again and applies the policy on that
-    # fresh record (mode, rate window, bot marks), not the cached message's.
+    # core reads the rooms again and applies the policy on that fresh record
+    # (mode, rate window, bot marks), not the cached message's.
     try:
-        reply_txid = await service.core.reply_room(message, args["text"])
+        reply_txid, notice = await service.core._reply_room_noting_funds(message, args["text"])
     except PolicySkip as skipped:
         raise CommandError(
             f"The room's reply policy keeps the bot silent on this message ({skipped.reason})"
         ) from None
     service._room.pop(txid, None)
-    return {"txid": reply_txid}
+    return {"txid": reply_txid, "low_funds_notice": notice}
+
+
+async def _funds(service: AgentService, _: dict[str, Any]) -> Any:
+    status = await service.core.check_funds()
+    return {
+        "balance": status.balance,
+        "min_balance": status.min_balance,
+        "spendable": status.spendable,
+        "fee_per_reply": status.fee_per_reply,
+        "threshold": status.threshold,
+        "replies_left": status.replies_left,
+        "low": status.low,
+    }
 
 
 async def _declare_commands(service: AgentService, _: dict[str, Any]) -> Any:
@@ -277,7 +290,13 @@ async def _serve(service: AgentService, args: dict[str, Any]) -> Any:
             for r in direct
         ],
         "rooms": [
-            {"txid": r.message.txid, "reply_txid": r.txid, "error": r.error, "skipped": r.skipped}
+            {
+                "txid": r.message.txid,
+                "reply_txid": r.txid,
+                "error": r.error,
+                "skipped": r.skipped,
+                "low_funds_notice": r.low_funds_notice,
+            }
             for r in rooms
         ],
     }
@@ -334,6 +353,12 @@ COMMANDS: tuple[AgentCommand, ...] = (
             Param("mailbox", "string", "The room's mailbox address", required=True),
         ),
         _leave_room,
+    ),
+    AgentCommand(
+        "funds",
+        "Show the bot's balance, what one reply costs and whether fewer than 100 replies' worth of fees remain.",
+        (),
+        _funds,
     ),
     AgentCommand(
         "serve",

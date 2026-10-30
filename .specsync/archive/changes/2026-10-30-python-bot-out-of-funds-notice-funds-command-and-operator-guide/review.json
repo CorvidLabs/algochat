@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-out-of-funds-notice-funds-command-and-operator-guide",
+  "reviewer": "corvid-agent",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "daaf0727fb4a7728cc7ebfb9f5e2b88e3fdacf4b",
+  "contract_digest": "bebd61082e08068a359ac57fa28089925c4940dfeec8d4ca2cd9d4c80f9e5ece",
+  "execution_digest": "8c9c9e88279f9e45ca07117d82581930b8d10fdffe7d1c93278a312fc4a2d275",
+  "workspace_digest": "fbe4cd8109072f4691ab6ed9713d25979c74e64caa0bb1edc0c9acb72c92f06e",
+  "timestamp": 1793326396
+}

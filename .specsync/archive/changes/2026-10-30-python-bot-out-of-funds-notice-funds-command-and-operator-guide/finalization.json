@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "python-bot-out-of-funds-notice-funds-command-and-operator-guide",
+  "implementation_commit": "daaf0727fb4a7728cc7ebfb9f5e2b88e3fdacf4b",
+  "implementation_tree": "9f849387c64238dcbfbe849561fc7bf60ee55245",
+  "contract_digest": "bebd61082e08068a359ac57fa28089925c4940dfeec8d4ca2cd9d4c80f9e5ece",
+  "workspace_digest": "fbe4cd8109072f4691ab6ed9713d25979c74e64caa0bb1edc0c9acb72c92f06e",
+  "closing_digest": "182c762293d25c7208490d7bf280ddf4c962e2160e0ff9185dca81d26d848796",
+  "review_digest": "e5f4f8c637ab551f0e0f158de932c4da68753f682ed2ccf5d6d88acd4c954198",
+  "finalization_digest": "41669297c7905c58cd8902b14cb6da9415d68234abaef49d04c2668b74b726a5",
+  "timestamp": 1793326401
+}
