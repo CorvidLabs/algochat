@@ -1,6 +1,6 @@
 ---
 module: algochat
-version: 7
+version: 8
 status: active
 files:
   - src/algochat/__init__.py
@@ -198,11 +198,13 @@ The `algochat` package exports the client, model, cryptographic, envelope, PSK, 
 | `ENCRYPTION_INFO_PREFIX` | Domain-separates standard message encryption with `AlgoChatV1`. |
 | `SENDER_KEY_INFO_PREFIX` | Domain-separates sender-key wrapping with `AlgoChatV1-SenderKey`. |
 | `build_payment` | Builds the fields of one payment as algod expects them: amount, `payment_fee` for the note, the suggested validity window, genesis id and hash, and both addresses. A note over 4096 bytes or a negative amount raises `TransactionError`. |
-| `sign_payment` | Signs a payment with the sender's 32-byte Ed25519 seed. Canonical msgpack (sorted keys, empty values left out) gives the same transaction id algod computes. A seed that is not the sender's raises `TransactionError`. |
+| `build_asset_create` | Builds an asset create (`acfg` with no asset id) with the given total, decimals, unit name, asset name, URL, manager and note, and no reserve, freeze or clawback. A total below 1, decimals outside 0 to 19, a unit name over 8 bytes, an asset name over 32, a URL over 96 or a note over 1024 raise `TransactionError`. |
+| `build_asset_config` | Builds an asset config on an asset id that keeps the given manager, leaves reserve, freeze and clawback empty and carries the note. An asset id below 1 or a note over 1024 bytes raises `TransactionError`. |
+| `sign_payment` | Signs a payment, or an asset create or config, with the sender's 32-byte Ed25519 seed. Canonical msgpack (sorted keys, empty values left out) gives the same transaction id algod computes. A seed that is not the sender's raises `TransactionError`. |
 | `SignedPayment` | A signed payment: its transaction id, the signed bytes to submit, and its fee. |
 | `send_payment` | Builds, signs, submits and confirms one payment through any `AlgodClient`. A transaction id from algod that differs from the local one raises `TransactionError`. No Algorand SDK is needed. |
-| `HttpAlgodClient` | `AlgodClient` over algod's REST API with the standard library. The operator gives an `http://` or `https://` URL and a token; there is no default endpoint and the token is never in `repr` or errors. Confirmation waits poll the pending endpoint and fail on a pool error or after the given rounds. |
-| `HttpIndexerClient` | `IndexerClient` over the indexer's REST API. Payments with a note, newest first as the indexer lists them. With a `limit` a search returns one page; without one it follows the indexer's next tokens and returns every match after `after_round`. |
+| `HttpAlgodClient` | `AlgodClient` over algod's REST API with the standard library. The operator gives an `http://` or `https://` URL and a token; there is no default endpoint and the token is never in `repr` or errors. Confirmation waits poll the pending endpoint and fail on a pool error or after the given rounds. For asset transactions it also reads a pending transaction (`pending_transaction`), the assets an account created (`account_created_assets`), one holding (`asset_holding`, `None` when not opted in) and an asset's params (`asset_params`, `None` when unknown). |
+| `HttpIndexerClient` | `IndexerClient` over the indexer's REST API. Payments with a note, newest first as the indexer lists them. With a `limit` a search returns one page; without one it follows the indexer's next tokens and returns every match after `after_round`. `account_created_assets` lists the assets an account created, deleted ones included, and `asset_config_history` the asset-config transactions on one asset, both across every page. |
 | `VALIDITY_ROUNDS` | 1000: a payment is valid from the suggested first round for this many rounds. |
 | `INDEXER_PAGE_LIMIT` | 1000: the page size an unlimited indexer search asks for. |
 | `HttpError` | An algod or indexer request that answered with an HTTP error. Carries the status and body, never the token. |
@@ -327,6 +329,7 @@ Then the fees are 1000, 1098, and 1308 microAlgos
 | 2026-10-16 | Raise the AlgoChat note ceiling to 4096 bytes. Standard plaintext max is 3954. PSK plaintext max is 3950. Note fees add the consensus surcharge above 1024 bytes on top of one minimum fee. |
 | 6 | 2026-10-29 | Library payments and HTTP clients so a bot can send by itself: `build_payment`, `sign_payment`, `send_payment`, `SignedPayment`, `HttpAlgodClient`, `HttpIndexerClient`, `HttpError`. `process_transaction` keeps a reply's context (algochat#44). |
 | 7 | 2026-10-29 | `NoteTransaction.intra_round_offset`, read from the indexer, so room messages and records order within a round (algochat#45). |
+| 8 | 2026-10-30 | Asset transactions for the bot's Raven identity NFT: `build_asset_create`, `build_asset_config` (signed by `sign_payment`, fees as `py-algorand-sdk` computes them), and the asset reads on `HttpAlgodClient` and `HttpIndexerClient` (algochat#59). |
 
 ## Corrected Model and Discovery Contracts
 

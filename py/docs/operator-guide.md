@@ -85,7 +85,39 @@ To refill, send Algo to the bot's address again so `spendable` is above
 runs out entirely, sends fail and the bot reports the error for that message
 instead of replying.
 
-## 5. What the bot never does
+## 5. Give the bot its Raven identity
+
+The bot can have its own Raven identity NFT, the same kind a person makes in
+Raven, so Raven shows its picture and name like anyone else's (AGENT-2). You
+make it from the command line or MCP; the bot's own wallet pays and its key
+signs it on this machine:
+
+```bash
+algochat-agent --name helper make-identity --emoji 🦊      # one emoji
+algochat-agent --name helper make-identity --nft 123456    # an NFT the bot's wallet holds
+algochat-agent --name helper identity                      # show it, as Raven reads it
+```
+
+The MCP tools are `make_identity` (`emoji` or `nft`) and `identity`.
+
+- The picture is one emoji or an NFT the bot's wallet holds. There are no
+  custom pictures: a link, text, several emoji, an NFT it does not hold or a
+  token that is not a picture NFT is refused and nothing is sent. To show an
+  NFT, send it to the bot's address first (the bot must opt in to it, which
+  your wallet tool can do with the bot's key on this machine).
+- The public name is the bot's `--name`, cut to 32 bytes. Run without
+  `--name`, it keeps the name already on the identity.
+- A bot has one identity. Running `make-identity` again updates the same
+  asset. With neither `--emoji` nor `--nft` it keeps the picture and refreshes
+  the name.
+- The first time costs the fee plus 0.1 Algo, which the asset keeps locked in
+  the wallet as minimum balance; updates cost only the fee. `funds` already
+  leaves the locked amount out.
+- Having an identity never makes the bot, or anyone, a bot in a room. Only a
+  room's owner or admin does that, when adding it. A bot without one works the
+  same.
+
+## 6. What the bot never does
 
 - It never sends Algo, payments or tips to anyone (AGENT-9).
 - It never sends its key anywhere, and never logs or prints it.

@@ -11,6 +11,8 @@ On October 29, 2026, Leif confirmed that any agent, such as Grok, GPT, Claude or
 
 The room owner or an admin adds a bot, and the bot joins straight away. They mark it as a bot only at that moment, and pick its reply mode and its rate limit for that room. The room's record holds all three, so every member and the bot can check them, and every AlgoChat language reads that record. A flag a person sets on their own identity never makes them a bot, because Leif does not want people posing as bots. A bot is never a room admin. It can be in a room's channels when an admin adds it to each one. Removing a bot is an ordinary removal. The owner or an admin can change a bot's mode and rate limit at any time; the suggested limit is 5 replies per minute. Each bot declares its own slash commands, and the MCP server mirrors every command-line command. Bots never answer other bots. When fewer than about 100 replies' worth of fees remain, a bot warns once, in the room where it reached that level, until its wallet is refilled. Payments and tipping come later.
 
+On October 30, 2026, Leif confirmed AGENT-2.a to AGENT-2.f for the bot's own Raven identity NFT ([algochat#59](https://github.com/CorvidLabs/algochat/issues/59)). Its picture is only ever an NFT its wallet holds or an emoji, never a custom picture.
+
 ## Criteria
 
 - **AGENT-1**  I want any agent to use AlgoChat through an agent module in this library.
@@ -20,6 +22,12 @@ The room owner or an admin adds a bot, and the bot joins straight away. They mar
   - **AGENT-1.d**  In the first version, I host my bot myself as its operator.
   - **AGENT-1.e**  In the first version, the MCP server has a tool for every command-line command.
 - **AGENT-2**  My bot has its own Algorand wallet and its own Raven identity NFT. That identity NFT does not make it a bot.
+  - **AGENT-2.a**  As the operator, I can give my bot its own Raven identity NFT from the command line or MCP, and the bot's own wallet pays for it.
+  - **AGENT-2.b**  It's the same kind of identity NFT a person makes in Raven, so Raven shows it like anyone else's.
+  - **AGENT-2.c**  My bot's picture is an NFT its wallet holds or an emoji. Its public name is its @name. I can change either later without making a second NFT.
+  - **AGENT-2.d**  A bot has only one identity NFT. Asking again updates it instead of making another.
+  - **AGENT-2.e**  Having the NFT never makes an account a bot, and a bot without one still works.
+  - **AGENT-2.f**  The bot's 25 words never leave its machine to make the NFT.
 - **AGENT-3**  As the bot's operator, I fund my bot's wallet, and that wallet pays the bot's fees.
   - **AGENT-3.a**  When fewer than about 100 replies' worth of fees remain in my bot's wallet, it posts a short out-of-funds warning once, in the room where it reached that level, and not again until its wallet is refilled.
 - **AGENT-4**  My bot's 25 words or key live in an environment variable or a local file on the machine that runs it, and are never committed.

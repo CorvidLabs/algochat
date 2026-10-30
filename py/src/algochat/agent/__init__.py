@@ -14,7 +14,11 @@ webhook bridge share one list of commands on top of :class:`AgentCore`
 (AGENT-1.a, AGENT-1.c, AGENT-1.e). The operator funds the bot's wallet,
 which pays its fees; when fewer than about 100 replies' worth remain, the bot
 warns once in the room where that happened, until refilled (AGENT-3,
-AGENT-3.a). The first version sends no payments or tips (AGENT-9).
+AGENT-3.a). The first version sends no payments or tips (AGENT-9). The bot
+can make its own Raven identity NFT, the same kind a person makes in Raven,
+with one emoji or an NFT its wallet holds as the picture and its ``@name`` as
+its public name; asking again updates it, and it never makes the account a
+bot (AGENT-2, AGENT-2.a to AGENT-2.f).
 """
 
 from .account import AgentAccount, address_from_public_key, mnemonic_to_seed
@@ -28,6 +32,7 @@ from .config import (
 from .core import AgentCore, DirectHandler, RoomHandler
 from .direct import DirectMessage, DirectReply, encode_reply, reply_preview
 from .funds import LOW_FUNDS_NOTICE, LOW_FUNDS_REPLIES, FundsStatus
+from .identity import Identity, IdentityError, IdentityPicture, IdentityResult
 from .policy import (
     SKIP_FROM_BOT,
     SKIP_NO_MODE,
@@ -91,6 +96,10 @@ __all__ = [
     "DirectMessage",
     "DirectReply",
     "FundsStatus",
+    "Identity",
+    "IdentityError",
+    "IdentityPicture",
+    "IdentityResult",
     "PolicySkip",
     "Room",
     "RoomHandler",

@@ -1,0 +1,24 @@
+---
+id: python-bot-raven-identity-nft
+state: draft
+type: feature
+base_commit: e0810da99cdf485e19b1645d538040c78de242b0
+---
+
+# Python bot Raven identity NFT
+
+## Intent
+
+Python bot Raven identity NFT
+
+## Affected Canonical Specs
+
+- None
+
+## Acceptance Criteria
+
+- AGENT-2 and AGENT-2.a to AGENT-2.f in hi/agent.md, as scoped by algochat#59: the operator gives the bot its own Raven identity NFT from the command line or MCP and the bot's own wallet pays for it; it is the same 1-of-1 RAVEN asset with Raven's ARC-69 note that a person makes in Raven, so Raven shows it like anyone else's; its picture is one emoji or an NFT the bot's wallet holds (never a custom picture or link) and its public name is the bot's @name, and either can change later without a second NFT; a bot has only one, and asking again updates it; having it never makes an account a bot, and a bot without one still works; the bot's 25 words never leave its machine; on localnet the bot mints with an emoji, switches to a held NFT, an ARC-19 NFT and back, always the same asset, read back the way Raven reads it, a look-alike by another creator is ignored, a link, two emoji and an NFT not held are refused, the holder added to a room as a plain member is not a bot and a bot with no identity answers it, the CLI and MCP make and show it, and no recorded HTTP request carries the mnemonic or seed; encoded transactions match py-algorand-sdk byte for byte; unit tests use public non-secret seeds and an in-memory ledger only.
+
+## No-spec Rationale
+
+The protocol spec and vectors do not change. The identity NFT is an ordinary Algorand asset with Raven's ARC-69 note, outside the AlgoChat message protocol; no message or room bytes change. The Python module specs under py/specs are updated in place.

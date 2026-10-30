@@ -125,6 +125,37 @@ class HttpAlgodClient(AlgodClient):
     async def get_current_round(self) -> int:
         return (await self._get("/v2/status"))["last-round"]
 
+    # Asset reads for the agent's identity NFT (AGENT-2). Raw algod JSON.
+
+    async def pending_transaction(self, txid: str) -> dict[str, Any]:
+        """algod's pending-transaction record, which carries ``asset-index`` for an asset create."""
+        return await self._get(f"/v2/transactions/pending/{urllib.parse.quote(txid)}")
+
+    async def account_created_assets(self, address: str) -> list[dict[str, Any]]:
+        """The assets ``address`` created and has not destroyed, as algod lists them (``index``, ``params``)."""
+        data = await self._get(f"/v2/accounts/{urllib.parse.quote(address)}")
+        return list(data.get("created-assets") or [])
+
+    async def asset_holding(self, address: str, asset_id: int) -> dict[str, Any] | None:
+        """``address``'s holding of ``asset_id`` (``amount``), or None when it has not opted in."""
+        try:
+            data = await self._get(f"/v2/accounts/{urllib.parse.quote(address)}/assets/{int(asset_id)}")
+        except HttpError as error:
+            if error.status == 404:
+                return None
+            raise
+        return data.get("asset-holding")
+
+    async def asset_params(self, asset_id: int) -> dict[str, Any] | None:
+        """The asset's params (``total``, ``decimals``, ``url``, ``reserve`` ...), or None when it does not exist."""
+        try:
+            data = await self._get(f"/v2/assets/{int(asset_id)}")
+        except HttpError as error:
+            if error.status == 404:
+                return None
+            raise
+        return data.get("params")
+
 
 def _note_transaction(tx: dict[str, Any]) -> NoteTransaction | None:
     payment = tx.get("payment-transaction")
@@ -184,6 +215,25 @@ class HttpIndexerClient(IndexerClient):
     ) -> list[NoteTransaction]:
         txs = await self.search_transactions(address1, after_round, limit)
         return [tx for tx in txs if {tx.sender, tx.receiver} == {address1, address2}]
+
+    async def account_created_assets(self, address: str) -> list[dict[str, Any]]:
+        """The assets ``address`` created, as Raven reads them: one page of up to 100."""
+        query = urllib.parse.urlencode({"limit": 100})
+        data = await self._get(f"/v2/accounts/{urllib.parse.quote(address)}/created-assets?{query}")
+        return list(data.get("assets") or [])
+
+    async def asset_config_history(self, asset_id: int) -> list[dict[str, Any]]:
+        """Every asset config of ``asset_id`` (raw indexer JSON), following next tokens."""
+        query: dict[str, Any] = {"asset-id": int(asset_id), "tx-type": "acfg", "limit": INDEXER_PAGE_LIMIT}
+        found: list[dict[str, Any]] = []
+        while True:
+            data = await self._get("/v2/transactions?" + urllib.parse.urlencode(query))
+            batch = data.get("transactions", [])
+            found += batch
+            token = data.get("next-token")
+            if not token or not batch:
+                return found
+            query["next"] = token
 
     async def get_transaction(self, txid: str) -> NoteTransaction:
         data = await self._get(f"/v2/transactions/{urllib.parse.quote(txid)}")
