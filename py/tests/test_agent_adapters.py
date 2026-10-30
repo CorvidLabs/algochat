@@ -62,9 +62,7 @@ def _cli_commands() -> dict[str, set[str]]:
     sub = next(a for a in parser._actions if a.dest == "cmd")
     found = {}
     for name, p in sub.choices.items():
-        found[name] = {
-            a.dest for a in p._actions if a.dest not in ("help", "once", "interval")
-        }
+        found[name] = {a.dest for a in p._actions if a.dest not in ("help", "once", "interval")}
     return found
 
 
@@ -77,9 +75,7 @@ def test_every_cli_command_has_an_mcp_tool_with_the_same_parameters():
     assert len(tools) == len(COMMANDS) == 11
     for tool in tool_list():
         command = next(c for c in COMMANDS if c.tool_name == tool["name"])
-        assert tool["inputSchema"]["required"] == [
-            p.name for p in command.params if p.required
-        ]
+        assert tool["inputSchema"]["required"] == [p.name for p in command.params if p.required]
         assert tool["description"] == command.description
 
 
@@ -97,73 +93,37 @@ async def _mcp(service: AgentService | None = None) -> McpServer:
 async def test_mcp_initialize_list_and_errors():
     server = await _mcp()
     init = await server.handle(
-        {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {"protocolVersion": "2025-03-26"},
-        }
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}}
     )
     assert init["result"]["protocolVersion"] == "2025-03-26"
     assert init["result"]["capabilities"] == {"tools": {"listChanged": False}}
-    newer = await server.handle(
-        {
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "initialize",
-            "params": {"protocolVersion": "1999-01-01"},
-        }
-    )
+    newer = await server.handle({"jsonrpc": "2.0", "id": 2, "method": "initialize", "params": {"protocolVersion": "1999-01-01"}})
     assert newer["result"]["protocolVersion"] == PROTOCOL_VERSIONS[0]
-    assert (
-        await server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"})
-        is None
-    )
-    assert (await server.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"}))[
-        "result"
-    ] == {}
+    assert await server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
+    assert (await server.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"}))["result"] == {}
     listed = await server.handle({"jsonrpc": "2.0", "id": 4, "method": "tools/list"})
-    assert [t["name"] for t in listed["result"]["tools"]] == [
-        c.tool_name for c in COMMANDS
-    ]
-    assert (await server.handle({"jsonrpc": "2.0", "id": 5, "method": "nope"}))[
-        "error"
-    ]["code"] == -32601
-    unknown = await server.handle(
-        {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "rm"}}
-    )
+    assert [t["name"] for t in listed["result"]["tools"]] == [c.tool_name for c in COMMANDS]
+    assert (await server.handle({"jsonrpc": "2.0", "id": 5, "method": "nope"}))["error"]["code"] == -32601
+    unknown = await server.handle({"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "rm"}})
     assert unknown["error"]["code"] == -32602
     assert (await server.handle({"id": 7, "method": "ping"}))["error"]["code"] == -32600
 
 
 async def test_mcp_serves_lines_over_stdio_and_reports_parse_errors():
     server = await _mcp()
-    reader = io.StringIO(
-        '{"jsonrpc":"2.0","id":1,"method":"ping"}\n\nnot json\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
-    )
+    reader = io.StringIO('{"jsonrpc":"2.0","id":1,"method":"ping"}\n\nnot json\n{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
     writer = io.StringIO()
     await server.serve(reader, writer)
     lines = [json.loads(line) for line in writer.getvalue().splitlines()]
     assert lines == [
         {"jsonrpc": "2.0", "id": 1, "result": {}},
-        {
-            "jsonrpc": "2.0",
-            "id": None,
-            "error": {"code": -32700, "message": "Parse error"},
-        },
+        {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}},
     ]
 
 
-async def _call(
-    server: McpServer, name: str, arguments: dict | None = None
-) -> tuple[bool, object]:
+async def _call(server: McpServer, name: str, arguments: dict | None = None) -> tuple[bool, object]:
     answer = await server.handle(
-        {
-            "jsonrpc": "2.0",
-            "id": 9,
-            "method": "tools/call",
-            "params": {"name": name, "arguments": arguments or {}},
-        }
+        {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": name, "arguments": arguments or {}}}
     )
     result = answer["result"]
     text = result["content"][0]["text"]
@@ -182,9 +142,7 @@ async def test_mcp_room_tools_follow_the_rooms_reply_policy():
 
     error, rooms = await _call(server, "rooms")
     assert not error
-    assert [(r["name"], r["status"], r["bot"]) for r in rooms] == [
-        ("team", "active", {"mode": 1, "replies": 1, "seconds": 60})
-    ]
+    assert [(r["name"], r["status"], r["bot"]) for r in rooms] == [("team", "active", {"mode": 1, "replies": 1, "seconds": 60})]
 
     quiet = await room.post(PERSON_SEED, "no mention here")
     asked = await room.post(PERSON_SEED, "@helper hello")
@@ -192,9 +150,7 @@ async def test_mcp_room_tools_follow_the_rooms_reply_policy():
     from_bot = await room.post(OTHER_BOT_SEED, "@helper bot here")
     error, messages = await _call(server, "read_rooms")
     assert not error
-    assert [
-        (m["txid"], m["mentioned"], m["from_bot"], m["skipped"]) for m in messages
-    ] == [
+    assert [(m["txid"], m["mentioned"], m["from_bot"], m["skipped"]) for m in messages] == [
         (quiet.txid, False, False, "not-mentioned"),
         (asked.txid, True, False, None),
         (again.txid, True, False, None),
@@ -202,34 +158,24 @@ async def test_mcp_room_tools_follow_the_rooms_reply_policy():
     ]
     error, text = await _call(server, "reply_room", {"txid": quiet.txid, "text": "hi"})
     assert error and "not-mentioned" in text
-    error, text = await _call(
-        server, "reply_room", {"txid": from_bot.txid, "text": "hi"}
-    )
+    error, text = await _call(server, "reply_room", {"txid": from_bot.txid, "text": "hi"})
     assert error and SKIP_FROM_BOT in text
-    error, sent = await _call(
-        server, "reply_room", {"txid": asked.txid, "text": "hello back"}
-    )
+    error, sent = await _call(server, "reply_room", {"txid": asked.txid, "text": "hello back"})
     assert not error
     assert _read(room, sent["txid"], chain) == "hello back"
     # The limit is 1 per 60 s: the second mention waits.
-    error, text = await _call(
-        server, "reply_room", {"txid": again.txid, "text": "too soon"}
-    )
+    error, text = await _call(server, "reply_room", {"txid": again.txid, "text": "too soon"})
     assert error and "rate-limit" in text
     clock.now += 61
     error, _ = await _call(server, "reply_room", {"txid": again.txid, "text": "now"})
     assert not error
-    error, text = await _call(
-        server, "reply_room", {"txid": again.txid, "text": "twice"}
-    )
+    error, text = await _call(server, "reply_room", {"txid": again.txid, "text": "twice"})
     assert error and "No unanswered room message" in text
     error, text = await _call(server, "reply_room", {"txid": asked.txid})
     assert error and "needs text" in text
     error, text = await _call(server, "reply_room", {"txid": asked.txid, "text": 5})
     assert error and "must be a string" in text
-    error, text = await _call(
-        server, "reply_room", {"txid": asked.txid, "text": "x", "extra": 1}
-    )
+    error, text = await _call(server, "reply_room", {"txid": asked.txid, "text": "x", "extra": 1})
     assert error and "no parameter extra" in text
 
 
@@ -245,10 +191,7 @@ async def test_reply_refuses_a_one_to_one_message_from_a_room_bot():
     robot = await _say(chain, other, OTHER_BOT_SEED, bot.address, "hi from a bot")
     service = AgentService(bot)
     read = await service.run("read")
-    assert [(m["txid"], m["from_bot"]) for m in read] == [
-        (hello.txid, False),
-        (robot.txid, True),
-    ]
+    assert [(m["txid"], m["from_bot"]) for m in read] == [(hello.txid, False), (robot.txid, True)]
     with pytest.raises(CommandError, match="another bot"):
         await service.run("reply", {"txid": robot.txid, "text": "hi"})
     assert (await service.run("reply", {"txid": hello.txid, "text": "hello"}))["txid"]
@@ -297,9 +240,7 @@ async def test_address_and_unknown_commands():
         ("https://0.0.0.0/hook", True, False),
     ],
 )
-def test_readable_text_only_goes_to_this_machine_or_a_secured_https_address(
-    url, secret, ok
-):
+def test_readable_text_only_goes_to_this_machine_or_a_secured_https_address(url, secret, ok):
     if ok:
         assert check_webhook_url(url, secret) == url
     else:
@@ -310,32 +251,12 @@ def test_readable_text_only_goes_to_this_machine_or_a_secured_https_address(
 @pytest.mark.parametrize(
     "url, secret, message",
     [
-        (
-            "http://bots.example.com/hook",
-            SECRET,
-            "Readable text goes over plain http only to this machine",
-        ),
-        (
-            "http://8.8.8.8/hook",
-            SECRET,
-            "Readable text goes over plain http only to this machine",
-        ),
+        ("http://bots.example.com/hook", SECRET, "Readable text goes over plain http only to this machine"),
+        ("http://8.8.8.8/hook", SECRET, "Readable text goes over plain http only to this machine"),
         ("file:///etc/passwd", SECRET, "must be http:// or https:// with a host"),
-        (
-            "https://user:pass@bots.example.com/hook",
-            SECRET,
-            "Put no credentials in the webhook URL",
-        ),
-        (
-            "https://169.254.169.254/",
-            SECRET,
-            "link-local, unspecified or cloud metadata",
-        ),
-        (
-            "https://metadata.google.internal/",
-            SECRET,
-            "link-local, unspecified or cloud metadata",
-        ),
+        ("https://user:pass@bots.example.com/hook", SECRET, "Put no credentials in the webhook URL"),
+        ("https://169.254.169.254/", SECRET, "link-local, unspecified or cloud metadata"),
+        ("https://metadata.google.internal/", SECRET, "link-local, unspecified or cloud metadata"),
         ("https://bots.example.com/hook", None, "needs a shared secret"),
     ],
 )
@@ -352,10 +273,7 @@ def test_a_redirect_is_refused_and_its_target_never_called():
         redirect = Receiver(lambda payload: (302, b"", {"Location": target.url}))
         with redirect as receiver, pytest.raises(WebhookError) as refused:
             WebhookBridge(receiver.url).post({"text": "secret words"})
-    assert (
-        str(refused.value)
-        == "The webhook answered with a redirect, which the bridge does not follow"
-    )
+    assert str(refused.value) == "The webhook answered with a redirect, which the bridge does not follow"
     assert target.received == []
 
 
@@ -364,15 +282,9 @@ def test_signatures_and_timestamps():
     signature = sign(SECRET, 1_800_000_000, body)
     assert signature.startswith("sha256=") and len(signature) == 7 + 64
     assert verify_signature(SECRET, "1800000000", body, signature, now=1_800_000_100)
-    assert not verify_signature(
-        SECRET, "1800000000", body + b" ", signature, now=1_800_000_100
-    )
-    assert not verify_signature(
-        SECRET + "x", "1800000000", body, signature, now=1_800_000_100
-    )
-    assert not verify_signature(
-        SECRET, "1800000000", body, signature, now=1_800_000_301
-    )
+    assert not verify_signature(SECRET, "1800000000", body + b" ", signature, now=1_800_000_100)
+    assert not verify_signature(SECRET + "x", "1800000000", body, signature, now=1_800_000_100)
+    assert not verify_signature(SECRET, "1800000000", body, signature, now=1_800_000_301)
     assert not verify_signature(SECRET, "soon", body, signature, now=1_800_000_000)
     assert not verify_signature(SECRET, "1800000000", body, "", now=1_800_000_000)
 
@@ -385,12 +297,7 @@ def test_the_secret_comes_from_one_place_and_is_long_enough(tmp_path):
     path.chmod(0o600)
     assert load_webhook_secret({"ALGOCHAT_WEBHOOK_SECRET_FILE": str(path)}) == SECRET
     with pytest.raises(AgentConfigError, match="only one"):
-        load_webhook_secret(
-            {
-                "ALGOCHAT_WEBHOOK_SECRET": SECRET,
-                "ALGOCHAT_WEBHOOK_SECRET_FILE": str(path),
-            }
-        )
+        load_webhook_secret({"ALGOCHAT_WEBHOOK_SECRET": SECRET, "ALGOCHAT_WEBHOOK_SECRET_FILE": str(path)})
     with pytest.raises(AgentConfigError, match="at least 32") as caught:
         load_webhook_secret({"ALGOCHAT_WEBHOOK_SECRET": "short-secret"})
     assert "short-secret" not in str(caught.value)
@@ -409,9 +316,7 @@ def test_the_bridge_signs_requests_and_reads_replies(monkeypatch):
         assert bridge.post({"type": "direct", "text": "ping"}) == "heard: ping"
         assert receiver.bad_signatures == 0
         sent = {k.lower(): v for k, v in receiver.headers[0].items()}
-        assert sent[TIMESTAMP_HEADER.lower()] and sent[
-            SIGNATURE_HEADER.lower()
-        ].startswith("sha256=")
+        assert sent[TIMESTAMP_HEADER.lower()] and sent[SIGNATURE_HEADER.lower()].startswith("sha256=")
         # A bridge with the wrong secret is refused by the receiver.
         with pytest.raises(WebhookError, match="HTTP 401"):
             WebhookBridge(receiver.url, SECRET[::-1]).post({"text": "x"})
@@ -448,12 +353,7 @@ def test_https_checks_the_certificate(tmp_path):
     cert, key = self_signed(tmp_path)
     with Receiver(secret=SECRET, tls=(cert, key)) as receiver:
         trusted = ssl.create_default_context(cafile=str(cert))
-        assert (
-            WebhookBridge(receiver.url, SECRET, ssl_context=trusted).post(
-                {"text": "tls"}
-            )
-            == "heard: tls"
-        )
+        assert WebhookBridge(receiver.url, SECRET, ssl_context=trusted).post({"text": "tls"}) == "heard: tls"
         with pytest.raises(WebhookError, match="could not be reached"):
             WebhookBridge(receiver.url, SECRET).post({"text": "untrusted"})
         loose = ssl.create_default_context()
@@ -489,16 +389,9 @@ async def test_serve_sends_only_what_the_policy_allows_to_the_webhook():
             ("room", "@helper weather?"),
         ]
         room_payload = receiver.received[1]
-        assert (
-            room_payload["mentioned"] is True
-            and room_payload["mailbox"] == room.mailbox_address
-        )
+        assert room_payload["mentioned"] is True and room_payload["mailbox"] == room.mailbox_address
         assert [r["skipped"] for r in served["direct"]] == [None, SKIP_FROM_BOT]
-        assert [r["skipped"] for r in served["rooms"]] == [
-            "not-mentioned",
-            None,
-            SKIP_FROM_BOT,
-        ]
+        assert [r["skipped"] for r in served["rooms"]] == ["not-mentioned", None, SKIP_FROM_BOT]
         reply = next(r for r in served["rooms"] if r["txid"] == asked.txid)
         assert _read(room, reply["reply_txid"], chain) == "heard: @helper weather?"
         assert receiver.bad_signatures == 0
@@ -558,12 +451,7 @@ async def test_a_long_lived_service_reads_the_rooms_again_before_replying():
     said = await room.post(PERSON_SEED, "plain words")
     [read] = await service.run("read-rooms")
     assert read["txid"] == said.txid and read["skipped"] is None
-    await room.admin(
-        OWNER_SEED,
-        OP_SET_BOT,
-        subject=public_key(BOT_SEED),
-        bot=BotSettings(BOT_MODE_COMMANDS, 5, 60),
-    )
+    await room.admin(OWNER_SEED, OP_SET_BOT, subject=public_key(BOT_SEED), bot=BotSettings(BOT_MODE_COMMANDS, 5, 60))
     with pytest.raises(CommandError, match="not-a-command"):
         await service.run("reply-room", {"txid": said.txid, "text": "too late"})
     # One-to-one: the sender is marked as a bot after the message was read.
@@ -572,12 +460,7 @@ async def test_a_long_lived_service_reads_the_rooms_again_before_replying():
     hello = await _say(chain, stranger, stranger_seed, bot.address, "hi")
     [direct] = await service.run("read")
     assert direct["txid"] == hello.txid and not direct["from_bot"]
-    await room.admin(
-        OWNER_SEED,
-        OP_ADD_BOT,
-        subject=public_key(stranger_seed),
-        bot=BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60),
-    )
+    await room.admin(OWNER_SEED, OP_ADD_BOT, subject=public_key(stranger_seed), bot=BotSettings(BOT_MODE_EVERY_MESSAGE, 5, 60))
     before = len(chain.txs)
     with pytest.raises(CommandError, match="another bot"):
         await service.run("reply", {"txid": hello.txid, "text": "hello"})
