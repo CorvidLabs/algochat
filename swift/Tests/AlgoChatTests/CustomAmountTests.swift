@@ -437,7 +437,7 @@ struct CustomAmountIntegrationTests {
         print("   ✅ Keys published")
 
         // Wait for indexer
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: alice.address, algokit: algokit)
         try await waitForTransaction(from: bob.address, algokit: algokit)
 
@@ -491,7 +491,7 @@ struct CustomAmountIntegrationTests {
         _ = try await aliceChat.publishKeyAndWait()
         _ = try await bobChat.publishKeyAndWait()
 
-        let algokit = AlgoKit(configuration: .localnet())
+        let algokit = try AlgoKit(configuration: .localnet())
         try await waitForTransaction(from: alice.address, algokit: algokit)
         try await waitForTransaction(from: bob.address, algokit: algokit)
 
