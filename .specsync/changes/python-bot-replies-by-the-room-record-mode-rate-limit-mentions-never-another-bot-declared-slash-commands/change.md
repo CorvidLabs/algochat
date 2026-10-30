@@ -1,6 +1,6 @@
 ---
 id: python-bot-replies-by-the-room-record-mode-rate-limit-mentions-never-another-bot-declared-slash-commands
-state: draft
+state: implementing
 type: feature
 base_commit: e32b4671829c9d82d32271392b44feda973b5716
 ---
