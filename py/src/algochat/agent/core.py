@@ -5,7 +5,10 @@ One object per bot. It owns the bot's own account and an :class:`AlgoChat`
 client bound to it. The operator supplies the algod and indexer clients, so
 the bot runs wherever the operator hosts it; nothing here calls a hosted
 service. The core reads one-to-one messages sent to the bot and replies to
-them from the bot's own account (AGENT-5). It joins the rooms and channels
+them from the bot's own account (AGENT-5). One-to-one messages are hybrid
+only: a ``0x04`` handshake, then ``0x05`` messages. The bot never sends an
+everyday ``0x01`` or extra-lock ``0x02`` note and does not read one sent to
+it (algochat#63). It joins the rooms and channels
 an owner or admin adds it to, reads and replies there, and stops when it is
 removed or leaves (AGENT-6, AGENT-7). In each room it follows the reply
 mode and rate limit in the room's record, never answers another bot, and
@@ -37,6 +40,7 @@ from ..group_admin import (
     room_bot,
     sender_may_post,
 )
+from ..hybrid_direct import HybridDirect, is_hybrid_direct_note, require_hybrid_note
 from ..keys import derive_keys_from_seed
 from ..models import MessageDirection
 from ..pq import (
@@ -142,6 +146,10 @@ class AgentCore:
         self._chain_anchor: tuple[float, float] | None = None
         self._account = account
         self._chat = chat
+        self._kem: MLKEMKeyPair | None = None
+        if chat._hybrid is None:
+            private, public = derive_keys_from_seed(account.seed)
+            chat._hybrid = HybridDirect(account.address, private, public, self._kem_keys())
         self._algod: AlgodClient | None = None
         self._indexer: IndexerClient | None = None
         self._cursor: int | None = None
@@ -152,7 +160,6 @@ class AgentCore:
         self._pending: list[KeyDelivery] = []
         self._inbox_cursor: int | None = None
         self._inbox_seen: set[str] = set()
-        self._kem: MLKEMKeyPair | None = None
         self._low_funds_warned: bool | None = None
         """Whether the bot already posted its low-funds notice; None until it looked."""
 
@@ -267,6 +274,24 @@ class AgentCore:
             )
         return self._algod, self._indexer
 
+    async def _pay_direct(self, receiver: str, notes: list[bytes]) -> str:
+        """Pays for hybrid one-to-one notes in order. Returns the last (``0x05``) txid.
+
+        Every note is checked to be ``0x04`` or ``0x05`` before anything is
+        paid, so no ``0x01`` or ``0x02`` note can leave the bot (algochat#63).
+        """
+        checked = [require_hybrid_note(note) for note in notes]
+        txid = ""
+        for index, note in enumerate(checked):
+            try:
+                txid = await self._pay(receiver, note)
+            except Exception:
+                if index == 0 and len(checked) > 1:
+                    # The handshake did not go out; open a new session next time.
+                    self._chat.hybrid.forget(receiver)
+                raise
+        return txid
+
     async def _pay(self, receiver: str, note: bytes) -> str:
         algod, _ = self._clients()
         info = await send_payment(
@@ -349,19 +374,21 @@ class AgentCore:
         return await self._pay(self.address, key + signature)
 
     async def send_direct(self, address: str, text: str) -> str:
-        """Sends ``text`` to ``address`` as a one-to-one message. Returns the txid.
+        """Sends ``text`` to ``address`` as a hybrid one-to-one message. Returns the ``0x05`` txid.
 
-        Reads the bot's rooms first and refuses with :class:`PolicySkip` when
-        any of them marks ``address`` as a bot (AGENT-8.c), before paying.
+        The first message to ``address`` pays for a ``0x04`` handshake too;
+        later ones reuse the session. Reads the bot's rooms first and refuses
+        with :class:`PolicySkip` when any of them marks ``address`` as a bot
+        (AGENT-8.c), before paying. Refuses with
+        :class:`~algochat.hybrid_direct.HybridKeyNotFoundError`, paying
+        nothing, when ``address`` has not published an X25519 key and a
+        signed ML-KEM-768 key; it never falls back to a classical note.
         """
         if address == self.address:
             raise ValueError("The bot does not message itself")
         await self._refuse_bot(address, SKIP_TO_BOT)
-        key = await self._chat.discover_key(address)
-        if key is None:
-            raise LookupError(f"{address} has not published an encryption key")
-        self._chat._ensure_key_usable(address, key)
-        return await self._pay(address, self._chat.encrypt(text, key.public_key))
+        notes = await self._chat.encrypt_hybrid(text, address)
+        return await self._pay_direct(address, notes)
 
     async def _refuse_bot(self, address: str, reason: str) -> None:
         await self.sync_rooms()
@@ -378,14 +405,10 @@ class AgentCore:
         return await self._reply(message, text)
 
     async def _reply(self, message: DirectMessage, text: str) -> str:
-        key = await self._chat.discover_key(message.sender)
-        if key is None:
-            raise LookupError(f"{message.sender} has not published an encryption key")
-        self._chat._ensure_key_usable(message.sender, key)
-        note = self._chat.encrypt(
-            encode_reply(text, message.txid, message.text), key.public_key
+        notes = await self._chat.encrypt_hybrid(
+            encode_reply(text, message.txid, message.text), message.sender
         )
-        txid = await self._pay(message.sender, note)
+        txid = await self._pay_direct(message.sender, notes)
         self._answered.add(message.txid)
         try:
             # A direct reply spends too; a refill seen here resets the notice.
@@ -396,7 +419,16 @@ class AgentCore:
         return txid
 
     async def _open(self, tx: NoteTransaction) -> DirectMessage | None:
-        """Decrypts one transaction. Records the bot's own replies as answered."""
+        """Decrypts one hybrid transaction. Records the bot's own replies as answered.
+
+        Only ``0x04`` handshakes and ``0x05`` messages are read. An everyday
+        ``0x01`` or extra-lock ``0x02`` note is rejected and never read
+        (algochat#63, AC4).
+        """
+        if not is_hybrid_direct_note(bytes(tx.note or b"")):
+            if tx.note and tx.receiver == self.address and tx.sender != self.address:
+                _LOG.debug("rejected %s: not a hybrid 0x04 or 0x05 note", tx.txid)
+            return None
         try:
             message = await self._chat.process_transaction(tx)
         except Exception as error:  # noqa: BLE001 - an unreadable note must not stop the bot
@@ -430,13 +462,14 @@ class AgentCore:
         """
         _, indexer = self._clients()
         # No limit: the client returns every match after the cursor (HttpIndexerClient
-        # follows the indexer's next tokens). Indexers list newest first, so sort here.
+        # follows the indexer's next tokens). Indexers list newest first, so sort here,
+        # in chain order, so a handshake opens before the 0x05 notes that use it.
         found = await indexer.search_transactions(
             self.address, after_round=self._cursor, limit=None
         )
         self._saw(found)
         received: list[DirectMessage] = []
-        for tx in sorted(found, key=lambda item: item.confirmed_round):
+        for tx in sorted(found, key=_chain_order):
             if tx.txid in self._seen:
                 continue
             self._seen.add(tx.txid)

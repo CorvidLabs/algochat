@@ -13,4 +13,4 @@ The note is a private memo on a public payment. Only the two of us can read it, 
 
 - **ENCRYPT-1**  Only the sender and recipient can read a message.
   - **ENCRYPT-1.a**  If someone tampers with the bytes, decryption fails closed and never leaks plaintext.
-- **ENCRYPT-2**  When we both have a post-quantum key, a message stays private even if X25519 is later broken, and a person without that key still gets a classical message.
+- **ENCRYPT-2**  When we both have a post-quantum key, a message stays private even if X25519 is later broken. A person without that key gets no message from me until they publish one, never a classical one.

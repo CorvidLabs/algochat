@@ -10,6 +10,7 @@ import hashlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from .envelope import decode_envelope, is_chat_message
 from .models import DiscoveredKey
 from .signature import verify_encryption_key_bytes
 
@@ -249,39 +250,83 @@ class IndexerClient(ABC):
 async def discover_encryption_key(
     indexer: IndexerClient,
     address: str,
+    search_depth: int | None = None,
 ) -> DiscoveredKey | None:
     """
-    Discovers the encryption public key for an Algorand address.
+    Discovers the X25519 encryption public key for an Algorand address.
 
-    This searches the indexer for key announcement transactions from the address.
-    The key is considered verified if it was signed by the address's Ed25519 key.
+    Matches the TypeScript library (``AlgorandService.paginatedKeyDiscovery``)
+    exactly (algochat#63):
+
+    - Only notes the address itself sent are read, in the order the indexer
+      returns them.
+    - A self-payment note of exactly 32 or 96 bytes is a key announcement.
+      The first 96-byte announcement whose Ed25519 signature verifies wins.
+      A 96-byte announcement whose signature fails is skipped entirely. A
+      32-byte announcement is an unverified trust-on-first-use candidate.
+    - Any other self-note (an ``ACPQ`` key, a PSK ``0x02`` note, a room note)
+      is never read as an X25519 key.
+    - Otherwise the sender key in the header of the account's own ``0x01``
+      chat envelopes (to anyone) is an unverified candidate.
+
+    The first candidate seen is returned when no verified announcement is
+    found. ``search_depth`` limits how many of the address's transactions
+    are searched; ``None`` searches all of them, as TypeScript does by default.
     """
-    # Search for transactions from this address
-    transactions = await indexer.search_transactions(address, limit=100)
+    transactions = await indexer.search_transactions(address, limit=search_depth)
+    tofu_candidate: DiscoveredKey | None = None
 
-    # Look for key announcements in the note field
     for tx in transactions:
         if tx.sender != address:
             continue
-
-        # Check if this is a key announcement (self-transfer with note)
-        if tx.receiver != address:
+        note = bytes(tx.note or b"")
+        if not note:
             continue
 
-        # Try to parse as key announcement
-        key = _parse_key_announcement(tx.note, address)
-        if key is not None:
-            return key
+        if tx.receiver == address and len(note) in (_ANNOUNCEMENT_SIZE, _SIGNED_ANNOUNCEMENT_SIZE):
+            announced = _parse_key_announcement(note, address)
+            if announced is not None and announced.is_verified:
+                return announced
+            if len(note) == _SIGNED_ANNOUNCEMENT_SIZE:
+                # A signed announcement whose signature fails is rejected (KEYS-4.b).
+                continue
+            if announced is not None and tofu_candidate is None:
+                tofu_candidate = announced
+            continue
 
-    return None
+        header_key = _envelope_sender_key(note)
+        if header_key is not None and tofu_candidate is None:
+            tofu_candidate = DiscoveredKey(public_key=header_key, is_verified=False)
+
+    return tofu_candidate
+
+
+_ANNOUNCEMENT_SIZE = 32
+_SIGNED_ANNOUNCEMENT_SIZE = 96
+
+
+def _envelope_sender_key(note: bytes) -> bytes | None:
+    """The sender X25519 key in the header of a ``0x01`` chat envelope, as TS reads it.
+
+    Only protocol ``0x01`` envelopes count, as in TypeScript's ``isChatMessage``
+    and ``decodeEnvelope``. Leif chose to match TypeScript exactly (algochat#63,
+    Q2): the X25519 key in ``0x04`` and ``0x05`` headers is not used here.
+    """
+    if not is_chat_message(note):
+        return None
+    try:
+        return bytes(decode_envelope(note).sender_public_key)
+    except Exception:  # noqa: BLE001 - a malformed envelope is skipped, as in TS
+        return None
 
 
 def _parse_key_announcement(note: bytes, address: str) -> DiscoveredKey | None:
-    """Parses a key announcement from a transaction note."""
-    # Key announcement format:
-    # - 32 bytes: X25519 public key
-    # - 64 bytes (optional): Ed25519 signature
+    """Parses a key announcement, as TypeScript's ``parseKeyAnnouncement`` does.
 
+    Format: 32 bytes of X25519 public key, then an optional 64-byte Ed25519
+    signature. A note that carries a signature is verified or rejected: a
+    present but invalid signature never falls through as an unverified key.
+    """
     if len(note) < 32:
         return None
 
@@ -289,17 +334,17 @@ def _parse_key_announcement(note: bytes, address: str) -> DiscoveredKey | None:
     if note[0:4] == b"ACPQ":
         return None
 
-    public_key = note[:32]
+    public_key = bytes(note[:32])
 
-    is_verified = False
     if len(note) >= 96:
-        # Has signature, verify it
-        signature = note[32:96]
+        signature = bytes(note[32:96])
         try:
-            # Decode the Algorand address to get the Ed25519 public key
             ed25519_public_key = _decode_algorand_address(address)
-            is_verified = verify_encryption_key_bytes(public_key, ed25519_public_key, signature)
-        except ValueError:
-            is_verified = False
+            verified = verify_encryption_key_bytes(public_key, ed25519_public_key, signature)
+        except Exception:  # noqa: BLE001 - any failure to verify is a rejection
+            return None
+        if not verified:
+            return None
+        return DiscoveredKey(public_key=public_key, is_verified=True)
 
-    return DiscoveredKey(public_key=public_key, is_verified=is_verified)
+    return DiscoveredKey(public_key=public_key, is_verified=False)

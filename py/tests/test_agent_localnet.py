@@ -93,6 +93,10 @@ async def _publish_key(core: AgentCore) -> None:
     txid = await core.publish_key()
     assert txid is not None
     await LocalnetIndexer().wait_for_indexer(txid, 30)
+    # One-to-one messages are hybrid only (algochat#63): publish the ML-KEM-768 key too.
+    pq_txid = await core.publish_pq_key()
+    assert pq_txid is not None
+    await LocalnetIndexer().wait_for_indexer(pq_txid, 30)
 
 
 async def _sync_until(chat: AlgoChat, indexer: LocalnetIndexer, txid: str):

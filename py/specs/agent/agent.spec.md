@@ -1,6 +1,6 @@
 ---
 module: agent
-version: 7
+version: 8
 status: active
 files:
   - src/algochat/agent/__init__.py
@@ -91,9 +91,9 @@ Give any agent one shared Python core for a self-hosted AlgoChat bot (AGENT-1, A
 `AgentCore` methods for one-to-one messages (AGENT-5):
 
 - `publish_key`: Publishes the bot's X25519 key signed by its account (a self-payment). Skips and returns `None` when the same verified key is already on chain, unless `force`.
-- `send_direct`: Sends a one-to-one message to an address that has a usable published key. Reads the bot's rooms first and raises `PolicySkip` (`SKIP_TO_BOT`) before paying when any of them marks the address as a bot. Returns the transaction id.
-- `read_direct`: Returns one-to-one messages to the bot it has not answered, oldest first, each once per core. Reads every indexer page after its cursor.
-- `reply`: Answers a `DirectMessage` with a section 9.2 reply (`{"text","replyTo":{"txid","preview"}}`) and marks it answered. Reads the bot's rooms first and raises `PolicySkip` (`SKIP_FROM_BOT`) before paying when any of them marks the sender as a bot.
+- `send_direct`: Sends a hybrid one-to-one message to an address that has published a usable X25519 key and a signed ML-KEM-768 key: a `0x04` handshake the first time, then `0x05` messages under that session (AGENT-5.a). A restarted core finds its newest handshake to the address on chain and reuses it. Reads the bot's rooms first and raises `PolicySkip` (`SKIP_TO_BOT`) before paying when any of them marks the address as a bot. Raises `HybridKeyNotFoundError` before paying when either key is missing, and never sends `0x01` or `0x02` (AGENT-5.b). Returns the `0x05` transaction id.
+- `read_direct`: Returns hybrid one-to-one messages to the bot it has not answered, oldest first in chain order, each once per core. Reads every indexer page after its cursor. A `0x05` opens only under a session from a `0x04` the same account paid for (AGENT-5.c). `0x01` and `0x02` notes are rejected and never read or answered (AGENT-5.d).
+- `reply`: Answers a `DirectMessage` with a section 9.2 reply (`{"text","replyTo":{"txid","preview"}}`) in a hybrid `0x05` message, as `send_direct` sends, and marks it answered. Reads the bot's rooms first and raises `PolicySkip` (`SKIP_FROM_BOT`) before paying when any of them marks the sender as a bot.
 - `serve_direct`: Reads new messages and replies with a sync or async handler's text. `None` or empty sends nothing. A failing handler or send is reported by error type and not retried. A sender marked as a bot in any of the bot's rooms is not answered (`skipped` is `SKIP_FROM_BOT`); when there are new messages it reads its rooms first, so a fresh core knows the marks. Returns one `DirectReply` per message.
 
 `AgentCore` methods for rooms and channels (AGENT-6, AGENT-7):
@@ -267,6 +267,8 @@ Module internals used by the adapters and not exported from `algochat.agent`:
 37. Holding an identity changes nothing about who is a bot: rooms mark bots only by their own record, the note carries no bot flag, and every other part of the core works the same with or without one (AGENT-2.e).
 38. The identity is signed on the bot's machine with the key from the env var or local file; no request carries the mnemonic or the seed (AGENT-2.f, AGENT-4).
 39. The minimum balance the identity locks is not spendable, so the low-funds check, which counts only the balance above the minimum balance, already leaves it out.
+40. Every one-to-one note the bot pays for is a hybrid `0x04` handshake or `0x05` message; `_pay_direct` checks every note before paying any (AGENT-5.a, algochat#63). When the handshake payment fails, the session is dropped so the next send opens a new one.
+41. The bot reads only `0x04` and `0x05` one-to-one notes and rejects `0x01` and `0x02` (AGENT-5.d). Its own `0x05` replies, opened with the sender wrap of its own handshake, mark the messages they cite as answered, so a restart does not answer twice.
 
 ## Behavioral Examples
 
@@ -351,7 +353,9 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | Mismatched account | `AgentAccount` fields do not come from its seed | Raise `AgentConfigError` |
 | Wrong client | `AgentCore` gets an `AlgoChat` client for another address | Raise `ValueError` |
 | No clients | A core built without `create` reads or sends | Raise `RuntimeError` naming `AgentCore.create` |
-| No key | `send_direct` or `reply` to an address without a published key | Raise `LookupError` |
+| No hybrid key | `send_direct` or `reply` to an address without a published X25519 key or a signed ML-KEM-768 key | Raise `HybridKeyNotFoundError` (a `LookupError`); nothing is paid, no classical note is sent |
+| Classical note | A one-to-one note that is not `0x02 0x04` or `0x02 0x05` reaches the payment step | Raise `ClassicalSendRefusedError`; nothing is paid |
+| Classical message to the bot | A `0x01` or `0x02` note sent to the bot | Rejected and not read; no answer |
 | Self | `send_direct` to the bot's own address | Raise `ValueError` |
 | Handler failure | A `serve_direct` handler or send raises | Record the error type in `DirectReply.error`, mark answered, go on |
 | Unknown room | `send_room`, `reply_room` or `leave_room` for a room the bot was never added to | Raise `LookupError` |
@@ -390,4 +394,5 @@ Then check_webhook_url refuses it: readable text goes over plain http only to th
 | 4 | 2026-10-29 | Reply policy from the room record: mode, rate limit, mentions, never another bot, declared slash commands (algochat#46, AGENT-8). |
 | 6 | 2026-10-29 | Out-of-funds notice: the operator funds the wallet, the bot warns once in the room where fewer than about 100 replies' worth of fees remain, until refilled; the `funds` command; no payments or tips; operator guide (algochat#48, AGENT-1.d, AGENT-3, AGENT-3.a, AGENT-4, AGENT-9). |
 | 7 | 2026-10-30 | The bot's own Raven identity NFT: `identity` and `make-identity` on the CLI and MCP; one 1-of-1 `RAVEN` asset per bot, paid by its wallet and signed on its machine; an emoji or a held NFT as the picture and the `@name` as its name; asking again updates it; a look-alike is ignored and it never makes an account a bot (algochat#59, AGENT-2, AGENT-2.a to AGENT-2.f). |
+| 8 | 2026-10-30 | One-to-one messages are hybrid only: `0x04` then `0x05`, never `0x01` or `0x02`; refuse without both keys; read only `0x04` and `0x05`, reject `0x01` and `0x02`; sessions reused and recovered from the chain (algochat#63, AGENT-5.a to AGENT-5.d). |
 | 5 | 2026-10-29 | MCP server, command-line tool and webhook bridge on the shared core; an MCP tool for every CLI command; webhook text only to this machine or authenticated HTTPS (algochat#47, AGENT-1.a, AGENT-1.c, AGENT-1.e). |

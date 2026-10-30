@@ -13,6 +13,8 @@ The room owner or an admin adds a bot, and the bot joins straight away. They mar
 
 On October 30, 2026, Leif confirmed AGENT-2.a to AGENT-2.f for the bot's own Raven identity NFT ([algochat#59](https://github.com/CorvidLabs/algochat/issues/59)). Its picture is only ever an NFT its wallet holds or an emoji, never a custom picture.
 
+On October 30, 2026, Leif confirmed AGENT-5.a to AGENT-5.d: my bot's one-to-one messages are hybrid only, it refuses rather than falls back to classical, and it reads only hybrid messages ([algochat#63](https://github.com/CorvidLabs/algochat/issues/63)). On rejecting everyday and extra-lock messages sent to it, his words were "Ac4: yes". On the rule behind them: "Just fix this and use the standard omg".
+
 ## Criteria
 
 - **AGENT-1**  I want any agent to use AlgoChat through an agent module in this library.
@@ -32,6 +34,10 @@ On October 30, 2026, Leif confirmed AGENT-2.a to AGENT-2.f for the bot's own Rav
   - **AGENT-3.a**  When fewer than about 100 replies' worth of fees remain in my bot's wallet, it posts a short out-of-funds warning once, in the room where it reached that level, and not again until its wallet is refilled.
 - **AGENT-4**  My bot's 25 words or key live in an environment variable or a local file on the machine that runs it, and are never committed.
 - **AGENT-5**  My bot can read one-to-one messages sent to it and reply to them.
+  - **AGENT-5.a**  My bot sends one-to-one messages only as a hybrid session, a handshake and then hybrid messages, and never as an everyday or extra-lock note.
+  - **AGENT-5.b**  If the other person has not published the keys a hybrid session needs, my bot refuses to send with a clear error and never falls back to classical.
+  - **AGENT-5.c**  My bot reads the hybrid one-to-one messages sent to it.
+  - **AGENT-5.d**  My bot rejects everyday and extra-lock one-to-one messages sent to it, and does not read them.
 - **AGENT-6**  My bot can read and reply in a group it is in.
 - **AGENT-7**  My bot can join a room and leave it.
   - **AGENT-7.a**  My bot is added to a room only by the room's owner or an admin, who marks it as a bot in that room when adding it.

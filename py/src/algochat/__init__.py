@@ -52,6 +52,13 @@ from .group_admin import (
     sender_may_post,
 )
 from .http_clients import HttpAlgodClient, HttpError, HttpIndexerClient
+from .hybrid_direct import (
+    ClassicalSendRefusedError,
+    HybridDirect,
+    HybridKeyNotFoundError,
+    HybridPeerKeys,
+    discover_pq_encaps_key,
+)
 from .keys import derive_keys_from_seed, generate_ephemeral_keypair
 from .models import (
     Conversation,
@@ -179,7 +186,7 @@ from .types import (
     payment_fee,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.6.0"
 
 __all__ = [
     # Payments and HTTP clients
@@ -305,6 +312,12 @@ __all__ = [
     # PSK Ratchet
     "derive_session_psk",
     "discover_encryption_key",
+    # Hybrid one-to-one messages (algochat#63)
+    "ClassicalSendRefusedError",
+    "HybridDirect",
+    "HybridKeyNotFoundError",
+    "HybridPeerKeys",
+    "discover_pq_encaps_key",
     "encapsulate",
     # Envelope
     "encode_envelope",

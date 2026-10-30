@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/py.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/py.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
-[![Source version](https://img.shields.io/badge/source-0.5.0-blue)](pyproject.toml)
+[![Source version](https://img.shields.io/badge/source-0.6.0-blue)](pyproject.toml)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -12,13 +12,13 @@ Python implementation of the AlgoChat protocol for encrypted messaging on Algora
 
 ## Version and requirements
 
-- Package: `py-algochat` **0.5.0**, implementing protocol **1.6.0**.
+- Package: `py-algochat` **0.6.0**, implementing protocol **1.6.0**, in AlgoChat release **1.6.1**. One-to-one messages are hybrid only: a `0x04` handshake, then `0x05`. It never sends `0x01` or `0x02`.
 - [Declared runtime](pyproject.toml): Python **3.10+**.
 - Qualification is configured for **Python 3.12**; Python 3.10 remains unqualified. The repository's qualification scripts separately require Python **3.11+**. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Installation
 
-The source version is **0.5.0**. PyPI publication requires separate release authorization and publisher configuration; a root protocol tag does not automatically publish this library. Install from the monorepo source:
+The source version is **0.6.0**. PyPI publication requires separate release authorization and publisher configuration; a root protocol tag does not automatically publish this library. Install from the monorepo source:
 
 ```bash
 pip install "git+https://github.com/CorvidLabs/algochat.git#subdirectory=py"
@@ -27,7 +27,7 @@ pip install "git+https://github.com/CorvidLabs/algochat.git#subdirectory=py"
 Once published, install from PyPI:
 
 ```bash
-pip install py-algochat==0.5.0
+pip install py-algochat==0.6.0
 ```
 
 ## Usage

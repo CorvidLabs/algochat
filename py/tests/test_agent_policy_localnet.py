@@ -120,8 +120,11 @@ async def test_bot_follows_the_room_record_across_every_language(tmp_path):
         bot = await _core(bot_account, harness, name="helper", commands=COMMANDS)
         other_bot = await _core(other_bot_account, harness, name="other")
         person = await _core(member, harness, name="member")
+        # One-to-one messages are hybrid only (AGENT-5.a, AGENT-5.b), so everyone publishes
+        # an X25519 key and a signed ML-KEM-768 key before anyone writes one.
         for core in (bot, other_bot, person):
             await harness.indexer.wait_for_indexer(await core.publish_key(), 30)
+            await harness.indexer.wait_for_indexer(await core.publish_pq_key(), 30)
 
         # 1. A room with an admin, another bot, and our bot in mentions mode: 2 replies per 60 s.
         # A wide window, counted in chain time, so a slow indexer or slow tools cannot open it early.
