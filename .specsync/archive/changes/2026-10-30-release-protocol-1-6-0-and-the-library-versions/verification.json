@@ -1,0 +1,175 @@
+{
+  "timestamp": 1793374463,
+  "commit": "78d57f66ee568ee4db3a8f60be69f512d3a8f0e3",
+  "contract_digest": "7de5ebc7652f20d107fb5675e870175dce4880d35e68e3d8d3aa4ccced9e2301",
+  "execution_digest": "cfe9018643a107fc762774e39324c68881a08c679df498a9d20643aef4711222",
+  "workspace_digest": "7ca4776b196c772b522b5f3f58e7bc8ca32e42b40ae04a8dc259770953ece082",
+  "acceptance_input_digest": "64ac755394ed4f2bed4dec38be72f64b5d4e1ecc5d0d514950982a89e24d9589",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "CHANGELOG.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bf9f48f60d218ac7f3edaf4998685522cd3fc7a9e339ebd5bf33310a296d593e",
+        "entry_digest": "213510c6d2d080827f0fe4f37c4b9ca9287f4fd1ea6ff5f7070ea4cb1b780d8c",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "PROTOCOL.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "068bde238d72fa44e88d34ea1b7c834b3608ab53ee39d484515c7423ec937f2c",
+        "entry_digest": "4e95a0b002568a5e24b9777b3630b32f61ad7b5d9728397b6bbe5f7b59c6e374",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "docs/PROTOCOL-FLOWS.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "3fb4ae6663bfbea3e53d036d73a5a4d7fb376cb75077715db9e0bceb320a2f1c",
+        "entry_digest": "4bf972a68cc5c7e933d6b139b8c0127130b9182ba936fafc3bcfcf3080e0b250",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "docs/RELEASE.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b6137b46526bda30c0195eb29d87d4d1f827fca1f7b5326e846eee109b3e78e0",
+        "entry_digest": "c31a570a72727cff09da2dd22d81fb86a0dd550a57bb1db5aaabd6c7aa88b42d",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "kt/build.gradle.kts",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "687034b4facaf9b7370829328896d5a147bb423875d1f21cd3cd3c29ea56c85d",
+        "entry_digest": "563a65b8bca94472474caa6dac8a4437525fc003ec8b5ea602cb06530797af93",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/docs/run-your-own-bot.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "ce4fb50878ce2b2a4f35183bc4d422713de42b82a9adaf4545012c684c161a74",
+        "entry_digest": "5e65e8f3641e4d3e8e704581ce5b8f4e2e78f8e0951f43a0a3a3a4323d81c657",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "py/pyproject.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8f2d2b30428d72725d12c6a2391efd2d3c39432787d2e29897ffc26b95952973",
+        "entry_digest": "1815df751ea761a0abdb48124fd7be5740d6680dedad4169ff85e6c2bfdc70c9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "rs/Cargo.toml",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a9493939f61e21d8bc0dcea98e986fb5e9df0caa1aa2342d2aed77357353a61c",
+        "entry_digest": "d3497bda3c6a1d3b5289457194778ff27acb9d24317f8025d565a36f323e6cc9",
+        "owners": [
+          "@exact:delivery"
+        ]
+      },
+      {
+        "path": "specs/protocol/protocol.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a53aa3be9163185306ee076b5effe0f250acfa6e580cfb8bd9f4daa3942c8ed9",
+        "entry_digest": "75ef9c921e8188846494fcbdaaacaeecb0cd58f2b24af853d753c38b205d5595",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/protocol/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "8eaa558e9b6a4c8fa37efc0ec4b65f1305eab5d2ee3cdddebb8d289e70eb6527",
+        "entry_digest": "6cdd1f30f16b51274042570ef44c65b9384e8a185d0651f3506f36f9ff703810",
+        "owners": [
+          "protocol"
+        ]
+      },
+      {
+        "path": "specs/release/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a65a7e77dc3b33739fdb248aeff89e6e9ac79ca0e7cb583da54b75254087d9ec",
+        "entry_digest": "408040983931c857066f9fac1024f9f79f589c48175f6403b49ef8cd901de2d3",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/release.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "897db4cc8efe4e38db7958055d268b367750c73b5ee29ec0efd8c1f3e2571355",
+        "entry_digest": "592aa63bb7cf5ff00bc8cacbef0e77b2795bff629b95d953e41cfe45b0ffae33",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "bba0697f2dfb8a5da889a13cf1c832aeda1ae1d0826910585277f20e4a1d82e2",
+        "entry_digest": "8a6d566984301d02719c4f848e69ec43e14160999a0b265f555dd2bb5896ca98",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "d18081fcbbf495a44ef0be06f8a77ff0b995c63246b361b760c271171c4913b3",
+        "entry_digest": "5f154ab38dc3fbcb30bc0571f3b99ed174054cd9a41c8e788d0fd596c4024ae4",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "ts/package.json",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b1f504183bd65cf71d7e0287602083b6ec058c66ff2a7219f50442f786ca11e6",
+        "entry_digest": "1d1bfb2c69ec73fe65c94e3e3e5ba3396a41ea8da80280735f7467a7ede8e92f",
+        "owners": [
+          "@exact:delivery"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec protocol --spec release",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-protocol-4",
+    "REQ-release-5"
+  ]
+}

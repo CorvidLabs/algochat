@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "release-protocol-1-6-0-and-the-library-versions",
+  "slug": "release-protocol-1-6-0-and-the-library-versions",
+  "title": "Release protocol 1.6.0 and the library versions",
+  "description": "Release protocol 1.6.0 and the library versions",
+  "kind": "documentation",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "67072f2cc9841bca5c51bc490642cfc99247a40c",
+  "created_at": 1793373692,
+  "updated_at": 1793374475,
+  "affected_specs": [
+    "release",
+    "protocol"
+  ],
+  "affected_paths": [
+    "PROTOCOL.md",
+    "docs/RELEASE.md",
+    "ts/package.json",
+    "py/pyproject.toml",
+    "rs/Cargo.toml",
+    "kt/build.gradle.kts",
+    "CHANGELOG.md",
+    "docs/PROTOCOL-FLOWS.md",
+    "py/docs/run-your-own-bot.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "Source names protocol 1.6.0 with Swift 1.6.0 TypeScript 0.12.0 Python 0.5.0 Rust 0.6.0 Kotlin 0.5.0 and Go 0.5.0, and the changelog and docs describe what 1.6.0 adds."
+  ],
+  "selected_artifacts": [
+    "context",
+    "docs",
+    "design",
+    "tasks",
+    "requirements"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "No registry publish from this change; publish workflows run only by their own trigger. v1.5.0 and go/v0.4.0 stay the previous release. No wire change. Qualification still does not publish packages.",
+    "public_contract": "yes"
+  }
+}

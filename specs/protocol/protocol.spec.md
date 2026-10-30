@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 17
+version: 18
 status: stable
 files:
   - PROTOCOL.md
@@ -11,7 +11,7 @@ files:
 
 ## Purpose
 
-The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. Version 1.5.0 names the delta room note already specified in section 5.8: member count 65535, 256 people, and channels the group owner keeps. PQ levels are the integers 0 through 5 in section 5.4.2. A new conversation should start at hybrid `0x04` and `0x05`, which is PQ level 3. Group mailbox protocols `0x06` and `0x07` use that same session. Everyday and Extra lock stay assigned and are not the default. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does. This wording does not change the wire format.
+The public wire format lives in PROTOCOL.md. Version 1.3.0 added optional protocols `0x04` and `0x05`. Version 1.4.0 includes room administration `0x03` and group mailbox protocols `0x06` and `0x07`. Version 1.5.0 names the delta room note already specified in section 5.8: member count 65535, 256 people, and channels the group owner keeps. Version 1.6.0 adds room bots, `0x03` ops 13 and 14, specified in section 5.8.2. PQ levels are the integers 0 through 5 in section 5.4.2. A new conversation should start at hybrid `0x04` and `0x05`, which is PQ level 3. Group mailbox protocols `0x06` and `0x07` use that same session. Everyday and Extra lock stay assigned and are not the default. Protocol `0x03` is the public room administration record and has no PQ level. Tag v1.3.0 does not include `0x03`, `0x06`, or `0x07`. Tag v1.4.0 does. This wording does not change the wire format.
 
 Documentation of current source adds offset tables and [application flow diagrams](../../docs/PROTOCOL-FLOWS.md), including separate cryptographic and authorization checks. The flow guide records port-specific limitations without relaxing normative requirements or qualifying a release.
 
@@ -59,3 +59,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-28 | a-room-note-records-one-added-or-removed-person-so-a-room-can-hold-256-people-and-a-channel-is-another-room-owned-by: A room note records one added or removed person so a room can hold 256 people, and a channel is another room owned by the group owner |
 | 2026-10-28 | prepare-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
 | 2026-10-30 | room-bots-owner-or-admin-adds-a-bot-with-a-reply-mode-and-rate-limit-and-can-change-them-every-language-reads-the: Room bots: owner or admin adds a bot with a reply mode and rate limit, and can change them; every language reads the record the same way |
+| 2026-10-30 | release-protocol-1-6-0-and-the-library-versions: Release protocol 1.6.0 and the library versions |
