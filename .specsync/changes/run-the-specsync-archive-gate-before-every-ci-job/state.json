@@ -7,10 +7,11 @@
   "title": "Run the SpecSync archive gate before every CI job",
   "description": "Run the SpecSync archive gate before every CI job",
   "kind": "operations",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "fae3900f9729724c088bdbe67faf2d8a69655dec",
   "created_at": 1793540867,
-  "updated_at": 1793541953,
+  "updated_at": 1793541954,
   "affected_specs": [],
   "affected_paths": [
     ".github/workflows/go.yml",
