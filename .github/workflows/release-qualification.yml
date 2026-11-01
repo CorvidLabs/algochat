@@ -25,7 +25,23 @@ permissions:
   contents: read
 
 jobs:
+  # Runs first. Every other job needs it, so a pull request with any open SpecSync
+  # change under .specsync/changes/ runs nothing else until the change is archived.
+  archive-gate:
+    name: Archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      # The archive gate inputs are newer than v6.1.1, which ignores them.
+      - uses: CorvidLabs/spec-sync@106aaa43d0bcf049f19b173ddb63815a25c3f931 # main, archive gate (#832)
+        with:
+          archive-gate-only: 'true'
   checks:
+    needs: archive-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -34,21 +50,28 @@ jobs:
           persist-credentials: false
       - run: python3 -m unittest discover -s scripts/release -v
   ts:
+    needs: archive-gate
     uses: ./.github/workflows/ts.yml
   py:
+    needs: archive-gate
     uses: ./.github/workflows/py.yml
   go:
+    needs: archive-gate
     uses: ./.github/workflows/go.yml
   kt:
+    needs: archive-gate
     uses: ./.github/workflows/kt.yml
   rs:
+    needs: archive-gate
     uses: ./.github/workflows/rs.yml
   swift:
+    needs: archive-gate
     # One Linux receipt: swift.yml also has this lane for direct Swift runs.
     uses: ./.github/workflows/swift.yml
     with:
       skip_linux: true
   swift-linux:
+    needs: archive-gate
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
@@ -68,7 +91,7 @@ jobs:
           if-no-files-found: error
   complete:
     if: always()
-    needs: [checks, ts, py, rs, kt, go, swift, swift-linux]
+    needs: [archive-gate, checks, ts, py, rs, kt, go, swift, swift-linux]
     runs-on: ubuntu-latest
     env:
       CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

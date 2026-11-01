@@ -31,7 +31,23 @@ permissions:
   contents: read
 
 jobs:
+  # Runs first. Every other job needs it, so a pull request with any open SpecSync
+  # change under .specsync/changes/ runs nothing else until the change is archived.
+  archive-gate:
+    name: Archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      # The archive gate inputs are newer than v6.1.1, which ignores them.
+      - uses: CorvidLabs/spec-sync@106aaa43d0bcf049f19b173ddb63815a25c3f931 # main, archive gate (#832)
+        with:
+          archive-gate-only: 'true'
   test:
+    needs: archive-gate
     runs-on: macos-latest
     timeout-minutes: 40
     env:
@@ -51,6 +67,7 @@ jobs:
           path: ${{ runner.temp }}/qualification-swift/
           if-no-files-found: error
   linux:
+    needs: archive-gate
     # A called workflow keeps the caller event name, so event_name cannot
     # tell a direct run from the matrix. skip_linux is that signal.
     if: ${{ inputs.skip_linux != true }}
