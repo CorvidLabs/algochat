@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "run-the-specsync-archive-gate-before-every-ci-job",
+  "slug": "run-the-specsync-archive-gate-before-every-ci-job",
+  "title": "Run the SpecSync archive gate before every CI job",
+  "description": "Run the SpecSync archive gate before every CI job",
+  "kind": "operations",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "fae3900f9729724c088bdbe67faf2d8a69655dec",
+  "created_at": 1793540867,
+  "updated_at": 1793541961,
+  "affected_specs": [],
+  "affected_paths": [
+    ".github/workflows/go.yml",
+    ".github/workflows/hi.yml",
+    ".github/workflows/kt.yml",
+    ".github/workflows/protocol.yml",
+    ".github/workflows/py.yml",
+    ".github/workflows/release-qualification.yml",
+    ".github/workflows/rs.yml",
+    ".github/workflows/spec-sync.yml",
+    ".github/workflows/status-renderer.yml",
+    ".github/workflows/swift.yml",
+    ".github/workflows/trust.yml",
+    ".github/workflows/ts.yml",
+    ".github/workflows/workflow-safety.yml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "CI workflow ordering only; no canonical spec owns .github/workflows",
+  "acceptance_criteria": [
+    "Every pull_request/push workflow (go, hi, kt, protocol, py, release-qualification, rs, spec-sync, status-renderer, swift, trust, ts, workflow-safety) starts with an archive-gate job named Archive that runs CorvidLabs/spec-sync pinned to 106aaa43d0bcf049f19b173ddb63815a25c3f931 with archive-gate-only: 'true'; every other job needs it directly or transitively (release-qualification complete also lists it and fails unless it succeeded), so an open change under .specsync/changes/ fails Archive and nothing else runs; scripts/release workflow tests still pass."
+  ],
+  "selected_artifacts": [
+    "context",
+    "plan",
+    "testing",
+    "design",
+    "tasks"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}
