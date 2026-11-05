@@ -1,6 +1,6 @@
 ---
 id: release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher
-state: draft
+state: implementing
 type: feature
 base_commit: fae3900f9729724c088bdbe67faf2d8a69655dec
 ---

@@ -12,7 +12,7 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Version and requirements
 
-- Crate: `algochat` **0.6.0**, implementing protocol **1.6.0**.
+- Crate: `algochat` **0.6.0**, implementing protocol **1.6.0**. Its crates.io source is release tag **`v1.6.2`**, whose `rs/src` is identical to `v1.6.1`; 1.6.2 changes only packaging.
 - [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
 - `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
 - Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. The source version does not establish crates.io availability. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
@@ -23,14 +23,21 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Installation
 
-The crate version in `Cargo.toml` is **0.6.0**. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`. Until 0.6.0 is published, depend on a checkout path:
+The crate version in `Cargo.toml` is **0.6.0**. It is published to crates.io from release tag `v1.6.2` by the manual [Publish crates.io](../.github/workflows/publish-crates.yml) workflow, only after the release is approved. Once [the release record](../docs/RELEASE.md#package-versions-and-distribution) shows dated evidence that crates.io serves 0.6.0, depend on it by version:
+
+```toml
+[dependencies]
+algochat = "0.6.0"
+```
+
+Until then crates.io still has 0.2.1 from the archived repository. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`; use a checkout path instead:
 
 ```toml
 [dependencies]
 algochat = { path = "/path/to/algochat/rs" }
 ```
 
-The protocol tag does not publish the crate. crates.io still has 0.2.1; use `algochat = "0.6.0"` only after that version is separately published. See the [dated publication evidence](../docs/RELEASE.md).
+The published crate contains the library sources, this README and the license. The tests, the `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository; their tests read the shared `../vectors/` files, so run them from a checkout.
 
 ## Usage
 

@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-47f570f9193bb588e44ef7ce",
-    "head": "EVT-92b12fcf3bf338034c6c9243",
+    "head": "EVT-d20d7ff73396b53e2b24b8c6",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "plan",
+    "current": "build",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -32,16 +32,15 @@
     "Intent CRATE-1..7 and scope Release A+B approved by Leif via orc 2026-11-05 11:00 MST ('Approve intent + A and B')",
     "D1+D2: tag v1.6.2, crate stays 0.6.0, rs/src identical to v1.6.1, pqcross not shipped (rejected: publishing v1.6.1 verbatim with archived repo link)",
     "D3: crates.io trusted publisher workflow (rejected: manual cargo publish)",
-    "D4: AlgoChat implements Algorand mnemonic decoding itself for #73 (rejected: depending on algonaut)"
+    "D4: AlgoChat implements Algorand mnemonic decoding itself for #73 (rejected: depending on algonaut)",
+    "Native definition approval of Release A recorded by 0xLeif via orc at dfa399f"
   ],
   "open_questions": [],
   "completed": [],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native definition approval of the Release A SpecSync change (Leif via orc)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
   "next_action": "After approval: failing tests first, then packaging, validate_package, publish-crates workflow, docs"
 }

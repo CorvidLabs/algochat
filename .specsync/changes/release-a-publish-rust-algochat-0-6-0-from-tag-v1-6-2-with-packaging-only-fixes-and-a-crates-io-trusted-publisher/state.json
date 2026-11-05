@@ -7,10 +7,11 @@
   "title": "Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67)",
   "description": "Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67)",
   "kind": "feature",
-  "state": "draft",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "fae3900f9729724c088bdbe67faf2d8a69655dec",
   "created_at": 1793901696,
-  "updated_at": 1793901931,
+  "updated_at": 1793902276,
   "affected_specs": [
     "release"
   ],
