@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-47f570f9193bb588e44ef7ce",
-    "head": "EVT-d20d7ff73396b53e2b24b8c6",
+    "head": "EVT-776a40bd5361fdd023c4c309",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "build",
+    "current": "accept",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -40,7 +40,9 @@
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [],
+  "awaiting_human": [
+    "Scoped implementation review of Release A at ce4865d (PR #74)"
+  ],
   "run_consents": [],
-  "next_action": "After approval: failing tests first, then packaging, validate_package, publish-crates workflow, docs"
+  "next_action": "After review: specsync change ship (finalize archive tip), push, hosted qualification; then Leif's release approval, tag v1.6.2, dispatch publish-crates"
 }
