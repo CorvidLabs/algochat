@@ -49,6 +49,23 @@ def require(files, name):
     return files[name]
 
 
+RUST_REPOSITORY = 'https://github.com/CorvidLabs/algochat'
+RUST_CRATE_FILES = {'Cargo.toml', 'Cargo.toml.orig', 'Cargo.lock', '.cargo_vcs_info.json', 'README.md', 'LICENSE'}
+
+
+def validate_crate_boundary(files, top, manifest):
+    """The published crate is the library sources and its metadata, nothing else."""
+    if manifest['package'].get('repository') != RUST_REPOSITORY:
+        raise ValueError('Rust crate repository must be ' + RUST_REPOSITORY)
+    for name in files:
+        parts = PurePosixPath(name).relative_to(top).parts
+        if len(parts) == 1 and parts[0] in RUST_CRATE_FILES:
+            continue
+        if len(parts) == 2 and parts[0] == 'src' and parts[1].endswith('.rs'):
+            continue
+        raise ValueError('unexpected Rust crate member: ' + name)
+
+
 def validate_package(lane, path):
     """Ignore ancillary logs/locks; validate the package formats for this lane."""
     try:
@@ -86,6 +103,8 @@ def validate_package(lane, path):
             if data[section]['name'] != identity:
                 raise ValueError('unexpected source package identity')
             require(files, str(PurePosixPath(matches[0]).parent / source))
+            if lane == 'rs':
+                validate_crate_boundary(files, PurePosixPath(matches[0]).parent, data)
         elif lane == 'kt':
             if path.name.endswith('-sources.jar'):
                 require(files, 'com/corvidlabs/algochat/Keys.kt')

@@ -1,0 +1,74 @@
+name: Publish crates.io
+
+# Publishes the Rust crate `algochat` from rs/ to crates.io (REQ-release-9).
+# Manual dispatch from main only, for an existing release tag on main whose
+# rs/Cargo.toml declares the requested version. The crates-io environment holds
+# the human approval. crates.io trusted publishing mints a short-lived token;
+# no registry secret is stored. Qualification workflows never call this one.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag on main, for example v1.6.2"
+        required: true
+        type: string
+      version:
+        description: "algochat version that tag declares in rs/Cargo.toml, for example 0.6.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-crates
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: crates-io
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check the requested tag and version
+        env:
+          TAG: ${{ inputs.tag }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "tag must look like v1.6.2"; exit 1; }
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "version must look like 0.6.0"; exit 1; }
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check the tag is on main
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$TAG^{commit}")"
+          git merge-base --is-ancestor HEAD origin/main
+      - name: Check the crate name and version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os, tomllib
+          package = tomllib.load(open('rs/Cargo.toml', 'rb'))['package']
+          assert package['name'] == 'algochat', package['name']
+          assert package['version'] == os.environ['VERSION'], (package['version'], os.environ['VERSION'])
+          PY
+      - name: Qualify the Rust crate on this commit
+        run: python3 scripts/release/qualify.py rs "${{ runner.temp }}/qualification-rs"
+      - name: Authenticate to crates.io with trusted publishing
+        id: auth
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9
+      - name: Publish algochat
+        working-directory: rs
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish --locked
