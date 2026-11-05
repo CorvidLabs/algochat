@@ -1,0 +1,47 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-47f570f9193bb588e44ef7ce",
+    "head": "EVT-92b12fcf3bf338034c6c9243",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants Raven Desktop built, so AlgoChat's Rust crate must be released with interop vectors.",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "plan",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher",
+  "references": {
+    "criteria": [
+      "CRATE-1",
+      "CRATE-6",
+      "CRATE-7"
+    ],
+    "requirements": [],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Intent CRATE-1..7 and scope Release A+B approved by Leif via orc 2026-11-05 11:00 MST ('Approve intent + A and B')",
+    "D1+D2: tag v1.6.2, crate stays 0.6.0, rs/src identical to v1.6.1, pqcross not shipped (rejected: publishing v1.6.1 verbatim with archived repo link)",
+    "D3: crates.io trusted publisher workflow (rejected: manual cargo publish)",
+    "D4: AlgoChat implements Algorand mnemonic decoding itself for #73 (rejected: depending on algonaut)"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Native definition approval of the Release A SpecSync change (Leif via orc)"
+  ],
+  "run_consents": [],
+  "next_action": "After approval: failing tests first, then packaging, validate_package, publish-crates workflow, docs"
+}
