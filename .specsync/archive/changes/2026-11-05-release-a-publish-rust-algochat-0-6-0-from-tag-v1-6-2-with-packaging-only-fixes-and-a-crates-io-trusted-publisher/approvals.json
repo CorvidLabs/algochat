@@ -55,6 +55,13 @@
         "release: REQUIREMENT REQ-release-3": "353369f31204bd6be5150e0fe056f1722a52a03bae4c251bca25f2ab53c02426",
         "release: REQUIREMENT REQ-release-5": "e70e4e217d1e2b958042847abf733ae01c53831c4d533d8f422b5a2ce569ac8d"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793902720,
+      "digest": "8c005c8e0af541a47ecdf8637b64fe82e2be800aa7b5b07e2dde66787279131b",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []

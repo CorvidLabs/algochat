@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher",
+  "slug": "release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher",
+  "title": "Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67)",
+  "description": "Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67)",
+  "kind": "feature",
+  "state": "archived",
+  "canonical_applied": true,
+  "base_commit": "fae3900f9729724c088bdbe67faf2d8a69655dec",
+  "created_at": 1793901696,
+  "updated_at": 1793902733,
+  "affected_specs": [
+    "release"
+  ],
+  "affected_paths": [
+    "rs/Cargo.toml",
+    "rs/README.md",
+    "rs/.github/workflows/release.yml",
+    ".github/workflows/publish-crates.yml",
+    "scripts/release/packages.py",
+    "scripts/release/test_release.py",
+    "specs/release/release.spec.md",
+    "specs/release/requirements.md",
+    "specs/release/testing.md",
+    "specs/release/context.md",
+    "docs/RELEASE.md",
+    "CHANGELOG.md",
+    "README.md",
+    "swift/README.md",
+    "index.html",
+    "hi/crate.md",
+    "INTENT.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "A crate packaged from the candidate is algochat 0.6.0 with only its manifest, lockfile, README, LICENSE and src/ library sources and the CorvidLabs/algochat repository link; rs/src stays identical to v1.6.1; and the only publish path is a manual crates.io trusted-publisher workflow for a matching v-tag behind the protected crates-io environment, guarded by release tests."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "research",
+    "design"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "constraints": "Lesson from the 1.6.0/1.6.1 releases: a git tag is not a registry publication; record registry availability only from dated external-consumer evidence. Qualification lanes stay read-only with no publication steps.",
+    "public_contract": "yes"
+  }
+}
