@@ -7,11 +7,11 @@
   "title": "70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier",
   "description": "70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "8e54462c1e937572bd8ca5e7274620e139b00b8c",
   "created_at": 1793929040,
-  "updated_at": 1793930291,
+  "updated_at": 1793930366,
   "affected_specs": [
     "protocol",
     "release"

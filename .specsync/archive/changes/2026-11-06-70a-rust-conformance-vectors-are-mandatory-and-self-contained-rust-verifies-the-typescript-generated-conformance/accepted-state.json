@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance",
+  "slug": "70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance",
+  "title": "70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier",
+  "description": "70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier",
+  "kind": "feature",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "8e54462c1e937572bd8ca5e7274620e139b00b8c",
+  "created_at": 1793929040,
+  "updated_at": 1793930361,
+  "affected_specs": [
+    "protocol",
+    "release"
+  ],
+  "affected_paths": [
+    "rs/",
+    "scripts/release/",
+    ".github/workflows/ts.yml",
+    "ts/conformance/"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "cargo test --locked passes both in rs/ and inside the unpacked algochat .crate, where tests/conformance.rs checks every section and case of the TypeScript-generated vectors 00-06 and the shared vectors from rs/vectors/ (byte-identical copies enforced by the release check), a missing vector file, a missing section or an unrecognized case makes the test fail, no Rust test returns early on a missing fixture, the sibling-directory cross_impl tests are gone, and the TypeScript qualification lane runs bun conformance/tools/verify.mjs."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "constraints": "CRATE-3 (a missing vector fails) and CRATE-6 (no own copy of the cryptography): vectors come from the TypeScript generator or the existing shared vectors/ files, never from the Rust code under test; synthetic public test values only. rs/src library code is not changed. The Release A package boundary (REQ-release-9) is widened only to /vectors/*.json and /tests/*.rs. Protocol, vector and release-script changes run the full qualification matrix. Deterministic vector sections are not regenerated; the TS files are copied, not rewritten.",
+    "public_contract": "yes"
+  }
+}
