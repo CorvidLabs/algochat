@@ -45,12 +45,13 @@
   "open_questions": [],
   "completed": [
     "#75 rustfmt fix b867cf8 pushed; corvid-agent re-requested",
-    "rs-lint implemented and locally verified at 2c00143"
+    "rs-lint implemented and locally verified at 2c00143",
+    "#73 implemented and locally verified at 4bf64f3"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
   "awaiting_human": [],
   "run_consents": [],
-  "next_action": "while #73 waits: watch #75/#76; after #75 merges, rebase/merge rs-lint per Leif's answer and open its PR"
+  "next_action": "specsync change check --commit; PR after rs-lint lands; ready for review"
 }
