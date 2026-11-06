@@ -67,6 +67,6 @@ Before the change, the tests must fail at the test-only commit because the vecto
     - `open_group_key_delivery` without the handshake-id check;
     - `derive_group_message_key` without the sender address.
   - Adding one byte to `vectors/room-session-v1.json` alone failed the TypeScript test, and the message named the regenerate command.
-- `git diff 7e164e4 HEAD -- rs/src ts/src`: only the two new test files. No library code changed.
+- `git diff 7e164e4 HEAD -- rs/src ts/src`: one file, the new `ts/src/pq/room-session.test.ts` (the Rust test lives in `rs/tests/`). No library code changed.
 
 Not run here: the hosted Release qualification matrix and CodeQL, which run on the PR.

@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-97fea64b50ff00b34d519202",
+  "criteria": [
+    "CRATE-8"
+  ],
+  "requirements": [
+    "REQ-protocol-14"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "Clean git clone --no-local at 113b749: qualify.py rs exit 0 (258+8+4+3+3+4 in rs/ and in the extracted 46-member crate, sha256 46ff8dcbcc0aca51130ec5aa2b998b4d792147de04095b0670293b9fb829c589; consumer ran); qualify.py ts exit 0 (bun test 326 pass, verify.mjs 85 checks passed)",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793980217,
+  "snapshot": {
+    "revision": "e65850f0653f0a1c012f0eafd5640f9c89c4a744",
+    "dirty": true,
+    "fingerprint": "807eae0c01094cab2ebc4d74f020329cee342fb7147b282d14c23b2a57face49",
+    "content": "c962087e471bd32c15034da37332dc9164b9fa26b3f2ba3cb97ce8ed4b9477a2"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Hosted Release qualification and CodeQL not run locally; they run on the PR"
+  ]
+}

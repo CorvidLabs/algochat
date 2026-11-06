@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-0c5eca8e80d7cb0f232e57cf",
-    "head": "EVT-357b5b0cb74422813812feb4",
+    "head": "EVT-0448ff1e13dd08e6c035bbb4",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "build",
+    "current": "accept",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -33,14 +33,19 @@
     "Orc t18 2026-11-06: branch leif/algochat-70c1-room-session stacked on #70b's head (7e164e4, which includes #78's CodeQL fix; t18 named 4da5be1), draft PR stated as stacked; one issue per PR; next free REQ id is REQ-protocol-14 (#73 holds 11, #68 12, #70b 13); CRATE-8..12 captured verbatim in this PR",
     "Test failure messages never include account-derived values (CodeQL cleartext-logging lesson from #78, 7e164e4)",
     "Leif (0xLeif) decided \"Native definition approval of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)\": \"approved #70c-1 as proposed\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native approval as 0xLeif at 505c9a8f (second attempt, after a short-hash mismatch)); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
-    "D-c3 (Leif, relayed by orc t18 2026-11-06): the rooms work ships as algochat 0.8.0, its own release; still no tags or publishing without his OK"
+    "D-c3 (Leif, relayed by orc t18 2026-11-06): the rooms work ships as algochat 0.8.0, its own release; still no tags or publishing without his OK",
+    "Three cases added after the first mutation run so the approved library mutations are observable: an add offered to a member who is not its subject (two), and a delivery under the right session key naming another handshake (rejected: leaving those mutations uncaught)"
   ],
   "open_questions": [],
-  "completed": [],
+  "completed": [
+    "Build, docs and local checks for #70c-1 (a55b170 test first, 420aaf5 emitter and vector, 8decac3 docs, 113b749 three added cases; native check verified)"
+  ],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [],
+  "awaiting_human": [
+    "Native implementation review of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)"
+  ],
   "run_consents": [],
-  "next_action": "Wait for Leif's definition approval relayed by orc t18; then close the gate, commit the failing tests (scratch drafts in scratchpad/c70c1), implement, verify and open a draft PR stated as stacked on #78"
+  "next_action": "Wait for Leif's review relayed by orc t18; PR stays draft until #75 merges; merge #78's head or origin/main as they land (no rebase); merge only on Leif's decision with --match-head-commit"
 }
