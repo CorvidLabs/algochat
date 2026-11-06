@@ -1,6 +1,6 @@
 ---
 id: 70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector
-state: draft
+state: approved
 type: feature
 base_commit: 7e164e4bed2bd1c3826afd63320755db62a4364f
 ---

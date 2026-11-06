@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-0c5eca8e80d7cb0f232e57cf",
-    "head": "EVT-8f3571793beef7fe8b454d91",
+    "head": "EVT-357b5b0cb74422813812feb4",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "intent",
+    "current": "build",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -31,16 +31,16 @@
   "decisions": [
     "Scope: #70c rows #70c-1..4 in order (issues #80-#83), CRATE-8..12 as drafted, D-c1 (a), D-c2 extend CRATE, D-c4 include legacy rooms, approved by Leif 2026-11-06 ('Ok yes I approve all', relayed by orc t18); D-c3 (which release) is Leif's open decision and not needed before building",
     "Orc t18 2026-11-06: branch leif/algochat-70c1-room-session stacked on #70b's head (7e164e4, which includes #78's CodeQL fix; t18 named 4da5be1), draft PR stated as stacked; one issue per PR; next free REQ id is REQ-protocol-14 (#73 holds 11, #68 12, #70b 13); CRATE-8..12 captured verbatim in this PR",
-    "Test failure messages never include account-derived values (CodeQL cleartext-logging lesson from #78, 7e164e4)"
+    "Test failure messages never include account-derived values (CodeQL cleartext-logging lesson from #78, 7e164e4)",
+    "Leif (0xLeif) decided \"Native definition approval of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)\": \"approved #70c-1 as proposed\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native approval as 0xLeif at 505c9a8f (second attempt, after a short-hash mismatch)); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
+    "D-c3 (Leif, relayed by orc t18 2026-11-06): the rooms work ships as algochat 0.8.0, its own release; still no tags or publishing without his OK"
   ],
   "open_questions": [],
   "completed": [],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native definition approval of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
   "next_action": "Wait for Leif's definition approval relayed by orc t18; then close the gate, commit the failing tests (scratch drafts in scratchpad/c70c1), implement, verify and open a draft PR stated as stacked on #78"
 }
