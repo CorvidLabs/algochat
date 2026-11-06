@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 20
+version: 21
 status: stable
 files:
   - PROTOCOL.md
@@ -63,3 +63,4 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-30 | release-protocol-1-6-0-and-the-library-versions: Release protocol 1.6.0 and the library versions |
 | 2026-11-06 | 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance: 70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier |
 | 2026-11-06 | 70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote: 70b: Rust reads a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote |
+| 2026-11-06 | 70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector: 70c-1: Rust joins a room over a real Hybrid session the way TypeScript does, from a shared vector |

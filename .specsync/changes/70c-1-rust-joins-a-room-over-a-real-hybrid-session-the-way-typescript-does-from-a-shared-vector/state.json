@@ -7,10 +7,11 @@
   "title": "70c-1: Rust joins a room over a real Hybrid session the way TypeScript does, from a shared vector",
   "description": "70c-1: Rust joins a room over a real Hybrid session the way TypeScript does, from a shared vector",
   "kind": "feature",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "7e164e4bed2bd1c3826afd63320755db62a4364f",
   "created_at": 1793974148,
-  "updated_at": 1793979334,
+  "updated_at": 1793980183,
   "affected_specs": [
     "protocol"
   ],
