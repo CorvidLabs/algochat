@@ -36,7 +36,9 @@
     "Orc t18 2026-11-05: start Release B under the approved scope, failing tests first, gates through the orc",
     "Native definition approval of #70a recorded by 0xLeif via orc at d3b1180 (Leif 18:41 MST 'Approve')",
     "Leif 2026-11-05 20:24 MST 'Go with both': rustfmt-only commit b867cf8 on #75, then a separate change making qualify rs run fmt --check and clippy --all-targets -D warnings, before #73",
-    "rs-lint definition approved by Leif 20:29 MST at ec4e7c6; unpinned-toolchain risk accepted"
+    "rs-lint definition approved by Leif 20:29 MST at ec4e7c6; unpinned-toolchain risk accepted",
+    "Standing rule (Leif 2026-11-05 22:43 MST): if an approved PR only gets origin/main merged in (bookkeeping/changelog/version conflicts, reviewed content unchanged, checks re-run green), merge at the new head without asking again and say so in the report; any change to reviewed content comes back for review",
+    "Leif 2026-11-05 23:24 MST: agent commits keep the worktree git identity (0xLeif) as author; no 'claude' author, no rewriting existing commits; native SpecSync approvals/reviews in his name only via the orc"
   ],
   "open_questions": [],
   "completed": [
