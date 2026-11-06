@@ -1,6 +1,6 @@
 ---
 id: 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance
-state: draft
+state: approved
 type: feature
 base_commit: 8e54462c1e937572bd8ca5e7274620e139b00b8c
 ---

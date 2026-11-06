@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-f08db351480aab15e8eda3f9",
-    "head": "EVT-fe4c90c3c79173adebe5200a",
+    "head": "EVT-828641748e06ee549abb9538",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "plan",
+    "current": "build",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -33,16 +33,15 @@
   },
   "decisions": [
     "Intent CRATE-1..7 and scope Release B (0.7.0: #70a, #73, #68, #70b in that order) approved by Leif via orc 2026-11-05 11:00 MST ('Approve intent + A and B'); D4 AlgoChat implements mnemonic decoding",
-    "Orc t18 2026-11-05: start Release B under the approved scope, failing tests first, gates through the orc"
+    "Orc t18 2026-11-05: start Release B under the approved scope, failing tests first, gates through the orc",
+    "Native definition approval of #70a recorded by 0xLeif via orc at d3b1180 (Leif 18:41 MST 'Approve')"
   ],
   "open_questions": [],
   "completed": [],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native definition approval of #70a (Release B item 1)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
-  "next_action": "Wait for Leif's definition approval via orc t18, then write the failing tests"
+  "next_action": "Write failing release and conformance tests"
 }
