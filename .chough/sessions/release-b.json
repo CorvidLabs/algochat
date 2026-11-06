@@ -40,12 +40,13 @@
   ],
   "open_questions": [],
   "completed": [
-    "#75 rustfmt fix b867cf8 pushed; corvid-agent re-requested"
+    "#75 rustfmt fix b867cf8 pushed; corvid-agent re-requested",
+    "rs-lint implemented and locally verified at 2c00143"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
   "awaiting_human": [],
   "run_consents": [],
-  "next_action": "after approval: failing QualifyLaneTests case, then qualify.py rs fmt+clippy"
+  "next_action": "specsync change check --commit, push after #75 merges (rebase onto main), PR, ready for review"
 }
