@@ -5,7 +5,7 @@ artifact: tasks
 
 # Tasks
 
-- [ ] Add the failing tests (`ts/src/pq/room-rekey.test.ts`, `rs/tests/room_rekey.rs`, the `SHARED` entry), commit them with this definition, and record the failures.
+- [x] Add the failing tests (`ts/src/pq/room-rekey.test.ts`, `rs/tests/room_rekey.rs`, the `SHARED` entry), commit them with this definition, and record the failures.
 - [ ] After approval, and after #70c-1's code has landed: add the TypeScript emitter, write `vectors/room-rekey-v1.json`, and copy it to `rs/vectors/`.
 - [ ] Update TEST-VECTORS.md, the protocol spec, `rs/README.md` and `CHANGELOG.md`.
 - [ ] Run the TypeScript, Rust and release checks, the clean-clone qualification lanes and the mutation runs, then `fledge lanes run verify` and `fledge trust verify`, and record the evidence.

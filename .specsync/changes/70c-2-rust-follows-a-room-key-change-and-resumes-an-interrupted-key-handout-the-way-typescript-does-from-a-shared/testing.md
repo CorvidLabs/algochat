@@ -18,3 +18,12 @@ Plan:
 Repository gates: `fledge lanes run verify`, `specsync change check --commit` and `fledge trust verify`. The hosted Release qualification matrix and CodeQL run on the PR, and CodeQL must report no new alert.
 
 The tests are committed with this definition and must fail there because the vector file is missing. TypeScript reports the regenerate command, and Rust names the copy command. Both failures are recorded with that commit.
+
+## Local evidence (macOS arm64, 2026-11-06)
+
+- Test first: at `fdbb385` the new tests fail because the vector does not exist yet.
+  - `cargo test --locked --test room_rekey`: 0 passed, 5 failed. Each panics on the missing `rs/vectors/room-rekey-v1.json`, and the message names the copy command.
+  - `cargo test --locked --test conformance`: 7 passed, 1 failed (`every_vector_file_is_present`).
+  - `bun test src/pq/room-rekey.test.ts` fails with `vectors/room-rekey-v1.json is missing ...; write it with: cd ts && bun scripts/emit-room-rekey-vector.ts && cp ../vectors/room-rekey-v1.json ../rs/vectors/`.
+  - `cargo fmt --check`, `cargo clippy --locked --all-targets -- -D warnings` and `tsc --noEmit` are clean.
+- Nothing else is built yet, as directed.
