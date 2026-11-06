@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-587d150c1c4242134ded92e6",
-    "head": "EVT-a630fb6ea6a4786c738ce8a3",
+    "head": "EVT-b971c35c48773519b211245e",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "build",
+    "current": "accept",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -35,14 +35,19 @@
     "Orc t18 2026-11-05: #68 uses REQ-protocol-12 (#73 takes REQ-protocol-11); build on #75's head b867cf8 by merge, draft PR against main, merge origin/main when #75 lands, no rebase or force push",
     "TS test runs the emitter into a temp file and compares bytes (rejected: importing ts/scripts from the test, which tsc rootDir=src refuses)",
     "Rust signer is Option<&SigningKey>, as sign_encryption_key takes (rejected: a raw 32-byte seed argument)",
-    "Leif (0xLeif) decided \"Native definition approval of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)\": \"Ok yes I approve all\" (orc tab, in reply to the orc's morning brief, 2026-11-06 06:1x MST; relayed by orc t18 over hc; orc recorded the native approval as 0xLeif at 3b8c77d); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated"
+    "Leif (0xLeif) decided \"Native definition approval of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)\": \"Ok yes I approve all\" (orc tab, in reply to the orc's morning brief, 2026-11-06 06:1x MST; relayed by orc t18 over hc; orc recorded the native approval as 0xLeif at 3b8c77d); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
+    "TS tests spawn the emitter with process.execPath, the running bun, so the regenerate check does not depend on PATH (rejected: 'bun' from PATH, which failed in a shell without bun on PATH)"
   ],
   "open_questions": [],
-  "completed": [],
+  "completed": [
+    "Build, docs and local checks for #68 (e2b8473 test first, effbbd5 implementation, c0fbac2 docs, 91c8c7f native check verified)"
+  ],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [],
+  "awaiting_human": [
+    "Native implementation review of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)"
+  ],
   "run_consents": [],
-  "next_action": "Wait for Leif's definition approval relayed by the orc; then commit the failing tests first"
+  "next_action": "Wait for Leif's review relayed by orc t18; on approval merge origin/main if it moved, then gh pr merge with --match-head-commit (no --admin/--auto). When #75 lands, merge origin/main (no rebase)."
 }
