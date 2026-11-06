@@ -1,6 +1,6 @@
 ---
 module: release
-version: 11
+version: 12
 status: active
 files:
   - scripts/release/packages.py
@@ -134,3 +134,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-30 | record-algochat-1-6-1-and-py-algochat-0-6-0-in-the-release-instructions-after-algochat-64: Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64) |
 | 2026-11-05 | release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher: Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67) |
 | 2026-11-06 | 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance: 70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier |
+| 2026-11-06 | rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and: Rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches |
