@@ -11,6 +11,10 @@ Protocol releases of this repository. Each library keeps its own package version
 - The crate ships its tests and copies of the vectors they read in `vectors/`, and qualification runs `cargo test` inside the packaged crate and rejects stale copies.
 - TypeScript qualification runs `bun conformance/tools/verify.mjs`.
 
+### Rust qualification checks formatting and lints
+
+- `qualify.py rs` runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` before its tests, so CI and the crates.io publish fail on unformatted code or any clippy warning, including in tests.
+
 ## 1.6.2 - 2026-11-05
 
 The Rust crate `algochat` 0.6.0 gets clean packaging and a guarded crates.io publish path (#67). No library source changes: `rs/src` is identical to `v1.6.1`, and the wire format is unchanged: protocol 1.6.0.
