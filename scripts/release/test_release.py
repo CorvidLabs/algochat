@@ -181,8 +181,14 @@ class RustCrateTests(unittest.TestCase):
     def test_clean_crate_is_accepted(self):
         self.check(rust_crate_files())
 
+    def test_tests_and_vector_copies_are_accepted(self):
+        # REQ-release-3 (#70a): the crate's tests run from the package.
+        self.check(rust_crate_files(extra=['tests/conformance.rs', 'tests/cross_impl.rs',
+                                           'vectors/group-v1.json', 'vectors/00-protocol-constants.json']))
+
     def test_unshipped_members_are_rejected(self):
-        for member in ['src/bin/pqcross.rs', 'tests/cross_impl.rs', 'examples/export_envelopes.rs',
+        for member in ['src/bin/pqcross.rs', 'tests/support/mod.rs', 'examples/export_envelopes.rs',
+                       'vectors/nested/x.json', 'vectors/notes.md', 'tests/fixture.json',
                        '.github/workflows/release.yml', '.specsync/config.toml', '.claude/skills/x/SKILL.md',
                        'AGENTS.md', 'fledge.toml', 'specs/crate/crate.spec.md', 'src/nested/mod.rs']:
             with self.subTest(member=member), self.assertRaises(ValueError):
@@ -193,6 +199,85 @@ class RustCrateTests(unittest.TestCase):
             with self.subTest(repository=repository), self.assertRaises(ValueError):
                 self.check(rust_crate_files(repository=repository))
 
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+class RustVectorCopyTests(unittest.TestCase):
+    """REQ-release-3 / REQ-protocol-10: rs/vectors/ holds exact copies of the canonical vectors."""
+
+    def tree(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        for relative in ['vectors/group-v1.json', 'ts/conformance/vectors/00-protocol-constants.json']:
+            source = root / relative
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text('{"name":"' + source.name + '"}')
+            copy = root / 'rs/vectors' / source.name
+            copy.parent.mkdir(parents=True, exist_ok=True)
+            copy.write_bytes(source.read_bytes())
+        return root
+
+    def test_repository_copies_match(self):
+        import packages
+        self.assertEqual(packages.check_rust_vector_copies(REPO_ROOT), [])
+
+    def test_complete_copy_set_is_accepted(self):
+        import packages
+        self.assertEqual(packages.check_rust_vector_copies(self.tree()), [])
+
+    def test_missing_differing_and_extra_copies_are_reported(self):
+        import packages
+        cases = {
+            'missing': lambda root: (root / 'rs/vectors/group-v1.json').unlink(),
+            'differing': lambda root: (root / 'rs/vectors/00-protocol-constants.json').write_text('{}'),
+            'extra': lambda root: (root / 'rs/vectors/stale.json').write_text('{}'),
+            'new source': lambda root: (root / 'vectors/pq-mlkem768.json').write_text('{}'),
+        }
+        for name, mutate in cases.items():
+            with self.subTest(case=name):
+                root = self.tree()
+                mutate(root)
+                self.assertEqual(len(packages.check_rust_vector_copies(root)), 1)
+
+
+class RustTestFixtureTests(unittest.TestCase):
+    """REQ-protocol-10: no Rust test reads outside the package or succeeds when a fixture is absent."""
+
+    def test_rust_tests_stay_inside_the_package(self):
+        offenders = []
+        for path in sorted((REPO_ROOT / 'rs/src').glob('*.rs')) + sorted((REPO_ROOT / 'rs/tests').glob('*.rs')):
+            for number, line in enumerate(path.read_text().splitlines(), 1):
+                if re.search(r'"[^"\n]*\.\./', line):
+                    offenders.append(f'{path.relative_to(REPO_ROOT)}:{number}: {line.strip()}')
+        self.assertEqual(offenders, [])
+
+    def test_integration_tests_never_probe_for_fixtures(self):
+        offenders = []
+        for path in sorted((REPO_ROOT / 'rs/tests').glob('*.rs')):
+            for number, line in enumerate(path.read_text().splitlines(), 1):
+                if '.exists()' in line or 'test-envelopes' in line or 'test-algochat' in line:
+                    offenders.append(f'{path.relative_to(REPO_ROOT)}:{number}: {line.strip()}')
+        self.assertEqual(offenders, [])
+
+
+class QualifyLaneTests(unittest.TestCase):
+    """REQ-release-1 (#70a): qualification runs the packaged Rust tests and the TypeScript vector verifier."""
+
+    def test_rust_lane_tests_the_extracted_crate_and_checks_copies(self):
+        text = (REPO_ROOT / 'scripts/release/qualify.py').read_text()
+        rust = text[text.index("elif lane == 'rs':"):]
+        rust = rust[:rust.index('elif lane ==', 1)]
+        self.assertIn('check_rust_vector_copies', rust)
+        self.assertRegex(rust, r"run\(\['cargo', 'test', '--locked'\], crate\)")
+
+    def test_typescript_lane_runs_the_vector_verifier(self):
+        text = (REPO_ROOT / 'scripts/release/qualify.py').read_text()
+        ts = text[text.index("if lane == 'ts':"):]
+        ts = ts[:ts.index('elif lane ==')]
+        self.assertIn("'conformance/tools/verify.mjs'", ts)
 
 PUBLISH_CRATES = '.github/workflows/publish-crates.yml'
 
