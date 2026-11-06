@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-f08db351480aab15e8eda3f9",
-    "head": "EVT-d154815b5e9dcf3f6162c727",
+    "head": "EVT-67dd039de225c9a81f0c0704",
     "legacy": null
   },
   "schema_version": 2,
@@ -39,7 +39,8 @@
     "rs-lint definition approved by Leif 20:29 MST at ec4e7c6; unpinned-toolchain risk accepted",
     "Standing rule (Leif 2026-11-05 22:43 MST): if an approved PR only gets origin/main merged in (bookkeeping/changelog/version conflicts, reviewed content unchanged, checks re-run green), merge at the new head without asking again and say so in the report; any change to reviewed content comes back for review",
     "Leif 2026-11-05 23:24 MST: agent commits keep the worktree git identity (0xLeif) as author; no 'claude' author, no rewriting existing commits; native SpecSync approvals/reviews in his name only via the orc",
-    "Orc: #70b moved to ac-acpq; this worker keeps #75, #76, rs-lint, #73 (Ed25519 only, REQ-protocol-11)"
+    "Orc: #70b moved to ac-acpq; this worker keeps #75, #76, rs-lint, #73 (Ed25519 only, REQ-protocol-11)",
+    "#73 definition approved by Leif ('Ok yes I approve all', 06:1x MST 2026-11-06) with: TS 25-word fix in this change, Ed25519 only, strict input"
   ],
   "open_questions": [],
   "completed": [
@@ -49,9 +50,7 @@
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "definition approval of 73-rust-creates-restores-and-validates-ed25519-algochat-accounts-from-the-same-algorand-25-word-phrase-as-typescript (queued for Leif's morning)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
   "next_action": "while #73 waits: watch #75/#76; after #75 merges, rebase/merge rs-lint per Leif's answer and open its PR"
 }
