@@ -276,6 +276,10 @@ function build(): Record<string, unknown> {
     authorize("a delivery at epoch 2 is not authorized", addA, "owner", "member_a", 2);
     authorize("an unknown record authorizes nothing", fill(0x09), "owner", "member_a", 1);
     authorize("the outsider is never authorized", addA, "owner", "outsider", 1);
+    // A member after the record who is not its subject: only the subject check refuses these.
+    must("an add authorizes only its subject",
+        authorize("the add of member_b does not authorize member_a", addB, "owner", "member_a", 1) === "rejected"
+        && authorize("the add of member_a does not authorize the owner", addA, "owner", "owner", 1) === "rejected");
 
     const openMessage = (caseName: string, sender: Name, note: Uint8Array, accepted: Array<[number, number]>) => {
         const opened = outcome(() =>
@@ -292,6 +296,21 @@ function build(): Record<string, unknown> {
     openMessage("a changed counter field", "owner", flip(messages[0].note, 41), []);
     openMessage("a changed epoch field", "owner", flip(messages[0].note, 37), []);
     must("outsider ignored", openMessage("the outsider's note opens but is ignored", "outsider", outsiderNote, []) === "rejected");
+
+    // Sealed under member_a's session key but naming member_b's handshake: the tag still verifies,
+    // so only the handshake-id check refuses it. Drawn last, so no earlier byte moves.
+    const misnamed = sealGroupKeyDelivery(
+        { ...handshakeA.session, handshakeId: handshakeB.session.handshakeId },
+        room.epoch,
+        groupId,
+        mailbox,
+        groupKey,
+        addA,
+    );
+    must(
+        "a delivery naming another handshake is refused",
+        openDelivery("member_a rejects a delivery that names member_b's handshake", "member_a", handshakeA, misnamed) === "rejected",
+    );
 
     return {
         description:

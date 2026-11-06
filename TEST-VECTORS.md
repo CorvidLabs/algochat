@@ -605,19 +605,21 @@ The flow:
 4. The owner and both members post 8 `0x07` messages. Each sender's counter starts at 0. The texts are empty, multi-byte UTF-8, multi-line and 280 bytes. Every message opens once for every member under the delivered key, and a repeated `(sender, epoch, counter)` is rejected.
 5. The outsider also holds the room key, for example from a leaked device. Its `0x07` note opens, but the outsider is not a member, so `sender_may_post` refuses it and a client ignores it.
 
-Its 20 cases are each accepted or rejected.
+Its 23 cases are each accepted or rejected.
 
 `open_delivery`:
 - A member's own delivery is accepted.
 - These are rejected:
   - the other member's delivery, opened under its own session;
   - a changed tag or handshake id;
-  - a 226-byte note.
+  - a 226-byte note;
+  - a delivery sealed under the member's own session key whose header names the other member's handshake. Only the handshake-id check refuses this one, because the tag still verifies.
 
 `authorize`:
 - Each add authorizes its own subject.
 - These are not authorized:
-  - an add for the other member;
+  - an add for the other member, whether or not that member has joined yet;
+  - the add of `member_a` for the owner;
   - the create;
   - a delivery from a member;
   - epoch 2;

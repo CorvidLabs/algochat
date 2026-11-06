@@ -24,7 +24,7 @@ Protocol releases of this repository. Each library keeps its own package version
   - an invite-only room made by delta `0x03` records;
   - a `0x04` handshake and a 227-byte action-5 key delivery for each member;
   - eight `0x07` messages from three senders and a note from the outsider;
-  - 20 delivery, authorization and message cases.
+  - 23 delivery, authorization and message cases.
 - Rust and TypeScript recover each member's session from the note and its own seed, open and authorize the room key against the accepted records, read every message once with per-sender replay, and ignore the outsider.
 - Written by `ts/scripts/emit-room-session-vector.ts` with the seeded random stream and copied into `rs/vectors/`. No library or wire change.
 - `hi/crate.md` gains CRATE-8 to CRATE-12 for rooms and Raven payloads.

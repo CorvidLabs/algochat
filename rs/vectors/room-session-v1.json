@@ -286,6 +286,24 @@
       "expect": "rejected"
     },
     {
+      "name": "the add of member_b does not authorize member_a",
+      "op": "authorize",
+      "admin_tx_id": "0303030303030303030303030303030303030303030303030303030303030303",
+      "sender": "owner",
+      "recipient": "member_a",
+      "epoch": 1,
+      "expect": "rejected"
+    },
+    {
+      "name": "the add of member_a does not authorize the owner",
+      "op": "authorize",
+      "admin_tx_id": "0202020202020202020202020202020202020202020202020202020202020202",
+      "sender": "owner",
+      "recipient": "owner",
+      "epoch": 1,
+      "expect": "rejected"
+    },
+    {
       "name": "the owner's message 0 a second time is a repeat",
       "op": "open_message",
       "sender": "owner",
@@ -344,6 +362,14 @@
       "sender": "outsider",
       "accepted": [],
       "note": "0207777777777777777777777777777777777777777777777777777777777777777700000001000000008c94eb96d1b9b9fabde56cb69cb463af93c20ab53275b168b9a81725774c3839c72bdc6a83a28ad6",
+      "expect": "rejected"
+    },
+    {
+      "name": "member_a rejects a delivery that names member_b's handshake",
+      "op": "open_delivery",
+      "account": "member_a",
+      "handshake": "owner-to-member_a",
+      "note": "02060c39e9f1b39a3c4aa7a26ffc68739a3e45ecf5f7d257f28c4b0e596d5fbea117f4d5d2d1b3ae150d64584271d818a0c6484ce1e68d16a2d60804afad4f6cd5e9537e54a4ca2dfa545b48bcd6846d132bd824ce145abd204026e9cb5b07c5f7a8c3b28626ca7a1118b910e848e56dc733b5b44fd2ca8c7bfaff76950f3b9e0a3fb6c3e51144a126af2af36e1d28b7f2575b140816724abec060bcd9982edf86518851ab6276902527112ac769bd9712bf2a16d968f024523f9ecfce8a83e51c027c5eaadab9886aa6b47442815985a65698e0d1fa2d107a4506b423e933989c75fb",
       "expect": "rejected"
     }
   ]
