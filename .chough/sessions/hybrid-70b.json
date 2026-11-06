@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-f7cd9900b71294ca0370ac8f",
-    "head": "EVT-c9e8618b59528ba595ce23fb",
+    "head": "EVT-075eb02cdcebfb7530ff3483",
     "legacy": null
   },
   "schema_version": 2,
@@ -37,19 +37,19 @@
     "Vectors go in root vectors/ (not ts/conformance numbering, which #73 uses for 07); version 0x02 Extra lock notes only, since TS 0.12.0 has no 0x01 writer",
     "Leif (0xLeif) decided \"Native definition approval of #70b (70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote)\": \"Ok yes I approve all\" (orc tab, in reply to the orc's morning brief, 2026-11-06 06:1x MST; relayed by orc t18 over hc (his 3 #70b decisions as proposed: seeds not phrases, seeded randomness in the emitter, 0x02 notes only); orc recorded the native approval as 0xLeif at 6dfa17b); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
     "TS tests spawn the emitter with process.execPath (rejected: 'bun' from PATH); psk_kept counts a counter valid only on Ok(true) (rejected: any Ok)",
-    "Test failure messages name a case, index or side, never an account's name or bytes (rejected: dismissing CodeQL alerts, which is Leif's security call)"
+    "Test failure messages name a case, index or side, never an account's name or bytes (rejected: dismissing CodeQL alerts, which is Leif's security call)",
+    "Leif (0xLeif) decided \"Native implementation review of #70b (70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote)\": \"Leif's review of #78 at c952aaff (relayed by the orc: 'Leif's reviews recorded as 0xLeif')\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native SpecSync review as 0xLeif at c952aaff); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated"
   ],
   "open_questions": [],
   "completed": [
     "Build, docs and local checks for #70b (73020ea test first, d087294 emitter and vectors, 09f3c5a docs, 8f62281 Ok(true) check; native check verified)",
-    "CodeQL fix for PR #78 at 7e164e4: no account-derived values in test failure messages; no dismissal (orc t18, Leif's call)"
+    "CodeQL fix for PR #78 at 7e164e4: no account-derived values in test failure messages; no dismissal (orc t18, Leif's call)",
+    "SpecSync change finalized and archived"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native implementation review of #70b (70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
-  "next_action": "Wait for Leif's review relayed by orc t18; on approval merge origin/main if it moved, then gh pr merge with --match-head-commit (no --admin/--auto). When #75 or #77 lands, merge origin/main (no rebase); expect union conflicts in SHARED, TEST-VECTORS.md, CHANGELOG.md and specs/protocol."
+  "next_action": "Push; when CI is green and corvid-agent approves the final head, gh pr merge 78 --match-head-commit <head> (no --admin/--auto); then merge #78/main into #84"
 }
