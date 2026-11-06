@@ -10,7 +10,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from evidence import REQUIRED, digest
-from packages import validate_package
+from packages import check_rust_vector_copies, validate_package
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMANDS = []
@@ -102,6 +102,7 @@ def qualify(lane, output, work):
         VERSIONS['node'] = run(['node', '--version']).strip()
         run(['bun', 'install', '--frozen-lockfile', '--ignore-scripts'], ROOT / 'ts')
         run(['bun', 'test'], ROOT / 'ts')
+        run(['bun', 'conformance/tools/verify.mjs'], ROOT / 'ts')  # REQ-protocol-10
         run(['bun', 'run', 'build'], ROOT / 'ts')
         packed_stdout = run(['npm', 'pack', '--ignore-scripts', '--json', '--pack-destination', output], ROOT / 'ts')
         archive = resolve_npm_tarball(packed_stdout, output, ROOT / 'ts')
@@ -129,6 +130,9 @@ def qualify(lane, output, work):
     elif lane == 'rs':
         VERSIONS['rustc'] = run(['rustc', '--version']).strip()
         VERSIONS['cargo'] = run(['cargo', '--version']).strip()
+        problems = check_rust_vector_copies(ROOT)
+        if problems:
+            raise SystemExit('\n'.join(problems))
         run(['cargo', 'generate-lockfile'], ROOT / 'rs')
         copy_artifact(ROOT / 'rs/Cargo.lock', output)
         run(['cargo', 'test', '--locked'], ROOT / 'rs')
@@ -138,6 +142,7 @@ def qualify(lane, output, work):
         copy_artifact(crates[0], output)
         extract(crates[0], work)
         crate = work / crates[0].name.removesuffix('.crate')
+        run(['cargo', 'test', '--locked'], crate)  # REQ-release-1: the crate's tests pass from the package.
         write(consumer / 'Cargo.toml', '[package]\nname="release-consumer"\nversion="0.0.0"\nedition="2021"\n[dependencies]\nalgochat={path=' + json.dumps(str(crate)) + '}\n')
         write(consumer / 'src/main.rs', 'use algochat as _; fn main() {}\n')
         run(['cargo', 'run'], consumer)

@@ -419,7 +419,11 @@ mod tests {
 
     #[test]
     fn parity_fixture() {
-        let text = std::fs::read_to_string("../vectors/pq-mlkem768.json").unwrap();
+        let text = std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/vectors/pq-mlkem768.json"
+        ))
+        .unwrap();
         let kem = derive_mlkem768(&[0x22u8; 32]).unwrap();
         assert_eq!(
             hex::encode(&kem.encaps_key),
