@@ -1283,10 +1283,7 @@ mod tests {
     use super::*;
 
     fn vector() -> Value {
-        let path = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/vectors/group-admin-v1.json"
-        );
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/vectors/group-admin-v1.json");
         let text = std::fs::read_to_string(path).unwrap_or_else(|error| panic!("{path}: {error}"));
         serde_json::from_str(&text).unwrap()
     }

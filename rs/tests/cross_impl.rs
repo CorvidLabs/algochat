@@ -5,8 +5,9 @@
 //! fixtures from sibling checkouts, and passed when those were absent, were
 //! removed in #70a.
 
-use algochat::{decode_psk_envelope, decrypt_message, decrypt_psk_message, derive_keys_from_seed, ChatEnvelope};
-
+use algochat::{
+    decode_psk_envelope, decrypt_message, decrypt_psk_message, derive_keys_from_seed, ChatEnvelope,
+};
 
 // ============================================================================
 // Proposal 0001: v2 AEAD header binding + identity verification vectors
