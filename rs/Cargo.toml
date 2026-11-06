@@ -10,9 +10,10 @@ repository = "https://github.com/CorvidLabs/algochat"
 homepage = "https://github.com/CorvidLabs/algochat/tree/main/rs"
 documentation = "https://docs.rs/algochat"
 readme = "README.md"
-# The published crate is the library only. Tests, examples, the pqcross mesh
-# binary, specs and the archived repository's workflows stay in the checkout.
-include = ["/src/*.rs", "/README.md", "/LICENSE"]
+# The published crate is the library, its tests and the vector copies those
+# tests read (REQ-release-3), so `cargo test` passes from the package.
+# Examples, the pqcross mesh binary and specs stay in the checkout.
+include = ["/src/*.rs", "/tests/*.rs", "/vectors/*.json", "/README.md", "/LICENSE"]
 keywords = ["algorand", "encryption", "messaging", "blockchain", "chacha20"]
 categories = ["cryptography", "encoding"]
 

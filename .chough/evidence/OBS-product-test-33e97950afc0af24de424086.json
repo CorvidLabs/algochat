@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-33e97950afc0af24de424086",
+  "criteria": [
+    "CRATE-3",
+    "CRATE-2"
+  ],
+  "requirements": [
+    "REQ-protocol-10",
+    "REQ-release-1",
+    "REQ-release-3"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md",
+    "specs/release/release.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "#70a at 66b7715: red first at 77cc02a (release tests failures=4 errors=7; conformance 0/8). Green: release tests 40 OK; clean-clone qualify.py rs exit 0 (cargo test 258+8+4 in rs/ and again inside the extracted algochat-0.6.0.crate, 40 members, sha256 19497b5f...); qualify.py ts exit 0 (verify.mjs 85/85); six vector mutations each fail the conformance test; specsync change check --commit verified at c0fa230; fledge trust verify passed (augur proceed 35).",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793930146,
+  "snapshot": {
+    "revision": "c0fa23051deaa99cc3f50c0730973aa55e5ddbb5",
+    "dirty": true,
+    "fingerprint": "1e5788457c76583f5057b26c4c4fc72921bb50ed3b54dfa7f70b4155ac850cad",
+    "content": "b0ebb34c31d707a11c481e21c5e9aca9e7f8f8098552486a59fd753ea595571c"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Hosted Release qualification matrix not yet run (runs on the PR)",
+    "01 mnemonic and algorandAddress fields pending #73",
+    "fledge trust provenance degraded (policy not satisfied), as in Release A"
+  ]
+}

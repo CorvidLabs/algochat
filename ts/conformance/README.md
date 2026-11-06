@@ -73,10 +73,11 @@ bun conformance/tools/verify.mjs
 The file `conformance/ci/conformance.yml` is a historical standalone workflow
 template, not an active monorepo workflow. Its old 79-check step label predates
 the current 85-check verifier. The active root [TypeScript workflow](../../.github/workflows/ts.yml)
-calls the package tests, build and consumer qualification through
-[`qualify.py`](../../scripts/release/qualify.py); it does not invoke this vector
-verifier or regeneration tripwire. Run the commands above explicitly when
-checking these vectors.
+calls the package tests, this vector verifier, build and consumer qualification
+through [`qualify.py`](../../scripts/release/qualify.py). It does not run the
+regeneration tripwire. Rust checks the same files from byte-identical copies in
+`rs/vectors/` (`rs/tests/conformance.rs`); refresh those copies after any vector
+change.
 
 ## Verifying an independent implementation
 

@@ -301,7 +301,10 @@ fn hkdf32(ikm: &[u8], salt: &[u8], info: &[u8]) -> Result<[u8; 32]> {
 mod tests {
     use super::*;
 
-    const VECTOR: &str = include_str!("../../vectors/group-v1.json");
+    const VECTOR: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/vectors/group-v1.json"
+    ));
 
     fn vector() -> serde_json::Value {
         serde_json::from_str(VECTOR).unwrap()

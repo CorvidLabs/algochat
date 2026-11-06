@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "33d92421d7a72f46e543a19de514db08c281daf0",
+  "contract_digest": "a30b59300b253062feac6a91a141bd89b37672fad775cdcae1d56b1929286b5e",
+  "execution_digest": "ffd74553b424fef701f1399be7a2461b880ea75d8fb2c01f9c99eea0cc89dbff",
+  "workspace_digest": "c05897e59113f65c248d2840449dc183414dd9e93eb27edde39407c6313252dd",
+  "timestamp": 1793930324
+}

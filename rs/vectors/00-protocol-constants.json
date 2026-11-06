@@ -1,0 +1,34 @@
+{
+  "tool": "@corvidlabs/ts-algochat conformance generator",
+  "libraryVersion": "0.4.1",
+  "generatedBy": "reference implementation (TypeScript)",
+  "note": "All byte strings are lowercase hex. All inputs are fixed test values; none are secret.",
+  "file": "00-protocol-constants",
+  "description": "Published protocol constants an implementation must agree on.",
+  "constants": {
+    "PROTOCOL": {
+      "VERSION": 1,
+      "VERSION_AAD": 2,
+      "PROTOCOL_ID": 1,
+      "HEADER_SIZE": 126,
+      "TAG_SIZE": 16,
+      "ENCRYPTED_SENDER_KEY_SIZE": 48,
+      "MAX_PAYLOAD_SIZE": 3954,
+      "MIN_PAYMENT": 1000
+    },
+    "PSK_PROTOCOL": {
+      "VERSION": 1,
+      "VERSION_AAD": 2,
+      "PROTOCOL_ID": 2,
+      "HEADER_SIZE": 130,
+      "TAG_SIZE": 16,
+      "ENCRYPTED_SENDER_KEY_SIZE": 48,
+      "MAX_PAYLOAD_SIZE": 3950,
+      "SESSION_SIZE": 100,
+      "COUNTER_WINDOW": 200
+    },
+    "ED25519_SIGNATURE_SIZE": 64,
+    "ED25519_PUBLIC_KEY_SIZE": 32,
+    "X25519_PUBLIC_KEY_SIZE": 32
+  }
+}

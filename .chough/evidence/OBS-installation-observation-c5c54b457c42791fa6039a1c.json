@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "OBS-installation-observation-c5c54b457c42791fa6039a1c",
+  "criteria": [
+    "CRATE-1"
+  ],
+  "requirements": [
+    "REQ-release-9"
+  ],
+  "contracts": [
+    "specs/release/release.spec.md"
+  ],
+  "kind": "installation-observation",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "Fresh cargo project outside the repo: cargo add algochat@0.6.0 resolves from the crates.io registry (Cargo.lock source registry+https://github.com/rust-lang/crates.io-index), builds, and a binary naming algochat::ChatEnvelope runs.",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793928893,
+  "snapshot": {
+    "revision": "e7ee307b404b002a07baadbd21facc856f95559f",
+    "dirty": true,
+    "fingerprint": "947d2c339490f5ec7c4f925dd8d51714959b556999b34fe2826e2f7077cdde80",
+    "content": "fb2acd946a03bc02e80bf6e7d4bbd9fbae0ea67c501dc001b9c2a47639ddff62"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Compile/link check only; no Raven Desktop build and no interop exercised (Release B / raven-desktop scope)"
+  ]
+}
