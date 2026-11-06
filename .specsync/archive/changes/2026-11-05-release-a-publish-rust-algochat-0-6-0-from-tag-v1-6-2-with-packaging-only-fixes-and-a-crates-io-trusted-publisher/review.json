@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "94fdad619abba1e61f6b459b7afb81018b315b8e",
+  "contract_digest": "6a5fec186a65086fef97063b0fef60ed03a5147fe51d8ca6de1458cb4e676a04",
+  "execution_digest": "cb637e1d17c87cf794480bef3c069f49cd216b57ae0961448c7f031f61be0325",
+  "workspace_digest": "6a18fe6b165b15e63db55b865bfa1f06935b38c74eeee0554e5ce631018b1bbd",
+  "timestamp": 1793902592
+}

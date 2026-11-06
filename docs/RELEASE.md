@@ -2,12 +2,12 @@
 
 A green **Release qualification / complete** check means the candidate passed the
 seven hosted lanes below. It does not authorize a release, establish historical
-provenance, or prove registry permissions. Protocol **1.6.0** (the specification version), release **1.6.1**, and each library's
+provenance, or prove registry permissions. Protocol **1.6.0** (the specification version), release **1.6.2**, and each library's
 package version are distinct. The [package version table](#package-versions-and-distribution) records the release set; the language/runtime requirements are below.
 
 ## Candidate and evidence
 
-A change inside one language tree runs that language's workflow, including Swift on Linux when the Swift tree or root package manifest changes. Markdown-only edits in that tree do not. The orchestrator calls every language workflow, plus its own Swift Linux job, only when the pull request or main push changes the protocol, test vectors, `scripts/release`, or the orchestrator workflow. A root README, docs, or intent change does not start those lanes. Manual dispatch still runs the full matrix. Checkout uses the PR **head SHA**, not GitHub's synthetic merge SHA. Credentials are not persisted; permissions are `contents: read`. There are no registry publishing steps or OIDC grants.
+A change inside one language tree runs that language's workflow, including Swift on Linux when the Swift tree or root package manifest changes. Markdown-only edits in that tree do not. The orchestrator calls every language workflow, plus its own Swift Linux job, only when the pull request or main push changes the protocol, test vectors, `scripts/release`, or the orchestrator workflow. A root README, docs, or intent change does not start those lanes. Manual dispatch still runs the full matrix. Checkout uses the PR **head SHA**, not GitHub's synthetic merge SHA. Credentials are not persisted; permissions are `contents: read`. There are no registry publishing steps or OIDC grants in qualification. The only crates.io path is the separate manual [crates.io publishing](#cratesio-publishing) workflow.
 
 The scripts require Python 3.11+. Each lane starts from a clean checkout, records platform/tool versions and every
 command with exit code/output, exercises an external consumer, and uploads
@@ -110,16 +110,16 @@ claim another author's historical actions or fabricate human implementation acce
 
 ## Package versions and distribution
 
-> **Pending:** the 1.6.1 rows below describe [algochat#64](https://github.com/CorvidLabs/algochat/pull/64), which is not merged or tagged yet. Until it merges and tag `v1.6.1` exists, the latest release is 1.6.0: tag `v1.6.0` and `go/v0.5.0` on `7d7b280`, with Python `0.5.0`.
+> **Pending:** the 1.6.2 rows below describe [algochat#67](https://github.com/CorvidLabs/algochat/issues/67), which is not merged or tagged yet. Until it merges and tag `v1.6.2` exists, the latest release is 1.6.1: tag `v1.6.1` on `094caa5ce446d4c75e7cb16358f298832e661f5a`, with `go/v0.5.0` carried over.
 
-`CorvidLabs/algochat` is the source. Archived language repositories stay archived. Release 1.6.1 keeps protocol specification **1.6.0**; the wire format does not change. Repository tag `v1.6.1` is the Swift package tag, cut from the merge commit of the 1.6.1 change. Go does not change in 1.6.1, so the Go module tag stays `go/v0.5.0`. Tags `v1.6.0` and `go/v0.5.0` are the previous release, on commit `7d7b280ae027b55502a3d16d72ab7afac3f93043`. Tags `v1.5.0` and `go/v0.4.0` are the release before that, on commit `5c4e51f7bf49bb26c4cab6368c142cc8c04344aa`. Tags `v1.4.0` and `go/v0.3.0` are older. Tags `v1.3.0` and `go/v0.2.0` remain on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`. Further registry publication or deployment, beyond the existing TypeScript GitHub Packages workflow, still requires that workflow's own dispatch.
+`CorvidLabs/algochat` is the source. Archived language repositories stay archived. Release 1.6.2 keeps protocol specification **1.6.0** and changes no library source: `rs/src` is identical to `v1.6.1`. It fixes the Rust crate's packaging and adds the crates.io publish workflow, so that Rust `0.6.0` is published from repository tag `v1.6.2`. Repository tag `v1.6.2` is also the Swift package tag, with Swift sources unchanged. Go does not change, so the Go module tag stays `go/v0.5.0`. Tag `v1.6.1` is the previous release, on commit `094caa5ce446d4c75e7cb16358f298832e661f5a`. Tags `v1.6.0` and `go/v0.5.0` are on commit `7d7b280ae027b55502a3d16d72ab7afac3f93043`. Tags `v1.5.0` and `go/v0.4.0` are on commit `5c4e51f7bf49bb26c4cab6368c142cc8c04344aa`. Tags `v1.4.0` and `go/v0.3.0` are older. Tags `v1.3.0` and `go/v0.2.0` remain on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`. Registry publication beyond the existing TypeScript GitHub Packages workflow and the crates.io workflow still requires its own authorization.
 
 | Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
-| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.6.1` / repository tag `v1.6.1` (pending; protocol specification 1.6.0) | this repository |
+| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.6.2` / repository tag `v1.6.2` (pending; protocol specification 1.6.0) | this repository |
 | TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | GitHub Packages for this repository |
-| Python | `py-algochat` | `0.6.0` (pending #64; `0.5.0` in 1.6.0) | PyPI; source version only until a publisher is configured |
-| Rust | `algochat` | `0.6.0` | crates.io; source version only until a publisher is configured |
+| Python | `py-algochat` | `0.6.0` | PyPI; source version only until a publisher is configured |
+| Rust | `algochat` | `0.6.0` from tag `v1.6.2` (pending) | crates.io through the [trusted-publisher workflow](#cratesio-publishing); not available until the dated evidence below records it |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | GitHub Packages for this repository |
 | Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.5.0` | this repository |
 
@@ -132,16 +132,44 @@ Distribution observations checked on **2026-10-30**, after the 1.6.0 tag:
 - The [crates.io registry](https://crates.io/crates/algochat/0.2.1) reports latest version `0.2.1` from the archived Rust repository, rather than source version `0.6.0`. Use a checkout path dependency for the current implementation, as the Rust README says.
 - GitHub Packages metadata lists Kotlin [`0.2.0`](https://github.com/CorvidLabs/kt-algochat/packages/3318797?version=0.2.0) only, associated with archived `CorvidLabs/kt-algochat`. That metadata does not establish availability at the intended monorepo Maven endpoint or artifact equivalence to current source.
 - The [Go module proxy](https://proxy.golang.org/github.com/!corvid!labs/algochat/go/@v/list) lists `v0.2.0` through `v0.5.0`. `@latest` is `v0.5.0`, from tag `go/v0.5.0` at `7d7b280`.
-- Authenticated remote installs, artifact-to-source provenance, and registry-side publisher bindings were not verified. There is no root PyPI, crates.io, or Kotlin publishing workflow. Qualification does not configure those external bindings; the TypeScript manual publishing workflow's presence is not a publication receipt.
+- Authenticated remote installs, artifact-to-source provenance, and registry-side publisher bindings were not verified. There is no root PyPI or Kotlin publishing workflow; the crates.io workflow below had not run. Qualification does not configure those external bindings; the TypeScript manual publishing workflow's presence is not a publication receipt.
 
 The old coordinate `com.corvidlabs:algochat:0.2.0` was a documentation error. Apps using archived `swift-algochat` `0.4.0` retain that repository URL until migrated. Source is protocol `1.6.0`, Kotlin `com.corvidlabs:kt-algochat:0.5.0`, and Go `go get github.com/CorvidLabs/algochat/go@v0.5.0`. A root tag `v1.6.1` or `v1.6.0` does not select that nested module. Tag `v1.6.0` is the previous release; `go/v0.5.0` carries over unchanged. What changed is in [CHANGELOG.md](../CHANGELOG.md).
 
 Runtime gaps recorded for this release: Node 18, Python 3.10, Rust 1.85, older Apple OS versions, and Android were not the runners used for qualification. Swift hybrid qualification covers macOS 26 only; its APIs declare availability on Apple OS 26 platforms. Linux builds the Swift library without ML-KEM.
 
 Nested legacy workflows remain historical references, not active root publication
-flows. Do not move them to root to activate publishing. Any future publication
-requires separate explicit authorization, manual invocation and verified credentials
-or trusted-publisher bindings; none are configured by qualification.
+flows. Do not move them to root to activate publishing. The archived Rust
+repository's nested publish workflow, `rs/.github/workflows/release.yml`, was removed
+in 1.6.2. Any other future publication requires separate explicit authorization,
+manual invocation and verified credentials or trusted-publisher bindings; none are
+configured by qualification.
+
+### crates.io publishing
+
+Leif authorized a crates.io trusted publisher on 2026-11-05 (decision D3 for
+[algochat#67](https://github.com/CorvidLabs/algochat/issues/67)). The Rust crate is
+published only by [`publish-crates.yml`](../.github/workflows/publish-crates.yml)
+(REQ-release-9):
+
+- manual `workflow_dispatch` from `main`, with inputs `tag` (for example `v1.6.2`) and `version` (for example `0.6.0`);
+- the job runs in the `crates-io` GitHub environment, whose required reviewer approves each run;
+- it checks out the tag, and fails unless the tag is on `main` and `rs/Cargo.toml` declares `algochat` at that version;
+- it runs `scripts/release/qualify.py rs` on that commit, including the crate boundary check, before any credential exists;
+- `rust-lang/crates-io-auth-action`, pinned to a commit, exchanges the job's OIDC token for a short-lived crates.io token, which `cargo publish --locked` uses and the action revokes. No registry secret is stored.
+
+The published crate contains only `src/*.rs`, `README.md`, `LICENSE` and Cargo's
+generated manifest, lockfile and VCS record. Its tests read `../vectors/` and
+therefore run only from a checkout; self-contained packaged vectors are planned for
+0.7.0 ([algochat#70](https://github.com/CorvidLabs/algochat/issues/70)).
+
+Owner configuration outside this repository, not verifiable from it: the crates.io
+trusted publisher for `CorvidLabs/algochat`, workflow `publish-crates.yml`,
+environment `crates-io`; removal of any publisher still bound to the archived
+`rs-algochat`; and the `crates-io` environment's required reviewer and `main`-only
+deployment rule. A version on crates.io is permanent (it can be yanked, never
+replaced). Record availability here only from a dated consumer build that resolves
+`algochat = "0.6.0"` from crates.io outside this repository.
 
 ## Historical 1.3.0 release preparation checklist
 

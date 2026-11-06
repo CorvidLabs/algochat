@@ -16,6 +16,35 @@ import re
 
 SHA = 'a' * 40
 
+RUST_REPOSITORY = 'https://github.com/CorvidLabs/algochat'
+
+
+def rust_crate_files(name='algochat', repository=RUST_REPOSITORY, extra=()):
+    """A minimal packaged crate: manifest first so missing_member drops it."""
+    manifest = '[package]\nname="' + name + '"\nversion="0.6.0"\n'
+    if repository is not None:
+        manifest += 'repository="' + repository + '"\n'
+    files = {
+        'algochat-0.6.0/Cargo.toml': manifest.encode(),
+        'algochat-0.6.0/Cargo.toml.orig': manifest.encode(),
+        'algochat-0.6.0/Cargo.lock': b'version = 4\n',
+        'algochat-0.6.0/.cargo_vcs_info.json': b'{"git":{"sha1":"' + SHA.encode() + b'"},"path_in_vcs":"rs"}',
+        'algochat-0.6.0/README.md': b'# algochat',
+        'algochat-0.6.0/LICENSE': b'MIT',
+        'algochat-0.6.0/src/lib.rs': b'// source',
+        'algochat-0.6.0/src/pq.rs': b'// source',
+    }
+    for member in extra:
+        files['algochat-0.6.0/' + member] = b'// not shipped'
+    return files
+
+
+def write_crate(path, files):
+    with tarfile.open(path, 'w:gz') as archive:
+        for member, data in files.items():
+            info = tarfile.TarInfo(member); info.size = len(data); archive.addfile(info, io.BytesIO(data))
+
+
 def make_package(lane, path, wrong_identity=False, missing_member=False):
     name = 'wrong' if wrong_identity else None
     if path.name == 'Cargo.lock':
@@ -29,7 +58,7 @@ def make_package(lane, path, wrong_identity=False, missing_member=False):
     elif lane == 'py':
         files={'py_algochat-0.2.0/pyproject.toml':('[project]\nname="'+(name or 'py-algochat')+'"\n').encode(), 'py_algochat-0.2.0/src/algochat/__init__.py':b'# package'}
     elif lane == 'rs':
-        files={'algochat-0.3.0/Cargo.toml':('[package]\nname="'+(name or 'algochat')+'"\n').encode(), 'algochat-0.3.0/src/lib.rs':b'// source'}
+        files=rust_crate_files(name or 'algochat')
     elif lane == 'kt':
         files={('wrong.class' if wrong_identity else 'com/corvidlabs/algochat/Keys.class'):b'CAFEBABE'}
     elif lane == 'go':
@@ -138,6 +167,134 @@ class PackageTests(unittest.TestCase):
         fixture.mutate(lambda data:data['artifacts'][0].update(sha256=digest(artifact)))
         validate(fixture.root,SHA)  # A hash is not semantic validation or an attestation.
         with self.assertRaises(ValueError): validate_package('ts',artifact)
+
+
+class RustCrateTests(unittest.TestCase):
+    """REQ-release-3: the published crate is the library and nothing else."""
+
+    def check(self, files):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'algochat-0.6.0.crate'
+            write_crate(path, files)
+            validate_package('rs', path)
+
+    def test_clean_crate_is_accepted(self):
+        self.check(rust_crate_files())
+
+    def test_unshipped_members_are_rejected(self):
+        for member in ['src/bin/pqcross.rs', 'tests/cross_impl.rs', 'examples/export_envelopes.rs',
+                       '.github/workflows/release.yml', '.specsync/config.toml', '.claude/skills/x/SKILL.md',
+                       'AGENTS.md', 'fledge.toml', 'specs/crate/crate.spec.md', 'src/nested/mod.rs']:
+            with self.subTest(member=member), self.assertRaises(ValueError):
+                self.check(rust_crate_files(extra=[member]))
+
+    def test_archived_or_missing_repository_is_rejected(self):
+        for repository in ['https://github.com/CorvidLabs/rs-algochat', None]:
+            with self.subTest(repository=repository), self.assertRaises(ValueError):
+                self.check(rust_crate_files(repository=repository))
+
+
+PUBLISH_CRATES = '.github/workflows/publish-crates.yml'
+
+
+def check_publish_workflow(text):
+    """REQ-release-9 guards for the only crates.io publication path."""
+    def fail(reason):
+        raise ValueError('publish-crates: ' + reason)
+    if 'secrets.' in text:
+        fail('reads a stored secret')
+    document = _parse_workflow(text)
+    trigger = document.get('on')
+    if not isinstance(trigger, dict) or list(trigger) != ['workflow_dispatch']:
+        fail('must be workflow_dispatch only')
+    inputs = (trigger['workflow_dispatch'] or {}).get('inputs') or {}
+    if sorted(inputs) != ['tag', 'version'] or not all(inputs[key].get('required') is True for key in inputs):
+        fail('needs required tag and version inputs')
+    if document.get('permissions') != {'contents': 'read'}:
+        fail('top-level permissions must be contents: read')
+    jobs = document.get('jobs') or {}
+    if list(jobs) != ['publish']:
+        fail('must have exactly one publish job')
+    job = jobs['publish']
+    if "github.ref == 'refs/heads/main'" not in str(job.get('if', '')):
+        fail('must run only when dispatched from main')
+    if job.get('environment') != 'crates-io':
+        fail('must run in the crates-io environment')
+    if job.get('permissions') != {'contents': 'read', 'id-token': 'write'}:
+        fail('job permissions must be contents: read and id-token: write only')
+    steps = job.get('steps') or []
+    for step in steps:
+        if '${{ inputs.' in str(step.get('run', '')):
+            fail('inputs must reach shell steps through env, not inline expressions')
+    def position(predicate, reason):
+        for index, step in enumerate(steps):
+            if predicate(step):
+                return index
+        fail(reason)
+    checkout = position(lambda step: str(step.get('uses', '')).startswith('actions/checkout@'), 'no checkout')
+    options = steps[checkout].get('with') or {}
+    if not re.fullmatch(r'actions/checkout@[0-9a-f]{40}', steps[checkout]['uses']):
+        fail('checkout must be pinned to a commit')
+    if options.get('ref') != 'refs/tags/${{ inputs.tag }}' or options.get('persist-credentials') is not False \
+            or str(options.get('fetch-depth')) != '0':
+        fail('checkout must take the tag with full history and no persisted credentials')
+    runs = lambda needle: (lambda step: needle in str(step.get('run', '')))
+    tag_format = position(runs('^v[0-9]+'), 'no tag format check')
+    ancestry = position(runs('git merge-base --is-ancestor'), 'no check that the tag is on main')
+    version = position(runs('rs/Cargo.toml'), 'no crate name and version check')
+    qualify = position(runs('scripts/release/qualify.py rs'), 'no Rust qualification before publishing')
+    auth = position(lambda step: str(step.get('uses', '')).startswith('rust-lang/crates-io-auth-action@'),
+                    'no trusted-publishing authentication')
+    if not re.fullmatch(r'rust-lang/crates-io-auth-action@[0-9a-f]{40}', steps[auth]['uses']):
+        fail('auth action must be pinned to a commit')
+    publish = position(runs('cargo publish'), 'no cargo publish')
+    if (steps[publish].get('env') or {}).get('CARGO_REGISTRY_TOKEN') != '${{ steps.' + str(steps[auth].get('id')) + '.outputs.token }}':
+        fail('cargo publish must use the minted token')
+    if not (tag_format < checkout < min(ancestry, version) and max(ancestry, version) < qualify < auth < publish):
+        fail('guards, qualification, authentication and publish are out of order')
+    if sum(runs('cargo publish')(step) for step in steps) != 1:
+        fail('publishes more than once')
+
+
+class PublishCratesWorkflowTests(unittest.TestCase):
+    """REQ-release-9: one manual, guarded, token-free crates.io path."""
+
+    def setUp(self):
+        self.root = Path(__file__).resolve().parents[2]
+        self.text = (self.root / PUBLISH_CRATES).read_text()
+
+    def test_workflow_passes_its_guards(self):
+        check_publish_workflow(self.text)
+
+    def test_mutations_are_rejected(self):
+        auth_pin = re.search(r'crates-io-auth-action@([0-9a-f]{40})', self.text).group(1)
+        mutations = {
+            'push trigger': ('on:\n  workflow_dispatch:', 'on:\n  push:\n    tags: ["v*"]\n  workflow_dispatch:'),
+            'stored secret': ('${{ steps.auth.outputs.token }}', '${{ secrets.CARGO_REGISTRY_TOKEN }}'),
+            'no environment': ('    environment: crates-io\n', ''),
+            'other environment': ('environment: crates-io', 'environment: release'),
+            'any branch': ("github.ref == 'refs/heads/main'", 'true'),
+            'write permission': ('      id-token: write', '      id-token: write\n      contents: write'),
+            'persisted credentials': ('persist-credentials: false', 'persist-credentials: true'),
+            'unpinned auth': ('crates-io-auth-action@' + auth_pin, 'crates-io-auth-action@v1'),
+            'no ancestry check': ('git merge-base --is-ancestor', 'true ||'),
+            'no qualification': ('scripts/release/qualify.py rs', 'scripts/release/qualify.py ts'),
+            'inline input': ('"$TAG"', '"${{ inputs.tag }}"'),
+        }
+        for name, (old, new) in mutations.items():
+            with self.subTest(name):
+                self.assertIn(old, self.text)
+                with self.assertRaises(ValueError):
+                    check_publish_workflow(self.text.replace(old, new, 1))
+
+    def test_qualification_workflows_still_cannot_publish(self):
+        for name in ['ts', 'py', 'rs', 'kt', 'go', 'swift', 'release-qualification', 'workflow-safety']:
+            text = (self.root / '.github/workflows' / f'{name}.yml').read_text()
+            self.assertNotIn('publish-crates', text)
+            check_workflow(text)
+
+    def test_archived_nested_publish_workflow_is_gone(self):
+        self.assertFalse((self.root / 'rs/.github/workflows/release.yml').exists())
 
 
 class ProvenanceTests(unittest.TestCase):

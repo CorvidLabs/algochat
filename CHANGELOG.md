@@ -2,6 +2,26 @@
 
 Protocol releases of this repository. Each library keeps its own package version. Earlier releases are described on the [releases page](https://github.com/CorvidLabs/algochat/releases). `ts/CHANGELOG.md` and `swift/CHANGELOG.md` are the archived per-language histories from before the monorepo.
 
+## 1.6.2 - Unreleased
+
+The Rust crate `algochat` 0.6.0 gets clean packaging and a guarded crates.io publish path (#67). No library source changes: `rs/src` is identical to `v1.6.1`, and the wire format is unchanged: protocol 1.6.0.
+
+| Library | Version |
+| --- | --- |
+| Protocol and Swift | 1.6.2, tag `v1.6.2` (protocol specification 1.6.0) |
+| TypeScript `@corvidlabs/ts-algochat` | 0.12.0 |
+| Python `py-algochat` | 0.6.0 |
+| Rust `algochat` | 0.6.0, published to crates.io from tag `v1.6.2` |
+| Kotlin `com.corvidlabs:kt-algochat` | 0.5.0 |
+| Go `github.com/CorvidLabs/algochat/go` | 0.5.0, tag `go/v0.5.0` |
+
+### Rust: packaging and publishing (#67)
+
+- The crate names `https://github.com/CorvidLabs/algochat` as its repository instead of the archived `rs-algochat`.
+- The published crate contains only the library sources, README and license. The tests, the example, the `pqcross` mesh binary and the archived repository's workflows, specs and agent files stay in the checkout.
+- Release qualification rejects a crate with any other member or the archived repository URL.
+- New manual `Publish crates.io` workflow: dispatched from `main` for a tag on `main` whose `rs/Cargo.toml` declares the requested version, in the `crates-io` environment, after the Rust qualification lane, using crates.io trusted publishing and no stored token. The archived repository's nested tag-triggered publish workflow is removed.
+
 ## 1.6.1 - 2026-10-30
 
 Python one-to-one messages are hybrid only (#63). The wire format is unchanged: protocol 1.6.0.

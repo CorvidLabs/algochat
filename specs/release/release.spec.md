@@ -1,6 +1,6 @@
 ---
 module: release
-version: 9
+version: 10
 status: active
 files:
   - scripts/release/packages.py
@@ -22,7 +22,7 @@ files:
 
 ## Purpose
 
-Make six-language candidate qualification and unresolved release gates observable without publishing packages.
+Make six-language candidate qualification and unresolved release gates observable without publishing packages. The one crates.io path is a separate, manually dispatched trusted-publisher workflow that qualification never calls.
 
 ## Public API
 
@@ -61,6 +61,17 @@ Internal Python helpers (not a library contract):
 | `contents` | Read ZIP/tar members after rejecting links, special files and duplicate entries. |
 | `require` | Require a named nonempty package member. |
 | `validate_package` | Check package format, required source/runtime files and existing package identity. |
+| `RUST_REPOSITORY` | The repository URL the Rust crate manifest must name. |
+| `RUST_CRATE_FILES` | Top-level members a Rust crate may contain besides `src/*.rs`. |
+| `validate_crate_boundary` | Reject a Rust crate whose repository is not this monorepo or that contains any other member. |
+| `rust_crate_files` | Test-only minimal Rust crate members, with optional extra members or repository. |
+| `write_crate` | Test-only gzip tar writer for Rust crate fixtures. |
+| `RustCrateTests` | Clean crate accepted; binary, test, example, workflow, agent, spec and nested source members and archived or missing repository rejected. |
+| `PUBLISH_CRATES` | Path of the crates.io publish workflow. |
+| `check_publish_workflow` | Reject a crates.io workflow without its manual-only trigger, main-only job, `crates-io` environment, tag, ancestry, version and qualification guards, pinned trusted-publishing auth, or with stored secrets, extra write permissions, persisted credentials or inline inputs. |
+| `PublishCratesWorkflowTests` | The real workflow passes its guards, each guard mutation fails, qualification workflows still cannot publish, and the archived nested publish workflow is gone. |
+
+`.github/workflows/publish-crates.yml` (REQ-release-9) is dispatched manually from `main` with a release tag and crate version. In the `crates-io` environment it checks the tag is on `main` and declares that `algochat` version, runs `qualify.py rs` on that commit, exchanges an OIDC token for a short-lived crates.io token with a commit-pinned `rust-lang/crates-io-auth-action`, and runs `cargo publish --locked`.
 
 Local verification tools (not hosted qualification receipts):
 
@@ -83,7 +94,7 @@ Local verification tools (not hosted qualification receipts):
 
 ## Invariants
 
-No qualification command publishes to a remote registry. Package identities and protocol behavior remain unchanged. All six languages and separate Swift Apple/Linux evidence are required. Evidence failure cannot produce a passing all-six result. Soft Trust provenance is not release approval. Dated local audit results stay tied to their recorded source and cannot qualify later commits. A defect reproduced by a regression probe is not behavioral acceptance; failed or incomplete probes cannot report success.
+No qualification command publishes to a remote registry. Only `publish-crates.yml` publishes the Rust crate, and only after the Rust qualification lane passes on the tagged commit. The published crate is the library sources, README, license and Cargo's generated files. Package identities and protocol behavior remain unchanged. All six languages and separate Swift Apple/Linux evidence are required. Evidence failure cannot produce a passing all-six result. Soft Trust provenance is not release approval. Dated local audit results stay tied to their recorded source and cannot qualify later commits. A defect reproduced by a regression probe is not behavioral acceptance; failed or incomplete probes cannot report success.
 
 ## Behavioral Examples
 
@@ -91,7 +102,7 @@ A clean exact-head hosted run with seven successful receipts and matching artifa
 
 ## Error Cases
 
-Missing languages, stale SHA, dirty sources, failed commands, malformed evidence, unsafe artifact paths, missing artifacts and digest mismatch fail. Invalid refs, empty ranges and non-ancestor ranges fail provenance verification; Attest failure propagates.
+A Rust crate with any member outside its boundary or a repository other than `https://github.com/CorvidLabs/algochat` fails package validation. A publish dispatch from another branch, for a malformed tag or version, for a tag not on `main`, or for a version the tag does not declare fails before authentication. Missing languages, stale SHA, dirty sources, failed commands, malformed evidence, unsafe artifact paths, missing artifacts and digest mismatch fail. Invalid refs, empty ranges and non-ancestor ranges fail provenance verification; Attest failure propagates.
 
 ## Dependencies
 
@@ -113,3 +124,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-28 | prepare-protocol-1-5-0-and-the-library-versions: Prepare protocol 1.5.0 and the library versions |
 | 2026-10-30 | release-protocol-1-6-0-and-the-library-versions: Release protocol 1.6.0 and the library versions |
 | 2026-10-30 | record-algochat-1-6-1-and-py-algochat-0-6-0-in-the-release-instructions-after-algochat-64: Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64) |
+| 2026-11-05 | release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher: Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67) |

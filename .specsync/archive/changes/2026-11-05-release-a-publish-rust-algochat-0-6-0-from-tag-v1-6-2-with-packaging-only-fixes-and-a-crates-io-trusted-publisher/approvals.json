@@ -1,0 +1,68 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793901979,
+      "digest": "6a5fec186a65086fef97063b0fef60ed03a5147fe51d8ca6de1458cb4e676a04",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher",
+        "title": "Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67)",
+        "description": "Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67)",
+        "kind": "feature",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          ".github/workflows/publish-crates.yml",
+          "CHANGELOG.md",
+          "INTENT.md",
+          "README.md",
+          "docs/RELEASE.md",
+          "hi/crate.md",
+          "index.html",
+          "rs/.github/workflows/release.yml",
+          "rs/Cargo.toml",
+          "rs/README.md",
+          "scripts/release/packages.py",
+          "scripts/release/test_release.py",
+          "specs/release/context.md",
+          "specs/release/release.spec.md",
+          "specs/release/requirements.md",
+          "specs/release/testing.md",
+          "swift/README.md"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "A crate packaged from the candidate is algochat 0.6.0 with only its manifest, lockfile, README, LICENSE and src/ library sources and the CorvidLabs/algochat repository link; rs/src stays identical to v1.6.1; and the only publish path is a manual crates.io trusted-publisher workflow for a matching v-tag behind the protected crates-io environment, guarded by release tests."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "constraints": "Lesson from the 1.6.0/1.6.1 releases: a git tag is not a registry publication; record registry availability only from dated external-consumer evidence. Qualification lanes stay read-only with no publication steps.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "release": "720110396d7c779c511e926edf93a06b80063fcf81d724dc3489a2be1efaaef6"
+      },
+      "approved_delta_bases": {
+        "release: REQUIREMENT REQ-release-2": "acf72c80d5fb88b5d83d464e5ceb36408d14e702de4514d674c576cb5f0a6c89",
+        "release: REQUIREMENT REQ-release-3": "353369f31204bd6be5150e0fe056f1722a52a03bae4c251bca25f2ab53c02426",
+        "release: REQUIREMENT REQ-release-5": "e70e4e217d1e2b958042847abf733ae01c53831c4d533d8f422b5a2ce569ac8d"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793902720,
+      "digest": "8c005c8e0af541a47ecdf8637b64fe82e2be800aa7b5b07e2dde66787279131b",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}
