@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-f08db351480aab15e8eda3f9",
-    "head": "EVT-53f297e1dd6fd868c61f3954",
+    "head": "EVT-7b9cf57b86ef9a70fd7ae97f",
     "legacy": null
   },
   "schema_version": 2,
@@ -35,7 +35,8 @@
     "Intent CRATE-1..7 and scope Release B (0.7.0: #70a, #73, #68, #70b in that order) approved by Leif via orc 2026-11-05 11:00 MST ('Approve intent + A and B'); D4 AlgoChat implements mnemonic decoding",
     "Orc t18 2026-11-05: start Release B under the approved scope, failing tests first, gates through the orc",
     "Native definition approval of #70a recorded by 0xLeif via orc at d3b1180 (Leif 18:41 MST 'Approve')",
-    "Leif 2026-11-05 20:24 MST 'Go with both': rustfmt-only commit b867cf8 on #75, then a separate change making qualify rs run fmt --check and clippy --all-targets -D warnings, before #73"
+    "Leif 2026-11-05 20:24 MST 'Go with both': rustfmt-only commit b867cf8 on #75, then a separate change making qualify rs run fmt --check and clippy --all-targets -D warnings, before #73",
+    "rs-lint definition approved by Leif 20:29 MST at ec4e7c6; unpinned-toolchain risk accepted"
   ],
   "open_questions": [],
   "completed": [
@@ -44,10 +45,7 @@
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Scoped implementation review of #70a at 65e67f5 (PR #75)",
-    "definition approval of rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
   "next_action": "after approval: failing QualifyLaneTests case, then qualify.py rs fmt+clippy"
 }
