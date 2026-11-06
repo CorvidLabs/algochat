@@ -207,6 +207,16 @@ describe('MnemonicService', () => {
             expect(validateMnemonic('abandon '.repeat(24).trim())).toBe(false);
             expect(validateMnemonic('abandon '.repeat(12).trim())).toBe(false);
         });
+
+        // #73: algosdk 3.7.0 reads the first 24 words and the last word, so a
+        // longer phrase ending in the right checksum decodes. It is not a
+        // 25-word phrase and must be rejected.
+        test('returns false for more than 25 words ending in the right checksum', () => {
+            const words = TEST_MNEMONIC.split(' ');
+            const longer = [...words.slice(0, 24), 'zoo', words[24]].join(' ');
+            expect(validateMnemonic(longer)).toBe(false);
+            expect(() => createChatAccountFromMnemonic(longer)).toThrow();
+        });
     });
 
     describe('validateAddress', () => {

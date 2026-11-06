@@ -13,6 +13,10 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as algochat from '../../src/index';
 import { x25519ECDH } from '../../src/crypto/keys';
+import { createHash } from 'node:crypto';
+import algosdk from 'algosdk';
+import { deriveMLKEMKeyPair } from '../../src/pq/kem';
+import { readEnglishWordlist } from './wordlist.mjs';
 
 const hex = (u8) => Buffer.from(u8).toString('hex');
 const unhex = (s) => new Uint8Array(Buffer.from(s, 'hex'));
@@ -217,6 +221,32 @@ const check = (label, cond) => {
     for (const c of v.cases) {
         const actual = run(c);
         check(`06 ${c.name}`, JSON.stringify(actual) === JSON.stringify(c.expect));
+    }
+}
+
+// --- 07 25-word accounts (#73) -----------------------------------------------
+{
+    const v = read('07-mnemonic-accounts.json');
+    const words = readEnglishWordlist();
+    check('07 wordlist count', words.length === v.wordlist.count);
+    check('07 wordlist sha256', createHash('sha256').update(words.join('\n')).digest('hex') === v.wordlist.sha256OfNewlineJoined);
+    for (const a of v.accounts) {
+        const entropy = unhex(a.entropy);
+        check(`07 ${a.name} valid`, algochat.validateMnemonic(a.mnemonic));
+        check(`07 ${a.name} entropy`, hex(algosdk.seedFromMnemonic(a.mnemonic)) === a.entropy);
+        check(`07 ${a.name} entropy -> phrase`, algosdk.mnemonicFromSeed(entropy) === a.mnemonic);
+        const account = algochat.createChatAccountFromMnemonic(a.mnemonic);
+        check(`07 ${a.name} address`, account.address === a.algorandAddress);
+        check(`07 ${a.name} ed25519`, hex(account.ed25519PublicKey) === a.ed25519PublicKey);
+        check(`07 ${a.name} x25519`, hex(account.encryptionKeys.publicKey) === a.x25519PublicKey);
+        check(`07 ${a.name} mlkem768`, hex(deriveMLKEMKeyPair(entropy).encapsKey) === a.mlkem768EncapsulationKey);
+        const falcon = algochat.createChatAccountFromMnemonic(a.mnemonic, { scheme: 'falcon-1024' });
+        check(`07 ${a.name} falcon address (info)`, falcon.address === a.falcon1024AddressInfoOnly);
+    }
+    for (const c of v.negative) {
+        let threw = false;
+        try { algochat.createChatAccountFromMnemonic(c.mnemonic); } catch { threw = true; }
+        check(`07 ${c.name} rejected`, c.expect === 'reject' && !algochat.validateMnemonic(c.mnemonic) && threw);
     }
 }
 
