@@ -12,4 +12,4 @@ artifact: tasks
 - [x] Remove the sibling-directory tests from `rs/tests/cross_impl.rs`.
 - [x] Update `rs/Cargo.toml` `include`, the specs, `rs/README.md` and `CHANGELOG.md`.
 - [x] Run the release tests, clean-clone `qualify.py rs` and `ts`, `fledge lanes run verify` and `fledge trust verify`, and record the evidence.
-- [ ] Open the PR without merging.
+- [x] Open the PR without merging (opened after this check; never merged by an agent).
