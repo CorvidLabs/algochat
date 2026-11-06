@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "timestamp": 1793930073,
+      "commit": "8d41917d2a857e586b4c647713b7fc37f37940c2",
+      "contract_digest": "a30b59300b253062feac6a91a141bd89b37672fad775cdcae1d56b1929286b5e",
+      "execution_digest": "ffd74553b424fef701f1399be7a2461b880ea75d8fb2c01f9c99eea0cc89dbff",
+      "workspace_digest": "536436a695459039b6b4c3875406ab9fb201f7dccc10a679337ebb2e4c865044",
+      "passed": false,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        },
+        {
+          "command": "specsync change check 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance (effective contract: release)",
+          "success": false,
+          "exit_code": 1
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-10",
+        "REQ-release-1",
+        "REQ-release-3"
+      ]
+    },
+    {
+      "timestamp": 1793930099,
+      "commit": "6da6edd37d6b81d79af2cb4f13c7fdf6aecd0f5e",
+      "contract_digest": "a30b59300b253062feac6a91a141bd89b37672fad775cdcae1d56b1929286b5e",
+      "execution_digest": "ffd74553b424fef701f1399be7a2461b880ea75d8fb2c01f9c99eea0cc89dbff",
+      "workspace_digest": "56a3222a7a670b128730905cc82a75e8dfec82e014ab287433db1dd7e415129e",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-10",
+        "REQ-release-1",
+        "REQ-release-3"
+      ]
+    }
+  ]
+}
