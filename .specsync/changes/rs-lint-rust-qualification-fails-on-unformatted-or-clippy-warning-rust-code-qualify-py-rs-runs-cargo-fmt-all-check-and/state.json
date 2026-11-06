@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and",
+  "slug": "rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and",
+  "title": "Rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches",
+  "description": "rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches",
+  "kind": "bug_fix",
+  "state": "draft",
+  "base_commit": "b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45",
+  "created_at": 1793935624,
+  "updated_at": 1793935641,
+  "affected_specs": [
+    "release"
+  ],
+  "affected_paths": [
+    "scripts/release/"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ after the lockfile is generated and before cargo test, records the rustfmt and clippy versions, and exits non-zero on a formatting diff or any clippy warning (a release test asserts both commands are in the rs lane, and a local probe with one unformatted line and one clippy warning each makes qualify.py rs fail); hosted Rust CI and the publish-crates qualification step therefore enforce formatting and lints with no workflow change; the current tree passes both."
+  ],
+  "selected_artifacts": [
+    "context",
+    "testing",
+    "tasks"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "REQ-release-2: qualification stays read-only with no publish credentials, so only qualify.py changes and no workflow gains a permission or step. The rustup stable toolchain on ubuntu-latest is unpinned, so a new stable clippy lint can fail qualification (and the publish-crates qualification step) without a code change; that is accepted and would be fixed in a follow-up, not by weakening -D warnings.",
+    "public_contract": "no"
+  }
+}
