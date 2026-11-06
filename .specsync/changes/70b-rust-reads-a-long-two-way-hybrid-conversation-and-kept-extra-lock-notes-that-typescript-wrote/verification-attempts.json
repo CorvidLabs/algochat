@@ -108,6 +108,24 @@
       "requirement_ids": [
         "REQ-protocol-13"
       ]
+    },
+    {
+      "timestamp": 1793981813,
+      "commit": "48a168b15b9239956dfa4cf8f164b946edbea924",
+      "contract_digest": "3cb24503468e382cb60e9a16e51e01ea29eb74855aadf63dc945c2dddffd0bf9",
+      "execution_digest": "63ae4869027c8f8d1223a15ed9f5375af107125a50cc91b4d492c697de0e5810",
+      "workspace_digest": "75251db900f30b4722af3d19e3daffaf724d24b3223b71ccd8d52ec460502272",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-13"
+      ]
     }
   ]
 }
