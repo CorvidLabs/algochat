@@ -1,0 +1,47 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-6dab68873aca3a28d836bbdb",
+    "head": "EVT-bd83ae2af707b09d6e5a6901",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants a Rust app to read each room message only with the key for its own epoch (CRATE-9) and to resume an interrupted key handout only for the people missed, at most 16 at a time (CRATE-10), so Rust proves from a TypeScript-written vector that a room of 19 removes a member, rotates its key, resumes a missed delivery, keeps old messages readable and drops the member from a channel (#70c-2, issue #81).",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "intent",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared",
+  "references": {
+    "criteria": [
+      "CRATE-9",
+      "CRATE-10"
+    ],
+    "requirements": [
+      "REQ-protocol-15"
+    ],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Scope: #70c-2 (issue #81) under Leif's approval of the #70c rows and CRATE-8..12 (2026-11-06); D-c3: ships as 0.8.0",
+    "Orc t18 2026-11-06: definition only plus committed failing tests, no build (no 4th level of code in the stack); branch leif/algochat-70c2-room-rekey from #84's head 1496b19; REQ-protocol-15; HI first (CRATE-9 and CRATE-10 already captured in #84's hi/crate.md)",
+    "Every approved library mutation must have a case only that check refuses (lesson from #70c-1, 113b749); test failure messages carry no account-derived values (lesson from #78, 7e164e4)"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Native definition approval of #70c-2 (70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared)"
+  ],
+  "run_consents": [],
+  "next_action": "Wait for Leif's definition approval relayed by orc t18; build only after approval and after #70c-1's code lands (orc: no 4th level of code in the stack)"
+}
