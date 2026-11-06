@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-47f570f9193bb588e44ef7ce",
-    "head": "EVT-776a40bd5361fdd023c4c309",
+    "head": "EVT-afa7457480b1bc8036ddc5e2",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "rs"
   ],
   "stage": {
-    "current": "accept",
+    "current": "done",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -33,16 +33,18 @@
     "D1+D2: tag v1.6.2, crate stays 0.6.0, rs/src identical to v1.6.1, pqcross not shipped (rejected: publishing v1.6.1 verbatim with archived repo link)",
     "D3: crates.io trusted publisher workflow (rejected: manual cargo publish)",
     "D4: AlgoChat implements Algorand mnemonic decoding itself for #73 (rejected: depending on algonaut)",
-    "Native definition approval of Release A recorded by 0xLeif via orc at dfa399f"
+    "Native definition approval of Release A recorded by 0xLeif via orc at dfa399f",
+    "Release A review 'Record pass' by Leif (0xLeif, native review at 94fdad6, relayed by orc t18); corvid-agent APPROVED e7ee307b; merged 8e54462c",
+    "Release A accepted and released by Leif via orc ('Yes, release when green'): tag v1.6.2 -> 8e54462c, algochat 0.6.0 on crates.io, published by token from the orc, not via publish-crates.yml"
   ],
   "open_questions": [],
-  "completed": [],
+  "completed": [
+    "Release A: algochat 0.6.0 published from v1.6.2 (8e54462c)"
+  ],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Scoped implementation review of Release A at ce4865d (PR #74)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
   "next_action": "After review: specsync change ship (finalize archive tip), push, hosted qualification; then Leif's release approval, tag v1.6.2, dispatch publish-crates"
 }

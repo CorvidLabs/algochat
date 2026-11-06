@@ -1,0 +1,48 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-f08db351480aab15e8eda3f9",
+    "head": "EVT-fe4c90c3c79173adebe5200a",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants Raven Desktop built, so AlgoChat's Rust crate 0.7.0 must ship mandatory shared vectors, the 25-word phrase path, the ACPQ write path and Hybrid/0x02 conversation vectors (Release B).",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "plan",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance",
+  "references": {
+    "criteria": [
+      "CRATE-2",
+      "CRATE-3",
+      "CRATE-4",
+      "CRATE-5",
+      "CRATE-6",
+      "CRATE-7"
+    ],
+    "requirements": [],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Intent CRATE-1..7 and scope Release B (0.7.0: #70a, #73, #68, #70b in that order) approved by Leif via orc 2026-11-05 11:00 MST ('Approve intent + A and B'); D4 AlgoChat implements mnemonic decoding",
+    "Orc t18 2026-11-05: start Release B under the approved scope, failing tests first, gates through the orc"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Native definition approval of #70a (Release B item 1)"
+  ],
+  "run_consents": [],
+  "next_action": "Wait for Leif's definition approval via orc t18, then write the failing tests"
+}
