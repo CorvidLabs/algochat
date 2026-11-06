@@ -44,6 +44,7 @@ const SHARED: &[&str] = &[
     "pq-conversation-v1.json",
     "pq-mlkem768.json",
     "psk-kept-v1.json",
+    "room-session-v1.json",
 ];
 
 const METADATA: &[&str] = &[
