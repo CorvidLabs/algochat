@@ -65,6 +65,26 @@
         "REQ-release-1",
         "REQ-release-3"
       ]
+    },
+    {
+      "timestamp": 1793930169,
+      "commit": "f23e10a4f4a1451b8c52615d1e53e838a2b60943",
+      "contract_digest": "a30b59300b253062feac6a91a141bd89b37672fad775cdcae1d56b1929286b5e",
+      "execution_digest": "ffd74553b424fef701f1399be7a2461b880ea75d8fb2c01f9c99eea0cc89dbff",
+      "workspace_digest": "099d003af30f225ab482a36847917b89e81992a4111396d4a2c18d90bfe500f6",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-10",
+        "REQ-release-1",
+        "REQ-release-3"
+      ]
     }
   ]
 }
