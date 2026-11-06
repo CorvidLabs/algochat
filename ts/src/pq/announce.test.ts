@@ -62,7 +62,7 @@ function hex(value: Uint8Array): string {
 describe('ACPQ announcement vector (REQ-protocol-12)', () => {
     test('the committed file is exactly what the regenerate command writes', () => {
         const output = join(mkdtempSync(join(tmpdir(), 'pq-announcement-')), 'pq-announcement-v1.json');
-        const run = Bun.spawnSync(['bun', 'scripts/emit-pq-announcement-vector.ts', output], {
+        const run = Bun.spawnSync([process.execPath, 'scripts/emit-pq-announcement-vector.ts', output], {
             cwd: new URL('../../', import.meta.url).pathname,
         });
         expect(run.exitCode).toBe(0);
