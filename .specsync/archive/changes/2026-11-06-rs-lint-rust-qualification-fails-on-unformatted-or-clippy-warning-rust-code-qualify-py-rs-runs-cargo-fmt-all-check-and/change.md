@@ -1,6 +1,6 @@
 ---
 id: rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and
-state: implementing
+state: archived
 type: bug_fix
 base_commit: b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45
 ---

@@ -7,11 +7,11 @@
   "title": "Rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches",
   "description": "rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches",
   "kind": "bug_fix",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45",
   "created_at": 1793935624,
-  "updated_at": 1793988343,
+  "updated_at": 1793988903,
   "affected_specs": [
     "release"
   ],
