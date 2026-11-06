@@ -43,5 +43,5 @@
   "blockers": [],
   "awaiting_human": [],
   "run_consents": [],
-  "next_action": "Write failing release and conformance tests"
+  "next_action": "Open PR for #70a; then ready for review via orc"
 }
