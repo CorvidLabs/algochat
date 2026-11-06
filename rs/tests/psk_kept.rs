@@ -235,7 +235,7 @@ fn the_counter_window_matches_typescript_across_a_restart() {
             state_matches(&state, &receive["state_at_restart"], "restored state");
         }
         let value = counter(&step["counter"], &context);
-        let valid = state.validate_counter(value).is_ok();
+        let valid = matches!(state.validate_counter(value), Ok(true));
         let expect = text(&step["expect"], &context);
         match expect {
             "accepted" => assert!(valid, "{context}: counter {value} rejected"),
