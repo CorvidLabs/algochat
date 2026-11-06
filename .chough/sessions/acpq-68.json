@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-587d150c1c4242134ded92e6",
-    "head": "EVT-b971c35c48773519b211245e",
+    "head": "EVT-50e5d0733cbbdff00a448ddb",
     "legacy": null
   },
   "schema_version": 2,
@@ -36,18 +36,18 @@
     "TS test runs the emitter into a temp file and compares bytes (rejected: importing ts/scripts from the test, which tsc rootDir=src refuses)",
     "Rust signer is Option<&SigningKey>, as sign_encryption_key takes (rejected: a raw 32-byte seed argument)",
     "Leif (0xLeif) decided \"Native definition approval of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)\": \"Ok yes I approve all\" (orc tab, in reply to the orc's morning brief, 2026-11-06 06:1x MST; relayed by orc t18 over hc; orc recorded the native approval as 0xLeif at 3b8c77d); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
-    "TS tests spawn the emitter with process.execPath, the running bun, so the regenerate check does not depend on PATH (rejected: 'bun' from PATH, which failed in a shell without bun on PATH)"
+    "TS tests spawn the emitter with process.execPath, the running bun, so the regenerate check does not depend on PATH (rejected: 'bun' from PATH, which failed in a shell without bun on PATH)",
+    "Leif (0xLeif) decided \"Native implementation review of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)\": \"Leif's review of #77 at 14250c5c (relayed by the orc: 'Leif's reviews recorded as 0xLeif')\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native SpecSync review as 0xLeif at 14250c5c); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated"
   ],
   "open_questions": [],
   "completed": [
-    "Build, docs and local checks for #68 (e2b8473 test first, effbbd5 implementation, c0fbac2 docs, 91c8c7f native check verified)"
+    "Build, docs and local checks for #68 (e2b8473 test first, effbbd5 implementation, c0fbac2 docs, 91c8c7f native check verified)",
+    "SpecSync change finalized and archived at 9e4f964"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native implementation review of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
-  "next_action": "Wait for Leif's review relayed by orc t18; on approval merge origin/main if it moved, then gh pr merge with --match-head-commit (no --admin/--auto). When #75 lands, merge origin/main (no rebase)."
+  "next_action": "Push; when CI is green and corvid-agent approves the final head, gh pr merge 77 --match-head-commit <head> (no --admin/--auto)"
 }
