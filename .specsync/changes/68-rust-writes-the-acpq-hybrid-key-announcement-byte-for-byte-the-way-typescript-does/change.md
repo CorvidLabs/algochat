@@ -1,6 +1,6 @@
 ---
 id: 68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does
-state: draft
+state: approved
 type: feature
 base_commit: b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45
 ---
