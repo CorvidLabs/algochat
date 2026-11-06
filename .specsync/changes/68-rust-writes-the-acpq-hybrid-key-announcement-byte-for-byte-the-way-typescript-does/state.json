@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does",
+  "slug": "68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does",
+  "title": "68: Rust writes the ACPQ Hybrid key announcement byte for byte the way TypeScript does",
+  "description": "68: Rust writes the ACPQ Hybrid key announcement byte for byte the way TypeScript does",
+  "kind": "feature",
+  "state": "draft",
+  "base_commit": "b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45",
+  "created_at": 1793947870,
+  "updated_at": 1793947882,
+  "affected_specs": [
+    "protocol"
+  ],
+  "affected_paths": [
+    "rs/",
+    "vectors/pq-announcement-v1.json",
+    "ts/scripts/emit-pq-announcement-vector.ts",
+    "ts/src/pq/announce.test.ts",
+    "TEST-VECTORS.md"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "cargo test --locked passes in rs/ and inside the unpacked algochat .crate, where tests/pq_announcement.rs shows that encode_pq_announcement and pq_announcement_signing_input reproduce the exact 1189-byte unsigned note, 1253-byte signed note and signing input of the TypeScript-generated vectors/pq-announcement-v1.json from its account seed, that every parse case gives the same unverified, verified or rejected result, and that a key that is not 1184 bytes is refused; bun test in ts/ shows the committed vector is exactly what ts/scripts/emit-pq-announcement-vector.ts writes and that every case holds in TypeScript; parse_pq_announcement results and the wire format do not change."
+  ],
+  "selected_artifacts": [
+    "context",
+    "requirements",
+    "plan",
+    "tasks",
+    "testing",
+    "docs",
+    "design",
+    "research"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "yes",
+    "public_contract": "yes"
+  }
+}

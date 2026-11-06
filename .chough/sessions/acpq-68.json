@@ -1,0 +1,49 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-587d150c1c4242134ded92e6",
+    "head": "EVT-8cdf1510e17dc37f503b2274",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants Raven Desktop to publish its Hybrid key from Rust the way Raven web does (CRATE-5), so the algochat crate writes the ACPQ announcement, signed or unsigned, byte for byte like TypeScript, checked against one shared vector (Release B #68).",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "intent",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does",
+  "references": {
+    "criteria": [
+      "CRATE-5",
+      "CRATE-6",
+      "CRATE-3"
+    ],
+    "requirements": [
+      "REQ-protocol-12"
+    ],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Scope: Release B #68 under Leif's approval of intent CRATE-1..7 and Release A+B ('Approve intent + A and B', relayed by orc t18 2026-11-05)",
+    "Orc t18 2026-11-05: #68 uses REQ-protocol-12 (#73 takes REQ-protocol-11); build on #75's head b867cf8 by merge, draft PR against main, merge origin/main when #75 lands, no rebase or force push",
+    "TS test runs the emitter into a temp file and compares bytes (rejected: importing ts/scripts from the test, which tsc rootDir=src refuses)",
+    "Rust signer is Option<&SigningKey>, as sign_encryption_key takes (rejected: a raw 32-byte seed argument)"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Native definition approval of #68 (68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does)"
+  ],
+  "run_consents": [],
+  "next_action": "Wait for Leif's definition approval relayed by the orc; then commit the failing tests first"
+}
