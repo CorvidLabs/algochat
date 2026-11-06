@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-6dab68873aca3a28d836bbdb",
-    "head": "EVT-bd83ae2af707b09d6e5a6901",
+    "head": "EVT-d5e03e56fb07c6df1031341d",
     "legacy": null
   },
   "schema_version": 2,
@@ -32,16 +32,15 @@
   "decisions": [
     "Scope: #70c-2 (issue #81) under Leif's approval of the #70c rows and CRATE-8..12 (2026-11-06); D-c3: ships as 0.8.0",
     "Orc t18 2026-11-06: definition only plus committed failing tests, no build (no 4th level of code in the stack); branch leif/algochat-70c2-room-rekey from #84's head 1496b19; REQ-protocol-15; HI first (CRATE-9 and CRATE-10 already captured in #84's hi/crate.md)",
-    "Every approved library mutation must have a case only that check refuses (lesson from #70c-1, 113b749); test failure messages carry no account-derived values (lesson from #78, 7e164e4)"
+    "Every approved library mutation must have a case only that check refuses (lesson from #70c-1, 113b749); test failure messages carry no account-derived values (lesson from #78, 7e164e4)",
+    "Leif (0xLeif) decided \"Native definition approval of #70c-2 (70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared)\": \"Leif approved #70c-2 (relayed by the orc)\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native approval as 0xLeif at 4f4ae2bc); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated"
   ],
   "open_questions": [],
   "completed": [],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native definition approval of #70c-2 (70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
-  "next_action": "Wait for Leif's definition approval relayed by orc t18; build only after approval and after #70c-1's code lands (orc: no 4th level of code in the stack)"
+  "next_action": "Build waits for #84's code to land (orc); then merge origin/main, add the emitter and vector, docs, checks, evidence, PR"
 }

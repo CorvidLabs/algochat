@@ -1,6 +1,6 @@
 ---
 id: 70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared
-state: draft
+state: approved
 type: feature
 base_commit: 1496b19f4f6f66c7aa7eb81f461b2b7dba9af323
 ---

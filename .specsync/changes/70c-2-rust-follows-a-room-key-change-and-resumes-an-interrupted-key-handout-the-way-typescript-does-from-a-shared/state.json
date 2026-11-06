@@ -7,10 +7,10 @@
   "title": "70c-2: Rust follows a room key change and resumes an interrupted key handout the way TypeScript does, from a shared vector",
   "description": "70c-2: Rust follows a room key change and resumes an interrupted key handout the way TypeScript does, from a shared vector",
   "kind": "feature",
-  "state": "draft",
+  "state": "approved",
   "base_commit": "1496b19f4f6f66c7aa7eb81f461b2b7dba9af323",
   "created_at": 1793983388,
-  "updated_at": 1793983401,
+  "updated_at": 1793988344,
   "affected_specs": [
     "protocol"
   ],
