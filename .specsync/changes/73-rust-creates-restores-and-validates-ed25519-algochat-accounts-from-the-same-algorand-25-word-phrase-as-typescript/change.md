@@ -1,6 +1,6 @@
 ---
 id: 73-rust-creates-restores-and-validates-ed25519-algochat-accounts-from-the-same-algorand-25-word-phrase-as-typescript
-state: approved
+state: implementing
 type: feature
 base_commit: 6cfb970c9f7d2c326b5105698673b68afda430d6
 ---

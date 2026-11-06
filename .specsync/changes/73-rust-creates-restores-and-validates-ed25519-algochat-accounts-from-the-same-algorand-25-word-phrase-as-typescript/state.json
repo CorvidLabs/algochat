@@ -7,10 +7,11 @@
   "title": "73: Rust creates, restores and validates Ed25519 AlgoChat accounts from the same Algorand 25-word phrase as TypeScript, checked against TypeScript-generated phrase vectors, and rejects every phrase that is not exactly 25 lowercase wordlist words separated by single spaces with a valid checksum",
   "description": "73: Rust creates, restores and validates Ed25519 AlgoChat accounts from the same Algorand 25-word phrase as TypeScript, checked against TypeScript-generated phrase vectors, and rejects every phrase that is not exactly 25 lowercase wordlist words separated by single spaces with a valid checksum",
   "kind": "feature",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "6cfb970c9f7d2c326b5105698673b68afda430d6",
   "created_at": 1793947833,
-  "updated_at": 1793970944,
+  "updated_at": 1793972529,
   "affected_specs": [
     "protocol"
   ],
