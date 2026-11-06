@@ -110,16 +110,16 @@ claim another author's historical actions or fabricate human implementation acce
 
 ## Package versions and distribution
 
-> **Pending:** the 1.6.2 rows below describe [algochat#67](https://github.com/CorvidLabs/algochat/issues/67), which is not merged or tagged yet. Until it merges and tag `v1.6.2` exists, the latest release is 1.6.1: tag `v1.6.1` on `094caa5ce446d4c75e7cb16358f298832e661f5a`, with `go/v0.5.0` carried over.
+Release 1.6.2 is tagged: `v1.6.2` is commit `8e54462c1e937572bd8ca5e7274620e139b00b8c` (the squash merge of [#74](https://github.com/CorvidLabs/algochat/pull/74) for [algochat#67](https://github.com/CorvidLabs/algochat/issues/67)), with a [GitHub release](https://github.com/CorvidLabs/algochat/releases/tag/v1.6.2). Leif approved it on 2026-11-05.
 
 `CorvidLabs/algochat` is the source. Archived language repositories stay archived. Release 1.6.2 keeps protocol specification **1.6.0** and changes no library source: `rs/src` is identical to `v1.6.1`. It fixes the Rust crate's packaging and adds the crates.io publish workflow, so that Rust `0.6.0` is published from repository tag `v1.6.2`. Repository tag `v1.6.2` is also the Swift package tag, with Swift sources unchanged. Go does not change, so the Go module tag stays `go/v0.5.0`. Tag `v1.6.1` is the previous release, on commit `094caa5ce446d4c75e7cb16358f298832e661f5a`. Tags `v1.6.0` and `go/v0.5.0` are on commit `7d7b280ae027b55502a3d16d72ab7afac3f93043`. Tags `v1.5.0` and `go/v0.4.0` are on commit `5c4e51f7bf49bb26c4cab6368c142cc8c04344aa`. Tags `v1.4.0` and `go/v0.3.0` are older. Tags `v1.3.0` and `go/v0.2.0` remain on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`. Registry publication beyond the existing TypeScript GitHub Packages workflow and the crates.io workflow still requires its own authorization.
 
 | Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
-| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.6.2` / repository tag `v1.6.2` (pending; protocol specification 1.6.0) | this repository |
+| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.6.2` / repository tag `v1.6.2` (protocol specification 1.6.0) | this repository |
 | TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | GitHub Packages for this repository |
 | Python | `py-algochat` | `0.6.0` | PyPI; source version only until a publisher is configured |
-| Rust | `algochat` | `0.6.0` from tag `v1.6.2` (pending) | crates.io through the [trusted-publisher workflow](#cratesio-publishing); not available until the dated evidence below records it |
+| Rust | `algochat` | `0.6.0` from tag `v1.6.2` | [crates.io](https://crates.io/crates/algochat/0.6.0), available since 2026-11-05 ([evidence](#rust-060-on-cratesio-2026-11-05)); later versions through the [trusted-publisher workflow](#cratesio-publishing) |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | GitHub Packages for this repository |
 | Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.5.0` | this repository |
 
@@ -129,10 +129,10 @@ Distribution observations checked on **2026-10-30**, after the 1.6.0 tag:
 - The [public npm registry](https://registry.npmjs.org/@corvidlabs%2fts-algochat) has `@corvidlabs/ts-algochat` versions `0.1.1` through `0.4.0`, with `latest` = `0.4.0`. It does not have source version `0.12.0`.
 - GitHub Packages metadata lists TypeScript [`0.12.0`](https://github.com/orgs/CorvidLabs/packages/npm/ts-algochat/1475087846), created 2026-10-30 by a manual `Publish npm` workflow run on `7d7b280` ([run 41087000341](https://github.com/CorvidLabs/algochat/actions/runs/41087000341)), and earlier versions including `0.10.0` and `0.9.0`. The package repository association is still archived `CorvidLabs/ts-algochat`.
 - The [PyPI metadata endpoint](https://pypi.org/pypi/py-algochat/json) returned HTTP 404. Use the monorepo source installation in the Python README.
-- The [crates.io registry](https://crates.io/crates/algochat/0.2.1) reports latest version `0.2.1` from the archived Rust repository, rather than source version `0.6.0`. Use a checkout path dependency for the current implementation, as the Rust README says.
+- The [crates.io registry](https://crates.io/crates/algochat/0.2.1) reported latest version `0.2.1` from the archived Rust repository, rather than source version `0.6.0`. This was superseded on 2026-11-05; see [Rust 0.6.0 on crates.io](#rust-060-on-cratesio-2026-11-05).
 - GitHub Packages metadata lists Kotlin [`0.2.0`](https://github.com/CorvidLabs/kt-algochat/packages/3318797?version=0.2.0) only, associated with archived `CorvidLabs/kt-algochat`. That metadata does not establish availability at the intended monorepo Maven endpoint or artifact equivalence to current source.
 - The [Go module proxy](https://proxy.golang.org/github.com/!corvid!labs/algochat/go/@v/list) lists `v0.2.0` through `v0.5.0`. `@latest` is `v0.5.0`, from tag `go/v0.5.0` at `7d7b280`.
-- Authenticated remote installs, artifact-to-source provenance, and registry-side publisher bindings were not verified. There is no root PyPI or Kotlin publishing workflow; the crates.io workflow below had not run. Qualification does not configure those external bindings; the TypeScript manual publishing workflow's presence is not a publication receipt.
+- Authenticated remote installs, artifact-to-source provenance, and registry-side publisher bindings were not verified. There is no root PyPI or Kotlin publishing workflow; the crates.io workflow below had not run (and as of 2026-11-05 still has not; see below). Qualification does not configure those external bindings; the TypeScript manual publishing workflow's presence is not a publication receipt.
 
 The old coordinate `com.corvidlabs:algochat:0.2.0` was a documentation error. Apps using archived `swift-algochat` `0.4.0` retain that repository URL until migrated. Source is protocol `1.6.0`, Kotlin `com.corvidlabs:kt-algochat:0.5.0`, and Go `go get github.com/CorvidLabs/algochat/go@v0.5.0`. A root tag `v1.6.1` or `v1.6.0` does not select that nested module. Tag `v1.6.0` is the previous release; `go/v0.5.0` carries over unchanged. What changed is in [CHANGELOG.md](../CHANGELOG.md).
 
@@ -170,6 +170,22 @@ environment `crates-io`; removal of any publisher still bound to the archived
 deployment rule. A version on crates.io is permanent (it can be yanked, never
 replaced). Record availability here only from a dated consumer build that resolves
 `algochat = "0.6.0"` from crates.io outside this repository.
+
+#### Rust 0.6.0 on crates.io (2026-11-05)
+
+- **How it was published:** Leif approved the release on 2026-11-05. `algochat` 0.6.0 was then published at 2026-11-06T01:32:59Z (18:32 MST on 2026-11-05) by running `cargo publish --locked` in `rs/` of a fresh clone of tag `v1.6.2`, on Leif's machine with his crates.io API token (account `0xLeif`).
+  - It was **not** published through `publish-crates.yml`. crates.io records no trusted-publishing data for this version, and the workflow has never run.
+  - This publication therefore does not exercise REQ-release-9's trusted-publisher path. The configured trusted publisher and the `crates-io` environment are untested until a later version is dispatched through the workflow.
+  - Before that dispatch, the owner should confirm the crates.io trusted-publisher binding and revoke the API token used for 0.6.0.
+- **The published crate:**
+  - Registry checksum: `ca8a49fb89d25ae0a92e432606d1cfd0d535e13f9ddc4dea6f1f0a29f4131b9d`.
+  - The downloaded `.crate` has 26 members: Cargo's generated manifest, lockfile and VCS record, `README.md`, `LICENSE` and `src/*.rs`. It contains no `src/bin/`, tests or examples.
+  - Its `.cargo_vcs_info.json` names commit `8e54462c1e937572bd8ca5e7274620e139b00b8c`, path `rs`, and its manifest names repository `https://github.com/CorvidLabs/algochat`.
+  - `git diff v1.6.1 v1.6.2 -- rs/src` is empty.
+- **External consumer, 2026-11-05, macOS arm64, rustc 1.95.0:** a fresh Cargo project outside this repository built and ran twice.
+  - With `cargo add algochat@0.6.0`, it resolved `algochat` 0.6.0 from the crates.io index.
+  - With `algochat` 0.6.0 and `algonaut` 0.9.0 together, it resolved `ctutils` 0.4.2, `reqwest` 0.13.5 and `rustls` 0.23.46.
+  - Not checked: the declared Rust 1.85 minimum, other platforms, and any runtime interop beyond building and linking.
 
 ## Historical 1.3.0 release preparation checklist
 
