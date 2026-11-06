@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-f08db351480aab15e8eda3f9",
-    "head": "EVT-828641748e06ee549abb9538",
+    "head": "EVT-51e2d12194b7ecc56a3168aa",
     "legacy": null
   },
   "schema_version": 2,
@@ -41,7 +41,9 @@
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [],
+  "awaiting_human": [
+    "Scoped implementation review of #70a at 65e67f5 (PR #75)"
+  ],
   "run_consents": [],
-  "next_action": "Open PR for #70a; then ready for review via orc"
+  "next_action": "After review: specsync change ship (no commit in between), push archive tip, merge on green per orc"
 }
