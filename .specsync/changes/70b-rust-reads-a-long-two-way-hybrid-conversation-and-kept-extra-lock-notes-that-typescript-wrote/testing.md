@@ -58,4 +58,15 @@ Before the change, the tests must fail at the test-only commit because the vecto
     - `decrypt_psk_message` deriving at counter 0.
   - Adding one byte to `vectors/pq-conversation-v1.json` or `vectors/psk-kept-v1.json` alone failed that file's TypeScript test, and the message named the regenerate command.
 
+## CodeQL follow-up (2026-11-06)
+
+- On PR #78, the CodeQL check raised 17 Rust "cleartext logging of sensitive information" alerts. Panic and assert messages in both Rust tests formatted values taken from the vector's `accounts`.
+- At `7e164e4` those messages are static, or name the side (recipient or sender) instead of the account. No assertion changed. Nothing was dismissed.
+- Reruns at `7e164e4`:
+  - `cargo test --locked --test pq_conversation --test psk_kept`: 3 and 3 passed.
+  - clippy with `-D warnings` and `cargo fmt --check` were clean.
+  - The same 23 mutations were all caught again.
+  - Clean-clone `qualify.py rs` exited 0, with 258 + 8 + 4 + 3 + 3 tests in `rs/` and inside the crate. The crate sha256 is now `d440a4818094de9df95fed40f027e1a68c9966f37a94af78d06200a654ce1abd`.
+- TypeScript files are unchanged since `8f62281`, so `qualify.py ts` was not rerun.
+
 Not run here: the hosted Release qualification matrix, which runs on the PR.
