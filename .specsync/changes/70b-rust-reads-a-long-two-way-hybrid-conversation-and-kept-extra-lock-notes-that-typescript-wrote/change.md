@@ -1,6 +1,6 @@
 ---
 id: 70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote
-state: approved
+state: implementing
 type: feature
 base_commit: b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45
 ---
