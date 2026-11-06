@@ -33,7 +33,8 @@
     "Scope: #70c-2 (issue #81) under Leif's approval of the #70c rows and CRATE-8..12 (2026-11-06); D-c3: ships as 0.8.0",
     "Orc t18 2026-11-06: definition only plus committed failing tests, no build (no 4th level of code in the stack); branch leif/algochat-70c2-room-rekey from #84's head 1496b19; REQ-protocol-15; HI first (CRATE-9 and CRATE-10 already captured in #84's hi/crate.md)",
     "Every approved library mutation must have a case only that check refuses (lesson from #70c-1, 113b749); test failure messages carry no account-derived values (lesson from #78, 7e164e4)",
-    "Leif (0xLeif) decided \"Native definition approval of #70c-2 (70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared)\": \"Leif approved #70c-2 (relayed by the orc)\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native approval as 0xLeif at 4f4ae2bc); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated"
+    "Leif (0xLeif) decided \"Native definition approval of #70c-2 (70c-2-rust-follows-a-room-key-change-and-resumes-an-interrupted-key-handout-the-way-typescript-does-from-a-shared)\": \"Leif approved #70c-2 (relayed by the orc)\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native approval as 0xLeif at 4f4ae2bc); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
+    "Orc t18 2026-11-06 (after the #84 slip): stop every command chain on any refusal (set -e or &&), and run 'specsync change ship <id> --dry-run' before 'ship' (rejected: ';' chains around native lifecycle commands)"
   ],
   "open_questions": [],
   "completed": [],
