@@ -11,7 +11,7 @@
   "canonical_applied": true,
   "base_commit": "8e54462c1e937572bd8ca5e7274620e139b00b8c",
   "created_at": 1793929040,
-  "updated_at": 1793930173,
+  "updated_at": 1793930194,
   "affected_specs": [
     "protocol",
     "release"
