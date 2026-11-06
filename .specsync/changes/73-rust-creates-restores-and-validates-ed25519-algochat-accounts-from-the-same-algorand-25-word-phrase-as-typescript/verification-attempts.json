@@ -95,6 +95,25 @@
         "REQ-protocol-10",
         "REQ-protocol-11"
       ]
+    },
+    {
+      "timestamp": 1793985153,
+      "commit": "52c4a372392549d40604ef775fed46f3d67554af",
+      "contract_digest": "89435a61efeecc1e605230395e14069ccd894bb349096a5315045a39edee41b9",
+      "execution_digest": "e65f917470047e130b18fda7f47f2a7c97169bde0345b9fba13de0de1ab4b0ea",
+      "workspace_digest": "6f90e6acfabb10f9986aa24b71445b2e6823cb5719228bcf825040ad5fdc36ea",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec protocol",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-protocol-10",
+        "REQ-protocol-11"
+      ]
     }
   ]
 }
