@@ -11,6 +11,11 @@ Protocol releases of this repository. Each library keeps its own package version
 - The crate ships its tests and copies of the vectors they read in `vectors/`, and qualification runs `cargo test` inside the packaged crate and rejects stale copies.
 - TypeScript qualification runs `bun conformance/tools/verify.mjs`.
 
+### Rust: writes the ACPQ Hybrid key announcement (#68)
+
+- `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed `ACPQ` note, and `pq_announcement_signing_input` returns the 32 bytes the signature covers. The bytes match TypeScript exactly. `parse_pq_announcement` results and the wire format are unchanged.
+- New shared vector `vectors/pq-announcement-v1.json`, written by `ts/scripts/emit-pq-announcement-vector.ts` and copied into `rs/vectors/`. It holds both notes, the signing input, 17 parse cases and three refused key lengths. TypeScript and Rust check it, and the TypeScript test fails if the committed file is not what the script writes.
+
 ## 1.6.2 - 2026-11-05
 
 The Rust crate `algochat` 0.6.0 gets clean packaging and a guarded crates.io publish path (#67). No library source changes: `rs/src` is identical to `v1.6.1`, and the wire format is unchanged: protocol 1.6.0.
