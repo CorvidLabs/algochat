@@ -7,10 +7,10 @@
   "title": "70b: Rust reads a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote",
   "description": "70b: Rust reads a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote",
   "kind": "feature",
-  "state": "draft",
+  "state": "approved",
   "base_commit": "b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45",
   "created_at": 1793948513,
-  "updated_at": 1793948547,
+  "updated_at": 1793970835,
   "affected_specs": [
     "protocol"
   ],
