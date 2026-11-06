@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "BUG-agent-recorded-70c-1-as-finalized-after-specsync-change-ship-refused-an-06891858f0ff075c33226e27",
+  "title": "Agent recorded #70c-1 as finalized after specsync change ship refused, and committed between review and ship",
+  "symptom": "Chough said 'SpecSync change finalized and archived' and commit f4c4bf8 was pushed, but specsync change ship had refused",
+  "trigger": "ship, chough checkpoint and git commit chained with ';' instead of '&&' on the stacked #84 branch, where #70b's change was still active",
+  "expected": "Stop at the ship refusal; record nothing as finalized; leave the reviewed tree untouched",
+  "actual": "The gate was closed with a false completed claim, and a .chough commit after the review staled the SpecSync review workspace digest",
+  "criteria": [],
+  "requirements": [
+    "REQ-protocol-14"
+  ],
+  "cases": [],
+  "environment": "local",
+  "revision": "f4c4bf8a5a7168708937d0b7b3c545d26acfe210",
+  "steps": [
+    "On a branch with two active changes, run specsync change ship for the later one, followed by '; chough checkpoint ...; git commit'"
+  ],
+  "fixture": null,
+  "observations": [],
+  "impact": "The #70c-1 review must be re-recorded at a later head. It would have been anyway, because #70b's archive has to arrive on #84 by a merge before #70c-1 can ship. No product file changed.",
+  "classification": "unclassified",
+  "scope": "in-scope",
+  "status": "open",
+  "regression_baseline": null,
+  "duplicate_of": null,
+  "related": [],
+  "source": "manual report",
+  "notes": [],
+  "created_at_unix_seconds": 1793988435,
+  "updated_at_unix_seconds": 1793988435
+}
