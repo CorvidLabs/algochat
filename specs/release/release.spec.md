@@ -1,6 +1,6 @@
 ---
 module: release
-version: 10
+version: 11
 status: active
 files:
   - scripts/release/packages.py
@@ -69,6 +69,7 @@ Internal Python helpers (not a library contract):
 | `rust_crate_files` | Test-only minimal Rust crate members, with optional extra members or repository. |
 | `write_crate` | Test-only gzip tar writer for Rust crate fixtures. |
 | `RustCrateTests` | Clean crate, tests and vector copies accepted; binary, example, nested test, source or vector, workflow, agent and spec members and archived or missing repository rejected. |
+| `REPO_ROOT` | Test-only repository root for checks against the real tree. |
 | `RustVectorCopyTests` | The repository's copies match; missing, differing and extra copies and an uncopied new source are each reported. |
 | `RustTestFixtureTests` | No Rust test reads a path outside the package, and no integration test probes for a fixture or names the archived fixture checkouts. |
 | `QualifyLaneTests` | `qualify.py rs` checks the copies and runs `cargo test --locked` in the extracted crate; `qualify.py ts` runs the vector verifier. |
@@ -131,3 +132,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-30 | release-protocol-1-6-0-and-the-library-versions: Release protocol 1.6.0 and the library versions |
 | 2026-10-30 | record-algochat-1-6-1-and-py-algochat-0-6-0-in-the-release-instructions-after-algochat-64: Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64) |
 | 2026-11-05 | release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher: Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67) |
+| 2026-11-06 | 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance: 70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier |

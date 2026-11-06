@@ -106,3 +106,13 @@ A room's `0x03` record SHALL hold the bot mark, reply mode and rate limit for ea
 - `ts/scripts/group-bot-localnet.ts` posts room and channel bot notes on LocalNet; every language reduces the confirmed notes to the same state, bot records and rejection reasons, and the added bot opens the room key from its own session and posts in the room.
 - `vectors/group-admin-v1.json` and `vectors/group-admin-delta-v1.json` bytes are unchanged.
 
+### REQ-protocol-10
+
+Rust SHALL verify every section and case of the TypeScript-generated conformance vectors `ts/conformance/vectors/00-06` and the shared `vectors/*.json` files it uses, reading them from byte-identical copies in `rs/vectors/` that ship in the crate. A missing vector file, a missing or unexpected section, or an unrecognized case SHALL fail the test. No Rust test SHALL return early or skip because a fixture is absent. A case Rust cannot yet check SHALL be named in one pending list with its issue; the only pending case allowed is the 01 mnemonic chain (#73). Vectors SHALL come from the TypeScript generator or the shared vector files, never from the Rust code under test. TypeScript qualification SHALL run `bun conformance/tools/verify.mjs`.
+
+#### Acceptance Criteria
+
+- `rs/tests/conformance.rs` passes in `rs/` and inside the extracted `.crate`; deleting a vector file, removing a section or renaming a negative case makes it fail.
+- `rs/tests/cross_impl.rs` has no sibling-directory tests and no test in `rs/` returns on a missing path.
+- `qualify.py ts` runs the TypeScript vector verifier and fails when it fails.
+
