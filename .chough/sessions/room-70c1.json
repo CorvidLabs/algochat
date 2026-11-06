@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-0c5eca8e80d7cb0f232e57cf",
-    "head": "EVT-0448ff1e13dd08e6c035bbb4",
+    "head": "EVT-149f1839d65c39761afe0463",
     "legacy": null
   },
   "schema_version": 2,
@@ -34,18 +34,18 @@
     "Test failure messages never include account-derived values (CodeQL cleartext-logging lesson from #78, 7e164e4)",
     "Leif (0xLeif) decided \"Native definition approval of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)\": \"approved #70c-1 as proposed\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native approval as 0xLeif at 505c9a8f (second attempt, after a short-hash mismatch)); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated",
     "D-c3 (Leif, relayed by orc t18 2026-11-06): the rooms work ships as algochat 0.8.0, its own release; still no tags or publishing without his OK",
-    "Three cases added after the first mutation run so the approved library mutations are observable: an add offered to a member who is not its subject (two), and a delivery under the right session key naming another handshake (rejected: leaving those mutations uncaught)"
+    "Three cases added after the first mutation run so the approved library mutations are observable: an add offered to a member who is not its subject (two), and a delivery under the right session key naming another handshake (rejected: leaving those mutations uncaught)",
+    "Leif (0xLeif) decided \"Native implementation review of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)\": \"Leif's review of #84 at 45f61516 (relayed by the orc: 'Leif's reviews recorded as 0xLeif')\" (relayed by orc t18 over hc, 2026-11-06; orc recorded the native SpecSync review as 0xLeif at 45f61516); recorded by ac-acpq agent (Claude Code); a relayed claim, not authenticated"
   ],
   "open_questions": [],
   "completed": [
-    "Build, docs and local checks for #70c-1 (a55b170 test first, 420aaf5 emitter and vector, 8decac3 docs, 113b749 three added cases; native check verified)"
+    "Build, docs and local checks for #70c-1 (a55b170 test first, 420aaf5 emitter and vector, 8decac3 docs, 113b749 three added cases; native check verified)",
+    "SpecSync change finalized and archived"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
-  "awaiting_human": [
-    "Native implementation review of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)"
-  ],
+  "awaiting_human": [],
   "run_consents": [],
-  "next_action": "Wait for Leif's review relayed by orc t18; PR stays draft until #75 merges; merge #78's head or origin/main as they land (no rebase); merge only on Leif's decision with --match-head-commit"
+  "next_action": "After #78 merges: merge origin/main into #84 (the stacked #70b copy resolves to main's archive), CI green, mark ready, merge pinned with --match-head-commit (no --admin/--auto)"
 }
