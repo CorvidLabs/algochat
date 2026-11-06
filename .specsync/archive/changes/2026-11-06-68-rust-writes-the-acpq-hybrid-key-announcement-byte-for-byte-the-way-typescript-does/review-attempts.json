@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "14250c5c7a6435eae491ad7633db0243242417b1",
+      "contract_digest": "2aa9212dd113f413cb961ca8a23548865eb331c645b72d525a7943138b2e222f",
+      "execution_digest": "f3b21552e66bc87a91caba3fc9dd211a9fb3a99d396caa6a10068ef251525a1c",
+      "workspace_digest": "79bec5761b569b4b08d1c8fa8c5e657421464f87ae39499b3541472fea8bcd53",
+      "timestamp": 1793988156
+    }
+  ]
+}

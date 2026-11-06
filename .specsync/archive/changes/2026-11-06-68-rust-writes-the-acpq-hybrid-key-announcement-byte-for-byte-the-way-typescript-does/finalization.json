@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does",
+  "implementation_commit": "14250c5c7a6435eae491ad7633db0243242417b1",
+  "implementation_tree": "f26ed1813d695d9094bdec72674a3f439e632cd1",
+  "contract_digest": "2aa9212dd113f413cb961ca8a23548865eb331c645b72d525a7943138b2e222f",
+  "workspace_digest": "79bec5761b569b4b08d1c8fa8c5e657421464f87ae39499b3541472fea8bcd53",
+  "closing_digest": "9e7b8edd0fce474f8d83fa41578c2411133ef5825ddd03a4b1c5f45e2e698fcb",
+  "review_digest": "8466674878cbb691b10b0c3faf7be3abc9587484c5853719750b6a5bd773cd9d",
+  "finalization_digest": "1fff44bac698c91a2612d17ed89bbb779f68ec4985bd1f6910ff0285f7fc17b5",
+  "timestamp": 1793988237
+}

@@ -7,11 +7,11 @@
   "title": "68: Rust writes the ACPQ Hybrid key announcement byte for byte the way TypeScript does",
   "description": "68: Rust writes the ACPQ Hybrid key announcement byte for byte the way TypeScript does",
   "kind": "feature",
-  "state": "verifying",
+  "state": "archived",
   "canonical_applied": true,
   "base_commit": "b867cf8fe8afaf9e7a4e899f5a58fb6dfd6f7f45",
   "created_at": 1793947870,
-  "updated_at": 1793972325,
+  "updated_at": 1793988241,
   "affected_specs": [
     "protocol"
   ],
