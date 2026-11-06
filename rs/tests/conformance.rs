@@ -210,11 +210,12 @@ fn key_derivation_01() {
     let mut derived = Vec::new();
     for account in accounts {
         let name = text(&account["name"], "01 account name");
-        keys(
-            account,
-            &["name", "mnemonic", "seed", "algorandAddress", "ed25519PublicKey", "x25519PrivateKey", "x25519PublicKey", "fingerprint"],
-            name,
-        );
+        // Only account A carries a mnemonic (the TypeScript generator's choice).
+        let mut fields = vec!["name", "seed", "algorandAddress", "ed25519PublicKey", "x25519PrivateKey", "x25519PublicKey", "fingerprint"];
+        if name.starts_with("A ") {
+            fields.push("mnemonic");
+        }
+        keys(account, &fields, name);
         let seed = bytes(&account["seed"], name);
         let (private, public) = derive_keys_from_seed(&seed).expect("derive");
         assert_eq!(hex::encode(private.to_bytes()), text(&account["x25519PrivateKey"], name), "01 {name} x25519 private");

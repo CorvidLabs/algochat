@@ -5,7 +5,7 @@ import tarfile
 import tomllib
 import zipfile
 from email.parser import Parser
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from xml.etree import ElementTree
 
 
@@ -53,15 +53,45 @@ RUST_REPOSITORY = 'https://github.com/CorvidLabs/algochat'
 RUST_CRATE_FILES = {'Cargo.toml', 'Cargo.toml.orig', 'Cargo.lock', '.cargo_vcs_info.json', 'README.md', 'LICENSE'}
 
 
+RUST_VECTOR_SOURCES = ('vectors', 'ts/conformance/vectors')
+
+
+def check_rust_vector_copies(root):
+    """REQ-release-3: rs/vectors/ is exactly a byte copy of each canonical vector file.
+
+    Returns one problem per missing, differing or extra copy; empty when they match.
+    """
+    root = Path(root)
+    sources = {}
+    for directory in RUST_VECTOR_SOURCES:
+        for source in sorted((root / directory).glob('*.json')):
+            if source.name in sources:
+                return ['two canonical vectors share the name ' + source.name]
+            sources[source.name] = source
+    copies = {copy.name: copy for copy in sorted((root / 'rs/vectors').glob('*'))}
+    problems = []
+    refresh = ' (refresh with: cp vectors/*.json ts/conformance/vectors/*.json rs/vectors/)'
+    for name, source in sources.items():
+        if name not in copies:
+            problems.append('rs/vectors/' + name + ' is missing' + refresh)
+        elif copies[name].read_bytes() != source.read_bytes():
+            problems.append('rs/vectors/' + name + ' differs from ' + str(source.relative_to(root)) + refresh)
+    for name in copies:
+        if name not in sources:
+            problems.append('rs/vectors/' + name + ' has no canonical source')
+    return problems
+
 def validate_crate_boundary(files, top, manifest):
-    """The published crate is the library sources and its metadata, nothing else."""
+    """The published crate is the library, its tests and vector copies, and its metadata, nothing else."""
     if manifest['package'].get('repository') != RUST_REPOSITORY:
         raise ValueError('Rust crate repository must be ' + RUST_REPOSITORY)
     for name in files:
         parts = PurePosixPath(name).relative_to(top).parts
         if len(parts) == 1 and parts[0] in RUST_CRATE_FILES:
             continue
-        if len(parts) == 2 and parts[0] == 'src' and parts[1].endswith('.rs'):
+        if len(parts) == 2 and parts[0] in {'src', 'tests'} and parts[1].endswith('.rs'):
+            continue
+        if len(parts) == 2 and parts[0] == 'vectors' and parts[1].endswith('.json'):
             continue
         raise ValueError('unexpected Rust crate member: ' + name)
 

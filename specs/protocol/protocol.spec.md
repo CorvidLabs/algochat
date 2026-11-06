@@ -17,7 +17,7 @@ Documentation of current source adds offset tables and [application flow diagram
 
 ## Public API
 
-PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json.
+PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json. The TypeScript-generated conformance vectors in ts/conformance/vectors/00-06 are checked by TypeScript (`verify.mjs`) and by Rust (`rs/tests/conformance.rs`) from copies in `rs/vectors/` (REQ-protocol-10).
 
 ## Invariants
 
@@ -38,6 +38,7 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 
 | Date | Change |
 |------|--------|
+| 2026-11-05 | #70a: Rust checks every section and case of ts/conformance/vectors 00-06 from packaged copies; a missing vector or unknown case fails. |
 | 2026-10-17 | add-hybrid-ml-kem-768-session-envelopes-0x04-and-0x05: Add hybrid ML-KEM-768 session envelopes 0x04 and 0x05 |
 | 2026-10-17 | Envelope version 0x02 binds the full everyday or Extra lock header as payload associated data. Version 0x01 stays valid. |
 | 2026-10-17 | prove-on-localnet-that-all-six-libraries-read-and-write-0x01-0x02-0x04-and-0x05-notes-for-empty-small-large-and-maximum: Prove on LocalNet that all six libraries read and write 0x01, 0x02, 0x04, and 0x05 notes for empty, small, large, and maximum plaintext, including several messages in one exchange. Go gains Extra lock. Every library accepts version 0x02 header binding the way TypeScript emits it. Identifier 0x03 stays unassigned. |
