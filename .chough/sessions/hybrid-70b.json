@@ -1,0 +1,49 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-f7cd9900b71294ca0370ac8f",
+    "head": "EVT-5a79aea0761cf79690bcb151",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants Raven Desktop and Raven web to read each other's Hybrid and kept Extra lock messages (CRATE-2), so Rust proves it reads a long two-way TypeScript Hybrid conversation and kept 0x02 notes, with replay and restart, from shared vectors before 0.7.0 (Release B #70b).",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "intent",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote",
+  "references": {
+    "criteria": [
+      "CRATE-2",
+      "CRATE-3"
+    ],
+    "requirements": [
+      "REQ-protocol-13"
+    ],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Scope: Release B #70b (order #70a, #73, #68, #70b) under Leif's approval of intent CRATE-1..7 and Release A+B ('Approve intent + A and B', relayed by orc t18 2026-11-05)",
+    "Orc t18 2026-11-06: #70b moved from algochat-scope; REQ-protocol-13; worktree ac-70b on leif/algochat-70b-hybrid-vectors from #75 head b867cf8; draft PR against main; merge origin/main when #75 lands; no rebase or force push",
+    "Emitter replaces crypto.getRandomValues with a seeded SHA-256 stream in its own process so the TS test can regenerate and compare (rejected: frozen random output; rejected: building envelopes in the emitter)",
+    "Accounts use the 01-key-derivation seeds; phrase to seed is #73's 07 vector (rejected: phrases in this vector, which would wait on #73's Rust API) - for Leif to confirm at definition approval",
+    "Vectors go in root vectors/ (not ts/conformance numbering, which #73 uses for 07); version 0x02 Extra lock notes only, since TS 0.12.0 has no 0x01 writer"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Native definition approval of #70b (70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote)"
+  ],
+  "run_consents": [],
+  "next_action": "Wait for Leif's definition approval relayed by the orc; then commit the failing tests first"
+}
