@@ -1,0 +1,46 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-0c5eca8e80d7cb0f232e57cf",
+    "head": "EVT-8f3571793beef7fe8b454d91",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants a Rust app to join a room the way Raven web does (CRATE-8), so Rust proves from a TypeScript-written vector that a member recovers its session from the owner's Hybrid handshake, opens its action-5 room key, checks it against the accepted 0x03 records, reads every 0x07 message and ignores a non-member (#70c-1, issue #80).",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "intent",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector",
+  "references": {
+    "criteria": [
+      "CRATE-8"
+    ],
+    "requirements": [
+      "REQ-protocol-14"
+    ],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Scope: #70c rows #70c-1..4 in order (issues #80-#83), CRATE-8..12 as drafted, D-c1 (a), D-c2 extend CRATE, D-c4 include legacy rooms, approved by Leif 2026-11-06 ('Ok yes I approve all', relayed by orc t18); D-c3 (which release) is Leif's open decision and not needed before building",
+    "Orc t18 2026-11-06: branch leif/algochat-70c1-room-session stacked on #70b's head (7e164e4, which includes #78's CodeQL fix; t18 named 4da5be1), draft PR stated as stacked; one issue per PR; next free REQ id is REQ-protocol-14 (#73 holds 11, #68 12, #70b 13); CRATE-8..12 captured verbatim in this PR",
+    "Test failure messages never include account-derived values (CodeQL cleartext-logging lesson from #78, 7e164e4)"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Native definition approval of #70c-1 (70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector)"
+  ],
+  "run_consents": [],
+  "next_action": "Wait for Leif's definition approval relayed by orc t18; then close the gate, commit the failing tests (scratch drafts in scratchpad/c70c1), implement, verify and open a draft PR stated as stacked on #78"
+}
