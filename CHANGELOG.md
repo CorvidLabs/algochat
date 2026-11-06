@@ -2,7 +2,7 @@
 
 Protocol releases of this repository. Each library keeps its own package version. Earlier releases are described on the [releases page](https://github.com/CorvidLabs/algochat/releases). `ts/CHANGELOG.md` and `swift/CHANGELOG.md` are the archived per-language histories from before the monorepo.
 
-## 1.6.2 - Unreleased
+## 1.6.2 - 2026-11-05
 
 The Rust crate `algochat` 0.6.0 gets clean packaging and a guarded crates.io publish path (#67). No library source changes: `rs/src` is identical to `v1.6.1`, and the wire format is unchanged: protocol 1.6.0.
 

@@ -15,7 +15,7 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 - Crate: `algochat` **0.6.0**, implementing protocol **1.6.0**. Its crates.io source is release tag **`v1.6.2`**, whose `rs/src` is identical to `v1.6.1`; 1.6.2 changes only packaging.
 - [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
 - `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
-- Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. The source version does not establish crates.io availability. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
+- Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. crates.io availability is recorded only from dated consumer evidence in the release record. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
 ## Migrating to 0.6.0
 
@@ -23,14 +23,14 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Installation
 
-The crate version in `Cargo.toml` is **0.6.0**. It is published to crates.io from release tag `v1.6.2` by the manual [Publish crates.io](../.github/workflows/publish-crates.yml) workflow, only after the release is approved. Once [the release record](../docs/RELEASE.md#package-versions-and-distribution) shows dated evidence that crates.io serves 0.6.0, depend on it by version:
+crates.io serves **0.6.0**, published from release tag `v1.6.2` on 2026-11-05 ([evidence](../docs/RELEASE.md#rust-060-on-cratesio-2026-11-05)). Depend on it by version:
 
 ```toml
 [dependencies]
 algochat = "0.6.0"
 ```
 
-Until then crates.io still has 0.2.1 from the archived repository. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`; use a checkout path instead:
+Later versions are published by the manual [Publish crates.io](../.github/workflows/publish-crates.yml) workflow, only after each release is approved. To build unreleased source, use a checkout path. This monorepo has no root package, so a git dependency on the repository does not select `rs/Cargo.toml`:
 
 ```toml
 [dependencies]
