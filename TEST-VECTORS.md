@@ -586,6 +586,53 @@ Both files come from one script, `cd ts && bun scripts/emit-conversation-vectors
 
 The TypeScript tests run the script into a temporary directory and fail, naming that command, if a committed file differs. If a dependency changes how randomness is drawn, the files change too, and the tests say how to regenerate them. TypeScript and Rust both check every field, case and step.
 
+## Room joined over a Hybrid session
+
+`vectors/room-session-v1.json` is one administered room from section 5.8 of PROTOCOL.md, joined over real `0x04` handshakes and written by the TypeScript library.
+
+Accounts:
+- The owner's seed is the bytes `0x80` to `0x9f`. The two members' seeds are `0xa0` to `0xbf` and `0xc0` to `0xdf`, and the outsider's is `0xe0` to `0xff`.
+- An account's address is its seed's Ed25519 public key, as on Algorand. Its X25519 and ML-KEM-768 keys come from the same seed, and the file records all three public values.
+
+The room:
+- The group id is `0x77` repeated, the mailbox is `0x88` repeated, the name is `team`, and the epoch is 1.
+- Transaction ids are fill bytes, `0x01`, `0x02` and `0x03`. They are test ids, not blockchain proof.
+
+The flow:
+1. The owner posts three delta `0x03` records: an invite-only create, an add of `member_a`, and an add of `member_b`. The file records each record's note, sender, transaction id, round and offset, and the room TypeScript reduces them to (`state`).
+2. The owner makes the room key and sends each member a 2366-byte `0x04` handshake. Under that session it sends the member a 227-byte `0x06` action-5 delivery that cites the member's add record.
+3. Each member recovers the session from the note with its own seed, and the owner recovers the same session as its sender. The member opens the delivery to the room key, group id, mailbox and epoch, and `delivery_authorized` accepts it against the accepted records.
+4. The owner and both members post 8 `0x07` messages. Each sender's counter starts at 0. The texts are empty, multi-byte UTF-8, multi-line and 280 bytes. Every message opens once for every member under the delivered key, and a repeated `(sender, epoch, counter)` is rejected.
+5. The outsider also holds the room key, for example from a leaked device. Its `0x07` note opens, but the outsider is not a member, so `sender_may_post` refuses it and a client ignores it.
+
+Its 20 cases are each accepted or rejected.
+
+`open_delivery`:
+- A member's own delivery is accepted.
+- These are rejected:
+  - the other member's delivery, opened under its own session;
+  - a changed tag or handshake id;
+  - a 226-byte note.
+
+`authorize`:
+- Each add authorizes its own subject.
+- These are not authorized:
+  - an add for the other member;
+  - the create;
+  - a delivery from a member;
+  - epoch 2;
+  - an unknown record;
+  - the outsider.
+
+`open_message`, accepted only when the note opens with no repeated pair in that sender's accepted list and the sender may post:
+- A repeat of the owner's first message is rejected.
+- A member's counter 0 is accepted, because replay state is per sender.
+- A message relabelled as another member's is rejected.
+- A changed tag, counter or epoch is rejected.
+- The outsider's note is rejected.
+
+`cd ts && bun scripts/emit-room-session-vector.ts && cp ../vectors/room-session-v1.json ../rs/vectors/` regenerates it. It uses the same seeded random stream as the conversation vectors, under the label `AlgoChat test vector room-session-v1`. The TypeScript test fails, naming that command, if the committed file differs. TypeScript and Rust both check every field and case.
+
 ## Coverage boundaries
 
 | Evidence | Establishes | Does not establish alone |
@@ -597,6 +644,7 @@ The TypeScript tests run the script into a temporary directory and fail, naming 
 | `vectors/group-admin-bots-v1.json` | Bot `0x03` bytes (ops 13 and 14), the bot list in room state, delivery to an added bot, and the exact reject sentences in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context; whether a bot keeps to its rate limit |
 | `vectors/pq-conversation-v1.json` | A TypeScript `0x04` handshake each way, read by both recipient and sender from the note and the account seed alone; 64 `0x05` messages including a 4096-byte note each way; every case result, in TypeScript and Rust | That Go, Python, Kotlin or Swift read it (they do not yet); that TypeScript reads Rust-written notes (the `pqcross` LocalNet mesh); notes from 25-word phrases (#73) |
 | `vectors/psk-kept-v1.json` | Kept version `0x02` Extra lock notes at counters 0 to 4294967295 read by recipient and sender, every case, and the counter window across a saved and restored state, in TypeScript and Rust | Version `0x01` notes; whether an app persists its counter state; that Raven Desktop never writes Extra lock notes |
+| `vectors/room-session-v1.json` | A member's own recovery of a real `0x04` handshake, its action-5 delivery opened and authorized against the accepted delta `0x03` records, `0x07` messages from three senders with per-sender replay, and a key holder who is not a member being ignored, in TypeScript and Rust | Blockchain authentication of senders and transaction ids; removal, rekey, current-key-only history, batches of 16 and channels (#81); legacy rooms (#82); that Go, Python, Kotlin or Swift read it |
 | Historical LocalNet reports in [PARITY.md](PARITY.md) | The author's reported run at its stated rounds | Independent current-head or release-package qualification |
 
 Use the exact [wire tables](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) and [flow guide](docs/PROTOCOL-FLOWS.md) alongside the fixtures. `vectors/group-admin-v1.json` is unchanged. `vectors/group-admin-delta-v1.json` is the delta note. The LocalNet record for that note is PROTOCOL.md.
