@@ -17,7 +17,7 @@ Documentation of current source adds offset tables and [application flow diagram
 
 ## Public API
 
-PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json. The TypeScript-generated conformance vectors in ts/conformance/vectors/00-06 are checked by TypeScript (`verify.mjs`) and by Rust (`rs/tests/conformance.rs`) from copies in `rs/vectors/` (REQ-protocol-10).
+PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json. The TypeScript-generated conformance vectors in ts/conformance/vectors/00-06 are checked by TypeScript (`verify.mjs`) and by Rust (`rs/tests/conformance.rs`) from copies in `rs/vectors/` (REQ-protocol-10). vectors/pq-conversation-v1.json (a TypeScript Hybrid conversation each way) and vectors/psk-kept-v1.json (kept version `0x02` Extra lock notes and a counter window across a restart) are written by `ts/scripts/emit-conversation-vectors.ts` and read by TypeScript and Rust (REQ-protocol-13).
 
 ## Invariants
 
