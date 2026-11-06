@@ -99,20 +99,21 @@ impl Conversation {
         let accounts = v["accounts"].as_object().expect("accounts: not an object");
         let names: BTreeSet<&str> = accounts.keys().map(String::as_str).collect();
         assert_eq!(names, BTreeSet::from(["alice", "bob"]), "accounts");
+        // Messages here stay static: they never include an account's name or bytes.
         for (name, account) in accounts {
-            keys(account, ACCOUNT_FIELDS, name);
-            let seed = bytes(&account["seed"], name);
+            keys(account, ACCOUNT_FIELDS, "an account");
+            let seed = bytes(&account["seed"], "an account seed");
             let (_, public) = derive_keys_from_seed(&seed).expect("X25519 keys");
             assert_eq!(
                 public.as_bytes().to_vec(),
-                bytes(&account["x25519_public"], name),
-                "{name}: X25519 key from the seed"
+                bytes(&account["x25519_public"], "an account X25519 key"),
+                "an account's X25519 key does not come from its seed"
             );
             let mlkem = derive_mlkem768(&seed).expect("ML-KEM keys");
             assert_eq!(
                 mlkem.encaps_key,
-                bytes(&account["encaps_key"], name),
-                "{name}: ML-KEM key from the seed"
+                bytes(&account["encaps_key"], "an account ML-KEM key"),
+                "an account's ML-KEM key does not come from its seed"
             );
             seeds.insert(name.clone(), seed);
         }
@@ -142,7 +143,7 @@ impl Conversation {
     fn seed(&self, name: &str) -> &[u8] {
         self.seeds
             .get(name)
-            .unwrap_or_else(|| panic!("unknown account {name}"))
+            .unwrap_or_else(|| panic!("a handshake or case names an unknown account"))
     }
 
     fn handshake(&self, name: &str) -> &Handshake {
@@ -187,17 +188,17 @@ fn both_sides_derive_every_session_from_the_note() {
             item.handshake_id,
             "{name}: handshake id"
         );
-        for account in [&item.recipient, &item.sender] {
+        for (side, account) in [("recipient", &item.recipient), ("sender", &item.sender)] {
             let session = conversation.session(account, name);
             assert_eq!(
                 session.session_key.to_vec(),
                 item.session_key,
-                "{name}: {account}'s session key"
+                "{name}: the {side}'s session key"
             );
             assert_eq!(
                 session.handshake_id.to_vec(),
                 item.handshake_id,
-                "{name}: {account}'s handshake id"
+                "{name}: the {side}'s handshake id"
             );
         }
     }
@@ -237,11 +238,14 @@ fn both_sides_read_every_message_in_order() {
             "{context}: note size"
         );
         longest = longest.max(note.len());
-        for account in [&item.recipient, &item.sender] {
+        for (side, account) in [("recipient", &item.recipient), ("sender", &item.sender)] {
             let session = &sessions[&(handshake.to_string(), account.clone())];
             let read = decrypt_pq_message(&note, session)
-                .unwrap_or_else(|error| panic!("{context}: {account} cannot read it: {error}"));
-            assert_eq!(read, plaintext, "{context}: {account} reads different text");
+                .unwrap_or_else(|error| panic!("{context}: the {side} cannot read it: {error}"));
+            assert_eq!(
+                read, plaintext,
+                "{context}: the {side} reads different text"
+            );
         }
         *per_handshake.entry(handshake.to_string()).or_default() += 1;
     }

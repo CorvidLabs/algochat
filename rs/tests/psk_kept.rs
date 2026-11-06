@@ -88,14 +88,15 @@ fn seeds(v: &Value) -> BTreeMap<String, Vec<u8>> {
     keys(v, FIELDS, FILE);
     let accounts = v["accounts"].as_object().expect("accounts: not an object");
     let mut seeds = BTreeMap::new();
+    // Messages here stay static: they never include an account's name or bytes.
     for (name, account) in accounts {
-        keys(account, ACCOUNT_FIELDS, name);
-        let seed = bytes(&account["seed"], name);
+        keys(account, ACCOUNT_FIELDS, "an account");
+        let seed = bytes(&account["seed"], "an account seed");
         let (_, public) = derive_keys_from_seed(&seed).expect("X25519 keys");
         assert_eq!(
             public.as_bytes().to_vec(),
-            bytes(&account["x25519_public"], name),
-            "{name}: X25519 key from the seed"
+            bytes(&account["x25519_public"], "an account X25519 key"),
+            "an account's X25519 key does not come from its seed"
         );
         seeds.insert(name.clone(), seed);
     }
@@ -137,10 +138,10 @@ fn recipient_and_sender_read_every_kept_note() {
         let from = text(&item["from"], name);
         let to = text(&item["to"], name);
         assert_ne!(from, to, "{name}: sender and recipient");
-        for reader in [to, from] {
+        for (side, reader) in [("recipient", to), ("sender", from)] {
             let read = read(&seeds[reader], &note, &psk)
-                .unwrap_or_else(|| panic!("{name}: {reader} cannot read it"));
-            assert_eq!(read, plaintext, "{name}: {reader} reads different text");
+                .unwrap_or_else(|| panic!("{name}: the {side} cannot read it"));
+            assert_eq!(read, plaintext, "{name}: the {side} reads different text");
         }
         counters.insert(envelope.ratchet_counter);
         longest = longest.max(note.len());
@@ -167,7 +168,7 @@ fn every_case_matches_typescript() {
         let account = text(&case["account"], name);
         let seed = seeds
             .get(account)
-            .unwrap_or_else(|| panic!("{name}: unknown account {account}"));
+            .unwrap_or_else(|| panic!("{name}: the case names an unknown account"));
         let accepted = read(
             seed,
             &bytes(&case["note"], name),
