@@ -2,7 +2,7 @@
 
 use chacha20poly1305::aead::{Aead, KeyInit, Payload};
 use chacha20poly1305::{ChaCha20Poly1305, Nonce};
-use ed25519_dalek::{Signature, Verifier, VerifyingKey};
+use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use hkdf::Hkdf;
 use ml_kem::kem::{Decapsulate, DecapsulationKey, KeyExport};
 use ml_kem::{MlKem768, Seed, B32};
@@ -254,8 +254,51 @@ pub fn decrypt_pq_message(note: &[u8], session: &PqSession) -> Result<String> {
     String::from_utf8(plain).map_err(|e| AlgoChatError::DecryptionError(e.to_string()))
 }
 
+const ANNOUNCE_MAGIC: &[u8; 4] = b"ACPQ";
+const ANNOUNCE_VERSION: u8 = 0x01;
+const ANNOUNCE_LABEL: &[u8] = b"AlgoChat-pq-ek-v1";
+const ENCAPS_KEY_LEN: usize = 1184;
+const ANNOUNCE_UNSIGNED: usize = ANNOUNCE_MAGIC.len() + 1 + ENCAPS_KEY_LEN;
+const ANNOUNCE_SIGNED: usize = ANNOUNCE_UNSIGNED + 64;
+
 pub fn is_pq_announcement(note: &[u8]) -> bool {
-    note.starts_with(b"ACPQ")
+    note.starts_with(ANNOUNCE_MAGIC)
+}
+
+/// The 32 bytes an ACPQ announcement signature signs: SHA-256 of
+/// `AlgoChat-pq-ek-v1`, the announcement version `0x01` and the 1184-byte
+/// ML-KEM-768 encapsulation key. Any other key length is an error.
+pub fn pq_announcement_signing_input(encaps_key: &[u8]) -> Result<[u8; 32]> {
+    if encaps_key.len() != ENCAPS_KEY_LEN {
+        return Err(AlgoChatError::InvalidPublicKey(format!(
+            "ML-KEM-768 encapsulation key must be {ENCAPS_KEY_LEN} bytes, got {}",
+            encaps_key.len()
+        )));
+    }
+    let mut hasher = Sha256::new();
+    hasher.update(ANNOUNCE_LABEL);
+    hasher.update([ANNOUNCE_VERSION]);
+    hasher.update(encaps_key);
+    Ok(hasher.finalize().into())
+}
+
+/// Encodes an ACPQ announcement note for a self-payment. Without a signing
+/// key the note is 1189 bytes and a reader treats the key as unverified. With
+/// the account's Ed25519 key it is 1253 bytes and ends with the signature over
+/// [`pq_announcement_signing_input`]. Any key length other than 1184 is an error.
+pub fn encode_pq_announcement(
+    encaps_key: &[u8],
+    signing_key: Option<&SigningKey>,
+) -> Result<Vec<u8>> {
+    let digest = pq_announcement_signing_input(encaps_key)?;
+    let mut note = Vec::with_capacity(ANNOUNCE_SIGNED);
+    note.extend_from_slice(ANNOUNCE_MAGIC);
+    note.push(ANNOUNCE_VERSION);
+    note.extend_from_slice(encaps_key);
+    if let Some(key) = signing_key {
+        note.extend_from_slice(&key.sign(&digest).to_bytes());
+    }
+    Ok(note)
 }
 
 /// Parsed ACPQ announcement. A bad signature returns `None`. No signature is unverified.
@@ -265,16 +308,14 @@ pub struct PqAnnouncement {
 }
 
 pub fn parse_pq_announcement(note: &[u8], verifying_key: Option<&[u8]>) -> Option<PqAnnouncement> {
-    const UNSIGNED: usize = 4 + 1 + 1184;
-    const SIGNED: usize = UNSIGNED + 64;
     if !is_pq_announcement(note)
-        || (note.len() != UNSIGNED && note.len() != SIGNED)
-        || note[4] != 0x01
+        || (note.len() != ANNOUNCE_UNSIGNED && note.len() != ANNOUNCE_SIGNED)
+        || note[4] != ANNOUNCE_VERSION
     {
         return None;
     }
-    let encaps_key = note[5..UNSIGNED].to_vec();
-    if note.len() == UNSIGNED {
+    let encaps_key = note[5..ANNOUNCE_UNSIGNED].to_vec();
+    if note.len() == ANNOUNCE_UNSIGNED {
         return Some(PqAnnouncement {
             encaps_key,
             verified: false,
@@ -282,11 +323,8 @@ pub fn parse_pq_announcement(note: &[u8], verifying_key: Option<&[u8]>) -> Optio
     }
     let key_bytes: [u8; 32] = verifying_key?.try_into().ok()?;
     let key = VerifyingKey::from_bytes(&key_bytes).ok()?;
-    let mut message = b"AlgoChat-pq-ek-v1".to_vec();
-    message.push(0x01);
-    message.extend_from_slice(&encaps_key);
-    let digest = Sha256::digest(&message);
-    let signature = Signature::from_slice(&note[UNSIGNED..]).ok()?;
+    let digest = pq_announcement_signing_input(&encaps_key).ok()?;
+    let signature = Signature::from_slice(&note[ANNOUNCE_UNSIGNED..]).ok()?;
     key.verify(&digest, &signature).ok()?;
     Some(PqAnnouncement {
         encaps_key,

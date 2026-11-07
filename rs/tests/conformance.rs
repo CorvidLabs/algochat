@@ -41,6 +41,7 @@ const SHARED: &[&str] = &[
     "group-admin-delta-v1.json",
     "group-admin-v1.json",
     "group-v1.json",
+    "pq-announcement-v1.json",
     "pq-mlkem768.json",
 ];
 

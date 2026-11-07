@@ -1,0 +1,51 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793970833,
+      "digest": "2aa9212dd113f413cb961ca8a23548865eb331c645b72d525a7943138b2e222f",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "68-rust-writes-the-acpq-hybrid-key-announcement-byte-for-byte-the-way-typescript-does",
+        "title": "68: Rust writes the ACPQ Hybrid key announcement byte for byte the way TypeScript does",
+        "description": "68: Rust writes the ACPQ Hybrid key announcement byte for byte the way TypeScript does",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "TEST-VECTORS.md",
+          "rs/",
+          "ts/scripts/emit-pq-announcement-vector.ts",
+          "ts/src/pq/announce.test.ts",
+          "vectors/pq-announcement-v1.json"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "cargo test --locked passes in rs/ and inside the unpacked algochat .crate, where tests/pq_announcement.rs shows that encode_pq_announcement and pq_announcement_signing_input reproduce the exact 1189-byte unsigned note, 1253-byte signed note and signing input of the TypeScript-generated vectors/pq-announcement-v1.json from its account seed, that every parse case gives the same unverified, verified or rejected result, and that a key that is not 1184 bytes is refused; bun test in ts/ shows the committed vector is exactly what ts/scripts/emit-pq-announcement-vector.ts writes and that every case holds in TypeScript; parse_pq_announcement results and the wire format do not change."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "f38dffabb4f42a2bf4c5c2ce035555772d54299b279482a5a2446f773ed02284"
+      },
+      "approved_delta_bases": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1793988237,
+      "digest": "9e7b8edd0fce474f8d83fa41578c2411133ef5825ddd03a4b1c5f45e2e698fcb",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}
