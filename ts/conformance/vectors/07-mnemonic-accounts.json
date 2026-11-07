@@ -1,0 +1,127 @@
+{
+  "tool": "@corvidlabs/ts-algochat 25-word account generator",
+  "libraryVersion": "0.12.0",
+  "algosdkVersion": "3.7.0",
+  "generatedBy": "reference implementation (TypeScript + algosdk)",
+  "note": "TEST ONLY: every phrase comes from fixed published entropy. Never fund these accounts. Byte strings are lowercase hex.",
+  "file": "07-mnemonic-accounts",
+  "description": "Algorand 25-word phrases: entropy, Ed25519 account, X25519 and ML-KEM-768 keys, and phrases every implementation must reject.",
+  "wordlist": {
+    "count": 2048,
+    "sha256OfNewlineJoined": "187db04a869dd9bc7be80d21a86497d692c0db6abd3aa8cb6be5d618ff757fae"
+  },
+  "accounts": [
+    {
+      "name": "zero",
+      "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon invest",
+      "entropy": "0000000000000000000000000000000000000000000000000000000000000000",
+      "ed25519PublicKey": "3b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da29",
+      "algorandAddress": "HNVCPPGOW2SC2YVDVDICU3YNONSTEFLXDXREHJR2YBEKDC2Z3IUZSC6YGI",
+      "x25519PublicKey": "7e8d332a8d69b9a69fd394b5dfb9716b1ec442482c7374c257dbb1f7a61e1014",
+      "mlkem768EncapsulationKey": "07e10ca1d4c67b402e76a13b425524c5e1c43e57ade88c1fa721cc4d97383abbc5041310c2855fa423752ea75a36445673c9b51d743dfd2b9a0ad9ae3db65efd2467290bc2f5d4bc9c809dab46611a540951413cbbe664e4e897c519216cecbee29b37b21390b865194007824b0004f12a183e38cdb1397bd05661510c693bf0131870ca54d8443758c58c28bf71085ece656773b0b2bde78dfa584d4490be97633183cb3a73f6975a52841ec7c89708b095f05263d76deedcc2935780ea479041548eb4c29e5aa87780b05ce908b8017593043393d424277ff95a54662470f832efd886cf405eca5ac3a8692ca124965ffb8a4192c1ffc05232e1bf8b4380a7d75b010431b22216e3a282f0ab61a03c1e47315c85c13590b4839ec1238b2c4903810f88480db89ba4256300a9c7453b7a7c734950203a6260e77d45aac704c05c4bd21ab1f390eae91383799acf8c5001a428874b7b394b4c36f0a6ac22043f3565ff4071319ac6a842c07123436d718214dc0c70e759c4bb0225494d62291bc5559c35c682802391c73bcb5766a8b1761e09e8a96e4bafaff49d993c8d0302674ca9c26cf402c79c927119bae2065836f1a325e912cee9100a9b48e2594ae7569f4844285d3a78fbe5ab16a48940255b92276fd7d8205996affa523252a1a363f6272bf7c0f6c71cdbf034093c26dcb2a6d4b7672faba3b7712ff8598e8592737754319cec6c6035a10fc1346e3974a215a554b83bfbe6a782c88a72da4de5a7233e69ca75367c1e83594ac85fe95b53b1001d29e376bfea70bea0b4026138a4eb21c2d47f2a924a08650787130b85c5aedf52152f9613e1124179931533000ea114469df6b3826c5ba5b34abc28738528a7b7ac0fcb2c47d9b35867c5837a6a337215299385646d0b537d82b77ab4a141d24d8d9377135818a864265019bd50abc47b683b8cf97bdd6927aa89554366cabd7778650aced9679acad05fc71aa150825bf83bc9d0706418b48b94150de175296446a5e402a4264b4e3ca7be7a5185bf3b5aa1fbafd445872a9ccb6c86b61eeb93372261c00c483a1c372e8c7a28729a14a6586819770fa091f8a61b6e2b9c34b223a22bb17577b57f9c5d993a824f52b7a9db2cccb68bf3612a5b83be7ee5b0362c06e216336918c6143a612cd936bb32cddfa5b17e8b7569d07e7538ac6bf2991e8a3893a69e455a25a4b2211cf6b599ba95f133b8bec5bed19108d380325fc257c191c9915818962230b6e60b31d5bc9d51a2c8d1af74642f250767baea04fc2aba39ec76f0126ae929337341b0c3bb01ca4a8dc4f79fc4d20081650c81172d852175c11c369be4c1b363bcc380a9ed802e9347c10a9cb61154484f6835fbe3b2df81c2d1e87371f8935f948b48a9c964ca17a39aa68c761c8c2a89955721c0d4000b6a9ef522a6d7a958f193b5639b0ecfe6594a4893a24a508d0206fb84383430a2c5d2478b73069868453eb3a5568411bc748f7b1b01db6cbe7e9853a891433adc2249b81a7a2a51c5e396960043ee2b67178bac0b0c41bd6a11d559b5c8c70a814785adc70c2e74576a85b0723b9a3bf8b3d9ca55ef7a0692a60964ec28d865af10a58971f29e9ec8cb990ae65f3c7ef4b855d7edf19f9b7253fea93421d255e64645001883aec497d8",
+      "falcon1024AddressInfoOnly": "UGEDBJQD4LZF6OMFQDQ3BLY6CRX36Y75AZPDKJ3TTRU4TOGJ36EL34CWRI"
+    },
+    {
+      "name": "ones",
+      "mnemonic": "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo abstract adapt",
+      "entropy": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "ed25519PublicKey": "76a1592044a6e4f511265bca73a604d90b0529d1df602be30a19a9257660d1f5",
+      "algorandAddress": "O2QVSICEU3SPKEJGLPFHHJQE3EFQKKOR35QCXYYKDGUSK5TA2H2Q3YZHOY",
+      "x25519PublicKey": "1a535ff79d56776e041e1f0d6475c26b55b35d4f94a0c4b4491419325239e402",
+      "mlkem768EncapsulationKey": "bbec5e436b7457bb8259b924a01b1e505778a5d47e351a6876e83d2febbc0de692d0f3c2dd71a5dfeac260312dc42b32f96564fbe384fec0892fb04210faacd7d19a04b1c85f61229aec9eb5493fbd2160f4a18708843ea1ac8b9bbbb8c4a5677f0b0563111a13f282ac47765849b365854531c3894888c7ee2613eab487fd190e8420c93431ad370ccf6788054f35727a5a9ff2dc935c0020d5fb6f58453a1e752eef24005ee096ec1b49d84771f6e381171c917a0296f4f0115ea2b4aa880c9fc1599c652a23579b405c5b1a433de117280d84049dfa1dee73ce3e8a5115994ffce405cdd3a1a2f10c45ac6408a512897300385caf147bbbada1238d96a4cd549c4d98a05a348dc2428d4147b7ed9870bef005573a7345928ec2e7ce6d475eb6254a91f2afe11b80d1462f5444a6c1f4718efc704979c4436b9f75da10a64732b2772691e488298a4f55796897a03bfdecbbdf9b11e333bc0da0a899c786a5f50316188758bc9bce1b55acc20e71389ae6522e1d41c2151859604044db8bb2fc812c24c3849c79c5b8884a385b6c86a469674aa447a4ba91c288c55a1514e709e4f82903681380f2b48e71b87ed553a5d35f2209876cfb3bb52bba95188963a78df629af320532e3b084ca45cdae0a19f2c34c7ab264cc3539ed9423535bc6c77b81851722ffb3b05015b33ae4cb6a1b439d39531d36c19187cf0c428b9fcacd9cf614142a6a2ad2265a36cd8f776a2fc7a8ef2c831481b608619d8de60acc1855a5e324e5f42b8cd3bcc204114c3c8d96229ea8488402d0977f54b199525339c6534c0a6e8e531fa4c25aaddc2a5292859d42246580697a3b725e9a90c5826f6738793efc2724789270d8941c66614ed8994562560f7848e0a9753ec306b2a84526741e0ed94b1da959033a19ce314a3bb5755ee35682530818756122c4acfee076a475c5ee8128c727699a68a85239404008a6847c152ed35167c6c56816ba0c2654db35008fc876bcc41e0c4c126d572ceb160aaa543fb255c61773851348cfd138a90929cb633440f67c78109576fbaa3551332031fb2160b4231b07ac8d89334ceb307b585d478808de26c3531bc7fbec04f9d8189ec8c7ec3010f1a77912f9bc02f45754d1730f980e875149c6c24f8c7a19f21b9409598c220bac1bd39868f99412eb4dd1d873b4a5834fc4c7f26c02fac01881987341a81c430c41c0e54dc2282629e29e95f9c0b2093fbd91499f48a3c7a534007a778c71a92de28606e351bca9a5b4eba946b52a253a228a092a4891a292cc26c830ce3fb0b90ca216d100586639aa39732f157a7ec76b618010b0f2bb587d0a8ae9d49d0b6872ac1035965b1a1eb6a2f9aa8b08c92fcfa78f2987165d61cdb4128c2d186020399c30bbc8878492b889c473f516f65b4db4b44b53b3beed396839a658a68ca7c1c111a9480f479a5d7435b22e83006d2ba94db97790428466b988efe8553a30c8ce5b45b5818e3035672f7965c9eb128dc777ad22836386c5c87a30ceea42e9c6c02d450136b3142f929660f29850c986e656ab612c00b6344aeb06c2a7a580a7b27ef61150f29190e55b8b80642abe4ac771b09d93ca2714f5976ddc0b5b64be56b42e4b4ec881778162ab5404b6b8909496fabc57076f05335c0aadf8f1f604",
+      "falcon1024AddressInfoOnly": "5Y26AZF7HJMMYYVEYEEOYE7F277CBZFENZWXL4GFAFMBWBTJ4P6WFWAHEE"
+    },
+    {
+      "name": "counter-00",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curtain",
+      "entropy": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "ed25519PublicKey": "03a107bff3ce10be1d70dd18e74bc09967e4d6309ba50d5f1ddc8664125531b8",
+      "algorandAddress": "AOQQPP7TZYIL4HLQ3UMOOS6ATFT6JVRQTOSQ2XY53SDGIESVGG4MPFYUMQ",
+      "x25519PublicKey": "96c84d4da41f8ef515f9fc37a701144bff38e5c26ecd24ca161e4de66405557e",
+      "mlkem768EncapsulationKey": "2a431460662494b62e310c1befc132f6c726ce64a2f1788f3c056e6321cb0c417f602c7f68a181d38a9be0c2190de4a8b7264b7aebbe739c7b0e85207590b46e8aaa97815df037bc1e804213d024f5741e99c83c9a507c7408b77a1766ff821042ca124d502fd36589bc5506cdb01ce24c20cd687f675c8045375cf844c8b5b11644722d57b215242b9643d1244b283a57589231615a847966f7a435aa8a69279a937104598cd8af216b28aa537d5f7849cfa9158d47373cd8127e051606e10e6dc3189e897517bb661a1c2863e456ca077fb9c9ca97957ff181a0af9a029af18a3875807dd293a2727a19c5c6cb799fe9d94e812758693a287218251885462809aa31b860b8a155f1a551d04aa2cf1a4ccd0c5da751ad9b221b97607430601f5d36192e5751f89c4af0709aaef076c511b6ec205b6491ccb1ca8b421cb2e7d9a2a8174b9f238d56ba51c025785d4b1515e52f3f72628a798501f0b9237210f92b4fd3b164fbe52d541c096d92456aeabab2f1718ea7a21787b661085f682b4f4ca7a9ba8a6ba0e6881e6b06dc9015a9135ad9f71785e926ed6c5ab7b41ccd5b978a28b004e77540b970751b106af2596ce995ad5a629ecca41cc720e2c3b9935121e0130ebbd5c272e679920b90f679c05b371cc6936f03640b279cb43d89cc8d3233d9d691ebe91325b434c9a0c712acac6de509dd780f5b3ba55adc990b79564cb86e0f808e19a8a4af672c95156fa4f83522e115fe44541920b97c0bbcd8fc2542f442603b078f55540aca540c335519c46b79f5888544ca4a9487c1b672973c16fd466f792284c2fa9c5aa72427f703d639396d741431090cc8a9b7edb2820c35c01b2529fa1c806f43938cb9214e284a7593964869a897e250b34670dc0894898906f9a63cea0700131ab1c8bc15806901d89b23cb4330f68acf2ad568b414c817739711b30b1af2258304189f64507fb6a5fa592d5efc54214187e6480c1c6ca09d6132c18ba0b4db33f9604949a05e3624af658c72a7a17cccc99d2841c9628aaf1c0252b726949e04a5d18ccb5f10ac67c7acf1248546fc038cfa23a272795f8c3f8ce7682ed8b3f746cdf8237682e2222403571638220da29c2e1039b43734a7532fafa4bfa825c23ef1caa73bc4d5160ea7420aa22a915e3920960151d014769ad6205cdba389201f708379d0a36ab7f547a7043a07f8b66474c0afa9620c735f1a606935c5b1fe08b1f6f2242d1cb57c4607b1e818f2461644b5a65ca021be88c71bd7befd66318d8c49cc1b9c9c3418f1e15f31f245ceacb5081a8099126841ab9fc6659a58026543d767ac789258b714cf417f0e9007e52a3d6cab0a008c7b52ca4475d58c95633292980395970947c874e638600ce814ec52578fbcafff69814f065fbaa36bebf6b1d71044a64c7a8eb98c67575ea3526737237249ca4d71628df0252072578764e57475123fb0a70690289fc046124e6b9252acab9611b0c1e199a0e2c51dc4b06f11bfd9f3389e1c2bcee4be9decb78448c9a16a9088107ac1b30be990518cdc969393463d09c9076a707a8c6054d26569f856593981f0fa1744187379c49fb43ba645e197afba4e7e94c66910c4f4480b4df410c595ba2378d4de1cd5ffd5d5ee2bd57d8ef02d4ad6c4c4ab281fc2461c",
+      "falcon1024AddressInfoOnly": "XUCZPHDELTE5A76VAMSXKVISTYMWRBSPMRFLKWQCVYKWKMSVRVQUHGV2AA"
+    },
+    {
+      "name": "stride-37",
+      "mnemonic": "accident feel rule enemy squeeze senior screen later violin reason angry recall absent practice layer belt shrimp aspect stairs coast copper excuse credit above yellow",
+      "entropy": "0b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186",
+      "ed25519PublicKey": "24c3a494fa2299626644b965a9132da79cfe67151fdc42de600cf09097db8247",
+      "algorandAddress": "ETB2JFH2EKMWEZSEXFS2SEZNU6OP4ZYVD7OEFXTABTYJBF63QJDQN6IRJQ",
+      "x25519PublicKey": "d68ad1de95fcd15c8cc1ee23e613382855fa97a998e5974ee4dce2dbbd12dc04",
+      "mlkem768EncapsulationKey": "5c0367557021adf095227c1a5f2a02756c44393b117088b5bb6aad19f14d28783ad94255e2607dec214ba8b24bd9f11d74909dd3587c2b4a03bbc2bb0f404c73d3a355234e501a264d331cc2ecac1c1399175797354c5d60813ae6556b94e2817c098c2b4952833c1affe471409a96ecd8aa59220b2949a5a38576713627873ace9c1b5a6aa30718b23872323835697668b7cc5e602ff348938cf7acbbb051d7f00ee22bc9f48336f078699fc8777bca4b045a97eba4320f634f994caf748605ec8a047ed810884151de6970a895c912513b4ae1625388b844e73d5b62a43d792b37245c48212058069201328239f47c4727c36ca315e74042092507ba1b97798a7f0515b606e98190762e05da941b449bdb7c00d0eb72ed630002a859160466b6344533e49b29dc5f61467c57657427769f36da7f1e9bc695d8105340ac5f104376252b5fd5cb5fa174b7f60dae3c9ab341baca2165a8f9a9033288f77773dc8947c98a31d46a96adc6283a48ac9576b9ca0b68471bcfa670413529a92ab5b058fc1a27f841dc794ece4a14a8408b227b7ef636090147009263088abb98549a27c51c530f4088864bc0815356aea46e1f9094f835076db3297f934d33e154107338f2687513c57a581b442524c779c169cf773fbc63b1855ca8dcb79ac2ab21b1681c302cbb9f6b05da6ac6604c4bc0b0681a0b83b60352473771a36b59784a140a297beac89562f7c264f7bb240096aed77c724abff4f28599b89571621b5ba79d354815c054aeac289b220ba624205ff468c79d053fa7cc6438d09f1f654a95114ec30c20a750bf37653dd9225b16b29360b694f31322142035fd326717e96e41611defeba13672b0de8c90e50c4199935a90b698de1719feb781987ab344b41246134126519586993bd6449c111a4b84f67fd589b97b2b3a9eeb242460a292103a81148a5bba9f3ebc530b936723201e061611f2c37d200cb783958a768619c8670145ab0c0e4ca84f337ce7337bbb41be728792704cb1d8143ed781ceb12972a0871bf3c644e500b16ca5b134227a2483b9239b806f74acd09087bc3c10858ac1a3f247f92c01373146b995c7e0da7767e2571de036aab60bc190a87da010d44ab897c5c5df6255d22c9752194c04610be4b44cf5ba1fd4fc6457a68be85069bf73c45ae5490ff73060e05e8e7167556c5ad1a568fe99316ec82ca621cde8712a5baac426c00ed2da92af440bf6523282bc16a69a35e47410011060cfd9c70e1b816a987667592b63f112ddc1ca4c0a0d5244c70fc84921a571b4850f39d813bdb91d7ad851d1eba1a15912cc4870c1a4a7a4a899b47796fd67619f179db52522fe772667d497dd3c9f90d9ad70e614e088b497052467c32ab00816db2c320d874d84c15588d343bffa2c690cc3215887ea1a392f0b267a1c4f79220dc7a770589cca4aa44211852b496c9b493589e791338e267ac1e3692f4a6c73c94fa0657871a4614455a5248b4ddca747604abdfda7bbdedc732692b4ef7806c4142a53e8a5d1f52c126686a0dacb65929f9a3c6093aabc310a3b2f7b08219953c13c93d8dc8a5bb77303c3860f775b2fbb492c05569d2583406a3487d66cc91cc8a823350bf681e5844e3c274f25ee48f92c2707ad52c4ab5d3e8cb51f6e9b9d22",
+      "falcon1024AddressInfoOnly": "RNSVPGH7FO7P66SSKTGM5DNAXCXKOP66BY5ADEWKARGCKPENIWF4N6DKJM"
+    }
+  ],
+  "negative": [
+    {
+      "name": "24-words",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon",
+      "expect": "reject"
+    },
+    {
+      "name": "26-words-ending-in-checksum",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon zoo curtain",
+      "expect": "reject"
+    },
+    {
+      "name": "30-words-ending-in-checksum",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon zoo zoo zoo zoo zoo curtain",
+      "expect": "reject"
+    },
+    {
+      "name": "bad-checksum-word",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curve",
+      "expect": "reject"
+    },
+    {
+      "name": "nonzero-padding-bits",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding ability curtain",
+      "expect": "reject"
+    },
+    {
+      "name": "unknown-word",
+      "mnemonic": "cactus amount account notaword army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curtain",
+      "expect": "reject"
+    },
+    {
+      "name": "uppercase",
+      "mnemonic": "CACTUS AMOUNT ACCOUNT EXPECT ARMY ACHIEVE EMBARK ANXIETY LIFT CROUCH MANDATE ABSTRACT CAPTAIN SETUP PARTY BENCH TISSUE GATE ARRIVE RANDOM DEAL MANSION WEDDING ABANDON CURTAIN",
+      "expect": "reject"
+    },
+    {
+      "name": "leading-space",
+      "mnemonic": " cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curtain",
+      "expect": "reject"
+    },
+    {
+      "name": "trailing-space",
+      "mnemonic": "cactus amount account expect army achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curtain ",
+      "expect": "reject"
+    },
+    {
+      "name": "double-space",
+      "mnemonic": "cactus amount account expect army  achieve embark anxiety lift crouch mandate abstract captain setup party bench tissue gate arrive random deal mansion wedding abandon curtain",
+      "expect": "reject"
+    },
+    {
+      "name": "tab-separator",
+      "mnemonic": "cactus\tamount\taccount\texpect\tarmy\tachieve\tembark\tanxiety\tlift\tcrouch\tmandate\tabstract\tcaptain\tsetup\tparty\tbench\ttissue\tgate\tarrive\trandom\tdeal\tmansion\twedding\tabandon\tcurtain",
+      "expect": "reject"
+    },
+    {
+      "name": "newline-separator",
+      "mnemonic": "cactus\namount\naccount\nexpect\narmy\nachieve\nembark\nanxiety\nlift\ncrouch\nmandate\nabstract\ncaptain\nsetup\nparty\nbench\ntissue\ngate\narrive\nrandom\ndeal\nmansion\nwedding\nabandon\ncurtain",
+      "expect": "reject"
+    },
+    {
+      "name": "four-letter-prefixes",
+      "mnemonic": "cact amou acco expe army achi emba anxi lift crou mand abst capt setu part benc tiss gate arri rand deal mans wedd aban curt",
+      "expect": "reject"
+    },
+    {
+      "name": "empty",
+      "mnemonic": "",
+      "expect": "reject"
+    }
+  ]
+}

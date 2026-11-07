@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-f08db351480aab15e8eda3f9",
-    "head": "EVT-7b9cf57b86ef9a70fd7ae97f",
+    "head": "EVT-67dd039de225c9a81f0c0704",
     "legacy": null
   },
   "schema_version": 2,
@@ -16,7 +16,7 @@
     "callers": [],
     "iteration": 1
   },
-  "native_change": "rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and",
+  "native_change": "73-rust-creates-restores-and-validates-ed25519-algochat-accounts-from-the-same-algorand-25-word-phrase-as-typescript",
   "references": {
     "criteria": [
       "CRATE-2",
@@ -38,17 +38,22 @@
     "Leif 2026-11-05 20:24 MST 'Go with both': rustfmt-only commit b867cf8 on #75, then a separate change making qualify rs run fmt --check and clippy --all-targets -D warnings, before #73",
     "rs-lint definition approved by Leif 20:29 MST at ec4e7c6; unpinned-toolchain risk accepted",
     "Standing rule (Leif 2026-11-05 22:43 MST): if an approved PR only gets origin/main merged in (bookkeeping/changelog/version conflicts, reviewed content unchanged, checks re-run green), merge at the new head without asking again and say so in the report; any change to reviewed content comes back for review",
-    "Leif 2026-11-05 23:24 MST: agent commits keep the worktree git identity (0xLeif) as author; no 'claude' author, no rewriting existing commits; native SpecSync approvals/reviews in his name only via the orc"
+    "Leif 2026-11-05 23:24 MST: agent commits keep the worktree git identity (0xLeif) as author; no 'claude' author, no rewriting existing commits; native SpecSync approvals/reviews in his name only via the orc",
+    "Orc: #70b moved to ac-acpq; this worker keeps #75, #76, rs-lint, #73 (Ed25519 only, REQ-protocol-11)",
+    "#73 definition approved by Leif ('Ok yes I approve all', 06:1x MST 2026-11-06) with: TS 25-word fix in this change, Ed25519 only, strict input",
+    "Handoff to Kimi worker (orc, 2026-11-06): Claude worker ac stops; handoff at _audits/handoffs/ac.md"
   ],
   "open_questions": [],
   "completed": [
     "#75 rustfmt fix b867cf8 pushed; corvid-agent re-requested",
-    "rs-lint implemented and locally verified at 2c00143"
+    "rs-lint implemented and locally verified at 2c00143",
+    "#73 implemented and locally verified at 4bf64f3",
+    "#75 merged 45e3d35; #76 merged 58ec99b; rs-lint PR #85 finalized/archived at 8dd9f5d (Leif scoped review via orc), all green, awaiting corvid-agent approval; #73 draft PR #86 stacked on #85 at daaaee5"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
   "awaiting_human": [],
   "run_consents": [],
-  "next_action": "specsync change check --commit, push after #75 merges (rebase onto main), PR, ready for review"
+  "next_action": "After #85 merges (pinned 8dd9f5d, green + corvid-agent approval): merge origin/main into #86 branch (no rebase, it is pushed), retarget #86 to main, re-run specsync change check --commit in a CLEAN worktree, push, mark ready, send 'ready for review' to orc"
 }

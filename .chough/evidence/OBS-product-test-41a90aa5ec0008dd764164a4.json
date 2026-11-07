@@ -1,0 +1,30 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-41a90aa5ec0008dd764164a4",
+  "criteria": [
+    "CRATE-4",
+    "CRATE-6"
+  ],
+  "requirements": [
+    "REQ-protocol-11",
+    "REQ-protocol-10"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "#73 at 4bf64f3: TS-generated 07 vectors (algosdk 3.7.0, deterministic, counter-00 equals 01 A); red at 51731b4 (verify 131/2, TS test fail, Rust conformance no compile); green: Rust 261+11+4, fmt+clippy clean, bun 314/314, verify 133/133; clean-clone qualify rs and ts exit 0 (crate tests too); 4 mutation probes fail as expected; 0 phrase-prefix hits in all test logs; rs verify lane and fledge trust verify pass",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793972674,
+  "snapshot": {
+    "revision": "3c52817a6f73df0eec0cbbba8beb5e2aa2969199",
+    "dirty": true,
+    "fingerprint": "d7b4ec20bf98976203bc8c25414b79ecde737778abba31b0d885f29b88778d98",
+    "content": "0813a3de26f97a994d3b0ba15e7d0ba4691b5779987f4c3d62bf7876309c12da"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}

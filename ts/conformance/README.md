@@ -31,6 +31,7 @@ that the protocol is secure.
 | `vectors/04-psk-envelope.json` | 0x02 wire format (counter-bearing header, 130 bytes) byte-exact encoding; captured real PSK envelope + decryption |
 | `vectors/05-psk-exchange.json` | Out-of-band exchange URI: deterministic creation, parse round-trip, malformed-URI rejection |
 | `vectors/06-negative-cases.json` | Mandatory failure behavior: tampered ciphertext, tampered sender-key (both paths), wrong key, truncation, bad version, misclassification, wrong ratchet position |
+| `vectors/07-mnemonic-accounts.json` | 25-word Algorand phrases (#73): wordlist hash, four phrases with entropy, Ed25519 key and address, X25519 and ML-KEM-768 keys (Falcon-1024 address for information only), and 14 phrases every implementation must reject (24 or 26+ words, checksum, padding, unknown or uppercase words, whitespace, prefixes, empty) |
 
 All byte strings are lowercase hex. All inputs are fixed **public test
 values** — every seed and PSK in these files is published by definition and
@@ -49,6 +50,9 @@ broken behavior.
 # Run these commands from the ts/ directory.
 # Regenerate (overwrites conformance/vectors/)
 bun conformance/tools/generate.mjs
+
+# Regenerate only 07-mnemonic-accounts.json (generate.mjs never writes it)
+bun conformance/tools/generate-mnemonic.mjs
 
 # verify the current source tree against the frozen vectors
 bun conformance/tools/verify.mjs

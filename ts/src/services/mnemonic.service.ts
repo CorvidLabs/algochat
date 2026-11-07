@@ -29,7 +29,22 @@ export interface ChatAccountOptions {
     scheme?: SigningScheme;
 }
 
+/** An Algorand phrase has exactly 25 words separated by single spaces. */
+const MNEMONIC_WORD_COUNT = 25;
+
+/**
+ * algosdk 3.7.0 reads the first 24 words and the last word without checking
+ * the count, so a longer phrase ending in the right checksum would decode.
+ * Reject it first (#73, REQ-protocol-11).
+ */
+function requireTwentyFiveWords(mnemonic: string): void {
+    if (mnemonic.split(' ').length !== MNEMONIC_WORD_COUNT) {
+        throw new Error('expected 25 words separated by single spaces');
+    }
+}
+
 function mnemonicEntropy(mnemonic: string): Uint8Array {
+    requireTwentyFiveWords(mnemonic);
     return algosdk.seedFromMnemonic(mnemonic);
 }
 
@@ -105,6 +120,7 @@ export function createRandomChatAccount(
  */
 export function validateMnemonic(mnemonic: string): boolean {
     try {
+        requireTwentyFiveWords(mnemonic);
         algosdk.mnemonicToSecretKey(mnemonic);
         return true;
     } catch {

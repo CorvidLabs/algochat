@@ -2,12 +2,16 @@
 //! TypeScript-generated conformance vectors.
 //!
 //! The vectors are byte-identical copies, in `rs/vectors/`, of
-//! `ts/conformance/vectors/00-06` and the shared `vectors/*.json`. They ship
+//! `ts/conformance/vectors/00-07` and the shared `vectors/*.json`. They ship
 //! in the crate, so these tests also run from the package. A missing file,
 //! a missing or unexpected section, or an unknown case fails. Nothing here
-//! is skipped because a file is absent. The only unchecked fields are in
-//! `PENDING`, each with the issue that adds them.
+//! is skipped because a file is absent. `PENDING` is empty (REQ-protocol-10);
+//! #73 added the 25-word checks (REQ-protocol-11).
 
+use algochat::{
+    create_random_ed25519_account, derive_mlkem768, entropy_to_mnemonic, mnemonic_to_entropy,
+    restore_ed25519_account, validate_mnemonic, MNEMONIC_WORDS,
+};
 use algochat::{
     decode_psk_envelope, decrypt_message, decrypt_psk_message, derive_hybrid_symmetric_key,
     derive_keys_from_seed, derive_position_psk, derive_psk_at_counter, derive_session_psk,
@@ -24,15 +28,8 @@ use std::collections::BTreeSet;
 use x25519_dalek::{PublicKey, StaticSecret};
 
 /// Fields Rust cannot check yet. Each entry names the issue that removes it.
-/// Release 0.7.0 ships only with this list empty (#73 is in the same release).
-const PENDING: &[(&str, &str, &str)] = &[
-    ("01-key-derivation.json", "accounts[].mnemonic", "#73"),
-    (
-        "01-key-derivation.json",
-        "accounts[].algorandAddress",
-        "#73",
-    ),
-];
+/// Release 0.7.0 ships only with this list empty.
+const PENDING: &[(&str, &str, &str)] = &[];
 
 /// Every vector file Rust reads. The release check keeps this directory equal
 /// to the canonical sources.
@@ -325,6 +322,29 @@ fn key_derivation_01() {
         }
         keys(account, &fields, name);
         let seed = bytes(&account["seed"], name);
+        if name.starts_with("A ") {
+            let phrase = text(&account["mnemonic"], name);
+            assert_eq!(
+                mnemonic_to_entropy(phrase).expect("01 A phrase").as_slice(),
+                seed.as_slice(),
+                "01 {name} phrase -> seed"
+            );
+            let restored = restore_ed25519_account(phrase).expect("01 A restore");
+            assert_eq!(
+                restored.address(),
+                text(&account["algorandAddress"], name),
+                "01 {name} phrase -> address"
+            );
+        }
+        assert_eq!(
+            algochat::algorand_address(
+                &SigningKey::from_bytes(&array::<32>(&account["seed"], name))
+                    .verifying_key()
+                    .to_bytes()
+            ),
+            text(&account["algorandAddress"], name),
+            "01 {name} address"
+        );
         let (private, public) = derive_keys_from_seed(&seed).expect("derive");
         assert_eq!(
             hex::encode(private.to_bytes()),
@@ -972,4 +992,162 @@ fn negative_cases_06() {
             }
         }
     }
+}
+
+#[test]
+fn nothing_is_pending() {
+    assert!(
+        PENDING.is_empty(),
+        "release 0.7.0 needs an empty PENDING list"
+    );
+}
+
+#[test]
+fn mnemonic_accounts_07() {
+    let v = conformance(
+        "07-mnemonic-accounts.json",
+        &["algosdkVersion", "wordlist", "accounts", "negative"],
+    );
+    keys(
+        &v["wordlist"],
+        &["count", "sha256OfNewlineJoined"],
+        "07 wordlist",
+    );
+    assert_eq!(number(&v["wordlist"]["count"], "07 count"), 2048);
+    assert_eq!(MNEMONIC_WORDS.len(), 2048);
+    use sha2::Digest;
+    let digest = sha2::Sha256::digest(MNEMONIC_WORDS.join("\n").as_bytes());
+    assert_eq!(
+        hex::encode(digest),
+        text(&v["wordlist"]["sha256OfNewlineJoined"], "07 sha256"),
+        "07 wordlist differs from algosdk's"
+    );
+
+    let accounts = v["accounts"].as_array().expect("07 accounts");
+    let names: BTreeSet<&str> = accounts
+        .iter()
+        .map(|a| text(&a["name"], "07 account name"))
+        .collect();
+    let expected: BTreeSet<&str> = ["zero", "ones", "counter-00", "stride-37"].into();
+    assert_eq!(names, expected, "07 account cases");
+    for account in accounts {
+        let name = text(&account["name"], "07 account name");
+        keys(
+            account,
+            &[
+                "name",
+                "mnemonic",
+                "entropy",
+                "ed25519PublicKey",
+                "algorandAddress",
+                "x25519PublicKey",
+                "mlkem768EncapsulationKey",
+                "falcon1024AddressInfoOnly",
+            ],
+            name,
+        );
+        let phrase = text(&account["mnemonic"], name);
+        let entropy = array::<32>(&account["entropy"], name);
+        assert!(validate_mnemonic(phrase), "07 {name} valid");
+        assert_eq!(
+            *mnemonic_to_entropy(phrase).expect("07 entropy"),
+            entropy,
+            "07 {name} entropy"
+        );
+        assert!(
+            entropy_to_mnemonic(&entropy).as_str() == phrase,
+            "07 {name} entropy -> phrase"
+        );
+        let restored = restore_ed25519_account(phrase).expect("07 restore");
+        assert_eq!(
+            restored.address(),
+            text(&account["algorandAddress"], name),
+            "07 {name} address"
+        );
+        assert_eq!(
+            hex::encode(restored.ed25519_public_key()),
+            text(&account["ed25519PublicKey"], name),
+            "07 {name} ed25519"
+        );
+        assert_eq!(
+            hex::encode(restored.encryption_public_key().as_bytes()),
+            text(&account["x25519PublicKey"], name),
+            "07 {name} x25519"
+        );
+        assert_eq!(
+            hex::encode(restored.mlkem768_encapsulation_key()),
+            text(&account["mlkem768EncapsulationKey"], name),
+            "07 {name} mlkem768"
+        );
+        assert_eq!(
+            derive_mlkem768(&entropy).expect("mlkem").encaps_key,
+            restored.mlkem768_encapsulation_key(),
+            "07 {name} mlkem768 from entropy"
+        );
+        // Ed25519 only: the same words restore a TypeScript Falcon-1024
+        // account to a different address (#69).
+        assert_ne!(
+            restored.address(),
+            text(&account["falcon1024AddressInfoOnly"], name),
+            "07 {name} falcon address is informational"
+        );
+    }
+
+    let negative = v["negative"].as_array().expect("07 negative");
+    let names: BTreeSet<&str> = negative
+        .iter()
+        .map(|c| text(&c["name"], "07 negative name"))
+        .collect();
+    let expected: BTreeSet<&str> = [
+        "24-words",
+        "26-words-ending-in-checksum",
+        "30-words-ending-in-checksum",
+        "bad-checksum-word",
+        "nonzero-padding-bits",
+        "unknown-word",
+        "uppercase",
+        "leading-space",
+        "trailing-space",
+        "double-space",
+        "tab-separator",
+        "newline-separator",
+        "four-letter-prefixes",
+        "empty",
+    ]
+    .into();
+    assert_eq!(names, expected, "07 negative cases");
+    for case in negative {
+        let name = text(&case["name"], "07 negative name");
+        keys(case, &["name", "mnemonic", "expect"], name);
+        assert_eq!(case["expect"], "reject", "07 {name} expect");
+        let phrase = text(&case["mnemonic"], name);
+        assert!(!validate_mnemonic(phrase), "07 {name} must be rejected");
+        assert!(
+            mnemonic_to_entropy(phrase).is_err(),
+            "07 {name} entropy must fail"
+        );
+        assert!(
+            restore_ed25519_account(phrase).is_err(),
+            "07 {name} restore must fail"
+        );
+    }
+}
+
+#[test]
+fn a_new_account_restores_from_its_phrase() {
+    let (account, phrase) = create_random_ed25519_account().expect("create");
+    assert_eq!(phrase.split(' ').count(), 25);
+    let restored = restore_ed25519_account(&phrase).expect("restore");
+    assert_eq!(restored.address(), account.address());
+    assert_eq!(restored.ed25519_public_key(), account.ed25519_public_key());
+    assert_eq!(
+        restored.encryption_public_key().as_bytes(),
+        account.encryption_public_key().as_bytes()
+    );
+    assert_eq!(
+        restored.mlkem768_encapsulation_key(),
+        account.mlkem768_encapsulation_key()
+    );
+    let entropy = mnemonic_to_entropy(&phrase).expect("entropy");
+    assert!(entropy_to_mnemonic(&entropy).as_str() == phrase.as_str());
 }
