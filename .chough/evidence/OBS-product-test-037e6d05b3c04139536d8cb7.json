@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-037e6d05b3c04139536d8cb7",
+  "criteria": [
+    "CRATE-8"
+  ],
+  "requirements": [
+    "REQ-protocol-14"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "failed",
+  "environment": "local",
+  "summary": "Test first at a55b170: cargo test --locked --test room_session 0/4 (missing rs/vectors copy, copy command named); conformance every_vector_file_is_present failed; bun test room-session.test.ts failed naming the regenerate command",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793980213,
+  "snapshot": {
+    "revision": "e65850f0653f0a1c012f0eafd5640f9c89c4a744",
+    "dirty": true,
+    "fingerprint": "807eae0c01094cab2ebc4d74f020329cee342fb7147b282d14c23b2a57face49",
+    "content": "c962087e471bd32c15034da37332dc9164b9fa26b3f2ba3cb97ce8ed4b9477a2"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}

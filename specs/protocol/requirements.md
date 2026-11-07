@@ -116,3 +116,25 @@ Rust SHALL verify every section and case of the TypeScript-generated conformance
 - `rs/tests/cross_impl.rs` has no sibling-directory tests and no test in `rs/` returns on a missing path.
 - `qualify.py ts` runs the TypeScript vector verifier and fails when it fails.
 
+### REQ-protocol-13
+
+Rust SHALL read a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote. `vectors/pq-conversation-v1.json` and `vectors/psk-kept-v1.json` SHALL be written by `ts/scripts/emit-conversation-vectors.ts` from synthetic seeds and the TypeScript library, never by the Rust code under test, with randomness from a fixed seeded stream inside that script only. The conversation file SHALL hold one `0x04` handshake each way, at least 32 `0x05` messages each way including one at the 4096-byte note ceiling, and accept, sender-recovery and decrypt cases. The kept file SHALL hold version `0x02` notes under one kept secret in both directions at counters including 0, 99, 100, 199, 200 and 4294967295, tamper and wrong-secret cases, and a receive transcript with the counter state at a restart. TypeScript and Rust SHALL check every field, note and case of both files, Rust from its copies in `rs/vectors/`: both accounts SHALL derive every session key from the note and their own seed, both sides SHALL read every message and kept note, and Rust's counter window SHALL give TypeScript's result for every step, also after its state is saved and restored. No library code, public API or wire format SHALL change.
+
+#### Acceptance Criteria
+
+- `cargo test --locked --test pq_conversation --test psk_kept` passes in `rs/` and inside the extracted `.crate`; both sides derive the recorded session keys and read every message and kept note.
+- Every handshake, message and kept-note case and every receive step gives the same result in TypeScript and Rust, before and after the restart.
+- Changing one byte of a recorded note, one recorded result or the restart state fails the Rust tests; a file that differs from the emitter's output fails the TypeScript test, whose message names the regenerate command.
+- A missing vector file fails both languages with the command that restores it.
+
+### REQ-protocol-14
+
+Rust SHALL join a room the way TypeScript does. `vectors/room-session-v1.json` SHALL be written by `ts/scripts/emit-room-session-vector.ts` from synthetic seeds and the TypeScript library, never by the Rust code under test, with randomness from a fixed seeded stream inside that script only. It SHALL hold an owner, two members and an outsider whose addresses are their accounts' Ed25519 public keys; delta `0x03` records that create an invite-only room and add both members; a `0x04` handshake from the owner to each member and that member's 227-byte `0x06` action-5 delivery under it; `0x07` messages from the owner and both members with per-sender counters; a `0x07` note from the outsider under the room key; and delivery, authorization and message cases. TypeScript and Rust SHALL check every field and case of that file, Rust from its copy in `rs/vectors/`: the records SHALL reduce to the same room, each member SHALL recover its session from the handshake with its own seed and open its delivery, `delivery_authorized` SHALL accept each delivery against the accepted records and refuse the others, every message SHALL open with per-sender replay state and a repeated `(sender, epoch, counter)` SHALL be rejected, and the outsider's note SHALL be refused by `sender_may_post` even though it opens. No library code, public API or wire format SHALL change.
+
+#### Acceptance Criteria
+
+- `cargo test --locked --test room_session` passes in `rs/` and inside the extracted `.crate`; each member derives the recorded session, opens its room key and reads every message.
+- Every delivery, authorization and message case gives the same result in TypeScript and Rust.
+- Changing one byte of a recorded note, the room key, a recorded member or result fails the Rust test; a file that differs from the emitter's output fails the TypeScript test, whose message names the regenerate command.
+- A missing vector file fails both languages with the command that restores it.
+

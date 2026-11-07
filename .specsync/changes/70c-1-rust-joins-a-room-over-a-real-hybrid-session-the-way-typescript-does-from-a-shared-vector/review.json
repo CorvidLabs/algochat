@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "45f61516f38768bf6ad6ed16f379711acc744389",
+  "contract_digest": "daaa4a204b2084c6961b0149ba3f249369ddbe35a5e1a990c753e69e5886b690",
+  "execution_digest": "ec1bd431c02b1e1dc2a3e82641ae858a0a6da7ca1cc2df5c549e7b93cfbe3c21",
+  "workspace_digest": "75251db900f30b4722af3d19e3daffaf724d24b3223b71ccd8d52ec460502272",
+  "timestamp": 1793988177
+}

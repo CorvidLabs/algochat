@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-decac72705f59d06bf58ed46",
+  "criteria": [
+    "CRATE-2"
+  ],
+  "requirements": [
+    "REQ-protocol-13"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "Mutations in a scratch clone at 8f62281, 23 of 23 caught: 16 vector mutations (note bytes, session key, plaintexts, case and step results, state_at_restart, renamed or extra field, a direction with 31 messages, deleted copies) and 5 Rust library mutations (sender recovery with empty AAD, accept without key-hash check, window 201, no pruning, PSK derived at counter 0) each fail the Rust tests; changing either vectors/ file alone fails its TS test naming the regenerate command",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793973194,
+  "snapshot": {
+    "revision": "b626f0edc6f6abd2e94b1698c0e82bd13ea97163",
+    "dirty": false,
+    "fingerprint": "0015e1f3a6c29a2eb8dccd488a826e10d59fec051f6650ef9c0a05811fa12463",
+    "content": "0cdeec530fe26be69b85b989fb702be5f68781a4998834912906e7d6e532df07"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}

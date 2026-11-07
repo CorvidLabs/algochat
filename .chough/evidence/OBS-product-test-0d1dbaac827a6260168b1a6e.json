@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-0d1dbaac827a6260168b1a6e",
+  "criteria": [
+    "CRATE-8"
+  ],
+  "requirements": [
+    "REQ-protocol-14"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "At 113b749 in the worktree: cargo test --locked 258 + 8 + 4 + 3 + 3 + 4 room_session passed; fmt and clippy -D warnings clean; bun test 326 pass; tsc clean; hi check passed; release unittests 40 OK; lanes verify passed; trust verify passed with augur review (risk 44: auth-named files, single author, churn)",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793980216,
+  "snapshot": {
+    "revision": "e65850f0653f0a1c012f0eafd5640f9c89c4a744",
+    "dirty": true,
+    "fingerprint": "807eae0c01094cab2ebc4d74f020329cee342fb7147b282d14c23b2a57face49",
+    "content": "c962087e471bd32c15034da37332dc9164b9fa26b3f2ba3cb97ce8ed4b9477a2"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}

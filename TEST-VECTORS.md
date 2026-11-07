@@ -529,6 +529,112 @@ The membership note is 195 bytes and starts with `0x0206`. The message note star
 
 `vectors/group-admin-bots-v1.json` is the room bot record, ops 13 (add bot) and 14 (set bot). A bot note is a delta note with five more bytes after the parent group id: reply mode, then replies and seconds as big-endian 16-bit numbers. Its drafts cover an owner and an admin adding a bot with the suggested 5 per 60 seconds, an admin adding or the owner changing a bot to mode 2 (every message), an admin changing it, a remove, a channel add with its own settings, and the owner's op 11 that drops a removed bot from a channel. Its draft_errors cover missing settings, mode 0 or 4 and a zero rate or window on both op 13 and op 14, a rate or window above 65535 (marked `wide_integer`: TypeScript, Go, Python and Kotlin must refuse it; Rust and Swift take 16-bit values and check that it does not fit), a plain member adding a bot, marking an existing member, appointing a bot admin, giving a bot the room, changing a person who is not a bot, a bot changing itself, a plain channel add of a parent bot, and a channel add-bot of someone who is not a bot in the parent. Its reductions post the same forgeries as notes and record the exact rejection sentence, plus malformed bot notes: a bad mode, a zero limit, missing settings, settings on another op, and a full-list bot note. Bad bot notes with mode 4, a zero window, and op 14 with mode 0 or 4 are rejected; mode 2 is accepted. A join request does not make anyone a bot, and neither does anything an account posts about itself: a key announcement, a chat note, a plain-text flag, a join request, or an op 13 naming itself. A removed bot is gone from the room at a new epoch; `checks.channel_departures` names it as a channel departure, and the owner's op 11 on the channel drops it there too. TypeScript, Go, Rust, Python, Kotlin, and Swift draft, reduce and check that file the same way. `ts/scripts/emit-group-admin-bots-vector.ts` regenerates it.
 
+## Hybrid conversation
+
+`vectors/pq-conversation-v1.json` is a long two-way Hybrid conversation from section 5.7 of PROTOCOL.md, written by the TypeScript library. Alice's account seed is the bytes `0x00` to `0x1f`, and Bob's is `0x20` to `0x3f`, the two seeds of `01-key-derivation`. Each account's X25519 and ML-KEM-768 keys come from its seed, and the file records both public keys.
+
+- Alice sends a 2366-byte `0x04` handshake to Bob. Bob replies under his own handshake to Alice, because a `0x05` sender must be the handshake's sender.
+- Each side then sends 32 `0x05` messages, alternating. The texts are empty, one byte, UTF-8, multi-line and 280 bytes. Each side's last message is 4002 bytes, which makes a 4096-byte note.
+- For each handshake the file records the note, its id (SHA-256 of the note) and the session key. The recipient derives that key by accepting the note. The sender derives it by recovering the sender copy from the note with its own seed.
+- Both the recipient and the sender read every message.
+
+Each of its 17 cases is accepted or rejected:
+
+- Accept:
+  - Alice accepting her own handshake to Bob is rejected.
+  - A changed encapsulation-key hash is rejected.
+  - A changed sender wrap is still accepted, because the recipient does not open the wrap, and gives the same session key.
+  - A note one byte short is rejected.
+  - A message offered as a handshake is rejected.
+- Recover as sender:
+  - Bob recovering Alice's handshake is rejected.
+  - A changed sender wrap, handshake nonce or recipient ML-KEM ciphertext is rejected.
+- Decrypt:
+  - A message under the other direction's handshake is rejected.
+  - A changed tag, message nonce or handshake id is rejected.
+  - A sender key relabelled to Bob's is rejected.
+  - Version `0x01` is rejected.
+  - A note shorter than the header and tag is rejected, and so is a 4097-byte note.
+
+## Kept Extra lock notes
+
+`vectors/psk-kept-v1.json` holds kept Extra lock notes from sections 5.5 and 8 of PROTOCOL.md, written by the TypeScript library. A Rust app only reads them. The accounts are the same two seeds. The kept secret is the bytes `0x40` to `0x5f`. Every note is version `0x02` (TypeScript 0.12.0 writes no `0x01`), uses the 130-byte header, and is encrypted under the secret ratcheted to its counter.
+
+- Alice's notes are at counters 0, 1 (empty text), 41, 99, 100, 101, 199, 200 and 4294967295.
+- Bob's notes are at 0, 7, 150, 300 and 301. The note at 301 holds 3950 bytes, which makes a 4096-byte note.
+- The recipient and the sender both read every note.
+
+Its 10 cases:
+
+- The kept secret is accepted.
+- These are all rejected:
+  - another secret, for Bob or for Alice;
+  - version `0x02` changed to `0x01`;
+  - a changed counter field;
+  - a changed tag;
+  - a changed encrypted sender key, for Bob or for Alice;
+  - a 4097-byte note;
+  - a note shorter than the header.
+
+`receive` is Bob's counter window for Alice's notes, with the 200-counter window and a fresh state. There are 17 steps over counters 201, 200, 0, 200, 5, 401, 400, 199, 200, 300, 300, 250, 600, 399, 400, 4294967295 and 800, and each step is accepted or rejected. An accepted counter is recorded.
+
+`state_at_restart` is the state before step 10: the send counter, the last peer counter and the seen counters. A reader saves that state, restores it and continues. `final_state` is the state after the last step.
+
+## Regenerating the conversation vectors
+
+Both files come from one script, `cd ts && bun scripts/emit-conversation-vectors.ts && cp ../vectors/pq-conversation-v1.json ../vectors/psk-kept-v1.json ../rs/vectors/`. Within its own process, the script replaces `crypto.getRandomValues` with a SHA-256 counter stream under a fixed label, so the library's random draws, and every byte, are reproducible. The library code is not changed.
+
+The TypeScript tests run the script into a temporary directory and fail, naming that command, if a committed file differs. If a dependency changes how randomness is drawn, the files change too, and the tests say how to regenerate them. TypeScript and Rust both check every field, case and step.
+
+## Room joined over a Hybrid session
+
+`vectors/room-session-v1.json` is one administered room from section 5.8 of PROTOCOL.md, joined over real `0x04` handshakes and written by the TypeScript library.
+
+Accounts:
+- The owner's seed is the bytes `0x80` to `0x9f`. The two members' seeds are `0xa0` to `0xbf` and `0xc0` to `0xdf`, and the outsider's is `0xe0` to `0xff`.
+- An account's address is its seed's Ed25519 public key, as on Algorand. Its X25519 and ML-KEM-768 keys come from the same seed, and the file records all three public values.
+
+The room:
+- The group id is `0x77` repeated, the mailbox is `0x88` repeated, the name is `team`, and the epoch is 1.
+- Transaction ids are fill bytes, `0x01`, `0x02` and `0x03`. They are test ids, not blockchain proof.
+
+The flow:
+1. The owner posts three delta `0x03` records: an invite-only create, an add of `member_a`, and an add of `member_b`. The file records each record's note, sender, transaction id, round and offset, and the room TypeScript reduces them to (`state`).
+2. The owner makes the room key and sends each member a 2366-byte `0x04` handshake. Under that session it sends the member a 227-byte `0x06` action-5 delivery that cites the member's add record.
+3. Each member recovers the session from the note with its own seed, and the owner recovers the same session as its sender. The member opens the delivery to the room key, group id, mailbox and epoch, and `delivery_authorized` accepts it against the accepted records.
+4. The owner and both members post 8 `0x07` messages. Each sender's counter starts at 0. The texts are empty, multi-byte UTF-8, multi-line and 280 bytes. Every message opens once for every member under the delivered key, and a repeated `(sender, epoch, counter)` is rejected.
+5. The outsider also holds the room key, for example from a leaked device. Its `0x07` note opens, but the outsider is not a member, so `sender_may_post` refuses it and a client ignores it.
+
+Its 23 cases are each accepted or rejected.
+
+`open_delivery`:
+- A member's own delivery is accepted.
+- These are rejected:
+  - the other member's delivery, opened under its own session;
+  - a changed tag or handshake id;
+  - a 226-byte note;
+  - a delivery sealed under the member's own session key whose header names the other member's handshake. Only the handshake-id check refuses this one, because the tag still verifies.
+
+`authorize`:
+- Each add authorizes its own subject.
+- These are not authorized:
+  - an add for the other member, whether or not that member has joined yet;
+  - the add of `member_a` for the owner;
+  - the create;
+  - a delivery from a member;
+  - epoch 2;
+  - an unknown record;
+  - the outsider.
+
+`open_message`, accepted only when the note opens with no repeated pair in that sender's accepted list and the sender may post:
+- A repeat of the owner's first message is rejected.
+- A member's counter 0 is accepted, because replay state is per sender.
+- A message relabelled as another member's is rejected.
+- A changed tag, counter or epoch is rejected.
+- The outsider's note is rejected.
+
+`cd ts && bun scripts/emit-room-session-vector.ts && cp ../vectors/room-session-v1.json ../rs/vectors/` regenerates it. It uses the same seeded random stream as the conversation vectors, under the label `AlgoChat test vector room-session-v1`. The TypeScript test fails, naming that command, if the committed file differs. TypeScript and Rust both check every field and case.
+
 ## Coverage boundaries
 
 | Evidence | Establishes | Does not establish alone |
@@ -538,6 +644,9 @@ The membership note is 195 bytes and starts with `0x0206`. The message note star
 | `vectors/group-admin-v1.json` | Public full-list admin encoding/reduction and 227-byte action-5 delivery with supplied inputs | Authenticated blockchain context, actual recipient handshake recovery, persistent replay handling |
 | `vectors/group-admin-delta-v1.json` | Delta `0x03` bytes, a channel parent group id, the 256-member cap, and forged channel rejects in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context |
 | `vectors/group-admin-bots-v1.json` | Bot `0x03` bytes (ops 13 and 14), the bot list in room state, delivery to an added bot, and the exact reject sentences in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context; whether a bot keeps to its rate limit |
+| `vectors/pq-conversation-v1.json` | A TypeScript `0x04` handshake each way, read by both recipient and sender from the note and the account seed alone; 64 `0x05` messages including a 4096-byte note each way; every case result, in TypeScript and Rust | That Go, Python, Kotlin or Swift read it (they do not yet); that TypeScript reads Rust-written notes (the `pqcross` LocalNet mesh); notes from 25-word phrases (#73) |
+| `vectors/psk-kept-v1.json` | Kept version `0x02` Extra lock notes at counters 0 to 4294967295 read by recipient and sender, every case, and the counter window across a saved and restored state, in TypeScript and Rust | Version `0x01` notes; whether an app persists its counter state; that Raven Desktop never writes Extra lock notes |
+| `vectors/room-session-v1.json` | A member's own recovery of a real `0x04` handshake, its action-5 delivery opened and authorized against the accepted delta `0x03` records, `0x07` messages from three senders with per-sender replay, and a key holder who is not a member being ignored, in TypeScript and Rust | Blockchain authentication of senders and transaction ids; removal, rekey, current-key-only history, batches of 16 and channels (#81); legacy rooms (#82); that Go, Python, Kotlin or Swift read it |
 | Historical LocalNet reports in [PARITY.md](PARITY.md) | The author's reported run at its stated rounds | Independent current-head or release-package qualification |
 
 Use the exact [wire tables](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) and [flow guide](docs/PROTOCOL-FLOWS.md) alongside the fixtures. `vectors/group-admin-v1.json` is unchanged. `vectors/group-admin-delta-v1.json` is the delta note. The LocalNet record for that note is PROTOCOL.md.

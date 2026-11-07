@@ -1,0 +1,46 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1793970835,
+      "digest": "3cb24503468e382cb60e9a16e51e01ea29eb74855aadf63dc945c2dddffd0bf9",
+      "note": null,
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote",
+        "title": "70b: Rust reads a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote",
+        "description": "70b: Rust reads a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote",
+        "kind": "feature",
+        "affected_specs": [
+          "protocol"
+        ],
+        "affected_paths": [
+          "TEST-VECTORS.md",
+          "rs/",
+          "ts/scripts/emit-conversation-vectors.ts",
+          "ts/src/pq/conversation.test.ts",
+          "ts/src/psk/kept.test.ts",
+          "vectors/pq-conversation-v1.json",
+          "vectors/psk-kept-v1.json"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "cargo test --locked passes in rs/ and inside the unpacked algochat .crate, where tests/pq_conversation.rs shows that both accounts derive every session key of the TypeScript-written vectors/pq-conversation-v1.json from their seeds alone (recipient accept and sender recovery), that both sides read all 64 0x05 messages, 32 each way including one per direction at the 4096-byte ceiling, and that every handshake and message case gives TypeScript's result; and tests/psk_kept.rs shows that the recipient and the sender read every kept version 0x02 Extra lock note of vectors/psk-kept-v1.json, including counters 0, 99, 100, 199, 200 and 4294967295, that every tamper and wrong-secret case gives TypeScript's result, and that the counter window gives TypeScript's result for every step, including after the state is saved and restored. bun test in ts/ shows both committed files are exactly what ts/scripts/emit-conversation-vectors.ts writes and that every case holds in TypeScript. No library code, public API or wire format changes."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "yes",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {
+        "protocol": "1444cdbc4841b184fc6aefb163a4d792befbf9c3f03e8e13ae14cdf5425a0df7"
+      },
+      "approved_delta_bases": {}
+    }
+  ],
+  "reopenings": []
+}

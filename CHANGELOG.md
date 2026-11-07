@@ -11,6 +11,24 @@ Protocol releases of this repository. Each library keeps its own package version
 - The crate ships its tests and copies of the vectors they read in `vectors/`, and qualification runs `cargo test` inside the packaged crate and rejects stale copies.
 - TypeScript qualification runs `bun conformance/tools/verify.mjs`.
 
+### Rust: reads TypeScript Hybrid conversations and kept Extra lock notes (#70b)
+
+- New shared vector `vectors/pq-conversation-v1.json`: a TypeScript `0x04` handshake each way and 64 `0x05` messages, with a 4096-byte note in each direction, plus 17 accept, sender-recovery and decrypt cases. Rust and TypeScript derive every session from the note and the account seed, as recipient and as sender, and read every message.
+- New shared vector `vectors/psk-kept-v1.json`: 14 kept version `0x02` Extra lock notes at counters 0 to 4294967295, read by recipient and sender, 10 cases, and a 17-step counter-window transcript that is saved and restored partway through.
+- Both are written by `ts/scripts/emit-conversation-vectors.ts`, which seeds the library's randomness in its own process so the bytes are reproducible, and copied into `rs/vectors/`. The TypeScript tests fail if a committed file is not what the script writes. No library or wire change.
+
+### Rust: joins a TypeScript room over real Hybrid sessions (#80, #70c-1)
+
+- New shared vector `vectors/room-session-v1.json`, which goes with algochat 0.8.0:
+  - an owner, two members and an outsider, whose addresses are their Ed25519 public keys;
+  - an invite-only room made by delta `0x03` records;
+  - a `0x04` handshake and a 227-byte action-5 key delivery for each member;
+  - eight `0x07` messages from three senders and a note from the outsider;
+  - 23 delivery, authorization and message cases.
+- Rust and TypeScript recover each member's session from the note and its own seed, open and authorize the room key against the accepted records, read every message once with per-sender replay, and ignore the outsider.
+- Written by `ts/scripts/emit-room-session-vector.ts` with the seeded random stream and copied into `rs/vectors/`. No library or wire change.
+- `hi/crate.md` gains CRATE-8 to CRATE-12 for rooms and Raven payloads.
+
 ## 1.6.2 - 2026-11-05
 
 The Rust crate `algochat` 0.6.0 gets clean packaging and a guarded crates.io publish path (#67). No library source changes: `rs/src` is identical to `v1.6.1`, and the wire format is unchanged: protocol 1.6.0.

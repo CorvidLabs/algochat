@@ -1,6 +1,6 @@
 ---
 module: protocol
-version: 19
+version: 21
 status: stable
 files:
   - PROTOCOL.md
@@ -17,7 +17,7 @@ Documentation of current source adds offset tables and [application flow diagram
 
 ## Public API
 
-PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json. The TypeScript-generated conformance vectors in ts/conformance/vectors/00-06 are checked by TypeScript (`verify.mjs`) and by Rust (`rs/tests/conformance.rs`) from copies in `rs/vectors/` (REQ-protocol-10).
+PROTOCOL.md section 5.4.2 is the PQ level table. Section 5.7 is the hybrid contract. Section 5.8 is the group contract, including room administration `0x03`. A new `0x03` note omits the member list and can name a parent group. Full-list notes still open. TEST-VECTORS.md pins the hybrid session key and points at vectors/group-v1.json, vectors/group-admin-v1.json, and vectors/group-admin-delta-v1.json. The TypeScript-generated conformance vectors in ts/conformance/vectors/00-06 are checked by TypeScript (`verify.mjs`) and by Rust (`rs/tests/conformance.rs`) from copies in `rs/vectors/` (REQ-protocol-10). vectors/pq-conversation-v1.json (a TypeScript Hybrid conversation each way) and vectors/psk-kept-v1.json (kept version `0x02` Extra lock notes and a counter window across a restart) are written by `ts/scripts/emit-conversation-vectors.ts` and read by TypeScript and Rust (REQ-protocol-13). vectors/room-session-v1.json (a room whose members join over real `0x04` handshakes, open their action-5 room key, check it against the accepted `0x03` records and read every `0x07` message) is written by `ts/scripts/emit-room-session-vector.ts` and read by TypeScript and Rust (REQ-protocol-14).
 
 ## Invariants
 
@@ -62,3 +62,5 @@ A flipped `0x05` byte fails decryption. An `ACPQ` note is not an X25519 announce
 | 2026-10-30 | room-bots-owner-or-admin-adds-a-bot-with-a-reply-mode-and-rate-limit-and-can-change-them-every-language-reads-the: Room bots: owner or admin adds a bot with a reply mode and rate limit, and can change them; every language reads the record the same way |
 | 2026-10-30 | release-protocol-1-6-0-and-the-library-versions: Release protocol 1.6.0 and the library versions |
 | 2026-11-06 | 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance: 70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier |
+| 2026-11-06 | 70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote: 70b: Rust reads a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote |
+| 2026-11-06 | 70c-1-rust-joins-a-room-over-a-real-hybrid-session-the-way-typescript-does-from-a-shared-vector: 70c-1: Rust joins a room over a real Hybrid session the way TypeScript does, from a shared vector |

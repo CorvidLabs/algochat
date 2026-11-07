@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-b6ab4b6045cdd00117831e11",
+  "criteria": [
+    "CRATE-8"
+  ],
+  "requirements": [
+    "REQ-protocol-14"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "Mutations at 113b749: 17/17 caught (11 vector, 5 Rust library: subject check, membership check, replay pairs, handshake-id check, sender address in the message key; and a vectors/ change alone fails the TS test naming the regenerate command)",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793980219,
+  "snapshot": {
+    "revision": "e65850f0653f0a1c012f0eafd5640f9c89c4a744",
+    "dirty": true,
+    "fingerprint": "807eae0c01094cab2ebc4d74f020329cee342fb7147b282d14c23b2a57face49",
+    "content": "c962087e471bd32c15034da37332dc9164b9fa26b3f2ba3cb97ce8ed4b9477a2"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}

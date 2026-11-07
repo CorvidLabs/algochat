@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-acfc28f977524273b553384e",
+  "criteria": [
+    "CRATE-2"
+  ],
+  "requirements": [
+    "REQ-protocol-13"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "failed",
+  "environment": "local",
+  "summary": "Test first at 73020ea: cargo test --locked --test pq_conversation 0/3 and --test psk_kept 0/3 (missing rs/vectors copies, copy command named); conformance every_vector_file_is_present failed; bun test conversation.test.ts and kept.test.ts failed naming the regenerate command",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793973189,
+  "snapshot": {
+    "revision": "b626f0edc6f6abd2e94b1698c0e82bd13ea97163",
+    "dirty": false,
+    "fingerprint": "0015e1f3a6c29a2eb8dccd488a826e10d59fec051f6650ef9c0a05811fa12463",
+    "content": "0cdeec530fe26be69b85b989fb702be5f68781a4998834912906e7d6e532df07"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}
