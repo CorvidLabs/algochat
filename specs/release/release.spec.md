@@ -1,6 +1,6 @@
 ---
 module: release
-version: 11
+version: 12
 status: active
 files:
   - scripts/release/packages.py
@@ -72,7 +72,7 @@ Internal Python helpers (not a library contract):
 | `REPO_ROOT` | Test-only repository root for checks against the real tree. |
 | `RustVectorCopyTests` | The repository's copies match; missing, differing and extra copies and an uncopied new source are each reported. |
 | `RustTestFixtureTests` | No Rust test reads a path outside the package, and no integration test probes for a fixture or names the archived fixture checkouts. |
-| `QualifyLaneTests` | `qualify.py rs` checks the copies and runs `cargo test --locked` in the extracted crate; `qualify.py ts` runs the vector verifier. |
+| `QualifyLaneTests` | `qualify.py rs` checks the copies, runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` in `rs/` before its tests, and runs `cargo test --locked` in the extracted crate; `qualify.py ts` runs the vector verifier. |
 | `PUBLISH_CRATES` | Path of the crates.io publish workflow. |
 | `check_publish_workflow` | Reject a crates.io workflow without its manual-only trigger, main-only job, `crates-io` environment, tag, ancestry, version and qualification guards, pinned trusted-publishing auth, or with stored secrets, extra write permissions, persisted credentials or inline inputs. |
 | `PublishCratesWorkflowTests` | The real workflow passes its guards, each guard mutation fails, qualification workflows still cannot publish, and the archived nested publish workflow is gone. |
@@ -119,6 +119,7 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | Date | Change |
 | --- | --- |
 | 2026-11-05 | #70a: the Rust crate ships its tests and vector copies, qualification tests the extracted crate and runs the TypeScript vector verifier. |
+| 2026-11-05 | rs-lint: Rust qualification runs rustfmt and clippy (all targets, warnings denied) before its tests. |
 | 2026-10-18 | Preserve dated local parity evidence and portable low-level replay / required-behavior probes. |
 | 2026-10-18 | Run a language qualification lane only when that tree changes, and the full matrix only for protocol, vector, or release-script changes. |
 | 2026-10-18 | Add credential-free qualification, external consumers, evidence checks and manual release checklist under approved definition. |
@@ -133,3 +134,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-10-30 | record-algochat-1-6-1-and-py-algochat-0-6-0-in-the-release-instructions-after-algochat-64: Record AlgoChat 1.6.1 and py-algochat 0.6.0 in the release instructions (after algochat#64) |
 | 2026-11-05 | release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher: Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67) |
 | 2026-11-06 | 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance: 70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier |
+| 2026-11-06 | rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and: Rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches |

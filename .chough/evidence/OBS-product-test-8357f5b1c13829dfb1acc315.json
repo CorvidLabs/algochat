@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-8357f5b1c13829dfb1acc315",
+  "criteria": [
+    "CRATE-3"
+  ],
+  "requirements": [
+    "REQ-release-1"
+  ],
+  "contracts": [
+    "specs/release/release.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "rs-lint at 2c00143 (supports CRATE-3: release checks fail instead of passing quietly): release tests red 1/41 at 696b5d9 then 41 OK; clean-clone qualify.py rs exit 0 running cargo fmt --check and clippy --all-targets -D warnings before tests; an unformatted-line probe and a test-only clippy probe each make qualify.py rs exit 1 at their step; rs verify lane and fledge trust verify pass",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793936118,
+  "snapshot": {
+    "revision": "1e5af4a88329bb10200e7b869e7a4ba4dd678f08",
+    "dirty": true,
+    "fingerprint": "888764c0c05ba6a707cb7fee5de895bd19adfba86e03f537ee417957c218454d",
+    "content": "2fb93db5f4f1f89b4bef20d6559f4f8c29d2ef31f040e154691989667336c035"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated"
+}

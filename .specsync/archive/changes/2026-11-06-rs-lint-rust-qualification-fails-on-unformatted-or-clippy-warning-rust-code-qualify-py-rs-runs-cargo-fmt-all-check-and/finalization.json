@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and",
+  "implementation_commit": "a2a5f540f425628a4d635a19b9aeaea5eaacd812",
+  "implementation_tree": "68578c721155337e5d9820054c969c4cc3f095c7",
+  "contract_digest": "07d064c915f9039c6867a3768b5ca6f19a0b1e41f9c72c16b2de987ff6f13258",
+  "workspace_digest": "73f2ae0b20fd6b7873a106350f887d20b483c626b85a618f4d2bd22c5bb28fdd",
+  "closing_digest": "d74d1d2be9fed56a47a14d89deed13d47d3e954690393dee0abb607e7fda67fa",
+  "review_digest": "4301a62280c6b437b32ee1fd3b1cf070693086b1b5c94535a3f2541b6814e402",
+  "finalization_digest": "4f419af9941187296f1cb82306698c4cc1d88364af2684e34e32d44c133ab9ae",
+  "timestamp": 1793988879
+}
