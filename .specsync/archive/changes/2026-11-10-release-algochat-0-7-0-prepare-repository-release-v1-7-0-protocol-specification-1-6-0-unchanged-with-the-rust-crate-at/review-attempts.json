@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "f1b64f5f273f775c67325ac62dcf3274a0c30ac4",
+      "contract_digest": "8b4232af7af107f4625dfaf0a51a44c0b504dcacfbf023491d7ae5bee85c68e6",
+      "execution_digest": "af6ad450837b1574125a93074528c891c14602710a30b3363e6f1b9bece38553",
+      "workspace_digest": "d361ecc400f5a08e580f6003ae4dd85228126f696d6cd0a50605b068449fee5b",
+      "timestamp": 1794344991
+    }
+  ]
+}

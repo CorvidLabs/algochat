@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+  "implementation_commit": "f1b64f5f273f775c67325ac62dcf3274a0c30ac4",
+  "implementation_tree": "419998dbec570dae3aebc98261cd8b5105c1001e",
+  "contract_digest": "8b4232af7af107f4625dfaf0a51a44c0b504dcacfbf023491d7ae5bee85c68e6",
+  "workspace_digest": "d361ecc400f5a08e580f6003ae4dd85228126f696d6cd0a50605b068449fee5b",
+  "closing_digest": "0f91443d027137f440a491a283c33b30023cc8f853b779098a6da8a98967c8da",
+  "review_digest": "84d4cad2b709f7ecae1a90ae87d14aab0ec6485eeae0c16935b90d4770bfa271",
+  "finalization_digest": "a25209d84468f8c67d0c5ddf0207ddfe16dd2c63f47ba9fe51ec7691cb64342c",
+  "timestamp": 1794345083
+}
