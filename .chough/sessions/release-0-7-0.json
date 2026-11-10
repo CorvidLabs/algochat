@@ -1,0 +1,42 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-7fc2ea6ea82842fbd2f180d9",
+    "head": "EVT-02de2371e3b6211df7f44500",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "Leif wants Raven Desktop built, so the Rust crate algochat 0.7.0 (Release B: #70a, #73, #68, #70b, all merged) is prepared for release from a repository tag, qualified on every lane with a pre-publish consumer proof; tagging and publishing wait for Leif's go (CRATE-1, CRATE-7)",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "plan",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+  "references": {
+    "criteria": [],
+    "requirements": [],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Leif ACCEPTED #86 (#73) 2026-11-10 and said merge it (coordinator hc t370); his scoped review was recorded as 0xLeif at 2ef8938 at his instruction; coordinator merged #86 as 60f9893. Release B complete: #75, #86, #77, #78.",
+    "Coordinator t370 relayed Leif 2026-11-10: prepare algochat 0.7.0 under a new SpecSync change (changelog, qualification of every lane, consumer proof), definition approval and release go are Leif's; no tag or publish. Candidate edits are prepared on a draft PR before native approval at that instruction.",
+    "Rejected: repository tag v0.7.0 (repo tags are the release/Swift line; the crate version is a separate publish-crates.yml input; v0.7.0 would sort below v1.6.2 for SwiftPM)"
+  ],
+  "open_questions": [],
+  "completed": [],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [
+    "Leif: native definition approval of release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at, with D-r1 tag (v1.7.0 recommended), D-r2 TypeScript 0.12.1 (recommended), D-r3 Python 0.6.1 (recommended); then the separate release go (tag, trusted-publisher check and 0.6.0 token revocation, publish-crates.yml dispatch)"
+  ],
+  "run_consents": [],
+  "next_action": "prepare the candidate on a draft PR: versions, CHANGELOG 1.7.0, release docs; qualify every lane; pre-publish consumer proof; provenance check; send Leif's questions"
+}
