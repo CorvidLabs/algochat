@@ -255,6 +255,11 @@ def test_a_frame_with_more_than_100_mentions_stays_plain_text():
     assert parse_room_text(hundred) == RoomText(text, None, (ADDRESS,) * 100)
 
 
+def test_a_deeply_nested_frame_is_plain_text_not_an_error():
+    frame = RAVEN_PREFIX + "[" * 100_000 + "]" * 100_000
+    assert parse_room_text(frame) == RoomText(frame)
+
+
 def test_command_calls_match_declared_commands_only():
     declared = ["echo", "help"]
     assert command_call("/echo hi there", declared, "helper", ADDRESS) == CommandCall("echo", "hi there")

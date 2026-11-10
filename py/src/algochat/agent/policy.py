@@ -176,7 +176,8 @@ def _raven_frame(value: str) -> RoomText | None:
     """
     try:
         raw = json.loads(value[len(_RAVEN_PREFIX) :], parse_constant=_reject_constant)
-    except ValueError:
+    except (ValueError, RecursionError):
+        # JavaScript parses deep nesting, and a nested array is plain text to Raven.
         return None
     if not isinstance(raw, dict):
         return None
