@@ -37,7 +37,7 @@ Later versions are published by the manual [Publish crates.io](../.github/workfl
 algochat = { path = "/path/to/algochat/rs" }
 ```
 
-The published crate contains the library sources, this README and the license. The tests, the `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository; their tests read the shared `../vectors/` files, so run them from a checkout.
+The packaged crate contains the library sources, the integration tests in `tests/`, the `vectors/` copies those tests read, this README and the license, so `cargo test` also runs from the package (see [Compatibility evidence and limits](#compatibility-evidence-and-limits)). The `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository. The 0.6.0 release on crates.io predates this and contains only the library sources, this README and the license.
 
 ## Usage
 
