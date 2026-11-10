@@ -1,0 +1,40 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-51add2329e6e25b62a396dfc",
+    "head": "EVT-8cfd227344f3462215d5bd53",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "rs/README.md describes the published crate's contents the way #70a (REQ-release-3) packages it (#79)",
+  "intent_scope": "CRATE",
+  "modules": [
+    "rs"
+  ],
+  "stage": {
+    "current": "accept",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "79-rs-readme-md-describes-the-packaged-crate-s-contents-the-way-70a-packages-it-req-release-3-library-sources-tests-rs",
+  "references": {
+    "criteria": [],
+    "requirements": [],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Authority: Leif's MERGE RULE 2026-11-10, relayed by coordinator Claude Code (hc t370): bug fixes that make behaviour match existing specs/requirements/hi may run the full SpecSync lifecycle with 0xLeif as approve/review actor and squash-merge once CI is green and every review thread is resolved. Scope: #79 only (rs/README.md wording to match REQ-release-3). Limit: no requirement, code or packaging change; agent claude-opus-5-5 acts, 0xLeif is the native actor label."
+  ],
+  "open_questions": [],
+  "completed": [
+    "rs/README.md reworded at 57d9354; package list and verify/trust checked"
+  ],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [],
+  "run_consents": [],
+  "next_action": "after hosted CI is green and threads are resolved: specsync change review --reviewer 0xLeif under the 2026-11-10 merge rule, ship, push archive, squash-merge"
+}
