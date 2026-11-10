@@ -69,7 +69,7 @@ This repository is the source for the protocol and all six libraries. Archived l
 | --- | --- | --- | --- |
 | Swift | package `algochat`, product `AlgoChat` | `1.7.0` / `v1.7.0` | [Swift tools 6.0+](Package.swift) |
 | TypeScript | `@corvidlabs/ts-algochat` | `0.12.1` | [Node.js 18.0.0+; TypeScript `^5.7.0` for development](ts/package.json) |
-| Python | `py-algochat` | `0.6.0` | [Python 3.10+](py/pyproject.toml) |
+| Python | `py-algochat` | `0.6.1` | [Python 3.10+](py/pyproject.toml) |
 | Rust | `algochat` | `0.7.0` (crates.io source: `v1.7.0`, pending publication; crates.io serves `0.6.0`) | [Rust 1.85+; edition 2021](rs/Cargo.toml) |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | [Kotlin 2.1.20; JDK 17 toolchain](kt/build.gradle.kts) |
 | Go | `github.com/CorvidLabs/algochat/go` | `0.5.0` / `go/v0.5.0` | [Go 1.25.0+](go/go.mod) |

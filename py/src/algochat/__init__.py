@@ -186,7 +186,7 @@ from .types import (
     payment_fee,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 __all__ = [
     # Payments and HTTP clients
