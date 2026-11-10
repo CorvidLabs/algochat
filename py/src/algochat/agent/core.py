@@ -786,6 +786,7 @@ class AgentCore:
             is_channel=track.parent is not None,
             reply_to=parsed.reply_to,
             mentioned=mentions(parsed.text, self._name, self.address)
+            or self.address in parsed.mentions
             or (parsed.reply_to is not None and parsed.reply_to in own),
             command=command_call(
                 parsed.text,

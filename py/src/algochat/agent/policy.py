@@ -8,13 +8,19 @@ change by the owner or an admin applies from the next message it handles.
 
 * Mode 1 (mentions): the bot answers a message that writes ``@`` and its
   name (or its address), or that replies to one of its own messages with a
-  section 9.2 reply.
+  section 9.2 reply, or a Raven room frame that replies to one of its
+  messages or binds a mention to its address.
 * Mode 2 (every message): the bot answers every message.
 * Mode 3 (commands): the bot answers ``/command`` messages for the commands
   it declared, and posts its command list in the room.
 * The bot never answers an account the room's record marks as a bot.
 * The bot sends at most ``replies`` messages in that room in any window of
   ``seconds`` seconds. A message over the limit is skipped, not queued.
+
+Raven sends a reply, a structured mention or a photo as a room frame:
+U+001E, ``RAVEN:ROOM:1``, a newline, then JSON with the visible ``text``
+(algochat#65). The bot reads the frame the way Raven's ``decodeRoomContent``
+does, so a frame Raven shows as plain text is plain text to the bot too.
 
 Nothing here touches the chain; :class:`~algochat.agent.core.AgentCore` uses
 these helpers.
@@ -23,9 +29,12 @@ these helpers.
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+
+from .account import public_key_from_address
 
 COMMAND_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 """A command name: 1 to 32 lowercase letters, digits, ``_`` or ``-``, not starting with ``_`` or ``-``."""
@@ -83,10 +92,16 @@ class BotCommand:
 
 @dataclass(frozen=True)
 class RoomText:
-    """A room message's text, with the transaction id it replies to when it is a section 9.2 reply."""
+    """A room message's visible text.
+
+    ``reply_to`` is the transaction id a section 9.2 reply or a Raven room
+    frame names. ``mentions`` holds the addresses a Raven room frame binds
+    mentions to, in order.
+    """
 
     text: str
     reply_to: str | None = None
+    mentions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -109,10 +124,12 @@ def check_bot_name(name: str | None) -> str | None:
 
 
 def parse_room_text(text: str) -> RoomText:
-    """Reads plain text, a section 9.1 ``{"text": ...}`` object or a section 9.2 reply.
+    """Reads plain text, a Raven room frame, a section 9.1 ``{"text": ...}`` object or a section 9.2 reply.
 
-    Anything that is not one of those JSON forms is plain text, kept as it is.
+    Anything that is not one of those forms is plain text, kept as it is.
     """
+    if text.startswith(_RAVEN_PREFIX):
+        return _raven_frame(text) or RoomText(text)
     stripped = text.strip()
     if not (stripped.startswith("{") and stripped.endswith("}")):
         return RoomText(text)
@@ -127,6 +144,73 @@ def parse_room_text(text: str) -> RoomText:
     if isinstance(reply, dict) and isinstance(reply.get("txid"), str) and reply["txid"]:
         reply_to = reply["txid"]
     return RoomText(payload["text"], reply_to)
+
+
+_RAVEN_PREFIX = "\u001eRAVEN:ROOM:1\n"
+_RAVEN_REFERENCE = re.compile(r"[A-Z2-7]{52}|[a-z0-9]{12,32}")
+_RAVEN_MAX_MENTIONS = 100
+
+
+def _reject_constant(name: str) -> None:
+    raise ValueError(f"{name} is not JSON")
+
+
+def _js_integer(value: object) -> int | None:
+    """``value`` as an integer when JavaScript's ``Number.isInteger`` accepts it, else None."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        return int(value)
+    return None
+
+
+def _raven_frame(value: str) -> RoomText | None:
+    """Reads a Raven room frame as Raven's ``decodeRoomContent`` does, or None when Raven shows it as plain text.
+
+    Raven also caps the frame's UTF-8 size, at its multipart limit, which is
+    larger than any one room note, so a note the bot opened never reaches it.
+    Raven drops mentions of accounts that are not members; the bot keeps every
+    well-formed mention and only asks whether one names its own address.
+    """
+    try:
+        raw = json.loads(value[len(_RAVEN_PREFIX) :], parse_constant=_reject_constant)
+    except ValueError:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    text, spans, reply_to = raw.get("text"), raw.get("mentions"), raw.get("replyTo", ...)
+    if not isinstance(text, str) or not isinstance(spans, list) or len(spans) > _RAVEN_MAX_MENTIONS:
+        return None
+    if reply_to is ...:
+        reply_to = None
+    elif not isinstance(reply_to, str) or not _RAVEN_REFERENCE.fullmatch(reply_to):
+        return None
+    # JavaScript strings index UTF-16 code units, and so do Raven's offsets.
+    units = text.encode("utf-16-le", "surrogatepass")
+    length = len(units) // 2
+    at_sign = "@".encode("utf-16-le")
+    found: list[str] = []
+    previous_end = 0
+    for span in spans:
+        if not isinstance(span, dict):
+            return None
+        address = span.get("address")
+        start, end = _js_integer(span.get("start")), _js_integer(span.get("end"))
+        if not isinstance(address, str) or start is None or end is None:
+            return None
+        try:
+            public_key_from_address(address)
+        except ValueError:
+            return None
+        if start < previous_end or end <= start + 1 or end > length:
+            return None
+        if units[2 * start : 2 * start + 2] != at_sign:
+            return None
+        previous_end = end
+        found.append(address)
+    return RoomText(text, reply_to, tuple(found))
 
 
 def mentions(text: str, name: str | None, address: str) -> bool:
