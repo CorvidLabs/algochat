@@ -11,14 +11,14 @@ A metadata, version and documentation release candidate, prepared before the def
 
 ## Out of scope
 
-- Pushing the tag, creating a GitHub release, or any registry publication. That covers crates.io, GitHub Packages and PyPI.
+- Pushing the tag, creating a GitHub release, or any registry publication from this change. That covers crates.io, GitHub Packages and PyPI. The tag and the publications follow the merge, as listed below.
 - The post-publish crates.io consumer proof.
 - `rs/src`, `ts/src`, `py/src` and the other library sources.
 - #84 (70c-1, 0.8.0) and the later rows of the proposal: #69, #71 and #72.
 
 ## Steps
 
-1. Bump the versions: `rs/Cargo.toml` to 0.7.0, and the TypeScript and Python versions per D-r2 and D-r3.
+1. Bump the versions: `rs/Cargo.toml` to 0.7.0, TypeScript to 0.12.1 (D-r2) and Python to 0.6.1 (D-r3).
 2. Turn CHANGELOG.md's Unreleased section into a 1.7.0 section with the library version table.
 3. Update the release record and labels: `docs/RELEASE.md` (1.7.0 rows; Rust 0.7.0 pending publication, with no availability claim), `README.md`, `rs/README.md`, `docs/HLD.md`, `index.html`, the TypeScript and Python READMEs, and `specs/release` (REQ-release-5).
 4. Qualify every lane:
@@ -31,10 +31,11 @@ A metadata, version and documentation release candidate, prepared before the def
 After Leif's go, and not part of this change:
 1. Native approval, then `change check --commit`, review, ship.
 2. Merge.
-3. Tag `v1.7.0` on main.
-4. The owner confirms the crates.io trusted publisher and revokes the 0.6.0 token.
-5. Dispatch `publish-crates.yml` with `v1.7.0` and `0.7.0`.
-6. Run the post-publish consumer proof and record availability.
+3. Tag `v1.7.0` on the merge commit.
+4. Publish TypeScript `0.12.1` to GitHub Packages with the manual `Publish npm` workflow from tag `v1.7.0` (D-r2).
+5. The owner confirms the crates.io trusted publisher and revokes the 0.6.0 token.
+6. Dispatch `publish-crates.yml` with `v1.7.0` and `0.7.0`.
+7. Run the post-publish consumer proofs and record availability.
 
 ## Risks
 

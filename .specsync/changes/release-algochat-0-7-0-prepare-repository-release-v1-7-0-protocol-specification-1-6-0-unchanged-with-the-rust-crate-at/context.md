@@ -14,10 +14,12 @@ Library sources since `v1.6.2`:
 - `py/src/algochat/agent/policy.py` and `core.py` changed (#65).
 - Kotlin, Go and Swift sources are unchanged.
 
-Decisions this definition asks Leif to make. The delta and the candidate use the recommended answer; if he chooses otherwise, both are edited before approval.
-- D-r1, repository tag: `v1.7.0` (recommended), `v1.6.3`, or another.
-- D-r2, TypeScript: `0.12.1` in source (recommended), or keep `0.12.0`. Publishing to GitHub Packages is a separate go either way.
-- D-r3, Python: `0.6.1` in source (recommended), or keep `0.6.0`. PyPI has no publisher.
+Leif's decisions, relayed by coordinator hc t370 on 2026-11-10 together with his approval of this definition and his release go:
+- D-r1, repository tag: `v1.7.0`.
+- D-r2, TypeScript: `0.12.1`, published to GitHub Packages with the release by the manual `Publish npm` workflow from tag `v1.7.0`, after the merge.
+- D-r3, Python: `0.6.1` in source only. PyPI has no publisher.
+- Provenance: he accepts it degraded, as for 1.6.2. `provenance.py v1.6.2 1a87ccc` fails because none of the 12 commits since `v1.6.2` is attested.
+- crates.io: `publish-crates.yml` is dispatched only after he confirms the trusted publisher (`CorvidLabs/algochat`, `publish-crates.yml`, environment `crates-io`) and revokes the API token used for 0.6.0.
 
 **Order.** The candidate edits were prepared on a draft PR before the native definition approval, at the coordinator's instruction. Leif's single decision therefore covers a concrete, qualified candidate. Nothing merges, tags or publishes before he approves.
 
