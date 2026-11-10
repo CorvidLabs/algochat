@@ -1,6 +1,6 @@
 ---
 id: 65-the-python-bot-reads-raven-s-raven-room-1-room-frame-so-a-slash-command-a-reply-to-one-of-its-messages-or-a-mention
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 98ffe186499eaa7f2769bd5981fd46a70380f384
 ---
