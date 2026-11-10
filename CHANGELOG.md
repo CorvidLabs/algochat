@@ -24,6 +24,12 @@ Protocol releases of this repository. Each library keeps its own package version
 - `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed `ACPQ` note, and `pq_announcement_signing_input` returns the 32 bytes the signature covers. The bytes match TypeScript exactly. `parse_pq_announcement` results and the wire format are unchanged.
 - New shared vector `vectors/pq-announcement-v1.json`, written by `ts/scripts/emit-pq-announcement-vector.ts` and copied into `rs/vectors/`. It holds both notes, the signing input, 17 parse cases and three refused key lengths. TypeScript and Rust check it, and the TypeScript test fails if the committed file is not what the script writes.
 
+### Rust: reads TypeScript Hybrid conversations and kept Extra lock notes (#70b)
+
+- New shared vector `vectors/pq-conversation-v1.json`: a TypeScript `0x04` handshake each way and 64 `0x05` messages, with a 4096-byte note in each direction, plus 17 accept, sender-recovery and decrypt cases. Rust and TypeScript derive every session from the note and the account seed, as recipient and as sender, and read every message.
+- New shared vector `vectors/psk-kept-v1.json`: 14 kept version `0x02` Extra lock notes at counters 0 to 4294967295, read by recipient and sender, 10 cases, and a 17-step counter-window transcript that is saved and restored partway through.
+- Both are written by `ts/scripts/emit-conversation-vectors.ts`, which seeds the library's randomness in its own process so the bytes are reproducible, and copied into `rs/vectors/`. The TypeScript tests fail if a committed file is not what the script writes. No library or wire change.
+
 ## 1.6.2 - 2026-11-05
 
 The Rust crate `algochat` 0.6.0 gets clean packaging and a guarded crates.io publish path (#67). No library source changes: `rs/src` is identical to `v1.6.1`, and the wire format is unchanged: protocol 1.6.0.

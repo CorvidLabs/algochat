@@ -42,7 +42,9 @@ const SHARED: &[&str] = &[
     "group-admin-v1.json",
     "group-v1.json",
     "pq-announcement-v1.json",
+    "pq-conversation-v1.json",
     "pq-mlkem768.json",
+    "psk-kept-v1.json",
 ];
 
 const METADATA: &[&str] = &[

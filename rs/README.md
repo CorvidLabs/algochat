@@ -150,7 +150,7 @@ Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate roo
 
 ## Compatibility evidence and limits
 
-Shared vectors and native tests cover specific standard, PSK, and PQ paths. `tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors, and a missing vector fails. The 25-word phrase chain in those vectors is still pending (#73). Passing native tests does not establish every client workflow or runtime.
+Shared vectors and native tests cover specific standard, PSK, and PQ paths. `tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors, and a missing vector fails. The 25-word phrase chain in those vectors is still pending (#73). `tests/pq_conversation.rs` reads a long two-way TypeScript Hybrid conversation (`vectors/pq-conversation-v1.json`): both sides derive every session from the note and their own seed and read all 64 messages. `tests/psk_kept.rs` reads kept version `0x02` Extra lock notes (`vectors/psk-kept-v1.json`) and checks that the counter window, saved and restored with serde, matches TypeScript. Passing native tests does not establish every client workflow or runtime.
 
 `vectors/` holds byte-identical copies of the repository's `vectors/*.json` and `ts/conformance/vectors/*.json`, so the tests also run from the published crate. Never edit them by hand. After a canonical vector changes, refresh them from the repository root with `cp vectors/*.json ts/conformance/vectors/*.json rs/vectors/`; release qualification rejects stale copies. See the [accuracy and implementation gap ledger](../docs/ACCURACY.md).
 
