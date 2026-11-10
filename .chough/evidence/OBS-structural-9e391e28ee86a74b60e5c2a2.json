@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "OBS-structural-9e391e28ee86a74b60e5c2a2",
+  "criteria": [
+    "CRATE-3"
+  ],
+  "requirements": [
+    "REQ-release-3"
+  ],
+  "contracts": [
+    "specs/release/release.spec.md"
+  ],
+  "kind": "structural",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "rs/README.md install paragraph (57d9354) checked against cargo package --list --allow-dirty --locked in rs/ (40 entries): src/*.rs without src/bin, tests/conformance.rs and tests/cross_impl.rs, 12 vectors/*.json copies, README.md, LICENSE, no examples/; matches the new sentence and the Compatibility evidence paragraph. fledge lanes run verify passed (validate; 41 release tests OK); fledge trust verify --range origin/main..HEAD passed (augur proceed 15, provenance degraded).",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1794321794,
+  "snapshot": {
+    "revision": "57d93540de958014771c0a6cfcbf16e37554bc88",
+    "dirty": true,
+    "fingerprint": "2e79b4b8b5c7716f07f3ddd2d279577b37480f4407514bfe3caddbb2bfe52a96",
+    "content": "149109d253151f41d77f2e660635c72a29f2a6bf83061770d3081c80f35584f1"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Docs-only: no product test exercises README text; hosted CI not yet observed"
+  ]
+}
