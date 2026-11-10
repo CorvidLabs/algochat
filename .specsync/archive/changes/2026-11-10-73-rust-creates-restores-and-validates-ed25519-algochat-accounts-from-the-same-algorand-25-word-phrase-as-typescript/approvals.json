@@ -39,6 +39,13 @@
       "approved_delta_bases": {
         "protocol: REQUIREMENT REQ-protocol-10": "3d5286dc0cda40d0edbe648f4bcd71f66e7f94f2c172ef47632af2a9573a5638"
       }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1794329505,
+      "digest": "0e0544e7aefa5d23b9d37a95f611b3760ca29a165d238cf0de24815f88ef0cdc",
+      "note": "Same-PR finalization closing digest"
     }
   ],
   "reopenings": []

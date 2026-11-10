@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "73-rust-creates-restores-and-validates-ed25519-algochat-accounts-from-the-same-algorand-25-word-phrase-as-typescript",
+  "implementation_commit": "2ef89384bf74120cd6eb300e8d25b546f6df590c",
+  "implementation_tree": "e8ec4351a3bd46002cabce8126ae95626713be83",
+  "contract_digest": "89435a61efeecc1e605230395e14069ccd894bb349096a5315045a39edee41b9",
+  "workspace_digest": "296e18ef629d404586db41f6b038621be4842bdb48e3c8e74e17360646dcabbd",
+  "closing_digest": "0e0544e7aefa5d23b9d37a95f611b3760ca29a165d238cf0de24815f88ef0cdc",
+  "review_digest": "fe8c4c2fcb4a4e2509da454aa4e1db723bb2523342c564fb105dbcc4f28d30cb",
+  "finalization_digest": "be902f36fcd78a00ed6b1caf060400ec0d9a6cb5d4a0af2fa05b47a34f627b31",
+  "timestamp": 1794329505
+}
