@@ -1,7 +1,7 @@
 {
   "history_cursor": {
     "cycle": "CYC-d25ef0940c8a9ed0a9b517f6",
-    "head": "EVT-ceef44a59640a6507970a998",
+    "head": "EVT-6c3201e8edfae72bfd03793b",
     "legacy": null
   },
   "schema_version": 2,
@@ -11,7 +11,7 @@
     "py"
   ],
   "stage": {
-    "current": "build",
+    "current": "accept",
     "status": "active",
     "callers": [],
     "iteration": 1
@@ -29,11 +29,13 @@
     "Rejected: changing Raven to send section 9.2 replies (a Raven decision; old clients would still send frames). Rejected: accepting non-string replyTo inside a frame (Raven itself rejects it)."
   ],
   "open_questions": [],
-  "completed": [],
+  "completed": [
+    "Red tests cb55a65; fix 0d63896: parse_room_text reads Raven frames with Raven's rules, core counts a mention bound to the bot's address; 61 policy tests, 676 suite, 50/50 Raven cross-check; evidence in the change's testing.md (chough evidence cannot link py/specs requirements)"
+  ],
   "observations": [],
   "bugs": [],
   "blockers": [],
   "awaiting_human": [],
   "run_consents": [],
-  "next_action": "failing tests first, then policy.py/core.py fix"
+  "next_action": "after hosted CI is green and threads are resolved: specsync change review --reviewer 0xLeif under the 2026-11-10 merge rule, ship, push archive, squash-merge"
 }
