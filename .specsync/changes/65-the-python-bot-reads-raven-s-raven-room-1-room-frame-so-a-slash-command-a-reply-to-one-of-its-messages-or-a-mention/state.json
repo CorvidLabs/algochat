@@ -7,10 +7,11 @@
   "title": "65: the Python bot reads Raven's RAVEN:ROOM:1 room frame, so a slash command, a reply to one of its messages, or a mention of it that Raven sends inside the frame is answered as AGENT-8, AGENT-8.d and AGENT-8.f require",
   "description": "65: the Python bot reads Raven's RAVEN:ROOM:1 room frame, so a slash command, a reply to one of its messages, or a mention of it that Raven sends inside the frame is answered as AGENT-8, AGENT-8.d and AGENT-8.f require",
   "kind": "bug_fix",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "98ffe186499eaa7f2769bd5981fd46a70380f384",
   "created_at": 1794322197,
-  "updated_at": 1794322308,
+  "updated_at": 1794322750,
   "affected_specs": [],
   "affected_paths": [
     "py/src/algochat/agent/",
