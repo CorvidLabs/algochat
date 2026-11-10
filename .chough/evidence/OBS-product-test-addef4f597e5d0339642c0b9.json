@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-addef4f597e5d0339642c0b9",
+  "criteria": [
+    "CRATE-2"
+  ],
+  "requirements": [
+    "REQ-protocol-13"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "After merging origin/main 5843ff7 (#77 #68, #87, #88) at f0d14b1 with union-only conflict resolution (CHANGELOG, SHARED list, specs/protocol REQ-12 then REQ-13): rs/ cargo fmt --check clean, clippy --all-targets -D warnings clean, cargo test --locked 258 unit + 8 conformance + 4 cross_impl + 4 pq_announcement + 3 pq_conversation + 3 psk_kept passed (the #68 and #70b vectors together); ts/ bun test 325 pass 0 fail; verify.mjs 85/85; fledge lanes run verify OK (41 release tests); specsync check --force 3 passed 0 warnings; fledge trust verify --range origin/main..HEAD passed (augur review 35).",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1794325691,
+  "snapshot": {
+    "revision": "f0d14b1692a2bf4796d0f7b2b3a4c46efd2ac001",
+    "dirty": false,
+    "fingerprint": "08eb0678ab671645ab69b59260bcf231d5750d29835a0948fa036ff466e56b21",
+    "content": "c757db2f3c74b723c1dc77da6df056910b6f13b1729fb141357cc4e7ecdab69a"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Incremental local build in the existing worktree, not a clean-clone qualify.py run; hosted CI on the pushed head not yet observed"
+  ]
+}

@@ -37,7 +37,7 @@ Later versions are published by the manual [Publish crates.io](../.github/workfl
 algochat = { path = "/path/to/algochat/rs" }
 ```
 
-The published crate contains the library sources, the integration tests, the vector copies in `vectors/`, this README and the license. The `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository.
+The packaged crate contains the library sources, the integration tests in `tests/`, the `vectors/` copies those tests read, this README and the license, so `cargo test` also runs from the package (see [Compatibility evidence and limits](#compatibility-evidence-and-limits)). The `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository. The 0.6.0 release on crates.io predates this and contains only the library sources, this README and the license.
 
 ## Usage
 
@@ -160,11 +160,11 @@ Issuing `u32::MAX` marks send state exhausted. The stored counter stays at `u32:
 
 ## Hybrid ML-KEM sessions
 
-Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate root: a 2366-byte handshake (id `0x04`), 78-byte data header (id `0x05`), and ACPQ announcement parsing. These functions are independent of the standard/PSK high-level client. See the [protocol API contract](specs/protocol/protocol.spec.md#hybrid-ml-kem-session-exports).
+Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate root: a 2366-byte handshake (id `0x04`), 78-byte data header (id `0x05`), and ACPQ announcements: `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed note byte for byte the way TypeScript does, and `parse_pq_announcement` reads one. These functions are independent of the standard/PSK high-level client. See the [protocol API contract](specs/protocol/protocol.spec.md#hybrid-ml-kem-session-exports).
 
 ## Compatibility evidence and limits
 
-Shared vectors and native tests cover specific standard, PSK, and PQ paths. `tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors, and a missing vector fails. Nothing is pending. Passing native tests does not establish every client workflow or runtime.
+Shared vectors and native tests cover specific standard, PSK, and PQ paths. `tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors, and a missing vector fails. Nothing is pending. `tests/pq_conversation.rs` reads a long two-way TypeScript Hybrid conversation (`vectors/pq-conversation-v1.json`): both sides derive every session from the note and their own seed and read all 64 messages. `tests/psk_kept.rs` reads kept version `0x02` Extra lock notes (`vectors/psk-kept-v1.json`) and checks that the counter window, saved and restored with serde, matches TypeScript. Passing native tests does not establish every client workflow or runtime.
 
 `vectors/` holds byte-identical copies of the repository's `vectors/*.json` and `ts/conformance/vectors/*.json`, so the tests also run from the published crate. Never edit them by hand. After a canonical vector changes, refresh them from the repository root with `cp vectors/*.json ts/conformance/vectors/*.json rs/vectors/`; release qualification rejects stale copies. See the [accuracy and implementation gap ledger](../docs/ACCURACY.md).
 

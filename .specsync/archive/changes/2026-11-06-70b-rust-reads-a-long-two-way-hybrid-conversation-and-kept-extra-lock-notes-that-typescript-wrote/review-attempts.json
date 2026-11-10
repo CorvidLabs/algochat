@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "70b-rust-reads-a-long-two-way-hybrid-conversation-and-kept-extra-lock-notes-that-typescript-wrote",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "c952aaff607de7778d3736097a29c50d3fc4345c",
+      "contract_digest": "3cb24503468e382cb60e9a16e51e01ea29eb74855aadf63dc945c2dddffd0bf9",
+      "execution_digest": "63ae4869027c8f8d1223a15ed9f5375af107125a50cc91b4d492c697de0e5810",
+      "workspace_digest": "23ba02c88952aa01185e0bfc11da82e34bb81c6820a3cd79dc80170762c2cb38",
+      "timestamp": 1793988166
+    }
+  ]
+}

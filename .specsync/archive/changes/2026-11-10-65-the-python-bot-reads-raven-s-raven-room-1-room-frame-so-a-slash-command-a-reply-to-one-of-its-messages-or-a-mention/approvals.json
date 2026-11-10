@@ -1,0 +1,46 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1794322308,
+      "digest": "da164e4016c175de9dc7caa693aea4ca1b469eb8e9ccf37817aed6fe381fb1d8",
+      "note": "Bug fix under Leif's 2026-11-10 merge rule (relayed by coordinator hc t370, which lists #65 as a bug); recorded by agent claude-opus-5-5. Python agent reads Raven's room frame so AGENT-8, AGENT-8.d and AGENT-8.f hold in Raven rooms; py/specs/agent corrected in place, no hi or requirement change.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "65-the-python-bot-reads-raven-s-raven-room-1-room-frame-so-a-slash-command-a-reply-to-one-of-its-messages-or-a-mention",
+        "title": "65: the Python bot reads Raven's RAVEN:ROOM:1 room frame, so a slash command, a reply to one of its messages, or a mention of it that Raven sends inside the frame is answered as AGENT-8, AGENT-8.d and AGENT-8.f require",
+        "description": "65: the Python bot reads Raven's RAVEN:ROOM:1 room frame, so a slash command, a reply to one of its messages, or a mention of it that Raven sends inside the frame is answered as AGENT-8, AGENT-8.d and AGENT-8.f require",
+        "kind": "bug_fix",
+        "affected_specs": [],
+        "affected_paths": [
+          "CHANGELOG.md",
+          "py/specs/agent/",
+          "py/src/algochat/agent/",
+          "py/tests/"
+        ],
+        "no_spec_change": true,
+        "no_spec_change_rationale": "The wire format and the root protocol, release and godot specs do not change. The Python agent module spec (py/specs/agent) is corrected in place, as #64 did, so parse_room_text and mentions mode name the Raven frame; hi AGENT-* and the agent requirements are unchanged.",
+        "acceptance_criteria": [
+          "parse_room_text reads a Raven room frame (U+001E, RAVEN:ROOM:1, a newline, then JSON with text, mentions, optional string replyTo and optional photo) exactly as Raven's decodeRoomContent accepts it: the visible text becomes the message text, a replyTo transaction id becomes reply_to, and each mention's address is kept; any frame Raven would show as plain text (not JSON, not an object, text not a string, mentions not an array or over 100, a replyTo that is not a string reference, a mention with a bad address, non-integer, overlapping, too-short or out-of-range UTF-16 offsets, or a span not starting with @) stays plain text, unchanged. Plain text and section 9.1 and 9.2 JSON read as before. In commands mode a declared /command inside a frame is answered (reply around /ping, reply around /echo hello world, mention frame /echo @account hello, mention plus reply); in mentions mode a frame replying to one of the bot's own messages, or binding a mention to the bot's address, counts as mentioning it, and a frame naming another message or address does not. Regression tests for each row of issue #65's table fail before the fix and pass after, the Python suite and ruff pass, and frames built by Raven's own encodeRoomContent parse as expected. No wire, hi or requirement change; the bot's own replies stay plain text."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "public_contract": "no"
+        }
+      },
+      "approved_delta_digests": {},
+      "approved_delta_bases": {}
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1794324381,
+      "digest": "6bc21edf25388d6110d26b1132b9feedfc775a9b3c40bf4a4f61c8517af0334e",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": []
+}

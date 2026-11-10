@@ -497,6 +497,26 @@ session_key = 9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734
 
 A real handshake with account seeds `0x11` and `0x22` MUST produce one 2366-byte `0x04` note, and both parties MUST derive the same session key. The sender copy is sealed under X25519 and ML-KEM to the sender. That session key is not this vector. This vector pins the combiner only. The recorded 1278-byte handshake in `vectors/pq-mlkem768.json` is the withdrawn layout.
 
+## 1.4 Hybrid key announcement
+
+`vectors/pq-announcement-v1.json` is the `ACPQ` self-payment note from section 5.7 of PROTOCOL.md. Every input is synthetic. The account seed is `0x22` repeated 32 times. Its ML-KEM-768 encapsulation key comes from that seed, and the account signs with the Ed25519 key from the same seed. The other signer's seed is `0x11` repeated 32 times. Ed25519 signatures are deterministic, so every byte is reproducible.
+
+```
+unsigned_note = "ACPQ" || 0x01 || encaps_key                 (1189 bytes)
+signing_input = SHA-256("AlgoChat-pq-ek-v1" || 0x01 || encaps_key)
+              = 4cc50efe3406941861112ccaa688d6802ed33bad373f6dda9f4c54c020688c2a
+signed_note   = unsigned_note || Ed25519(account key, signing_input)  (1253 bytes)
+```
+
+The file records both notes, the signing input and both public keys in full. Its 17 parse cases give `unverified`, `verified` or `rejected`:
+
+- An unsigned note is unverified, with or without a key.
+- A signed note is verified only with the signer's key. Without a key, with another signer's key, or with a changed key or signature byte, it is rejected.
+- An unsigned note with a zero signature appended is rejected.
+- Version `0x02`, the magic `ACPR`, a note one byte short or long at either size, the magic alone, and an empty note are all rejected.
+
+`bad_encaps_key_lengths` (0, 1183 and 1185) must be refused when encoding. TypeScript and Rust both check the file. `cd ts && bun scripts/emit-pq-announcement-vector.ts && cp ../vectors/pq-announcement-v1.json ../rs/vectors/` regenerates it, and the TypeScript test fails if the committed file differs from that output.
+
 ## Group mailbox
 
 `vectors/group-v1.json` is the shared `0x06` and `0x07` vector. The session key is an input, not a handshake output. Every field below is a repeated fill byte except the two notes and the message key, which the file records in full.
@@ -529,15 +549,75 @@ The membership note is 195 bytes and starts with `0x0206`. The message note star
 
 `vectors/group-admin-bots-v1.json` is the room bot record, ops 13 (add bot) and 14 (set bot). A bot note is a delta note with five more bytes after the parent group id: reply mode, then replies and seconds as big-endian 16-bit numbers. Its drafts cover an owner and an admin adding a bot with the suggested 5 per 60 seconds, an admin adding or the owner changing a bot to mode 2 (every message), an admin changing it, a remove, a channel add with its own settings, and the owner's op 11 that drops a removed bot from a channel. Its draft_errors cover missing settings, mode 0 or 4 and a zero rate or window on both op 13 and op 14, a rate or window above 65535 (marked `wide_integer`: TypeScript, Go, Python and Kotlin must refuse it; Rust and Swift take 16-bit values and check that it does not fit), a plain member adding a bot, marking an existing member, appointing a bot admin, giving a bot the room, changing a person who is not a bot, a bot changing itself, a plain channel add of a parent bot, and a channel add-bot of someone who is not a bot in the parent. Its reductions post the same forgeries as notes and record the exact rejection sentence, plus malformed bot notes: a bad mode, a zero limit, missing settings, settings on another op, and a full-list bot note. Bad bot notes with mode 4, a zero window, and op 14 with mode 0 or 4 are rejected; mode 2 is accepted. A join request does not make anyone a bot, and neither does anything an account posts about itself: a key announcement, a chat note, a plain-text flag, a join request, or an op 13 naming itself. A removed bot is gone from the room at a new epoch; `checks.channel_departures` names it as a channel departure, and the owner's op 11 on the channel drops it there too. TypeScript, Go, Rust, Python, Kotlin, and Swift draft, reduce and check that file the same way. `ts/scripts/emit-group-admin-bots-vector.ts` regenerates it.
 
+## Hybrid conversation
+
+`vectors/pq-conversation-v1.json` is a long two-way Hybrid conversation from section 5.7 of PROTOCOL.md, written by the TypeScript library. Alice's account seed is the bytes `0x00` to `0x1f`, and Bob's is `0x20` to `0x3f`, the two seeds of `01-key-derivation`. Each account's X25519 and ML-KEM-768 keys come from its seed, and the file records both public keys.
+
+- Alice sends a 2366-byte `0x04` handshake to Bob. Bob replies under his own handshake to Alice, because a `0x05` sender must be the handshake's sender.
+- Each side then sends 32 `0x05` messages, alternating. The texts are empty, one byte, UTF-8, multi-line and 280 bytes. Each side's last message is 4002 bytes, which makes a 4096-byte note.
+- For each handshake the file records the note, its id (SHA-256 of the note) and the session key. The recipient derives that key by accepting the note. The sender derives it by recovering the sender copy from the note with its own seed.
+- Both the recipient and the sender read every message.
+
+Each of its 17 cases is accepted or rejected:
+
+- Accept:
+  - Alice accepting her own handshake to Bob is rejected.
+  - A changed encapsulation-key hash is rejected.
+  - A changed sender wrap is still accepted, because the recipient does not open the wrap, and gives the same session key.
+  - A note one byte short is rejected.
+  - A message offered as a handshake is rejected.
+- Recover as sender:
+  - Bob recovering Alice's handshake is rejected.
+  - A changed sender wrap, handshake nonce or recipient ML-KEM ciphertext is rejected.
+- Decrypt:
+  - A message under the other direction's handshake is rejected.
+  - A changed tag, message nonce or handshake id is rejected.
+  - A sender key relabelled to Bob's is rejected.
+  - Version `0x01` is rejected.
+  - A note shorter than the header and tag is rejected, and so is a 4097-byte note.
+
+## Kept Extra lock notes
+
+`vectors/psk-kept-v1.json` holds kept Extra lock notes from sections 5.5 and 8 of PROTOCOL.md, written by the TypeScript library. A Rust app only reads them. The accounts are the same two seeds. The kept secret is the bytes `0x40` to `0x5f`. Every note is version `0x02` (TypeScript 0.12.0 writes no `0x01`), uses the 130-byte header, and is encrypted under the secret ratcheted to its counter.
+
+- Alice's notes are at counters 0, 1 (empty text), 41, 99, 100, 101, 199, 200 and 4294967295.
+- Bob's notes are at 0, 7, 150, 300 and 301. The note at 301 holds 3950 bytes, which makes a 4096-byte note.
+- The recipient and the sender both read every note.
+
+Its 10 cases:
+
+- The kept secret is accepted.
+- These are all rejected:
+  - another secret, for Bob or for Alice;
+  - version `0x02` changed to `0x01`;
+  - a changed counter field;
+  - a changed tag;
+  - a changed encrypted sender key, for Bob or for Alice;
+  - a 4097-byte note;
+  - a note shorter than the header.
+
+`receive` is Bob's counter window for Alice's notes, with the 200-counter window and a fresh state. There are 17 steps over counters 201, 200, 0, 200, 5, 401, 400, 199, 200, 300, 300, 250, 600, 399, 400, 4294967295 and 800, and each step is accepted or rejected. An accepted counter is recorded.
+
+`state_at_restart` is the state before step 10: the send counter, the last peer counter and the seen counters. A reader saves that state, restores it and continues. `final_state` is the state after the last step.
+
+## Regenerating the conversation vectors
+
+Both files come from one script, `cd ts && bun scripts/emit-conversation-vectors.ts && cp ../vectors/pq-conversation-v1.json ../vectors/psk-kept-v1.json ../rs/vectors/`. Within its own process, the script replaces `crypto.getRandomValues` with a SHA-256 counter stream under a fixed label, so the library's random draws, and every byte, are reproducible. The library code is not changed.
+
+The TypeScript tests run the script into a temporary directory and fail, naming that command, if a committed file differs. If a dependency changes how randomness is drawn, the files change too, and the tests say how to regenerate them. TypeScript and Rust both check every field, case and step.
+
 ## Coverage boundaries
 
 | Evidence | Establishes | Does not establish alone |
 | --- | --- | --- |
 | Hybrid combiner above and valid component fields in `vectors/pq-mlkem768.json` | Deterministic ML-KEM components and KDF bytes | A valid current handshake from the withdrawn `handshake_note` field |
+| `vectors/pq-announcement-v1.json` | Exact unsigned and signed `ACPQ` notes, the signing input and every parse result, written by TypeScript and reproduced by Rust | That Go, Python, Kotlin or Swift write the same bytes (they do not read this file yet); that a key was published on chain |
 | `vectors/group-v1.json` | Legacy 195-byte delivery, group KDF and message bytes | Discovery or derivation of its supplied session key |
 | `vectors/group-admin-v1.json` | Public full-list admin encoding/reduction and 227-byte action-5 delivery with supplied inputs | Authenticated blockchain context, actual recipient handshake recovery, persistent replay handling |
 | `vectors/group-admin-delta-v1.json` | Delta `0x03` bytes, a channel parent group id, the 256-member cap, and forged channel rejects in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context |
 | `vectors/group-admin-bots-v1.json` | Bot `0x03` bytes (ops 13 and 14), the bot list in room state, delivery to an added bot, and the exact reject sentences in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context; whether a bot keeps to its rate limit |
+| `vectors/pq-conversation-v1.json` | A TypeScript `0x04` handshake each way, read by both recipient and sender from the note and the account seed alone; 64 `0x05` messages including a 4096-byte note each way; every case result, in TypeScript and Rust | That Go, Python, Kotlin or Swift read it (they do not yet); that TypeScript reads Rust-written notes (the `pqcross` LocalNet mesh); notes from 25-word phrases (#73) |
+| `vectors/psk-kept-v1.json` | Kept version `0x02` Extra lock notes at counters 0 to 4294967295 read by recipient and sender, every case, and the counter window across a saved and restored state, in TypeScript and Rust | Version `0x01` notes; whether an app persists its counter state; that Raven Desktop never writes Extra lock notes |
 | Historical LocalNet reports in [PARITY.md](PARITY.md) | The author's reported run at its stated rounds | Independent current-head or release-package qualification |
 
 Use the exact [wire tables](PROTOCOL.md#57-hybrid-session-protocols-0x04-and-0x05) and [flow guide](docs/PROTOCOL-FLOWS.md) alongside the fixtures. `vectors/group-admin-v1.json` is unchanged. `vectors/group-admin-delta-v1.json` is the delta note. The LocalNet record for that note is PROTOCOL.md.

@@ -4,6 +4,10 @@ Protocol releases of this repository. Each library keeps its own package version
 
 ## Unreleased
 
+### Python bot: reads Raven's room frame (#65)
+
+- Raven sends a reply, a structured mention or a photo as a room frame (U+001E, `RAVEN:ROOM:1`, a newline, then JSON). The bot now reads it the way Raven does. A `/command` inside a frame is answered in commands mode, and a Raven reply to one of the bot's messages, or a mention bound to its address, counts as mentioning it. Before, the bot kept the frame as literal text and skipped it. A frame Raven shows as plain text stays plain text, and bare text and section 9 JSON read as before. No wire change. py-algochat's version is unchanged until a release.
+
 ### Rust: mandatory conformance vectors (#70a)
 
 - `rs/tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors 00-06. A missing vector file, a missing or extra section, or an unknown case fails. The 25-word phrase chain is pending #73.
@@ -11,15 +15,26 @@ Protocol releases of this repository. Each library keeps its own package version
 - The crate ships its tests and copies of the vectors they read in `vectors/`, and qualification runs `cargo test` inside the packaged crate and rejects stale copies.
 - TypeScript qualification runs `bun conformance/tools/verify.mjs`.
 
+### Rust qualification checks formatting and lints
+
+- `qualify.py rs` runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` before its tests, so CI and the crates.io publish fail on unformatted code or any clippy warning, including in tests.
+
 ### Rust: accounts from a 25-word phrase (#73)
 
 - `validate_mnemonic`, `restore_ed25519_account` and `create_random_ed25519_account` give the same entropy, address, Ed25519, X25519 and ML-KEM-768 keys as TypeScript, checked against the new TypeScript-generated vector `07-mnemonic-accounts.json`. Phrases must be exactly 25 lowercase list words with single spaces. Ed25519 only; Falcon is #69.
 - The Rust conformance test now checks the 01 phrase and address fields, so nothing is pending.
 - TypeScript `validateMnemonic` and `createChatAccountFromMnemonic` reject phrases longer than 25 words; algosdk 3.7.0 accepted them when they ended in the right checksum.
 
-### Rust qualification checks formatting and lints
+### Rust: writes the ACPQ Hybrid key announcement (#68)
 
-- `qualify.py rs` runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` before its tests, so CI and the crates.io publish fail on unformatted code or any clippy warning, including in tests.
+- `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed `ACPQ` note, and `pq_announcement_signing_input` returns the 32 bytes the signature covers. The bytes match TypeScript exactly. `parse_pq_announcement` results and the wire format are unchanged.
+- New shared vector `vectors/pq-announcement-v1.json`, written by `ts/scripts/emit-pq-announcement-vector.ts` and copied into `rs/vectors/`. It holds both notes, the signing input, 17 parse cases and three refused key lengths. TypeScript and Rust check it, and the TypeScript test fails if the committed file is not what the script writes.
+
+### Rust: reads TypeScript Hybrid conversations and kept Extra lock notes (#70b)
+
+- New shared vector `vectors/pq-conversation-v1.json`: a TypeScript `0x04` handshake each way and 64 `0x05` messages, with a 4096-byte note in each direction, plus 17 accept, sender-recovery and decrypt cases. Rust and TypeScript derive every session from the note and the account seed, as recipient and as sender, and read every message.
+- New shared vector `vectors/psk-kept-v1.json`: 14 kept version `0x02` Extra lock notes at counters 0 to 4294967295, read by recipient and sender, 10 cases, and a 17-step counter-window transcript that is saved and restored partway through.
+- Both are written by `ts/scripts/emit-conversation-vectors.ts`, which seeds the library's randomness in its own process so the bytes are reproducible, and copied into `rs/vectors/`. The TypeScript tests fail if a committed file is not what the script writes. No library or wire change.
 
 ## 1.6.2 - 2026-11-05
 

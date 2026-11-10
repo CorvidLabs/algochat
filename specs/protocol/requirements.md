@@ -126,3 +126,25 @@ An AlgoChat account phrase SHALL be exactly 25 lowercase words from the 2048-wor
 - A phrase Rust creates restores to the same account in Rust, and its entropy re-encodes to the same phrase.
 - Rust account types print no secret through `Debug`.
 
+### REQ-protocol-12
+
+Rust SHALL write the `ACPQ` announcement byte for byte as PROTOCOL.md section 5.7 and TypeScript `encodePQKeyAnnouncement` do. `encode_pq_announcement` SHALL return the 1189-byte unsigned note, or, given the account's Ed25519 signing key, the 1253-byte note ending with the signature over the signing input. `pq_announcement_signing_input` SHALL return SHA-256 of `AlgoChat-pq-ek-v1`, the version byte `0x01` and the encapsulation key. Both SHALL refuse an encapsulation key that is not 1184 bytes. `vectors/pq-announcement-v1.json` SHALL be written by `ts/scripts/emit-pq-announcement-vector.ts` from synthetic inputs, never by the Rust code under test, and SHALL record the signing input, the unsigned and signed notes from one account seed, and parse cases for the unsigned note with and without a key, a wrong signer, a changed key, signature or version, bad note lengths, and bad key lengths. TypeScript and Rust SHALL check every field and case of that file, Rust from its copy in `rs/vectors/`. The wire format and the results of `parse_pq_announcement` SHALL NOT change.
+
+#### Acceptance Criteria
+
+- `cargo test --locked --test pq_announcement` passes in `rs/` and inside the extracted `.crate`; the notes from the vector's seed and the signing input equal the vector bytes.
+- Every parse case gives the same `unverified`, `verified` or `rejected` result in TypeScript and Rust, and an unsigned note stays unverified when a key is given.
+- Changing one byte of a recorded note or the signing input, or one case's result, fails the Rust test; a vector that differs from the emitter's output fails the TypeScript test, whose message names the regenerate command.
+- Encoding and the signing input refuse 0-, 1183- and 1185-byte keys in both languages.
+
+### REQ-protocol-13
+
+Rust SHALL read a long two-way Hybrid conversation and kept Extra lock notes that TypeScript wrote. `vectors/pq-conversation-v1.json` and `vectors/psk-kept-v1.json` SHALL be written by `ts/scripts/emit-conversation-vectors.ts` from synthetic seeds and the TypeScript library, never by the Rust code under test, with randomness from a fixed seeded stream inside that script only. The conversation file SHALL hold one `0x04` handshake each way, at least 32 `0x05` messages each way including one at the 4096-byte note ceiling, and accept, sender-recovery and decrypt cases. The kept file SHALL hold version `0x02` notes under one kept secret in both directions at counters including 0, 99, 100, 199, 200 and 4294967295, tamper and wrong-secret cases, and a receive transcript with the counter state at a restart. TypeScript and Rust SHALL check every field, note and case of both files, Rust from its copies in `rs/vectors/`: both accounts SHALL derive every session key from the note and their own seed, both sides SHALL read every message and kept note, and Rust's counter window SHALL give TypeScript's result for every step, also after its state is saved and restored. No library code, public API or wire format SHALL change.
+
+#### Acceptance Criteria
+
+- `cargo test --locked --test pq_conversation --test psk_kept` passes in `rs/` and inside the extracted `.crate`; both sides derive the recorded session keys and read every message and kept note.
+- Every handshake, message and kept-note case and every receive step gives the same result in TypeScript and Rust, before and after the restart.
+- Changing one byte of a recorded note, one recorded result or the restart state fails the Rust tests; a file that differs from the emitter's output fails the TypeScript test, whose message names the regenerate command.
+- A missing vector file fails both languages with the command that restores it.
+

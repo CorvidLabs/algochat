@@ -69,7 +69,7 @@ Having an identity never makes the bot a bot in a room, and a bot works fine wit
 
 Ask the room's owner or an admin to add the bot's address as a bot, in Raven or any AlgoChat client. They pick its reply mode and rate limit, and every member can see them:
 
-- **Mentions**: it answers `@helper` and replies to its own messages.
+- **Mentions**: it answers `@helper` and replies to its own messages, including Raven's replies and mentions.
 - **Every message**: it answers everything.
 - **Commands**: it posts its command list once, then answers only those commands.
 
