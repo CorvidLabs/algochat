@@ -273,6 +273,24 @@ class QualifyLaneTests(unittest.TestCase):
         self.assertIn('check_rust_vector_copies', rust)
         self.assertRegex(rust, r"run\(\['cargo', 'test', '--locked'\], crate\)")
 
+    def test_rust_lane_checks_format_and_lints_before_tests(self):
+        """REQ-release-1 (rs-lint): rustfmt and clippy run in rs/ after the lockfile and before the first test."""
+        text = (REPO_ROOT / 'scripts/release/qualify.py').read_text()
+        rust = text[text.index("elif lane == 'rs':"):]
+        rust = rust[:rust.index('elif lane ==', 1)]
+        fmt = "run(['cargo', 'fmt', '--all', '--', '--check'], ROOT / 'rs')"
+        clippy = "run(['cargo', 'clippy', '--all-targets', '--locked', '--', '-D', 'warnings'], ROOT / 'rs')"
+        self.assertIn(fmt, rust)
+        self.assertIn(clippy, rust)
+        lockfile = rust.index("'generate-lockfile'")
+        first_test = rust.index("run(['cargo', 'test'")
+        self.assertLess(lockfile, rust.index(fmt))
+        self.assertLess(lockfile, rust.index(clippy))
+        self.assertLess(rust.index(fmt), first_test)
+        self.assertLess(rust.index(clippy), first_test)
+        self.assertIn("VERSIONS['rustfmt']", rust)
+        self.assertIn("VERSIONS['clippy']", rust)
+
     def test_typescript_lane_runs_the_vector_verifier(self):
         text = (REPO_ROOT / 'scripts/release/qualify.py').read_text()
         ts = text[text.index("if lane == 'ts':"):]

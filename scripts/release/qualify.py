@@ -130,11 +130,16 @@ def qualify(lane, output, work):
     elif lane == 'rs':
         VERSIONS['rustc'] = run(['rustc', '--version']).strip()
         VERSIONS['cargo'] = run(['cargo', '--version']).strip()
+        VERSIONS['rustfmt'] = run(['cargo', 'fmt', '--version']).strip()
+        VERSIONS['clippy'] = run(['cargo', 'clippy', '--version']).strip()
         problems = check_rust_vector_copies(ROOT)
         if problems:
             raise SystemExit('\n'.join(problems))
         run(['cargo', 'generate-lockfile'], ROOT / 'rs')
         copy_artifact(ROOT / 'rs/Cargo.lock', output)
+        # REQ-release-1 (rs-lint): the same format and lint gates as the rs verify lane, with tests linted too.
+        run(['cargo', 'fmt', '--all', '--', '--check'], ROOT / 'rs')
+        run(['cargo', 'clippy', '--all-targets', '--locked', '--', '-D', 'warnings'], ROOT / 'rs')
         run(['cargo', 'test', '--locked'], ROOT / 'rs')
         run(['cargo', 'package', '--locked'], ROOT / 'rs')
         crates = list((ROOT / 'rs/target/package').glob('*.crate'))

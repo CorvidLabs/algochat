@@ -1,0 +1,114 @@
+{
+  "timestamp": 1793988341,
+  "commit": "a2a5f540f425628a4d635a19b9aeaea5eaacd812",
+  "contract_digest": "07d064c915f9039c6867a3768b5ca6f19a0b1e41f9c72c16b2de987ff6f13258",
+  "execution_digest": "0b9a1add16bcbf558dd450dd2eff8b1a8343c1c1c5499b3937df744b1cec185e",
+  "workspace_digest": "73f2ae0b20fd6b7873a106350f887d20b483c626b85a618f4d2bd22c5bb28fdd",
+  "acceptance_input_digest": "d680dcfe2285872bc9d87636eaa41f20e1918f8d362badfdc12a52b31a3d8b0f",
+  "acceptance_manifest": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "path": "scripts/release/evidence.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "b28cdd457ae4a30fd7c0417e7aa376cdcf9980d4d8ff90034f61fcba14d02c67",
+        "entry_digest": "de6d4e6941f94695c2d08f0ffe345218d866238fa0a6d6b482d31b4935ee3092",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "scripts/release/packages.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "740d685c73581d154a425d1a9e9c04e25952f6662856205ff4bfd02c4abfc9c4",
+        "entry_digest": "3d80465ded3a05c064385d887ae05698cf9502bf95ea13567a18df476efa4b47",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "scripts/release/provenance.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "820397bbe41c52ee302421517b422470d20276d328bbcb083239aa18af0f8005",
+        "entry_digest": "ac6bc98f49250acfaeed42e04dd7e3de0be7dda10645ec682ec23bf65b876ee7",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "scripts/release/qualify.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "683416df50b1ca5c0a2d88b77cffaa4a3ba80f3a2ecc0c492fa1fcc182ef1590",
+        "entry_digest": "255155adb1125869a3f266701272900dd8d9fe5cc93d9d3d8fd37dd773eebab8",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "scripts/release/test_release.py",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "1f4246f5e503f67d4b66b1672626b313d588584beaae910359a93439ce88ecfa",
+        "entry_digest": "a007a2381668efc160ec6a4136ccbb77948b3e0d19cf81dcd62a96b3e8e38107",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/context.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "a65a7e77dc3b33739fdb248aeff89e6e9ac79ca0e7cb583da54b75254087d9ec",
+        "entry_digest": "408040983931c857066f9fac1024f9f79f589c48175f6403b49ef8cd901de2d3",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/release.spec.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "7ee87f26be9907b0431ab455adb8b5ceb3bd40116b9191aab0b548f4bbd8d3c7",
+        "entry_digest": "0fe1cf199244757ebc1a828db99c2694c62082f0748448f6f5c99299a446d629",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/requirements.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "f3ee99004ae74f6d9a7a7f9917dd0aae3b36ed2a06ec25e61026698cbb16e2ef",
+        "entry_digest": "addf5bec44ffa9cd8e72af78653c92dff9ae10c748f1d69316fb8ec7f496789a",
+        "owners": [
+          "release"
+        ]
+      },
+      {
+        "path": "specs/release/testing.md",
+        "kind": "file",
+        "mode": 33188,
+        "payload_digest": "6b20e7a6fa5fea0d66c03f5e97eef8a0981d8d94ff6aa53abff6b59594894cce",
+        "entry_digest": "3b9d5c209cd9389e92a5e69211b165c8d88f2743f6f1e09331e2ac2a40acbc78",
+        "owners": [
+          "release"
+        ]
+      }
+    ]
+  },
+  "passed": true,
+  "commands": [
+    {
+      "command": "specsync check --spec release",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "requirement_ids": [
+    "REQ-release-1"
+  ]
+}
