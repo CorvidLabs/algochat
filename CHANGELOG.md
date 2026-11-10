@@ -9,7 +9,7 @@ Release B: the Rust crate `algochat` 0.7.0, prepared for crates.io from tag `v1.
 | Library | Version |
 | --- | --- |
 | Protocol and Swift | 1.7.0, tag `v1.7.0` (protocol specification 1.6.0) |
-| TypeScript `@corvidlabs/ts-algochat` | 0.12.0 |
+| TypeScript `@corvidlabs/ts-algochat` | 0.12.1 (source; not published) |
 | Python `py-algochat` | 0.6.0 |
 | Rust `algochat` | 0.7.0, for crates.io from tag `v1.7.0` |
 | Kotlin `com.corvidlabs:kt-algochat` | 0.5.0 |

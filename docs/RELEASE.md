@@ -119,7 +119,7 @@ Release 1.6.2 is tagged: `v1.6.2` is commit `8e54462c1e937572bd8ca5e7274620e139b
 | Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
 | Protocol and Swift | package `algochat`, product `AlgoChat` | `1.7.0` / repository tag `v1.7.0`, pending (protocol specification 1.6.0); previous `1.6.2` / `v1.6.2` | this repository |
-| TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | GitHub Packages for this repository |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.12.1` (GitHub Packages has `0.12.0`) | GitHub Packages for this repository; `0.12.1` only on a separate decision |
 | Python | `py-algochat` | `0.6.0` | PyPI; source version only until a publisher is configured |
 | Rust | `algochat` | `0.7.0` from tag `v1.7.0`, pending; `0.6.0` from tag `v1.6.2` | `0.7.0`: crates.io through the [trusted-publisher workflow](#cratesio-publishing) after Leif's release approval, not published. `0.6.0`: [crates.io](https://crates.io/crates/algochat/0.6.0), available since 2026-11-05 ([evidence](#rust-060-on-cratesio-2026-11-05)) |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | GitHub Packages for this repository |
