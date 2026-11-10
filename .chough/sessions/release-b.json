@@ -41,19 +41,21 @@
     "Leif 2026-11-05 23:24 MST: agent commits keep the worktree git identity (0xLeif) as author; no 'claude' author, no rewriting existing commits; native SpecSync approvals/reviews in his name only via the orc",
     "Orc: #70b moved to ac-acpq; this worker keeps #75, #76, rs-lint, #73 (Ed25519 only, REQ-protocol-11)",
     "#73 definition approved by Leif ('Ok yes I approve all', 06:1x MST 2026-11-06) with: TS 25-word fix in this change, Ed25519 only, strict input",
-    "Handoff to Kimi worker (orc, 2026-11-06): Claude worker ac stops; handoff at _audits/handoffs/ac.md"
+    "Handoff to Kimi worker (orc, 2026-11-06): Claude worker ac stops; handoff at _audits/handoffs/ac.md",
+    "Coordinator t370 relayed Leif 2026-11-10: finish #86 to READY (merge origin/main, no rebase; check --commit in a clean worktree; push; ready; corvid-agent review), then STOP for Leif's review; do not record Leif's review or merge (feature; only the definition is approved). Done in clean detached worktree _worktrees/ac-73-ready because algochat-scope has untracked .agents/."
   ],
   "open_questions": [],
   "completed": [
     "#75 rustfmt fix b867cf8 pushed; corvid-agent re-requested",
     "rs-lint implemented and locally verified at 2c00143",
     "#73 implemented and locally verified at 4bf64f3",
-    "#75 merged 45e3d35; #76 merged 58ec99b; rs-lint PR #85 finalized/archived at 8dd9f5d (Leif scoped review via orc), all green, awaiting corvid-agent approval; #73 draft PR #86 stacked on #85 at daaaee5"
+    "#75 merged 45e3d35; #76 merged 58ec99b; rs-lint PR #85 finalized/archived at 8dd9f5d (Leif scoped review via orc), all green, awaiting corvid-agent approval; #73 draft PR #86 stacked on #85 at daaaee5",
+    "#86 brought up to date: origin/main c861d2b merged at b205542; clean-clone qualify rs and ts pass"
   ],
   "observations": [],
   "bugs": [],
   "blockers": [],
   "awaiting_human": [],
   "run_consents": [],
-  "next_action": "After #85 merges (pinned 8dd9f5d, green + corvid-agent approval): merge origin/main into #86 branch (no rebase, it is pushed), retarget #86 to main, re-run specsync change check --commit in a CLEAN worktree, push, mark ready, send 'ready for review' to orc"
+  "next_action": "Leif's scoped review of #86 at the pushed head (his to record), then specsync change ship with no commit in between, push the archive, corvid-agent on the final head, merge by Leif; then prepare the 0.7.0 release"
 }
