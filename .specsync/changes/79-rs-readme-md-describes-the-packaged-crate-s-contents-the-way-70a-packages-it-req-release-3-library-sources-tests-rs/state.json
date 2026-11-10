@@ -7,10 +7,11 @@
   "title": "79: rs/README.md describes the packaged crate's contents the way #70a packages it (REQ-release-3): library sources, tests/*.rs, the vectors/ copies, README and license; the example and pqcross stay in the checkout; 0.6.0 predates this",
   "description": "79: rs/README.md describes the packaged crate's contents the way #70a packages it (REQ-release-3): library sources, tests/*.rs, the vectors/ copies, README and license; the example and pqcross stay in the checkout; 0.6.0 predates this",
   "kind": "bug_fix",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "57d93540de958014771c0a6cfcbf16e37554bc88",
   "created_at": 1794321700,
-  "updated_at": 1794321771,
+  "updated_at": 1794321823,
   "affected_specs": [],
   "affected_paths": [
     "rs/README.md"
