@@ -120,6 +120,10 @@ pub enum AlgoChatError {
     #[error("Random generation failed")]
     RandomGenerationFailed,
 
+    /// The text is not a valid 25-word Algorand phrase. The reason never contains the phrase.
+    #[error("Invalid mnemonic: {0}")]
+    InvalidMnemonic(&'static str),
+
     /// Invalid public key format.
     #[error("Invalid public key: {0}")]
     InvalidPublicKey(String),

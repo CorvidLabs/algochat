@@ -19,6 +19,12 @@ Protocol releases of this repository. Each library keeps its own package version
 
 - `qualify.py rs` runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` before its tests, so CI and the crates.io publish fail on unformatted code or any clippy warning, including in tests.
 
+### Rust: accounts from a 25-word phrase (#73)
+
+- `validate_mnemonic`, `restore_ed25519_account` and `create_random_ed25519_account` give the same entropy, address, Ed25519, X25519 and ML-KEM-768 keys as TypeScript, checked against the new TypeScript-generated vector `07-mnemonic-accounts.json`. Phrases must be exactly 25 lowercase list words with single spaces. Ed25519 only; Falcon is #69.
+- The Rust conformance test now checks the 01 phrase and address fields, so nothing is pending.
+- TypeScript `validateMnemonic` and `createChatAccountFromMnemonic` reject phrases longer than 25 words; algosdk 3.7.0 accepted them when they ended in the right checksum.
+
 ### Rust: writes the ACPQ Hybrid key announcement (#68)
 
 - `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed `ACPQ` note, and `pq_announcement_signing_input` returns the 32 bytes the signature covers. The bytes match TypeScript exactly. `parse_pq_announcement` results and the wire format are unchanged.

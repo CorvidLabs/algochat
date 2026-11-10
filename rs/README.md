@@ -85,6 +85,20 @@ fn main() -> algochat::Result<()> {
 }
 ```
 
+## Accounts from a 25-word phrase
+
+```rust
+use algochat::{create_random_ed25519_account, restore_ed25519_account, validate_mnemonic};
+
+let (account, phrase) = create_random_ed25519_account()?; // show `phrase` to its owner only
+assert!(validate_mnemonic(&phrase));
+let restored = restore_ed25519_account(&phrase)?;
+assert_eq!(restored.address(), account.address());
+// restored.signing_key(), encryption_private_key(), encryption_public_key(), mlkem768_keys()
+```
+
+A phrase is exactly 25 lowercase words from the Algorand list with single spaces between them. Nothing is trimmed or lowercased, so normalize what a user types before calling in. A phrase from Raven web or Pera restores to the same address and keys as in TypeScript; `ts/conformance/vectors/07-mnemonic-accounts.json` pins this. Accounts are Ed25519 only. A phrase TypeScript `createRandomChatAccount` made for a Falcon-1024 account (its default) restores here to the Ed25519 address of those words, with the same encryption keys; Falcon is #69. `Debug` on an account prints no secret, and errors never repeat the phrase.
+
 ## Protocol
 
 AlgoChat uses:
@@ -150,7 +164,7 @@ Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate roo
 
 ## Compatibility evidence and limits
 
-Shared vectors and native tests cover specific standard, PSK, and PQ paths. `tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors, and a missing vector fails. The 25-word phrase chain in those vectors is still pending (#73). `tests/pq_conversation.rs` reads a long two-way TypeScript Hybrid conversation (`vectors/pq-conversation-v1.json`): both sides derive every session from the note and their own seed and read all 64 messages. `tests/psk_kept.rs` reads kept version `0x02` Extra lock notes (`vectors/psk-kept-v1.json`) and checks that the counter window, saved and restored with serde, matches TypeScript. Passing native tests does not establish every client workflow or runtime.
+Shared vectors and native tests cover specific standard, PSK, and PQ paths. `tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors, and a missing vector fails. Nothing is pending. `tests/pq_conversation.rs` reads a long two-way TypeScript Hybrid conversation (`vectors/pq-conversation-v1.json`): both sides derive every session from the note and their own seed and read all 64 messages. `tests/psk_kept.rs` reads kept version `0x02` Extra lock notes (`vectors/psk-kept-v1.json`) and checks that the counter window, saved and restored with serde, matches TypeScript. Passing native tests does not establish every client workflow or runtime.
 
 `vectors/` holds byte-identical copies of the repository's `vectors/*.json` and `ts/conformance/vectors/*.json`, so the tests also run from the published crate. Never edit them by hand. After a canonical vector changes, refresh them from the repository root with `cp vectors/*.json ts/conformance/vectors/*.json rs/vectors/`; release qualification rejects stale copies. See the [accuracy and implementation gap ledger](../docs/ACCURACY.md).
 
