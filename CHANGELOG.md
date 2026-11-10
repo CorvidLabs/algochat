@@ -11,6 +11,10 @@ Protocol releases of this repository. Each library keeps its own package version
 - The crate ships its tests and copies of the vectors they read in `vectors/`, and qualification runs `cargo test` inside the packaged crate and rejects stale copies.
 - TypeScript qualification runs `bun conformance/tools/verify.mjs`.
 
+### Rust qualification checks formatting and lints
+
+- `qualify.py rs` runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` before its tests, so CI and the crates.io publish fail on unformatted code or any clippy warning, including in tests.
+
 ### Rust: writes the ACPQ Hybrid key announcement (#68)
 
 - `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed `ACPQ` note, and `pq_announcement_signing_input` returns the 32 bytes the signature covers. The bytes match TypeScript exactly. `parse_pq_announcement` results and the wire format are unchanged.
