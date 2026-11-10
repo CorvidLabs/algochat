@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "id": "OBS-installation-observation-7fa94cccbee0b779f1c6d46f",
+  "criteria": [
+    "CRATE-1",
+    "CRATE-5",
+    "CRATE-4"
+  ],
+  "requirements": [
+    "REQ-release-8"
+  ],
+  "contracts": [
+    "specs/release/release.spec.md"
+  ],
+  "kind": "installation-observation",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "Pre-publish consumer proof: fresh Cargo projects outside the repo depend on algochat = 0.7.0 patched to the extracted algochat-0.7.0.crate; both runs restore 4/4 vector-07 accounts to their addresses, reject 14/14 negatives, round-trip a created account, encode 1189/1253-byte ACPQ notes and verify the signed one; alone resolves ctutils 0.4.2; with algonaut 0.9.0 resolves ctutils 0.4.2, reqwest 0.13.5, rustls 0.23.46 (no conflict). rustc 1.99.0.",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1794331488,
+  "snapshot": {
+    "revision": "1a87ccc37bdce162f13c14691b466f5c7f462229",
+    "dirty": true,
+    "fingerprint": "4465e8acf826d83ae34b24b8c5d95634bf41be133394db5955ebdfc3caf73b42",
+    "content": "3fc9d3cf478f2ddb25d3cef241cfc844580f0f0bb4db92fe79dd3fc9ca26272b"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Packaged crate via [patch.crates-io], not crates.io resolution (nothing published); post-publish proof still required after Leif's go"
+  ]
+}

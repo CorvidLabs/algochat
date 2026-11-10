@@ -30,7 +30,9 @@
     "Rejected: repository tag v0.7.0 (repo tags are the release/Swift line; the crate version is a separate publish-crates.yml input; v0.7.0 would sort below v1.6.2 for SwiftPM)"
   ],
   "open_questions": [],
-  "completed": [],
+  "completed": [
+    "0.7.0 candidate 1a87ccc on draft PR #89: versions, CHANGELOG 1.7.0, release docs; hosted qualification 42863190030 green; local rs/ts/py/go/swift qualify pass; consumer proof alone and with algonaut 0.9.0 pass; provenance.py fails (no attestations)"
+  ],
   "observations": [],
   "bugs": [],
   "blockers": [],
@@ -38,5 +40,5 @@
     "Leif: native definition approval of release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at, with D-r1 tag (v1.7.0 recommended), D-r2 TypeScript 0.12.1 (recommended), D-r3 Python 0.6.1 (recommended); then the separate release go (tag, trusted-publisher check and 0.6.0 token revocation, publish-crates.yml dispatch)"
   ],
   "run_consents": [],
-  "next_action": "prepare the candidate on a draft PR: versions, CHANGELOG 1.7.0, release docs; qualify every lane; pre-publish consumer proof; provenance check; send Leif's questions"
+  "next_action": "Leif: approve the definition (D-r1 tag, D-r2 TS 0.12.1, D-r3 Python 0.6.1) and give the release go; then specsync change approve as he decides, check --commit, review, ship, merge; tag v1.7.0, trusted-publisher check and 0.6.0 token revocation, publish-crates.yml dispatch, post-publish consumer proof"
 }
