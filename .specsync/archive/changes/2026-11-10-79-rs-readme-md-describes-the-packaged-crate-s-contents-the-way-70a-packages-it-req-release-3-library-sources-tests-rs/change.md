@@ -1,6 +1,6 @@
 ---
 id: 79-rs-readme-md-describes-the-packaged-crate-s-contents-the-way-70a-packages-it-req-release-3-library-sources-tests-rs
-state: implementing
+state: archived
 type: bug_fix
 base_commit: 57d93540de958014771c0a6cfcbf16e37554bc88
 ---

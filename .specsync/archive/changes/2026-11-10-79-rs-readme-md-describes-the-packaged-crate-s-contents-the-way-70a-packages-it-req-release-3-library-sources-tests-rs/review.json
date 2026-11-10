@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "change_id": "79-rs-readme-md-describes-the-packaged-crate-s-contents-the-way-70a-packages-it-req-release-3-library-sources-tests-rs",
+  "reviewer": "0xLeif",
+  "provenance": {
+    "schema_version": 1,
+    "provider": "github_actions_check",
+    "required_check": "SpecSync scoped review"
+  },
+  "verdict": "pass",
+  "implementation_commit": "65b339ee9c7f0418b336da964eda6270585b92dc",
+  "contract_digest": "f6afd859d092828b4262a3a1d1b40cc526a401409f78792275ca8bce1553f55a",
+  "execution_digest": "eeff04127a2c846a53196e3d01371d4e2b3f2db40bdbaf3ef2734d512b1536f7",
+  "workspace_digest": "73ca99fb63d76ee8611d970a825d9c8c07004b5fca3725ea5142b3c824624be4",
+  "timestamp": 1794323384
+}
