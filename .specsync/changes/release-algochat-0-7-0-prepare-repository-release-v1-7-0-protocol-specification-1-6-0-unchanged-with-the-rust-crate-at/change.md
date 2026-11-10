@@ -1,6 +1,6 @@
 ---
 id: release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at
-state: approved
+state: implementing
 type: operations
 base_commit: 60f9893654b96b4c6e053cf1826df2385497a9c7
 ---

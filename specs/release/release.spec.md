@@ -1,6 +1,6 @@
 ---
 module: release
-version: 12
+version: 13
 status: active
 files:
   - scripts/release/packages.py
@@ -135,3 +135,4 @@ Python 3.11+ standard library, git, Attest, each language toolchain and existing
 | 2026-11-05 | release-a-publish-rust-algochat-0-6-0-from-tag-v1-6-2-with-packaging-only-fixes-and-a-crates-io-trusted-publisher: Release A: publish Rust algochat 0.6.0 from tag v1.6.2 with packaging-only fixes and a crates.io trusted-publisher workflow (algochat#67) |
 | 2026-11-06 | 70a-rust-conformance-vectors-are-mandatory-and-self-contained-rust-verifies-the-typescript-generated-conformance: 70a: Rust conformance vectors are mandatory and self-contained: Rust verifies the TypeScript-generated conformance vectors and the shared vectors from files packaged in the crate, a missing vector or unhandled case fails, the silent sibling-directory tests are removed, and TypeScript CI runs its vector verifier |
 | 2026-11-06 | rs-lint-rust-qualification-fails-on-unformatted-or-clippy-warning-rust-code-qualify-py-rs-runs-cargo-fmt-all-check-and: Rs-lint: Rust qualification fails on unformatted or clippy-warning Rust code: qualify.py rs runs cargo fmt --all -- --check and cargo clippy --all-targets --locked -- -D warnings in rs/ before the tests, so hosted CI catches what the rs verify lane catches |
+| 2026-11-10 | release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at: Release algochat 0.7.0: prepare repository release v1.7.0 (protocol specification 1.6.0 unchanged) with the Rust crate at 0.7.0 from that tag, the CHANGELOG release section, release documentation, qualification of every lane and a pre-publish external-consumer proof; the tag and crates.io publication wait for Leif's release go |
