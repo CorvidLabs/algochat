@@ -1,0 +1,43 @@
+{
+  "history_cursor": {
+    "cycle": "CYC-d25ef0940c8a9ed0a9b517f6",
+    "head": "EVT-3aa03a9e3bdcf1a1312c2d31",
+    "legacy": null
+  },
+  "schema_version": 2,
+  "objective": "A Python bot in a Raven room answers a slash command, a reply to its own message, or a mention that Raven sends inside its RAVEN:ROOM:1 frame, as AGENT-8, AGENT-8.d and AGENT-8.f already require (#65)",
+  "intent_scope": "AGENT",
+  "modules": [
+    "py"
+  ],
+  "stage": {
+    "current": "done",
+    "status": "active",
+    "callers": [],
+    "iteration": 1
+  },
+  "native_change": "65-the-python-bot-reads-raven-s-raven-room-1-room-frame-so-a-slash-command-a-reply-to-one-of-its-messages-or-a-mention",
+  "references": {
+    "criteria": [],
+    "requirements": [],
+    "cases": [],
+    "design": [],
+    "files": []
+  },
+  "decisions": [
+    "Authority: Leif's MERGE RULE 2026-11-10, relayed by coordinator Claude Code (hc t370), which lists #65 as a bug: bug fixes that make behaviour match existing specs/requirements/hi may run the full SpecSync lifecycle with 0xLeif as approve/review actor and squash-merge once CI is green and every review thread is resolved. Scope: #65 only (Python agent reads Raven's RAVEN:ROOM:1 frame for AGENT-8, AGENT-8.d, AGENT-8.f; module spec rows corrected in place). Limits: no hi, requirement, wire or Raven change; no version bump; the bot's own replies stay plain text. Agent claude-opus-5-5 acts; 0xLeif is the native actor label.",
+    "Rejected: changing Raven to send section 9.2 replies (a Raven decision; old clients would still send frames). Rejected: accepting non-string replyTo inside a frame (Raven itself rejects it).",
+    "Native implementation review of #65 recorded as 0xLeif at e45140e by agent claude-opus-5-5 under Leif's 2026-11-10 bug-fix merge rule; Leif approved the allow rule for this review and merge (coordinator hc t370, 2026-11-10); hosted CI green at e45140e; 0 unresolved threads; corvid-agent APPROVED at 6fc3de7 (3005-frame differential vs Raven, 0 mismatches) before the one later commit 4571238 (RecursionError on deep nesting returns plain text, with a test)"
+  ],
+  "open_questions": [],
+  "completed": [
+    "Red tests cb55a65; fix 0d63896: parse_room_text reads Raven frames with Raven's rules, core counts a mention bound to the bot's address; 61 policy tests, 676 suite, 50/50 Raven cross-check; evidence in the change's testing.md (chough evidence cannot link py/specs requirements)",
+    "#65 change reviewed and archived (specsync change ship)"
+  ],
+  "observations": [],
+  "bugs": [],
+  "blockers": [],
+  "awaiting_human": [],
+  "run_consents": [],
+  "next_action": "push the archive, wait for green checks, squash-merge #88 pinned to the head"
+}

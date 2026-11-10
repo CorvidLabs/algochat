@@ -150,6 +150,116 @@ def test_room_text_reads_plain_text_and_section_9_payloads():
     assert parse_room_text('{"text":"t","replyTo":{"txid":""}}') == RoomText("t")
 
 
+# --- Raven room frames (#65) --------------------------------------------------
+#
+# Raven's encodeRoomContent (raven src/app/core/utils/room-content.ts) leaves
+# bare text as it is. A reply, a structured mention or a photo becomes U+001E,
+# "RAVEN:ROOM:1", a newline, then compact JSON. replyTo is a string, and a
+# mention's start and end are UTF-16 offsets into text.
+
+RAVEN_PREFIX = "\u001eRAVEN:ROOM:1\n"
+PERSON = address(PERSON_SEED)
+TXID = "A" * 52
+BAD_CHECKSUM = ADDRESS[:10] + ("B" if ADDRESS[10] != "B" else "C") + ADDRESS[11:]
+
+
+def _utf16(text: str, index: int) -> int:
+    """The UTF-16 offset of Python index ``index`` in ``text``."""
+    return len(text[:index].encode("utf-16-le")) // 2
+
+
+def _mention(text: str, word: str, account: str) -> dict:
+    """A Raven mention span over ``word`` (which starts with @) in ``text``."""
+    start = text.index(word)
+    return {"address": account, "start": _utf16(text, start), "end": _utf16(text, start + len(word))}
+
+
+def _raven(text: str, mentions: list | None = None, reply_to: str | None = None, **extra) -> str:
+    """A room plaintext the way Raven's encodeRoomContent writes it."""
+    body = {"text": text, "mentions": mentions or []}
+    if reply_to is not None:
+        body["replyTo"] = reply_to
+    body.update(extra)
+    return RAVEN_PREFIX + json.dumps(body, separators=(",", ":"), ensure_ascii=False)
+
+
+def test_room_text_reads_raven_frames():
+    assert parse_room_text(_raven("/ping", reply_to=TXID)) == RoomText("/ping", TXID)
+    assert parse_room_text(_raven("/echo hello world", reply_to=TXID)) == RoomText("/echo hello world", TXID)
+    text = "/echo @helper hello"
+    frame = _raven(text, [_mention(text, "@helper", ADDRESS)])
+    assert parse_room_text(frame) == RoomText(text, None, (ADDRESS,))
+    frame = _raven(text, [_mention(text, "@helper", ADDRESS)], TXID)
+    assert parse_room_text(frame) == RoomText(text, TXID, (ADDRESS,))
+    # Raven's local message references are 12 to 32 lowercase letters or digits.
+    assert parse_room_text(_raven("hi", reply_to="abc123def456")) == RoomText("hi", "abc123def456")
+    # A photo's caption is the text; the photo itself is not read.
+    assert parse_room_text(_raven("look", photo="anything")) == RoomText("look")
+    # Mentions keep their order; offsets count UTF-16 units, as in JavaScript.
+    text = "\U0001f600 @Ann and @Bob"
+    frame = _raven(text, [_mention(text, "@Ann", PERSON), _mention(text, "@Bob", ADDRESS)])
+    assert parse_room_text(frame) == RoomText(text, None, (PERSON, ADDRESS))
+    # Integral numbers are integers in JavaScript, so Raven accepts 0.0.
+    frame = RAVEN_PREFIX + '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":0.0,"end":3}]}'
+    assert parse_room_text(frame) == RoomText("@ab", None, (ADDRESS,))
+    # Bare text, even text that looks like a command or JSON, is unchanged.
+    assert parse_room_text("/ping") == RoomText("/ping")
+    no_newline = RAVEN_PREFIX.rstrip("\n") + '{"text":"x","mentions":[]}'
+    assert parse_room_text(no_newline) == RoomText(no_newline)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "not json",
+        "[1,2]",
+        '"just a string"',
+        '{"mentions":[]}',
+        '{"text":7,"mentions":[]}',
+        '{"text":"x"}',
+        '{"text":"x","mentions":{}}',
+        '{"text":"x","mentions":[],"replyTo":{"txid":"' + "A" * 52 + '"}}',
+        '{"text":"x","mentions":[],"replyTo":""}',
+        '{"text":"x","mentions":[],"replyTo":"' + "a" * 52 + '"}',
+        '{"text":"x","mentions":[],"replyTo":"' + "A" * 51 + '"}',
+        '{"text":"x","mentions":[],"replyTo":"short1"}',
+        '{"text":"x","mentions":[],"replyTo":"' + "A" * 52 + '\\n"}',
+        '{"text":"x","mentions":[],"replyTo":null}',
+        '{"text":"x","mentions":[],"replyTo":NaN}',
+        '{"text":"@ab","mentions":[1]}',
+        '{"text":"@ab","mentions":[{"address":"NOTANADDRESS","start":0,"end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + BAD_CHECKSUM + '","start":0,"end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS.lower() + '","start":0,"end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":0.5,"end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":"0","end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":true,"end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":0,"end":1}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":0,"end":4}]}',
+        '{"text":"x@ab","mentions":[{"address":"' + ADDRESS + '","start":0,"end":3}]}',
+        '{"text":"@ab","mentions":[{"address":"' + ADDRESS + '","start":-1,"end":3}]}',
+        '{"text":"@a @b","mentions":[{"address":"' + ADDRESS + '","start":3,"end":5},'
+        '{"address":"' + ADDRESS + '","start":0,"end":2}]}',
+    ],
+)
+def test_a_frame_raven_shows_as_plain_text_stays_plain_text(body):
+    frame = RAVEN_PREFIX + body
+    assert parse_room_text(frame) == RoomText(frame)
+
+
+def test_a_frame_with_more_than_100_mentions_stays_plain_text():
+    text = "@a " * 101
+    spans = [{"address": ADDRESS, "start": i * 3, "end": i * 3 + 2} for i in range(101)]
+    frame = RAVEN_PREFIX + json.dumps({"text": text, "mentions": spans})
+    assert parse_room_text(frame) == RoomText(frame)
+    hundred = RAVEN_PREFIX + json.dumps({"text": text, "mentions": spans[:100]})
+    assert parse_room_text(hundred) == RoomText(text, None, (ADDRESS,) * 100)
+
+
+def test_a_deeply_nested_frame_is_plain_text_not_an_error():
+    frame = RAVEN_PREFIX + "[" * 100_000 + "]" * 100_000
+    assert parse_room_text(frame) == RoomText(frame)
+
+
 def test_command_calls_match_declared_commands_only():
     declared = ["echo", "help"]
     assert command_call("/echo hi there", declared, "helper", ADDRESS) == CommandCall("echo", "hi there")
@@ -297,6 +407,71 @@ async def test_commands_mode_posts_the_list_once_and_answers_declared_commands()
     [txid] = await changed.declare_commands()
     assert _read(room, txid, chain) == changed.command_list
     assert "/roll - Roll a die" in changed.command_list
+
+
+@pytest.mark.asyncio
+async def test_commands_mode_answers_a_command_raven_sends_inside_its_frame():
+    # Issue #65's table: Raven wraps a reply or a structured mention in its frame.
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_COMMANDS, 20, 60))
+    bot = await _bot(chain, clock, commands=[BotCommand("echo", "Repeat"), BotCommand("ping", "Pong")])
+    earlier = await room.post(OWNER_SEED, "earlier")
+    mention = "/echo @helper hello"
+    spans = [_mention(mention, "@helper", ADDRESS)]
+    await room.post(PERSON_SEED, "/ping")
+    await room.post(PERSON_SEED, "/echo hello world")
+    await room.post(PERSON_SEED, _raven("/ping", reply_to=earlier.txid))
+    await room.post(PERSON_SEED, _raven("/echo hello world", reply_to=earlier.txid))
+    await room.post(PERSON_SEED, _raven(mention, spans))
+    await room.post(PERSON_SEED, _raven(mention, spans, earlier.txid))
+    await room.post(PERSON_SEED, json.dumps({"text": "/ping hi", "replyTo": {"txid": earlier.txid}}))
+    served = await bot.serve_rooms(_echo)
+    assert [(r.message.text, r.message.reply_to, r.message.command, r.skipped) for r in served] == [
+        ("earlier", None, None, SKIP_NOT_A_COMMAND),
+        ("/ping", None, CommandCall("ping", ""), None),
+        ("/echo hello world", None, CommandCall("echo", "hello world"), None),
+        ("/ping", earlier.txid, CommandCall("ping", ""), None),
+        ("/echo hello world", earlier.txid, CommandCall("echo", "hello world"), None),
+        (mention, None, CommandCall("echo", "@helper hello"), None),
+        (mention, earlier.txid, CommandCall("echo", "@helper hello"), None),
+        ("/ping hi", earlier.txid, CommandCall("ping", "hi"), None),
+    ]
+    assert [_read(room, r.txid, chain) for r in served[1:]] == [
+        "ping: ",
+        "echo: hello world",
+        "ping: ",
+        "echo: hello world",
+        "echo: @helper hello",
+        "echo: @helper hello",
+        "ping: hi",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_mentions_mode_counts_a_raven_reply_or_mention_aimed_at_the_bot():
+    chain = Ledger()
+    clock = Clock(chain)
+    room = await _room(chain, BotSettings(BOT_MODE_MENTIONS, 10, 60))
+    bot = await _bot(chain, clock)
+    await bot.sync_rooms()
+    asked = await room.post(PERSON_SEED, "@helper start")
+    [answered] = await bot.serve_rooms(_echo)
+    # Raven's visible text for a mention is a display name; the span binds it to an address.
+    to_bot, to_person = "hey @Echo, look", "hey @Ann"
+    await room.post(PERSON_SEED, _raven("thanks", reply_to=answered.txid))
+    await room.post(OWNER_SEED, _raven("not to the bot", reply_to=asked.txid))
+    await room.post(OWNER_SEED, _raven(to_bot, [_mention(to_bot, "@Echo", ADDRESS)]))
+    await room.post(OWNER_SEED, _raven(to_person, [_mention(to_person, "@Ann", PERSON)]))
+    served = await bot.serve_rooms(_echo)
+    assert [(r.message.text, r.message.reply_to, r.message.mentioned, r.skipped) for r in served] == [
+        ("thanks", answered.txid, True, None),
+        ("not to the bot", asked.txid, False, SKIP_NOT_MENTIONED),
+        (to_bot, None, True, None),
+        (to_person, None, False, SKIP_NOT_MENTIONED),
+    ]
+    assert _read(room, served[0].txid, chain) == "heard: thanks"
+    assert _read(room, served[2].txid, chain) == f"heard: {to_bot}"
 
 
 @pytest.mark.asyncio

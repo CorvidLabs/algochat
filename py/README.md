@@ -127,7 +127,7 @@ Call `serve_rooms` on a timer. Replies are plain text, as Raven shows room messa
 
 The room's owner or admin picks the bot's reply mode and rate limit when adding it, and can change them at any time. The bot reads them from the room's record every time it serves:
 
-- **Mentions**: it answers `@` and its name (or its address), and replies to its own messages.
+- **Mentions**: it answers `@` and its name (or its address), and replies to its own messages. Raven's replies and mentions count too.
 - **Every message**: it answers everything.
 - **Commands**: it posts its command list in the room once, then answers only the commands it declared. `/help` is always declared.
 
