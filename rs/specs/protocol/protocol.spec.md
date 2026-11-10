@@ -90,10 +90,12 @@ remaining able to decode version 1 messages.
 | `encrypt_pq_message` | Emits version 0x02/id 0x05 data, a 78-byte authenticated header, and at most 4002 plaintext bytes. |
 | `decrypt_pq_message` | Checks data/session identity and authenticates before returning UTF-8 plaintext. |
 | `PqAnnouncement` | Public `encaps_key` and `verified` fields from ACPQ parsing. |
+| `pq_announcement_signing_input` | Returns SHA-256 of `AlgoChat-pq-ek-v1`, version `0x01` and a 1184-byte encapsulation key: the 32 bytes an ACPQ signature signs. Any other key length is an `InvalidPublicKey` error. |
+| `encode_pq_announcement` | Takes a 1184-byte encapsulation key and an optional Ed25519 `SigningKey`; returns the 1189-byte unsigned or 1253-byte signed ACPQ note, byte for byte as TypeScript writes it. Any other key length is an `InvalidPublicKey` error. |
 | `is_pq_announcement` | Recognizes the ACPQ prefix. |
 | `parse_pq_announcement` | Parses exact unsigned/signed ACPQ lengths, returning an unverified unsigned key or verified signed key; invalid signatures return `None`. |
 
-Handshake id 0x04 and data id 0x05 use version 0x02. Protocol 0x03 is room administration, not a handshake id. PQ constants and direct KEM encapsulate/decapsulate operations are private in this port. `pq::tests::parity_fixture` reads the committed `vectors/pq-mlkem768.json`; `live_localnet_note` is conditional evidence, not a required live network run. See the [accuracy ledger](../../../docs/ACCURACY.md).
+Handshake id 0x04 and data id 0x05 use version 0x02. Protocol 0x03 is room administration, not a handshake id. PQ constants and direct KEM encapsulate/decapsulate operations are private in this port. `pq::tests::parity_fixture` reads the committed `vectors/pq-mlkem768.json`, and `tests/pq_announcement.rs` reproduces every note, the signing input and every parse case of `vectors/pq-announcement-v1.json` (REQ-protocol-12); `live_localnet_note` is conditional evidence, not a required live network run. See the [accuracy ledger](../../../docs/ACCURACY.md).
 
 ## Invariants
 
@@ -164,3 +166,4 @@ Handshake id 0x04 and data id 0x05 use version 0x02. Protocol 0x03 is room admin
 | 2026-07-14 | CorvidLabs | Adopted the existing v1/v2 standard protocol contract into SpecSync 5.0.1. |
 | 2026-10-16 | CorvidLabs | Raise the note ceiling to 4096 bytes for protocol revision 1.2.1. Standard plaintext max is 3954. Note fees add the consensus surcharge above 1024 bytes on top of one minimum fee. This is not protocol 1.3. |
 | 2026-07-14 | CHG-0001-adopt-specsync-5-0-1-and-trust-1-0-0-governance-for-the-rust-algochat-implementa: Adopt SpecSync 5.0.1 and Trust 1.0.0 governance for the Rust AlgoChat implementation |
+| 2026-11-06 | CorvidLabs | #68: `encode_pq_announcement` and `pq_announcement_signing_input` write the ACPQ announcement byte for byte the way TypeScript does, checked against `vectors/pq-announcement-v1.json`. `parse_pq_announcement` results are unchanged. |

@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "OBS-product-test-209b90f68d3cda59eeb91845",
+  "criteria": [
+    "CRATE-5"
+  ],
+  "requirements": [
+    "REQ-protocol-12"
+  ],
+  "contracts": [
+    "specs/protocol/protocol.spec.md"
+  ],
+  "kind": "product-test",
+  "outcome": "passed",
+  "environment": "local",
+  "summary": "Clean git clone --no-local at c0fbac2: qualify.py rs exit 0 (258+8+4+4 in rs/ and inside the extracted algochat-0.6.0.crate, 42 members, sha256 9332b889cd7eda7caa2970f13b76df47a625cfe8d4fb4961896f02b367da71b3; consumer ran); qualify.py ts exit 0 (bun test 317 pass, verify.mjs 85 checks passed)",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1793972139,
+  "snapshot": {
+    "revision": "91c8c7f47edbcab874ae2d992125cf2facb1e76c",
+    "dirty": false,
+    "fingerprint": "baeafd35a46ffaac8276171fbcdd0b61929c0c426096b4c4fe01fcb849118569",
+    "content": "b89fce8b6440fa4f25bad0674ba70ae63920060771e1400d5a6cdb4d97eda28e"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Hosted Release qualification matrix not run locally; it runs on the PR"
+  ]
+}

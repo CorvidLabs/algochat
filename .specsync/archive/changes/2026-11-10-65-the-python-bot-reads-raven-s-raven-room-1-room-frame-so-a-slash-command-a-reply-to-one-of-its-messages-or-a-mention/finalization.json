@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "65-the-python-bot-reads-raven-s-raven-room-1-room-frame-so-a-slash-command-a-reply-to-one-of-its-messages-or-a-mention",
+  "implementation_commit": "e45140e3240e6d9d805a00469cd8e3720274dc71",
+  "implementation_tree": "6b48a4256709e6e609452d7f67e132b6d06ba72e",
+  "contract_digest": "da164e4016c175de9dc7caa693aea4ca1b469eb8e9ccf37817aed6fe381fb1d8",
+  "workspace_digest": "7bec913a03e1e957e9997066d7318f837bf2f8cd33defe6b42e81386cc3dd1f2",
+  "closing_digest": "6bc21edf25388d6110d26b1132b9feedfc775a9b3c40bf4a4f61c8517af0334e",
+  "review_digest": "a40f0d421c2a65d1b889ba72f8ea5deceac3b483a83a2187c910d0867871ab25",
+  "finalization_digest": "6d7e02c8f8b3f5f9f5d34b59ee24bd51b111ed780687b2560fb0a3ee194c6e58",
+  "timestamp": 1794324381
+}

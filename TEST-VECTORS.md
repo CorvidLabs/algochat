@@ -497,6 +497,26 @@ session_key = 9b393e8cec553ada4821c1fa04b40bf499446b19ca9218fd8dcf8b705e06d734
 
 A real handshake with account seeds `0x11` and `0x22` MUST produce one 2366-byte `0x04` note, and both parties MUST derive the same session key. The sender copy is sealed under X25519 and ML-KEM to the sender. That session key is not this vector. This vector pins the combiner only. The recorded 1278-byte handshake in `vectors/pq-mlkem768.json` is the withdrawn layout.
 
+## 1.4 Hybrid key announcement
+
+`vectors/pq-announcement-v1.json` is the `ACPQ` self-payment note from section 5.7 of PROTOCOL.md. Every input is synthetic. The account seed is `0x22` repeated 32 times. Its ML-KEM-768 encapsulation key comes from that seed, and the account signs with the Ed25519 key from the same seed. The other signer's seed is `0x11` repeated 32 times. Ed25519 signatures are deterministic, so every byte is reproducible.
+
+```
+unsigned_note = "ACPQ" || 0x01 || encaps_key                 (1189 bytes)
+signing_input = SHA-256("AlgoChat-pq-ek-v1" || 0x01 || encaps_key)
+              = 4cc50efe3406941861112ccaa688d6802ed33bad373f6dda9f4c54c020688c2a
+signed_note   = unsigned_note || Ed25519(account key, signing_input)  (1253 bytes)
+```
+
+The file records both notes, the signing input and both public keys in full. Its 17 parse cases give `unverified`, `verified` or `rejected`:
+
+- An unsigned note is unverified, with or without a key.
+- A signed note is verified only with the signer's key. Without a key, with another signer's key, or with a changed key or signature byte, it is rejected.
+- An unsigned note with a zero signature appended is rejected.
+- Version `0x02`, the magic `ACPR`, a note one byte short or long at either size, the magic alone, and an empty note are all rejected.
+
+`bad_encaps_key_lengths` (0, 1183 and 1185) must be refused when encoding. TypeScript and Rust both check the file. `cd ts && bun scripts/emit-pq-announcement-vector.ts && cp ../vectors/pq-announcement-v1.json ../rs/vectors/` regenerates it, and the TypeScript test fails if the committed file differs from that output.
+
 ## Group mailbox
 
 `vectors/group-v1.json` is the shared `0x06` and `0x07` vector. The session key is an input, not a handshake output. Every field below is a repeated fill byte except the two notes and the message key, which the file records in full.
@@ -591,6 +611,7 @@ The TypeScript tests run the script into a temporary directory and fail, naming 
 | Evidence | Establishes | Does not establish alone |
 | --- | --- | --- |
 | Hybrid combiner above and valid component fields in `vectors/pq-mlkem768.json` | Deterministic ML-KEM components and KDF bytes | A valid current handshake from the withdrawn `handshake_note` field |
+| `vectors/pq-announcement-v1.json` | Exact unsigned and signed `ACPQ` notes, the signing input and every parse result, written by TypeScript and reproduced by Rust | That Go, Python, Kotlin or Swift write the same bytes (they do not read this file yet); that a key was published on chain |
 | `vectors/group-v1.json` | Legacy 195-byte delivery, group KDF and message bytes | Discovery or derivation of its supplied session key |
 | `vectors/group-admin-v1.json` | Public full-list admin encoding/reduction and 227-byte action-5 delivery with supplied inputs | Authenticated blockchain context, actual recipient handshake recovery, persistent replay handling |
 | `vectors/group-admin-delta-v1.json` | Delta `0x03` bytes, a channel parent group id, the 256-member cap, and forged channel rejects in TypeScript, Go, Rust, Python, Kotlin, and Swift | Authenticated blockchain context |

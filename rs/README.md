@@ -37,7 +37,7 @@ Later versions are published by the manual [Publish crates.io](../.github/workfl
 algochat = { path = "/path/to/algochat/rs" }
 ```
 
-The published crate contains the library sources, this README and the license. The tests, the `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository; their tests read the shared `../vectors/` files, so run them from a checkout.
+The packaged crate contains the library sources, the integration tests in `tests/`, the `vectors/` copies those tests read, this README and the license, so `cargo test` also runs from the package (see [Compatibility evidence and limits](#compatibility-evidence-and-limits)). The `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository. The 0.6.0 release on crates.io predates this and contains only the library sources, this README and the license.
 
 ## Usage
 
@@ -146,7 +146,7 @@ Issuing `u32::MAX` marks send state exhausted. The stored counter stays at `u32:
 
 ## Hybrid ML-KEM sessions
 
-Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate root: a 2366-byte handshake (id `0x04`), 78-byte data header (id `0x05`), and ACPQ announcement parsing. These functions are independent of the standard/PSK high-level client. See the [protocol API contract](specs/protocol/protocol.spec.md#hybrid-ml-kem-session-exports).
+Protocol 1.3.0 exports low-level X25519 + ML-KEM-768 sessions from the crate root: a 2366-byte handshake (id `0x04`), 78-byte data header (id `0x05`), and ACPQ announcements: `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed note byte for byte the way TypeScript does, and `parse_pq_announcement` reads one. These functions are independent of the standard/PSK high-level client. See the [protocol API contract](specs/protocol/protocol.spec.md#hybrid-ml-kem-session-exports).
 
 ## Compatibility evidence and limits
 

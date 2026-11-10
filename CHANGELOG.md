@@ -4,6 +4,10 @@ Protocol releases of this repository. Each library keeps its own package version
 
 ## Unreleased
 
+### Python bot: reads Raven's room frame (#65)
+
+- Raven sends a reply, a structured mention or a photo as a room frame (U+001E, `RAVEN:ROOM:1`, a newline, then JSON). The bot now reads it the way Raven does. A `/command` inside a frame is answered in commands mode, and a Raven reply to one of the bot's messages, or a mention bound to its address, counts as mentioning it. Before, the bot kept the frame as literal text and skipped it. A frame Raven shows as plain text stays plain text, and bare text and section 9 JSON read as before. No wire change. py-algochat's version is unchanged until a release.
+
 ### Rust: mandatory conformance vectors (#70a)
 
 - `rs/tests/conformance.rs` checks every section and case of the TypeScript-generated conformance vectors 00-06. A missing vector file, a missing or extra section, or an unknown case fails. The 25-word phrase chain is pending #73.
@@ -14,6 +18,11 @@ Protocol releases of this repository. Each library keeps its own package version
 ### Rust qualification checks formatting and lints
 
 - `qualify.py rs` runs `cargo fmt --all -- --check` and `cargo clippy --all-targets --locked -- -D warnings` before its tests, so CI and the crates.io publish fail on unformatted code or any clippy warning, including in tests.
+
+### Rust: writes the ACPQ Hybrid key announcement (#68)
+
+- `encode_pq_announcement` writes the 1189-byte unsigned or 1253-byte signed `ACPQ` note, and `pq_announcement_signing_input` returns the 32 bytes the signature covers. The bytes match TypeScript exactly. `parse_pq_announcement` results and the wire format are unchanged.
+- New shared vector `vectors/pq-announcement-v1.json`, written by `ts/scripts/emit-pq-announcement-vector.ts` and copied into `rs/vectors/`. It holds both notes, the signing input, 17 parse cases and three refused key lengths. TypeScript and Rust check it, and the TypeScript test fails if the committed file is not what the script writes.
 
 ### Rust: reads TypeScript Hybrid conversations and kept Extra lock notes (#70b)
 
