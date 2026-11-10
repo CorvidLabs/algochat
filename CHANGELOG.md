@@ -2,11 +2,22 @@
 
 Protocol releases of this repository. Each library keeps its own package version. Earlier releases are described on the [releases page](https://github.com/CorvidLabs/algochat/releases). `ts/CHANGELOG.md` and `swift/CHANGELOG.md` are the archived per-language histories from before the monorepo.
 
-## Unreleased
+## 1.7.0 - 2026-11-10
 
-### Python bot: reads Raven's room frame (#65)
+Release B: the Rust crate `algochat` 0.7.0, prepared for crates.io from tag `v1.7.0`. It adds 25-word phrase accounts, the `ACPQ` Hybrid key announcement encoder, and packaged conformance vectors that prove Rust reads what TypeScript writes. The wire format is unchanged: protocol 1.6.0. Kotlin, Go and Swift sources are unchanged.
 
-- Raven sends a reply, a structured mention or a photo as a room frame (U+001E, `RAVEN:ROOM:1`, a newline, then JSON). The bot now reads it the way Raven does. A `/command` inside a frame is answered in commands mode, and a Raven reply to one of the bot's messages, or a mention bound to its address, counts as mentioning it. Before, the bot kept the frame as literal text and skipped it. A frame Raven shows as plain text stays plain text, and bare text and section 9 JSON read as before. No wire change. py-algochat's version is unchanged until a release.
+| Library | Version |
+| --- | --- |
+| Protocol and Swift | 1.7.0, tag `v1.7.0` (protocol specification 1.6.0) |
+| TypeScript `@corvidlabs/ts-algochat` | 0.12.0 |
+| Python `py-algochat` | 0.6.0 |
+| Rust `algochat` | 0.7.0, for crates.io from tag `v1.7.0` |
+| Kotlin `com.corvidlabs:kt-algochat` | 0.5.0 |
+| Go `github.com/CorvidLabs/algochat/go` | 0.5.0, tag `go/v0.5.0` |
+
+### Rust 0.7.0: migrating from 0.6.0
+
+- `AlgoChatError` has a new variant, `InvalidMnemonic(&'static str)`. A `match` that lists every variant needs an arm for it. Everything else is additive.
 
 ### Rust: mandatory conformance vectors (#70a)
 
@@ -35,6 +46,10 @@ Protocol releases of this repository. Each library keeps its own package version
 - New shared vector `vectors/pq-conversation-v1.json`: a TypeScript `0x04` handshake each way and 64 `0x05` messages, with a 4096-byte note in each direction, plus 17 accept, sender-recovery and decrypt cases. Rust and TypeScript derive every session from the note and the account seed, as recipient and as sender, and read every message.
 - New shared vector `vectors/psk-kept-v1.json`: 14 kept version `0x02` Extra lock notes at counters 0 to 4294967295, read by recipient and sender, 10 cases, and a 17-step counter-window transcript that is saved and restored partway through.
 - Both are written by `ts/scripts/emit-conversation-vectors.ts`, which seeds the library's randomness in its own process so the bytes are reproducible, and copied into `rs/vectors/`. The TypeScript tests fail if a committed file is not what the script writes. No library or wire change.
+
+### Python bot: reads Raven's room frame (#65)
+
+- Raven sends a reply, a structured mention or a photo as a room frame (U+001E, `RAVEN:ROOM:1`, a newline, then JSON). The bot now reads it the way Raven does. A `/command` inside a frame is answered in commands mode, and a Raven reply to one of the bot's messages, or a mention bound to its address, counts as mentioning it. Before, the bot kept the frame as literal text and skipped it. A frame Raven shows as plain text stays plain text, and bare text and section 9 JSON read as before. No wire change. py-algochat's version is unchanged until a release.
 
 ## 1.6.2 - 2026-11-05
 

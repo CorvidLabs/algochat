@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/CorvidLabs/algochat/rs.yml?label=CI&branch=main)](https://github.com/CorvidLabs/algochat/actions/workflows/rs.yml)
 [![License](https://img.shields.io/github/license/CorvidLabs/algochat)](../LICENSE)
-[![Source version](https://img.shields.io/badge/source-0.6.0-blue)](Cargo.toml)
+[![Source version](https://img.shields.io/badge/source-0.7.0-blue)](Cargo.toml)
 
 > **Pre-1.0 Notice**: This library is under active development. The API may change between minor versions until 1.0.
 
@@ -12,10 +12,14 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Version and requirements
 
-- Crate: `algochat` **0.6.0**, implementing protocol **1.6.0**. Its crates.io source is release tag **`v1.6.2`**, whose `rs/src` is identical to `v1.6.1`; 1.6.2 changes only packaging.
+- Crate: `algochat` **0.7.0**, implementing protocol **1.6.0**. It is to be published to crates.io from release tag **`v1.7.0`** once that release is approved; until then crates.io serves **0.6.0**, from release tag `v1.6.2`.
 - [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
 - `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
 - Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. crates.io availability is recorded only from dated consumer evidence in the release record. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
+
+## Migrating to 0.7.0
+
+0.7.0 adds 25-word phrase accounts (`validate_mnemonic`, `restore_ed25519_account`, `create_random_ed25519_account`) and the `ACPQ` announcement encoder (`encode_pq_announcement`, `pq_announcement_signing_input`). `AlgoChatError` has a new variant, `InvalidMnemonic(&'static str)`, so a `match` that lists every variant needs an arm for it. Nothing else changes for existing callers. See the [1.7.0 changelog](../CHANGELOG.md#170---2026-11-10).
 
 ## Migrating to 0.6.0
 
@@ -23,7 +27,7 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Installation
 
-crates.io serves **0.6.0**, published from release tag `v1.6.2` on 2026-11-05 ([evidence](../docs/RELEASE.md#rust-060-on-cratesio-2026-11-05)). Depend on it by version:
+crates.io serves **0.6.0**, published from release tag `v1.6.2` on 2026-11-05 ([evidence](../docs/RELEASE.md#rust-060-on-cratesio-2026-11-05)). 0.7.0 is not on crates.io yet; once it is, use `algochat = "0.7.0"`. Depend on a published version:
 
 ```toml
 [dependencies]
@@ -37,7 +41,7 @@ Later versions are published by the manual [Publish crates.io](../.github/workfl
 algochat = { path = "/path/to/algochat/rs" }
 ```
 
-The packaged crate contains the library sources, the integration tests in `tests/`, the `vectors/` copies those tests read, this README and the license, so `cargo test` also runs from the package (see [Compatibility evidence and limits](#compatibility-evidence-and-limits)). The `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository. The 0.6.0 release on crates.io predates this and contains only the library sources, this README and the license.
+The packaged crate contains the library sources, the integration tests in `tests/`, the `vectors/` copies those tests read, this README and the license, so `cargo test` also runs from the package (see [Compatibility evidence and limits](#compatibility-evidence-and-limits)). The `export_envelopes` example and the `pqcross` cross-language mesh binary stay in this repository. 0.7.0 is the first release packaged this way; the 0.6.0 release on crates.io contains only the library sources, this README and the license.
 
 ## Usage
 
