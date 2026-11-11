@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "id": "OBS-structural-12f0617351d5abc42cd04275",
+  "criteria": [
+    "CRATE-7"
+  ],
+  "requirements": [
+    "REQ-release-4"
+  ],
+  "contracts": [
+    "specs/release/release.spec.md"
+  ],
+  "kind": "structural",
+  "outcome": "failed",
+  "environment": "local",
+  "summary": "provenance.py v1.6.2 1a87ccc after fetching refs/notes/attest: exit 1; 12 commits 8e54462..1a87ccc lack attestation and passing-test evidence (requireAttestation, requireTestsPassed)",
+  "artifacts": [],
+  "artifact_fingerprints": {},
+  "observed_at_unix_seconds": 1794331488,
+  "snapshot": {
+    "revision": "1a87ccc37bdce162f13c14691b466f5c7f462229",
+    "dirty": true,
+    "fingerprint": "4465e8acf826d83ae34b24b8c5d95634bf41be133394db5955ebdfc3caf73b42",
+    "content": "3fc9d3cf478f2ddb25d3cef241cfc844580f0f0bb4db92fe79dd3fc9ca26272b"
+  },
+  "provenance": "unauthenticated observation; not proof of human approval, test execution, or deployment",
+  "method": "automated",
+  "limitations": [
+    "Degraded provenance as on every recent PR; an input to Leif's release go, not fixed here"
+  ]
+}

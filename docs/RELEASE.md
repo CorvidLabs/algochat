@@ -2,7 +2,7 @@
 
 A green **Release qualification / complete** check means the candidate passed the
 seven hosted lanes below. It does not authorize a release, establish historical
-provenance, or prove registry permissions. Protocol **1.6.0** (the specification version), release **1.6.2**, and each library's
+provenance, or prove registry permissions. Protocol **1.6.0** (the specification version), release **1.7.0**, and each library's
 package version are distinct. The [package version table](#package-versions-and-distribution) records the release set; the language/runtime requirements are below.
 
 ## Candidate and evidence
@@ -59,7 +59,7 @@ Node.js 18, Python 3.10, Rust 1.85, older Apple platforms, and Android remain un
 | --- | --- | --- |
 | TypeScript | Bun tests/build; npm tarball; Node import and TypeScript resolution | Node 22 qualification; declared Node 18 minimum not qualified |
 | Python | pytest; wheel and sdist; separate venv install/import for each | Python 3.12; declared Python 3.10 minimum not qualified |
-| Rust | cargo tests and verified package; packaged-source consumer | Runner compiler recorded; declared Rust 1.85 minimum not qualified |
+| Rust | rustfmt and clippy; cargo tests in the checkout and again inside the extracted, verified package; packaged-source consumer | Runner compiler recorded; declared Rust 1.85 minimum not qualified |
 | Kotlin | tests; jars/POM; isolated Maven-local repository and Gradle consumer | Java 17; Android not qualified |
 | Go | tests/build; source/fixture archive; extracted parity test; consumer with explicit local module replacement | Go 1.25; remote module/tag distribution not proved |
 | Swift Apple | macOS 26+ tests/build; root source/fixture package; extracted PQ tests; external consumer | Hosted Apple evidence only; older Apple platform minima not qualified |
@@ -67,7 +67,7 @@ Node.js 18, Python 3.10, Rust 1.85, older Apple platforms, and Android remain un
 
 The Kotlin `publishToMavenLocal` command only writes an isolated temporary local
 Maven repository. It never invokes `publish` or a remote publishing task and uses
-no registry credentials. Swift and Go source archives are not registry packages. They include root `vectors/` and rerun their extracted parity tests. The Rust crate consumer validates compilation/import, not its packaged full test suite: `rs/src/pq.rs` reads `../vectors/pq-mlkem768.json`, outside the published crate. Rust full tests run in the checkout; self-contained packaged-test fixtures remain a release packaging decision, not a claimed pass.
+no registry credentials. Swift and Go source archives are not registry packages. They include root `vectors/` and rerun their extracted parity tests. From 0.7.0 the Rust crate ships its integration tests and byte-identical copies of the vectors they read (REQ-release-3), and qualification reruns `cargo test --locked` inside the extracted crate; the consumer then validates compilation and import. The 0.6.0 crate on crates.io predates this and contains no tests.
 
 Bun uses its existing frozen lockfile with install scripts disabled. Rust resolves
 and archives Cargo.lock before locked tests/package verification. Python, Maven,
@@ -110,16 +110,18 @@ claim another author's historical actions or fabricate human implementation acce
 
 ## Package versions and distribution
 
+Release 1.7.0 is approved, not yet tagged. Its candidate is the release pull request for Release B (the Rust crate `algochat` 0.7.0: #70a, #73, #68 and #70b). Leif approved the release on 2026-11-10, accepting degraded provenance as for 1.6.2. Tag `v1.7.0` goes on that pull request's merge commit, and the manual `Publish npm` workflow then publishes TypeScript `0.12.1` to GitHub Packages from that tag. The crates.io publication through [`publish-crates.yml`](#cratesio-publishing) waits until the owner confirms the crates.io trusted publisher and revokes the API token used for 0.6.0. The post-publish consumer proof follows that publication. Release 1.7.0 keeps protocol specification **1.6.0**: `PROTOCOL.md` is unchanged since `v1.6.2`. Kotlin, Go and Swift sources are unchanged, so the Go module tag stays `go/v0.5.0` and repository tag `v1.7.0` is also the Swift package tag. Until it is tagged, release 1.6.2 below is the current tag.
+
 Release 1.6.2 is tagged: `v1.6.2` is commit `8e54462c1e937572bd8ca5e7274620e139b00b8c` (the squash merge of [#74](https://github.com/CorvidLabs/algochat/pull/74) for [algochat#67](https://github.com/CorvidLabs/algochat/issues/67)), with a [GitHub release](https://github.com/CorvidLabs/algochat/releases/tag/v1.6.2). Leif approved it on 2026-11-05.
 
 `CorvidLabs/algochat` is the source. Archived language repositories stay archived. Release 1.6.2 keeps protocol specification **1.6.0** and changes no library source: `rs/src` is identical to `v1.6.1`. It fixes the Rust crate's packaging and adds the crates.io publish workflow, so that Rust `0.6.0` is published from repository tag `v1.6.2`. Repository tag `v1.6.2` is also the Swift package tag, with Swift sources unchanged. Go does not change, so the Go module tag stays `go/v0.5.0`. Tag `v1.6.1` is the previous release, on commit `094caa5ce446d4c75e7cb16358f298832e661f5a`. Tags `v1.6.0` and `go/v0.5.0` are on commit `7d7b280ae027b55502a3d16d72ab7afac3f93043`. Tags `v1.5.0` and `go/v0.4.0` are on commit `5c4e51f7bf49bb26c4cab6368c142cc8c04344aa`. Tags `v1.4.0` and `go/v0.3.0` are older. Tags `v1.3.0` and `go/v0.2.0` remain on commit `8f4eaff6b68ddd860da7caf4088146cc1b803038`. Registry publication beyond the existing TypeScript GitHub Packages workflow and the crates.io workflow still requires its own authorization.
 
 | Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
-| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.6.2` / repository tag `v1.6.2` (protocol specification 1.6.0) | this repository |
-| TypeScript | `@corvidlabs/ts-algochat` | `0.12.0` | GitHub Packages for this repository |
-| Python | `py-algochat` | `0.6.0` | PyPI; source version only until a publisher is configured |
-| Rust | `algochat` | `0.6.0` from tag `v1.6.2` | [crates.io](https://crates.io/crates/algochat/0.6.0), available since 2026-11-05 ([evidence](#rust-060-on-cratesio-2026-11-05)); later versions through the [trusted-publisher workflow](#cratesio-publishing) |
+| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.7.0` / repository tag `v1.7.0`, pending (protocol specification 1.6.0); previous `1.6.2` / `v1.6.2` | this repository |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.12.1` (GitHub Packages has `0.12.0`) | GitHub Packages for this repository; `0.12.1` from tag `v1.7.0` with release 1.7.0, not yet published |
+| Python | `py-algochat` | `0.6.1` | PyPI; source version only until a publisher is configured |
+| Rust | `algochat` | `0.7.0` from tag `v1.7.0`, pending; `0.6.0` from tag `v1.6.2` | `0.7.0`: crates.io through the [trusted-publisher workflow](#cratesio-publishing) once the owner confirms the trusted publisher and revokes the 0.6.0 token, not published. `0.6.0`: [crates.io](https://crates.io/crates/algochat/0.6.0), available since 2026-11-05 ([evidence](#rust-060-on-cratesio-2026-11-05)) |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | GitHub Packages for this repository |
 | Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.5.0` | this repository |
 

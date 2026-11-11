@@ -1,0 +1,217 @@
+{
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "0xLeif",
+      "timestamp": 1794344804,
+      "digest": "8b4232af7af107f4625dfaf0a51a44c0b504dcacfbf023491d7ae5bee85c68e6",
+      "note": "Leif approved the 1.7.0 release definition on 2026-11-10 (relayed by coordinator hc t370): D-r1 tag v1.7.0; D-r2 TypeScript 0.12.1, published to GitHub Packages with the release; D-r3 Python 0.6.1 source only; release go, accepting degraded provenance as for 1.6.2. crates.io dispatch waits for his trusted-publisher confirmation and 0.6.0 token revocation.",
+      "approved_scope": {
+        "schema_version": 1,
+        "change_id": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+        "title": "Release algochat 0.7.0: prepare repository release v1.7.0 (protocol specification 1.6.0 unchanged) with the Rust crate at 0.7.0 from that tag, the CHANGELOG release section, release documentation, qualification of every lane and a pre-publish external-consumer proof; the tag and crates.io publication wait for Leif's release go",
+        "description": "Release algochat 0.7.0: prepare repository release v1.7.0 (protocol specification 1.6.0 unchanged) with the Rust crate at 0.7.0 from that tag, the CHANGELOG release section, release documentation, qualification of every lane and a pre-publish external-consumer proof; the tag and crates.io publication wait for Leif's release go",
+        "kind": "operations",
+        "affected_specs": [
+          "release"
+        ],
+        "affected_paths": [
+          "CHANGELOG.md",
+          "README.md",
+          "docs/HLD.md",
+          "docs/RELEASE.md",
+          "index.html",
+          "rs/Cargo.toml",
+          "rs/README.md",
+          "specs/release/"
+        ],
+        "no_spec_change": false,
+        "no_spec_change_rationale": null,
+        "acceptance_criteria": [
+          "rs/Cargo.toml declares algochat 0.7.0 and CHANGELOG.md has a 1.7.0 release section (Release B: #70a mandatory packaged vectors, #73 25-word phrase accounts, #68 ACPQ write path, #70b Hybrid and kept 0x02 vectors, plus rs-lint, #79 and #65) with the library version table; docs/RELEASE.md, README.md, rs/README.md, docs/HLD.md and index.html name repository release v1.7.0 (protocol specification 1.6.0, PROTOCOL.md unchanged since v1.6.2), Rust 0.7.0 from tag v1.7.0 as pending publication with no availability claim, and the TypeScript and Python versions Leif decides (D-r2, D-r3); REQ-release-5 names those identities; every qualification lane (TypeScript, Swift, Python, Rust, Kotlin, Go, Swift Linux) passes on the candidate head, with the Rust lane building, verifying and testing algochat-0.7.0.crate from the package; a fresh Cargo project outside the repository builds and runs against that packaged crate alone and alongside algonaut 0.9.0, calling the 0.7.0 APIs on synthetic inputs, with the resolved ctutils, reqwest and rustls versions recorded; no tag is pushed and nothing is published; the release tag, publication through publish-crates.yml and the post-publish crates.io consumer proof wait for Leif's release go."
+        ],
+        "dependencies": [],
+        "supersedes": [],
+        "answers": {
+          "architecture_risk": "no",
+          "constraints": "No library, test or wire change; protocol specification stays 1.6.0. No tag push, GitHub release or registry publication from this change: CRATE-7 and REQ-release-9 keep crates.io publication behind Leif's release go and publish-crates.yml (never run yet; 0.6.0 was published by hand, so the owner confirms the trusted publisher and revokes the 0.6.0 token first). crates.io versions are permanent. Qualification stays read-only (REQ-release-2). TypeScript and Python version bumps (D-r2, D-r3) change source versions only; their publication is a separate decision. Release B's 25-word phrase vectors are synthetic; nothing prints a phrase or secret.",
+          "public_contract": "yes"
+        }
+      },
+      "approved_delta_digests": {
+        "release": "651a5f2886b2d7fa6bd99110de4c3602b459da389331d130af1d51195be520a5"
+      },
+      "approved_delta_bases": {
+        "release: REQUIREMENT REQ-release-5": "265bc0e44d1ff6898bc7299423f557668b34a2b66390be8c8978de9c4564a829"
+      }
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1794345083,
+      "digest": "0f91443d027137f440a491a283c33b30023cc8f853b779098a6da8a98967c8da",
+      "note": "Same-PR finalization closing digest"
+    },
+    {
+      "gate": "finalization",
+      "actor": "specsync:finalization",
+      "timestamp": 1794360306,
+      "digest": "4ca83f1240951ce00e3dc72edaea22a19147aadd95557df2d17bc01b2cb06cce",
+      "note": "Same-PR finalization closing digest"
+    }
+  ],
+  "reopenings": [
+    {
+      "schema_version": 1,
+      "change_id": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+      "actor": "0xLeif",
+      "reason": "corvid-agent's review found three stale 1.7.0 doc lines",
+      "timestamp": 1794360014,
+      "from_state": "archived",
+      "to_state": "verifying",
+      "superseded_approval": {
+        "gate": "finalization",
+        "actor": "specsync:finalization",
+        "timestamp": 1794345083,
+        "digest": "0f91443d027137f440a491a283c33b30023cc8f853b779098a6da8a98967c8da",
+        "note": "Same-PR finalization closing digest"
+      },
+      "prior_verification": {
+        "timestamp": 1794344967,
+        "commit": "f1b64f5f273f775c67325ac62dcf3274a0c30ac4",
+        "contract_digest": "8b4232af7af107f4625dfaf0a51a44c0b504dcacfbf023491d7ae5bee85c68e6",
+        "execution_digest": "af6ad450837b1574125a93074528c891c14602710a30b3363e6f1b9bece38553",
+        "workspace_digest": "d361ecc400f5a08e580f6003ae4dd85228126f696d6cd0a50605b068449fee5b",
+        "acceptance_input_digest": "a2724ca0efd1f4ad4a4fe9c41e8f1718fecececfe932cb34e7ee3e6854e5a87c",
+        "acceptance_manifest": {
+          "schema_version": 1,
+          "entries": [
+            {
+              "path": "CHANGELOG.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "37491c287ab560c50d138d8816b9542fa63e8b8e045585e8a5cda7a350a29a2b",
+              "entry_digest": "2f80c440ed5d4949ca7a80a0254f236176434ae4f5efbfc9c6d9a706f23625e7",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "README.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "f6820047940c60d6d1bb42faaf4f9c1743866af14ee82c48f20925a81864690e",
+              "entry_digest": "117650073fa212b6e7bd01489d8f18246b2b2bbcb4cc309cf9ee2f4576a02fc5",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "docs/HLD.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "20e8c6999cb3c7123f15bcf787e37ba95c63449eed4ac8481e8e886f7bbf8e48",
+              "entry_digest": "771d8b2b2a1f8f588e1ccab0fabc158332136766ff45ad3336cc68316574a79a",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "docs/RELEASE.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "6b84e752c8e917f1f78dc58617acf6f8637bf2c34c55bc9d1009a281033eb69e",
+              "entry_digest": "624f632986b9d8cf4a8dcfe5a81fed57a3c28b7db2a0b15b562a8570d04cee05",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "index.html",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "58ed87c74b958e4fe0411321087acd481749898d1554e582fc8d74f5518c528c",
+              "entry_digest": "8611484938bf13f715fd324d46b7ea097d4d7a287302258dc37a40aac8f3ae44",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "rs/Cargo.toml",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "6ebef0fe5d640ae2f5a8319834efdef6703bfe63e43731f9d65505e9aab31db6",
+              "entry_digest": "8c14d1f78825c3140e426dfbe55536fb58e1d51d1141b8d023dd0494e4963b51",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "rs/README.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "547f5030329e793bdf8f86ae5310fe8e4cce3a9034be3bc5eaf1e035238009db",
+              "entry_digest": "947ec2ec4c7d28bd90ee9621af4592dc3b0267a304fdd1b01090d8fffd3b8faa",
+              "owners": [
+                "@exact:delivery"
+              ]
+            },
+            {
+              "path": "specs/release/context.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "a65a7e77dc3b33739fdb248aeff89e6e9ac79ca0e7cb583da54b75254087d9ec",
+              "entry_digest": "408040983931c857066f9fac1024f9f79f589c48175f6403b49ef8cd901de2d3",
+              "owners": [
+                "release"
+              ]
+            },
+            {
+              "path": "specs/release/release.spec.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "370a4a146329bead90eb4609f517b8cf9006c4d3cb63136bbc3981a09cfeac8a",
+              "entry_digest": "cd1e784f241500cfa4d5d41f536ba1c64df1713aebe64bb16cbec791a0245bec",
+              "owners": [
+                "release"
+              ]
+            },
+            {
+              "path": "specs/release/requirements.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "68befb5aa8cc8638d4ddb60eb697a72f0d45f80136a6c400e8a5e6c7036396c1",
+              "entry_digest": "8af98dcfc50f0ce2433a17d2c69860ef318660884808ce112d5948a4df4a0b23",
+              "owners": [
+                "release"
+              ]
+            },
+            {
+              "path": "specs/release/testing.md",
+              "kind": "file",
+              "mode": 33188,
+              "payload_digest": "6b20e7a6fa5fea0d66c03f5e97eef8a0981d8d94ff6aa53abff6b59594894cce",
+              "entry_digest": "3b9d5c209cd9389e92a5e69211b165c8d88f2743f6f1e09331e2ac2a40acbc78",
+              "owners": [
+                "release"
+              ]
+            }
+          ]
+        },
+        "passed": true,
+        "commands": [
+          {
+            "command": "specsync check --spec release",
+            "success": true,
+            "exit_code": 0
+          }
+        ],
+        "requirement_ids": [
+          "REQ-release-5"
+        ]
+      },
+      "stale_acceptance_input_digest": "a2724ca0efd1f4ad4a4fe9c41e8f1718fecececfe932cb34e7ee3e6854e5a87c",
+      "current_acceptance_input_digest": "1ef91b95ad63aeb4e5b5220499e2f1283a8291e4745c4a8fb7cb7792643211cf"
+    }
+  ]
+}

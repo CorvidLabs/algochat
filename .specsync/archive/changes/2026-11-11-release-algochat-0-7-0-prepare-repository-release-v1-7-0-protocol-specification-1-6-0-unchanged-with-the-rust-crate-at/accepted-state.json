@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "workflow_version": 2,
+  "workflow_origin_version": 2,
+  "id": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+  "slug": "release-algochat-0-7-0-prepare-repository-release-v1-7-0-protocol-specification-1-6-0-unchanged-with-the-rust-crate-at",
+  "title": "Release algochat 0.7.0: prepare repository release v1.7.0 (protocol specification 1.6.0 unchanged) with the Rust crate at 0.7.0 from that tag, the CHANGELOG release section, release documentation, qualification of every lane and a pre-publish external-consumer proof; the tag and crates.io publication wait for Leif's release go",
+  "description": "Release algochat 0.7.0: prepare repository release v1.7.0 (protocol specification 1.6.0 unchanged) with the Rust crate at 0.7.0 from that tag, the CHANGELOG release section, release documentation, qualification of every lane and a pre-publish external-consumer proof; the tag and crates.io publication wait for Leif's release go",
+  "kind": "operations",
+  "state": "accepted",
+  "canonical_applied": true,
+  "base_commit": "60f9893654b96b4c6e053cf1826df2385497a9c7",
+  "created_at": 1794330522,
+  "updated_at": 1794360306,
+  "affected_specs": [
+    "release"
+  ],
+  "affected_paths": [
+    "rs/Cargo.toml",
+    "rs/README.md",
+    "CHANGELOG.md",
+    "docs/RELEASE.md",
+    "README.md",
+    "index.html",
+    "docs/HLD.md",
+    "specs/release/"
+  ],
+  "no_spec_change": false,
+  "no_spec_change_rationale": null,
+  "acceptance_criteria": [
+    "rs/Cargo.toml declares algochat 0.7.0 and CHANGELOG.md has a 1.7.0 release section (Release B: #70a mandatory packaged vectors, #73 25-word phrase accounts, #68 ACPQ write path, #70b Hybrid and kept 0x02 vectors, plus rs-lint, #79 and #65) with the library version table; docs/RELEASE.md, README.md, rs/README.md, docs/HLD.md and index.html name repository release v1.7.0 (protocol specification 1.6.0, PROTOCOL.md unchanged since v1.6.2), Rust 0.7.0 from tag v1.7.0 as pending publication with no availability claim, and the TypeScript and Python versions Leif decides (D-r2, D-r3); REQ-release-5 names those identities; every qualification lane (TypeScript, Swift, Python, Rust, Kotlin, Go, Swift Linux) passes on the candidate head, with the Rust lane building, verifying and testing algochat-0.7.0.crate from the package; a fresh Cargo project outside the repository builds and runs against that packaged crate alone and alongside algonaut 0.9.0, calling the 0.7.0 APIs on synthetic inputs, with the resolved ctutils, reqwest and rustls versions recorded; no tag is pushed and nothing is published; the release tag, publication through publish-crates.yml and the post-publish crates.io consumer proof wait for Leif's release go."
+  ],
+  "selected_artifacts": [
+    "context",
+    "plan",
+    "testing",
+    "design",
+    "tasks",
+    "requirements",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "constraints": "No library, test or wire change; protocol specification stays 1.6.0. No tag push, GitHub release or registry publication from this change: CRATE-7 and REQ-release-9 keep crates.io publication behind Leif's release go and publish-crates.yml (never run yet; 0.6.0 was published by hand, so the owner confirms the trusted publisher and revokes the 0.6.0 token first). crates.io versions are permanent. Qualification stays read-only (REQ-release-2). TypeScript and Python version bumps (D-r2, D-r3) change source versions only; their publication is a separate decision. Release B's 25-word phrase vectors are synthetic; nothing prints a phrase or secret.",
+    "public_contract": "yes"
+  }
+}
