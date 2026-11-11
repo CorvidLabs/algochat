@@ -1,6 +1,6 @@
 ---
 id: record-release-1-7-0-as-tagged-and-typescript-0-12-1-as-available-on-github-packages-from-dated-consumer-evidence-req
-state: implementing
+state: archived
 type: bug_fix
 base_commit: aadcf73813075a5210ac7bf5e8777b5cddc80a65
 ---

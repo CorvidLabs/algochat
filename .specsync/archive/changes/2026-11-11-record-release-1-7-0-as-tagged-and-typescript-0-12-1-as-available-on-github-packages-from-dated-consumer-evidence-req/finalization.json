@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "change_id": "record-release-1-7-0-as-tagged-and-typescript-0-12-1-as-available-on-github-packages-from-dated-consumer-evidence-req",
+  "implementation_commit": "94595af9a2c651e07b4b938328db51cc810493e9",
+  "implementation_tree": "2b276d5a00577900177ddcb389d7eebee0604fd6",
+  "contract_digest": "8e4d205ea66aa7ada8cda4ec5da6f73f36833114215512b8b28e8452aeeccfec",
+  "workspace_digest": "1ae855a7c761b5c91566d3d2ee9047192bc5a76fc6094b6f0ec1229b275262ba",
+  "closing_digest": "d31cdde67d8acc257e3e37ec6d1c6e33e36bedc8feeee183866155651be7dcfd",
+  "review_digest": "11a7edc82c0884b2adf01640d53602e5e1dbf6c7c89e855f85f2781598d50288",
+  "finalization_digest": "02b7014deb3cc0a3c7231cbcc84983e7937426b7678017dca129e94058309b77",
+  "timestamp": 1794362485
+}
