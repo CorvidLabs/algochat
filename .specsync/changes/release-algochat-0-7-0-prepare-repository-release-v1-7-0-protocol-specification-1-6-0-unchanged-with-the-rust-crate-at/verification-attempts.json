@@ -188,6 +188,24 @@
       "requirement_ids": [
         "REQ-release-5"
       ]
+    },
+    {
+      "timestamp": 1794360160,
+      "commit": "55e8f43161cf3a2df79b88a1efb7aaf46d8a02c0",
+      "contract_digest": "8b4232af7af107f4625dfaf0a51a44c0b504dcacfbf023491d7ae5bee85c68e6",
+      "execution_digest": "35fb8773ee093d6c7869e151e3188cebd4a63d9ca3284b213f034835fa43310e",
+      "workspace_digest": "0fb7dcfa68219175a1647b3c63ac34a0aea1ab28aae567a06f7e8ed74dc58740",
+      "passed": true,
+      "commands": [
+        {
+          "command": "specsync check --spec release",
+          "success": true,
+          "exit_code": 0
+        }
+      ],
+      "requirement_ids": [
+        "REQ-release-5"
+      ]
     }
   ]
 }
