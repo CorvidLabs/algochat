@@ -7,10 +7,11 @@
   "title": "Record release 1.7.0 as tagged and TypeScript 0.12.1 as available on GitHub Packages from dated consumer evidence (REQ-release-5), with Rust 0.7.0 still pending and crates.io serving 0.6.0",
   "description": "Record release 1.7.0 as tagged and TypeScript 0.12.1 as available on GitHub Packages from dated consumer evidence (REQ-release-5), with Rust 0.7.0 still pending and crates.io serving 0.6.0",
   "kind": "bug_fix",
-  "state": "approved",
+  "state": "verifying",
+  "canonical_applied": true,
   "base_commit": "aadcf73813075a5210ac7bf5e8777b5cddc80a65",
   "created_at": 1794362049,
-  "updated_at": 1794362105,
+  "updated_at": 1794362387,
   "affected_specs": [],
   "affected_paths": [
     "docs/RELEASE.md",
