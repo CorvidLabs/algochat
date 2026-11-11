@@ -49,7 +49,7 @@ Release B: the Rust crate `algochat` 0.7.0, prepared for crates.io from tag `v1.
 
 ### Python bot: reads Raven's room frame (#65)
 
-- Raven sends a reply, a structured mention or a photo as a room frame (U+001E, `RAVEN:ROOM:1`, a newline, then JSON). The bot now reads it the way Raven does. A `/command` inside a frame is answered in commands mode, and a Raven reply to one of the bot's messages, or a mention bound to its address, counts as mentioning it. Before, the bot kept the frame as literal text and skipped it. A frame Raven shows as plain text stays plain text, and bare text and section 9 JSON read as before. No wire change. py-algochat's version is unchanged until a release.
+- Raven sends a reply, a structured mention or a photo as a room frame (U+001E, `RAVEN:ROOM:1`, a newline, then JSON). The bot now reads it the way Raven does. A `/command` inside a frame is answered in commands mode, and a Raven reply to one of the bot's messages, or a mention bound to its address, counts as mentioning it. Before, the bot kept the frame as literal text and skipped it. A frame Raven shows as plain text stays plain text, and bare text and section 9 JSON read as before. No wire change. py-algochat 0.6.1.
 
 ## 1.6.2 - 2026-11-05
 

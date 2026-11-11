@@ -12,7 +12,7 @@ Rust implementation of the AlgoChat protocol for encrypted messaging on Algorand
 
 ## Version and requirements
 
-- Crate: `algochat` **0.7.0**, implementing protocol **1.6.0**. It is to be published to crates.io from release tag **`v1.7.0`** once that release is approved; until then crates.io serves **0.6.0**, from release tag `v1.6.2`.
+- Crate: `algochat` **0.7.0**, implementing protocol **1.6.0**. It is to be published to crates.io from release tag **`v1.7.0`** once the owner confirms the crates.io trusted publisher; until then crates.io serves **0.6.0**, from release tag `v1.6.2`.
 - [Declared toolchain](Cargo.toml): Rust **1.85+**, edition **2021**.
 - `ml-kem` 0.3.3 enables `ctutils` through `hybrid-array` 0.4 and `module-lattice` 0.2. `ctutils` 0.4.3 requires Rust 1.87, so this crate pins `ctutils` 0.4.2. That release declares Rust 1.85 and still builds the current ML-KEM code. An unpinned resolution is not 1.85-compatible.
 - Qualification records the runner's Rust compiler version; the declared Rust 1.85 minimum remains unqualified. crates.io availability is recorded only from dated consumer evidence in the release record. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
