@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "schema_version": 2,
+      "change_id": "record-release-1-7-0-as-tagged-and-typescript-0-12-1-as-available-on-github-packages-from-dated-consumer-evidence-req",
+      "reviewer": "0xLeif",
+      "provenance": {
+        "schema_version": 1,
+        "provider": "github_actions_check",
+        "required_check": "SpecSync scoped review"
+      },
+      "verdict": "pass",
+      "implementation_commit": "94595af9a2c651e07b4b938328db51cc810493e9",
+      "contract_digest": "8e4d205ea66aa7ada8cda4ec5da6f73f36833114215512b8b28e8452aeeccfec",
+      "execution_digest": "87cb2359857a6fa02282de746ce6339a6bbe941062ead9458f7d270465a19086",
+      "workspace_digest": "1ae855a7c761b5c91566d3d2ee9047192bc5a76fc6094b6f0ec1229b275262ba",
+      "timestamp": 1794362421
+    }
+  ]
+}

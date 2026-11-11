@@ -12,7 +12,7 @@ TypeScript implementation of the AlgoChat protocol for encrypted messaging on Al
 
 ## Version and requirements
 
-- Package: `@corvidlabs/ts-algochat` **0.12.1** in source, implementing protocol **1.6.0**. 0.12.1 makes `validateMnemonic` and `createChatAccountFromMnemonic` reject phrases longer than 25 words. GitHub Packages serves 0.12.0 until 0.12.1 is published there from repository tag `v1.7.0` with release 1.7.0.
+- Package: `@corvidlabs/ts-algochat` **0.12.1** in source, implementing protocol **1.6.0**. 0.12.1 makes `validateMnemonic` and `createChatAccountFromMnemonic` reject phrases longer than 25 words. GitHub Packages serves 0.12.1, published from repository tag `v1.7.0` on 2026-11-11 ([evidence](../docs/RELEASE.md#typescript-0121-on-github-packages-2026-11-11)).
 - [Declared runtime](package.json): Node.js **18.0.0+**. Development uses TypeScript **`^5.7.0`**, resolved by the Bun lockfile.
 - Qualification is configured for **Node.js 22** and **Bun 1.3.6**; Node.js 18 remains unqualified. See [all language versions and qualification limits](../docs/RELEASE.md#language-and-runtime-versions).
 
@@ -58,13 +58,13 @@ The package's configured registry is GitHub Packages. Set `@corvidlabs:registry=
 
 ```bash
 # npm
-npm install @corvidlabs/ts-algochat@0.12.0
+npm install @corvidlabs/ts-algochat@0.12.1
 
 # bun
-bun add @corvidlabs/ts-algochat@0.12.0
+bun add @corvidlabs/ts-algochat@0.12.1
 
 # pnpm
-pnpm add @corvidlabs/ts-algochat@0.12.0
+pnpm add @corvidlabs/ts-algochat@0.12.1
 ```
 
 ## Quick Start

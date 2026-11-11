@@ -110,7 +110,7 @@ claim another author's historical actions or fabricate human implementation acce
 
 ## Package versions and distribution
 
-Release 1.7.0 is approved, not yet tagged. Its candidate is the release pull request for Release B (the Rust crate `algochat` 0.7.0: #70a, #73, #68 and #70b). Leif approved the release on 2026-11-10, accepting degraded provenance as for 1.6.2. Tag `v1.7.0` goes on that pull request's merge commit, and the manual `Publish npm` workflow then publishes TypeScript `0.12.1` to GitHub Packages from that tag. The crates.io publication through [`publish-crates.yml`](#cratesio-publishing) waits until the owner confirms the crates.io trusted publisher and revokes the API token used for 0.6.0. The post-publish consumer proof follows that publication. Release 1.7.0 keeps protocol specification **1.6.0**: `PROTOCOL.md` is unchanged since `v1.6.2`. Kotlin, Go and Swift sources are unchanged, so the Go module tag stays `go/v0.5.0` and repository tag `v1.7.0` is also the Swift package tag. Until it is tagged, release 1.6.2 below is the current tag.
+Release 1.7.0 is tagged. `v1.7.0` is commit `aadcf73813075a5210ac7bf5e8777b5cddc80a65`, the squash merge of [#89](https://github.com/CorvidLabs/algochat/pull/89) for Release B: the Rust crate `algochat` 0.7.0, with #70a, #73, #68 and #70b. It has a [GitHub release](https://github.com/CorvidLabs/algochat/releases/tag/v1.7.0). Leif approved the release on 2026-11-10, accepting degraded provenance as for 1.6.2. TypeScript `0.12.1` was published to GitHub Packages from that tag on 2026-11-11 ([evidence](#typescript-0121-on-github-packages-2026-11-11)). Rust `0.7.0` is not published yet, so crates.io serves `0.6.0`. Its publication through [`publish-crates.yml`](#cratesio-publishing) waits until the owner confirms the crates.io trusted publisher and revokes the API token used for 0.6.0. The post-publish consumer proof follows that publication. Release 1.7.0 keeps protocol specification **1.6.0**: `PROTOCOL.md` is unchanged since `v1.6.2`. Kotlin, Go and Swift sources are unchanged, so the Go module tag stays `go/v0.5.0` and repository tag `v1.7.0` is also the Swift package tag. Release 1.6.2, below, is the previous release.
 
 Release 1.6.2 is tagged: `v1.6.2` is commit `8e54462c1e937572bd8ca5e7274620e139b00b8c` (the squash merge of [#74](https://github.com/CorvidLabs/algochat/pull/74) for [algochat#67](https://github.com/CorvidLabs/algochat/issues/67)), with a [GitHub release](https://github.com/CorvidLabs/algochat/releases/tag/v1.6.2). Leif approved it on 2026-11-05.
 
@@ -118,10 +118,10 @@ Release 1.6.2 is tagged: `v1.6.2` is commit `8e54462c1e937572bd8ca5e7274620e139b
 
 | Library | Identity | Source version / release tag | Intended distribution destination |
 | --- | --- | --- | --- |
-| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.7.0` / repository tag `v1.7.0`, pending (protocol specification 1.6.0); previous `1.6.2` / `v1.6.2` | this repository |
-| TypeScript | `@corvidlabs/ts-algochat` | `0.12.1` (GitHub Packages has `0.12.0`) | GitHub Packages for this repository; `0.12.1` from tag `v1.7.0` with release 1.7.0, not yet published |
+| Protocol and Swift | package `algochat`, product `AlgoChat` | `1.7.0` / repository tag `v1.7.0` (protocol specification 1.6.0); previous `1.6.2` / `v1.6.2` | this repository |
+| TypeScript | `@corvidlabs/ts-algochat` | `0.12.1` from tag `v1.7.0` | GitHub Packages for this repository: `0.12.1` available since 2026-11-11 ([evidence](#typescript-0121-on-github-packages-2026-11-11)) |
 | Python | `py-algochat` | `0.6.1` | PyPI; source version only until a publisher is configured |
-| Rust | `algochat` | `0.7.0` from tag `v1.7.0`, pending; `0.6.0` from tag `v1.6.2` | `0.7.0`: crates.io through the [trusted-publisher workflow](#cratesio-publishing) once the owner confirms the trusted publisher and revokes the 0.6.0 token, not published. `0.6.0`: [crates.io](https://crates.io/crates/algochat/0.6.0), available since 2026-11-05 ([evidence](#rust-060-on-cratesio-2026-11-05)) |
+| Rust | `algochat` | `0.7.0` from tag `v1.7.0`, not yet published; `0.6.0` from tag `v1.6.2` | `0.7.0`: crates.io through the [trusted-publisher workflow](#cratesio-publishing) once the owner confirms the trusted publisher and revokes the 0.6.0 token, not published. `0.6.0`: [crates.io](https://crates.io/crates/algochat/0.6.0), available since 2026-11-05 ([evidence](#rust-060-on-cratesio-2026-11-05)) |
 | Kotlin | `com.corvidlabs:kt-algochat` | `0.5.0` | GitHub Packages for this repository |
 | Go | `github.com/CorvidLabs/algochat/go` | tag `go/v0.5.0` | this repository |
 
@@ -188,6 +188,24 @@ replaced). Record availability here only from a dated consumer build that resolv
   - With `cargo add algochat@0.6.0`, it resolved `algochat` 0.6.0 from the crates.io index.
   - With `algochat` 0.6.0 and `algonaut` 0.9.0 together, it resolved `ctutils` 0.4.2, `reqwest` 0.13.5 and `rustls` 0.23.46.
   - Not checked: the declared Rust 1.85 minimum, other platforms, and any runtime interop beyond building and linking.
+
+### TypeScript 0.12.1 on GitHub Packages (2026-11-11)
+
+- **How it was published:** Leif approved release 1.7.0 on 2026-11-10, including publishing TypeScript 0.12.1 with it. After tag `v1.7.0` was pushed, the manual [`Publish npm`](../.github/workflows/publish-npm.yml) workflow was dispatched at ref `v1.7.0`. [Run 42941689248](https://github.com/CorvidLabs/algochat/actions/runs/42941689248) ran on commit `aadcf73` and published at 2026-11-11T01:49:34Z.
+- **The published package:**
+  - GitHub Packages lists [`0.12.1`](https://github.com/orgs/CorvidLabs/packages/npm/ts-algochat/1540140676).
+  - Its registry metadata names `gitHead` `aadcf73813075a5210ac7bf5e8777b5cddc80a65`, shasum `d454046392b8bb30b3661727970c44cd6b0a0a13` and integrity `sha512-5phfTNqwNl1kQJPjBGOyNg13b76Hntzu5CnYsDtzS3PbH38jB31iHWKg/4sAwvPPCMeH/jSiQ5kZ4+l/LRJSMg==`.
+  - The downloaded tarball has that sha1 and 358 entries.
+  - A local `npm pack` of `ts/` at `v1.7.0`, after `bun install --frozen-lockfile` and `bun run build`, extracts to the same files. The tarball bytes differ.
+  - The package's npm metadata names repository `CorvidLabs/algochat`, directory `ts`. GitHub's package-to-repository association is still the archived `CorvidLabs/ts-algochat`.
+- **External consumer, 2026-11-11T01:51Z, macOS arm64, Node 26.10.0:**
+  - Setup: a fresh project outside this repository ran `npm install @corvidlabs/ts-algochat@0.12.1` from `npm.pkg.github.com` with a `read:packages` token. It resolved the tarball above.
+  - Results:
+    - all 4 `07-mnemonic-accounts` phrases restore to their addresses through `validateMnemonic` and `createChatAccountFromMnemonic`;
+    - all 14 negatives are rejected;
+    - a 26-word phrase is rejected by `validateMnemonic`, and `createChatAccountFromMnemonic` throws on it.
+  - No phrase or secret was printed.
+  - Not checked: Node 18 (the declared minimum), Bun as the consumer runtime, other platforms, and the public npm registry, which still has 0.4.0.
 
 ## Historical 1.3.0 release preparation checklist
 
