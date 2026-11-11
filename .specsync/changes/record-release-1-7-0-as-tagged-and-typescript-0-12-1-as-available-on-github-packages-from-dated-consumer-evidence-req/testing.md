@@ -40,3 +40,5 @@ Observed 2026-11-11 (UTC), macOS arm64.
 - **Public npm:** the registry's `latest` is 0.4.0, and it has no 0.12.1.
 - **crates.io API, 2026-11-11:** `max_version` and `newest_version` are 0.6.0, updated 2026-11-06T01:32:59Z.
 - **Stale text:** a search of `docs/`, `ts/README.md`, `ts/index.html`, `README.md` and `index.html` finds no `ts-algochat@0.12.0`, "not yet tagged", "until 0.12.1" or "Until it is tagged".
+- `fledge lanes run verify`: validate passed, and the 41 release unit tests are OK.
+- `fledge trust verify --range origin/main..HEAD` at `6fa9a38`: the trust gate passed. Augur's verdict was review, not block, at risk 36. Attest provenance is degraded because the policy is not satisfied, as on earlier PRs.
